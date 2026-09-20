@@ -17,3 +17,7 @@ e2e/.runtime/
 .am/
 __pycache__/
 *.pyc
+
+# playwright 产物
+test-results/
+playwright-report/

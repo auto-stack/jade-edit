@@ -1,0 +1,13 @@
+{
+  "name": "jade-edit",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/regen-vue.mjs",
+    "test:e2e": "playwright test -c e2e/playwright.config.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.1"
+  }
+}

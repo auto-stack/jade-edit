@@ -27,6 +27,8 @@ dep bps {
 }
 
 // vue 轨 engine 消费（@autodown/engine 外部官方组件；出口契约 1.0 冻结）。
+// ⚠ link 路径基准 = 生成工程包位置（gen/front/vue），非本 pac 位置——
+// 生成器原样并入 gen package.json（T-06 实证：基准错=断链 symlink）。
 npm_deps: {
-    "@autodown/engine": "link:../auto-down/autodown/packages/engine"
+    "@autodown/engine": "link:../../../../auto-down/autodown/packages/engine"
 }
