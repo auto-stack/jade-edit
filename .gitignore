@@ -3,6 +3,8 @@
 gen/
 build/
 dist/
+deps/
+rust-workspace/
 
 # node / vite
 node_modules/
