@@ -1,0 +1,145 @@
+// back/wsys.at — wiki 工作区后端实现本体（PLAN-001 T-02）。
+//
+// 全部文件系统 IO 收口于此（front 零 fs.*/File.* 内建——vue 轨 ts_adapter
+// 将二者拦为 __vmOnly 抛错桩，auto-edit PLAN-003 T-00 P-5 实证）。AutoVM
+// 解释服役（merged 进程内 / split 为 HTTP 服务侧模块 / vue 轨供 HTTP）。
+// 函数名与 api.at 契约名刻意错开（root_dir↔ws_root 等）——013-todo 形态：
+// 契约 fn 与实现 fn 同名会在导入处遮蔽冲突。
+//
+// frontmatter 处理纯字符串层（split/concat），不经 JsonAny——VM JsonAny
+// 损坏类（PLAN-081 T-03 两轮实测）结构性消除。行分隔按 "\n" 切；CRLF
+// 文件行尾带 "\r"，界符判定按 "---" 与 "---\r" 双形态容错。
+
+/// 工作区根：JADE_WORKSPACE（fixture 隔离通道——automan 无条件覆盖
+/// AUTO_PROJECT_DIR，隔离只能走独立名）→ AUTO_PROJECT_DIR → "."
+pub fn root_dir() str {
+    var root str = Env.get("JADE_WORKSPACE")
+    if root == "" {
+        root = Env.get("AUTO_PROJECT_DIR")
+    }
+    if root == "" {
+        root = "."
+    }
+    return root
+}
+
+/// 路径归一：相对路径（树行 id 等）拼工作区根；绝对路径（盘符/根斜杠）
+/// 直通。VM 渲染期进程 CWD 会切到 src/front（automan 注记），相对路径
+/// 绝不能裸用。
+fn resolve(path str) str {
+    if path == "" {
+        return root_dir()
+    }
+    var n = path.length
+    if n > 1 {
+        if path.slice(1, 2) == ":" {
+            return path
+        }
+    }
+    var head = path.slice(0, 1)
+    if head == "/" {
+        return path
+    }
+    if head == "\\" {
+        return path
+    }
+    return root_dir() + "/" + path
+}
+
+/// 目录树 JSON（front 侧 json.to_value 解析；该内建 vue 转译吸收）
+pub fn tree_json(path str, depth int) str {
+    return fs.tree(resolve(path), depth)
+}
+
+/// frontmatter 界符行判定（"---" 或 CRLF 尾 "---\r"）
+fn is_delim(line str) bool {
+    if line == "---" {
+        return true
+    }
+    if line == "---\r" {
+        return true
+    }
+    return false
+}
+
+/// 读文档 body：首行 = 界符 → 剥至第二个界符行，其后的行以 "\n" 重接；
+/// 无 frontmatter → 全文直通。
+pub fn read_body(path str) str {
+    var text str = File.read_text(resolve(path))
+    var lines = text.split("\n")
+    if lines.len() > 0 {
+        if is_delim(lines[0]) {
+            var i int = 1
+            while i < lines.len() {
+                if is_delim(lines[i]) {
+                    var out str = ""
+                    var j int = i + 1
+                    while j < lines.len() {
+                        out = out + lines[j]
+                        if j < lines.len() - 1 {
+                            out = out + "\n"
+                        }
+                        j = j + 1
+                    }
+                    return out
+                }
+                i = i + 1
+            }
+        }
+    }
+    return text
+}
+
+/// 写文档：存在且有 frontmatter → 界符段原文保留（含界符行与段尾换行）
+/// + 新 body；否则（新文件/无 frontmatter）直写 body。落盘 exists 复核。
+pub fn write_body(path str, body str) bool {
+    var full str = resolve(path)
+    var text str = ""
+    var has bool = false
+    if File.exists(full) {
+        text = File.read_text(full)
+        var lines = text.split("\n")
+        if lines.len() > 0 {
+            if is_delim(lines[0]) {
+                var i int = 1
+                while i < lines.len() {
+                    if is_delim(lines[i]) {
+                        has = true
+                    }
+                    i = i + 1
+                }
+            }
+        }
+    }
+    var out str = ""
+    if has {
+        // 界符段 = 界符行起至闭合界符行（含，含段尾换行）逐行重接——与
+        // read_body 的切分点互补，round-trip 字节稳定（body 未编辑时）。
+        var lines2 = text.split("\n")
+        var k int = 1
+        var done bool = false
+        while k < lines2.len() {
+            if !done {
+                out = out + lines2[k - 1] + "\n"
+                if is_delim(lines2[k]) {
+                    out = out + lines2[k] + "\n"
+                    done = true
+                }
+            }
+            k = k + 1
+        }
+    }
+    out = out + body
+    File.write_text(full, out)
+    return File.exists(full)
+}
+
+/// 路径存在性
+pub fn path_exists(path str) bool {
+    return File.exists(resolve(path))
+}
+
+/// 环境变量读（未设 = ""）
+pub fn env_lookup(name str) str {
+    return Env.get(name)
+}
