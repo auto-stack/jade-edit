@@ -26,14 +26,36 @@
 
 ## 运行矩阵
 
-（T-08 收尾回填：vm / vue / 后端三命令。）
+前置：`auto.exe` 在 PATH 或 `AUTO_EXE` env；jade-garden-back exe（auto-down
+构建产物，缺失时 run-back 提示构建命令）；`pnpm install`（仓根，playwright）。
+
+```sh
+# —— 后端（axum 外部服务器，隔离 fixture 工作区；--vm 可切实验 VM 模式）——
+node scripts/run-back.mjs [--port 8199]
+
+# —— vm 轨（iced 原生窗；split 模式连后端）——
+AUTO_VM_MERGE=0 AUTO_BACKEND=http://127.0.0.1:8199 auto run -r vm
+
+# —— vue 轨（生成+补丁+install+build 一键；vite dev 需代理指向后端）——
+pnpm build                          # = node scripts/regen-vue.mjs
+AUTO_HTTP_PORT=8199 AUTO_FRONT_PORT=4181 pnpm --dir gen/front/vue dev
+
+# —— 门（双轨一致性：vm 矩阵 + vue build/e2e + 契约漂移）——
+node scripts/gate.mjs
+
+# —— 单门 ——
+node tests/vm_matrix.mjs            # vm 六检查 + 结构基线零漂移
+pnpm test:e2e                       # vue 六检查（同一检查单）
+node scripts/contract-sync.mjs --check   # 契约副本漂移门
+```
 
 ## 文档
 
-- [ARCHITECTURE.md](ARCHITECTURE.md) — 架构定版（T-07）
+- [ARCHITECTURE.md](ARCHITECTURE.md) — 架构定版（SD-01：双轨机制 /
+  013 形态消费面 + C-1..C-6 双轨硬约束 / 后端复用 / 测试体系 / 纪律）
 - [plans/081-t00-rulings.md](plans/081-t00-rulings.md) — T-00 三勘定
   决策档（双轨机制 / actions-vue 现状 / 后端选型）
-- [../docs/parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v0（T-07）
+- [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v0（九项三分类）
 
 ## 计划
 
