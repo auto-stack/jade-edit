@@ -22,31 +22,34 @@
 | vm 轨 | `auto run -r vm`（auto-lang exe，解释渲染 iced） |
 | vue 轨 | `auto build -r vue`（生成 Vue3+Vite 工程） |
 | deps | bps = auto-lang blueprints（filetree）；stylekit = auto-edit specs |
-| 后端 | jade-garden-back 外部服务器（axum 模式；`JADE_GARDEN_SERVER=vm` 可切实验 VM 模式） |
+| 后端 | 自有 `src/back`（Auto 写：api.at 契约 + wsys.at 实现；merged=进程内直调 / split·vue=HTTP / `--server` 运行期切引擎——PLAN-001 换基，supersede 外部 exe 复用） |
 
 ## 运行矩阵
 
-前置：`auto.exe` 在 PATH 或 `AUTO_EXE` env；jade-garden-back exe（auto-down
-构建产物，缺失时 run-back 提示构建命令）；`pnpm install`（仓根，playwright）。
+前置：`auto.exe` 在 PATH 或 `AUTO_EXE` env（须含上游 669 `#[api]` 实参
+装配修复，≥ 2026-09-21 构建）；`pnpm install`（仓根，playwright）。
+工作区根：`JADE_WORKSPACE` env（缺席 = AUTO_PROJECT_DIR = 工程目录）。
 
 ```sh
-# —— 后端（axum 外部服务器，隔离 fixture 工作区；--vm 可切实验 VM 模式）——
-node scripts/run-back.mjs [--port 8199]
+# —— vm 轨（默认 merged：back 进程内直调，零后端进程零端口）——
+JADE_WORKSPACE=<工作区> auto run -r vm
 
-# —— vm 轨（iced 原生窗；split 模式连后端）——
-AUTO_VM_MERGE=0 AUTO_BACKEND=http://127.0.0.1:8199 auto run -r vm
+# —— vm 轨 split（AutoVM HTTP 后端 + 前端窗，HTTP 往返）——
+JADE_WORKSPACE=<工作区> auto run -r vm --no-merge
 
-# —— vue 轨（生成+补丁+install+build 一键；vite dev 需代理指向后端）——
+# —— 后端独立 serve（不开窗——vue dev / 联调用）——
+node scripts/serve-back.mjs [--port 8211]     # auto run --server vm + 隔离 fixture + ws_root belt
+
+# —— vue 轨（生成+补件+install+build 一键；dev 需代理指向后端）——
 pnpm build                          # = node scripts/regen-vue.mjs
-AUTO_HTTP_PORT=8199 AUTO_FRONT_PORT=4181 pnpm --dir gen/front/vue dev
+AUTO_HTTP_PORT=8211 AUTO_FRONT_PORT=4181 pnpm --dir gen/front/vue dev
 
-# —— 门（双轨一致性：vm 矩阵 + vue build/e2e + 契约漂移）——
+# —— 门（双轨一致性：vm 双臂矩阵 + vue build/e2e）——
 node scripts/gate.mjs
 
 # —— 单门 ——
-node tests/vm_matrix.mjs            # vm 六检查 + 结构基线零漂移
-pnpm test:e2e                       # vue 六检查（同一检查单）
-node scripts/contract-sync.mjs --check   # 契约副本漂移门
+node tests/vm_matrix.mjs            # 双臂（merged+split）六检查 + 基线 v1 零漂移
+pnpm test:e2e                       # vue 六检查（同一检查单；serve-back 后端）
 ```
 
 ## 文档

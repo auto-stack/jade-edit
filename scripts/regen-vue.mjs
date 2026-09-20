@@ -75,7 +75,7 @@ fs.writeFileSync(
   nativesDts,
   [
     '// natives.d.ts — vm 宿主内建声明层补件（gen-only 构建流；类型门用，',
-    '// 运行期缺口见 docs/README vue 限制节）',
+    '// 运行期实现在 vm-natives.ts 垫片）',
     'declare function console_log(...args: any[]): void',
     'declare function console_lines(): string',
     'declare function console_clear(): void',
@@ -87,6 +87,40 @@ fs.writeFileSync(
   ].join('\n')
 )
 console.log('[regen-vue] 补件：src/natives.d.ts（7 内建声明）')
+
+// natives 运行期垫片（vue 无 vm 宿主——natives.d.ts 只过类型门；六检查
+// 走 save/edit 热路径必经 console_* 家族。console_log 聚合 → console_lines
+// 回读：vue 侧 ConsolePanel 真数据而非空桩）。
+const vmNatives = path.join(vueDir, 'src', 'vm-natives.ts')
+fs.writeFileSync(
+  vmNatives,
+  [
+    '// vm-natives.ts — vm 宿主内建运行期垫片（PLAN-001 T-04；类型面见 natives.d.ts）',
+    'const __consoleBuf: string[] = []',
+    'globalThis.console_log = (...args: any[]) => {',
+    '  __consoleBuf.push(args.map((a) => String(a)).join(" "))',
+    '  if (__consoleBuf.length > 200) __consoleBuf.shift()',
+    '  console.log("[vm]", ...args)',
+    '}',
+    'globalThis.console_lines = () => __consoleBuf.join("\\n");',
+    'globalThis.console_clear = () => { __consoleBuf.length = 0 };',
+    'globalThis.file_basename = (p: string) => String(p).replace(/\\\\/g, "/").split("/").filter(Boolean).pop() ?? "";',
+    '// 文件对话框在浏览器宿主无阻塞式对应（vue 运行期限制，登记 README）：返回 "" = 取消。',
+    'globalThis.dialog_open = () => "";',
+    'globalThis.dialog_save = () => "";',
+    '(globalThis as any).Process = { exit: (code = 0) => { console.warn("[vm] Process.exit(" + code + ") no-op in vue") } }',
+    '',
+  ].join('\n')
+)
+{
+  const mainTs = path.join(vueDir, 'src', 'main.ts')
+  let s = fs.readFileSync(mainTs, 'utf8')
+  if (!s.includes('vm-natives')) {
+    s = `import './vm-natives'\n` + s
+    fs.writeFileSync(mainTs, s)
+  }
+}
+console.log('[regen-vue] 补件：src/vm-natives.ts 运行期垫片（console 聚合/dialog 取消/no-op exit）+ main.ts 注入')
 
 {
   const storeTs = path.join(vueDir, 'src', 'stores', 'useEditorStore.ts')

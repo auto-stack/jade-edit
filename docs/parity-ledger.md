@@ -1,8 +1,7 @@
-# jade-edit 双轨差异登记表 v0（PLAN-081 T-07 首版）
+# jade-edit 双轨差异登记表 v1（PLAN-081 T-07 首版；PLAN-001 T-05 换基复核）
 
 > 方法论继承旧 jade-garden L3 差异表（design 30 §8）：差异不静默、逐项
-> 记账（形态/处置/升级路径）。初始版起记账——不积累组装级差异是本仓
-> 立项裁定（PLAN-081 §0 纪律）。分类：**归档级**（双轨形态已对齐/不追）
+> 记账（形态/处置/升级路径）。分类：**归档级**（双轨形态已对齐/不追）
 > / **组装级**（当前装配差异，后续批次收口）/ **上游级**（auto-lang /
 > engine / auto-down 侧缺口，本仓补丁或纪律规避）。
 
@@ -10,13 +9,19 @@
 | --- | --- | --- | --- | --- | --- |
 | D-01 | 编辑器代码字体/主题 | fence mono CJK tofu 债 + hljs 主题定格（auto-lang DEBTS 041 在册） | DOM 字体栈/hljs 主题随工程 CSS | 上游 | engine/auto-lang 侧债，本仓不修；观感差异接受 |
 | D-02 | engine 平台面 | rust/VM 平台面 experimental（engine ARCHITECTURE §2） | 契约面（出口 1.0 冻结）稳定 | 上游 | engine 稳定化后续；断言域=契约面，深层行为不锁 |
-| D-03 | 编辑器播种/切换 | `key: path` 重挂载播种（key 变即重读 content:） | 生成 `:key` 为静态串 + `:content` prop 更新 | 组装 | v0 单文档流不触发；多 tab 切换面到 tab 条功能批时实测定夺（若 vue 需真重挂载=上游 key 透传缺口，届时上游另立） |
-| D-04 | 生成 api client 四缺口 | 不适用（vm 走 `use back.api:` + #[api] HTTP 改写，正确） | 通配路由 URL 不替换 / `List<T>` / `JsonAny` / `map` 直译 | 上游 | regen-vue.mjs 补丁 + pattern 断言（上游修复后断言失败=撤除提示）；上游候选计划：vue api client 通配与类型发射 |
-| D-05 | actions 面 | actions{} 双轨可用（F-1 已过时：vue 合成 451 P2 + 070 T-05 去门化；keydown 回退层双轨） | 同左 | 归档 | v0 无 menubar（最小面裁定 #4）；残余=use 深度不对称（vue 只扫一级 use）——纪律：actions 只放根 widget |
-| D-06 | 后端运行模式 | split（AUTO_VM_MERGE=0 + AUTO_BACKEND） | split（vite /api 代理 AUTO_HTTP_PORT） | 归档 | 双轨同指外部 axum 服务器；VM 模式（JADE_GARDEN_SERVER=vm）实验位：run-back --vm 可切，验证属后续 |
-| D-07 | JsonAny 契约字段 | 经 VM 变量/Obj 字面量存取损坏（C-1，T-03 实测：落盘 "4000090"/`<vmref>`） | JS 原生对象直通 | 上游 | 纪律 C-1（现读现传）；上游修复（JsonAny 装箱）后解禁。参考：旧 jade desktop vm 轨 save 同款模式未断言 frontmatter——潜在同坑（其仓冻结不改，仅登记） |
-| D-08 | 状态读面 | 合并根状态裸读可用 | 裸读发射为未声明标识符（vue-tsc 拒绝） | 归档 | 定形 `.store.*` 单一读面（013 形态），双轨合法；store computed 同因退役（C-2/C-3） |
-| D-09 | 结构基线 | tests/baseline/structure-v0.txt 锁 state+snapshot（vnode id 确定性） | 无对应（vue 轨 DOM 断言走 e2e） | 归档 | 断言域=两轨交集（文本/结构/磁盘），vue 侧不复制 vm 基线形态 |
+| D-03 | 编辑器播种/切换 | `key: active_key` 重挂载播种（key 变即重读 content:） | 生成 `:key` 为静态串 + `:content` prop 更新 | 组装 | 换基后多 tab 面已进入（tab 条在库）；六检查域单文档不触发切换断言——切换面 e2e 扩展批实测定夺 |
+| D-04 | ~~生成 api client 四缺口~~ → 标量契约 | 不适用（vm 走 `use back.api` 直调） | 换基后契约全标量（str/int/bool）⇒ 旧四缺口（通配 URL/List\<T\>/JsonAny/map）**结构性消除**（regen-vue 断言守残留） | 归档 | PLAN-001 T-02 契约设计即规避；残余缺口见 D-10/D-15 |
+| D-05 | actions 面 | actions{} 双轨可用（menubar/toolbar 快照锚 + keydown 回退层） | 同左（换基后 menubar/toolbar 已进入） | 归档 | PLAN-081「v0 无 menubar 最小面裁定 #4」随换基 supersede；残余=use 深度不对称（vue 只扫一级 use）——纪律：actions 只放根 widget |
+| D-06 | ~~后端运行模式~~ | ~~split 外部 exe~~ → 换基后：自有 Auto src/back，merged 进程内直调 | HTTP（vite /api 代理 → `auto run --server vm -B`） | 归档 | PLAN-001 换基定版（supersede R-3）；a2r rust 引擎 = 上游缺口 F-R1（auto-edit PLAN-003 在册），不可用不阻塞 |
+| D-07 | ~~JsonAny 契约字段~~ | ~~VM 存取损坏~~ → 换基后 front 全程零 JsonAny（frontmatter back 侧字符串层保留/拼回；read_wiki 只回 body） | 同左 | 归档 | PLAN-081 C-1「现读现传」绕法随边界内移退役；上游 JsonAny 装箱修复仍登记（旧 jade 潜在同坑在案） |
+| D-08 | 状态读面 | 合并根状态裸读可用 | 裸读发射为未声明标识符（vue-tsc 拒绝） | 归档 | 定形 `.store.*` 单一读面（013 形态）；store computed 双轨皆坏已退役 |
+| D-09 | 结构基线 | tests/baseline/structure-v1.txt 锁 state+snapshot（换基满状态；v0 留档） | 无对应（vue 轨 DOM 断言走 e2e） | 归档 | 断言域=两轨交集；vue 侧不复制 vm 基线形态 |
+| D-10 | vue-tsc v-for 兄弟模板作用域 | 不适用 | v-for 内**互补兄弟 `<template v-if>` 对的第二分支**丢循环变量作用域（i/t/r 三症状；2.0.29/2.2.12 × vue3.4/3.5 组合全试无免） | 上游 | 规避双管：源级消对（explorer 单按钮 + handler 分流）+ regen-vue 生成级 v-for 拆分补丁（tab 对——vm 轨需双分支保留）；上游候选计划 |
+| D-11 | `.find` 闭包 split 硬崩 | merged OK；**`--no-merge` split 下 `.tabs.find(t => …)` 闭包使进程硬崩**（无 panic 输出；T-01 实勘，type/save 双复现） | 不适用（js 原生 find） | 上游 | 纪律：store 内 tab 定位一律 while 索引扫描（基座同款形态）；auto-lang 侧另立计划修复后解禁 |
+| D-12 | autodown_editor 事件面 | key/content/final/oninput/on_focus（aura_view_builder.rs 实勘）——**无 oncursor/oncontextmenu**，无 code_editor_* 内建族 | 同左 | 上游 | StatusBar 行:列降级（docs 计数+脏标替代）；ctx_menu 组件不迁入（无右键锚）；menubar 编辑项 no-op+console 注记（编辑器内原生快捷键仍可用）；engine 事件面扩展后续批 |
+| D-13 | vm 宿主内建 vue 运行期 | 不适用（宿主原生） | natives.d.ts 只过类型门；运行期 = regen-vue 补 `vm-natives.ts` 垫片（console_log 聚合/console_lines 回读=ConsolePanel 真数据；file_basename；dialog_* 返回 ""=取消；Process.exit no-op） | 组装 | 垫片为 gen 产物常驻补件；dialog 的 vue 真形态（文件选择器）属后续批 |
+| D-14 | frontmatter updated_at 补写 | 旧 jade-garden-back 保存时服务端补 updated_at；换基 Auto back v0 **逐字保留 frontmatter**（不补写） | 同左 | 组装 | 六检查断言域不含 updated_at（磁盘原文+标记+frontmatter 三验）；补写属 wiki 域功能池后续批 |
+| D-15 | 生成器残余缺口（换基面） | 不适用 | 双段 `${}` 插值发射错序（源级拆单段规避）；`--lenient` 通道（menubar-item props 超 vue schema 面[text/disabled/onclick]）；deps/bps 部分同步 package load 告警（不阻断） | 上游 | regen-vue 补件 + 断言守；auto-edit PLAN-003 七类补件同源（其 regen_vue.py 在册） |
 
 ## 增记规则
 

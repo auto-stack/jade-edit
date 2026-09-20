@@ -73,33 +73,48 @@ src/back/api.at           /api 契约副本（GENERATED，漂移门守）
 - engine rust/VM 平台面 experimental（engine ARCHITECTURE §2）——深层
   行为差异入 [parity-ledger.md](parity-ledger.md)。
 
-## 5. 后端复用（T-00 R-3 裁定：axum 模式）
+## 5. 后端（PLAN-001 换基定版：自有 Auto src/back——supersede R-3）
 
-- 后端 = **外部服务器进程** jade-garden-back（auto-down 冻结仓构建产物，
-  直引路径——`scripts/run-back.mjs` 一处定位 + 缺失提示构建命令）。
-- **exe 拷贝隔离**（e2e-prepare 原配方）：服务器把 `jade-garden-config.json`
-  存在 exe 旁且 **config 的 workspace_root 压过
-  `JADE_GARDEN_DEFAULT_WORKSPACE` env**（server state.rs:27）——原地跑
-  exe 时一份陈年 config 即可让所有写落错位置（T-03 实录事故：auto-down
-  源 fixture 被写坏）。run-back 跑 `e2e/.runtime` 副本 + 删副本旁 config
-  + 启动后 `GET /api/workspace` 实际根断言（belt）。
+> PLAN-081 T-00 R-3（外部 axum exe 复用）为 bootstrap 期零后端工作量
+> 捷径，2026-09-20/21 用户改道裁定后由本节取代（HTTP-always split =
+> 旧 jade-garden 纯 Vue 时代遗产配方；历史见
+> [plans/001-jade-edit-rebase-autoedit.md](plans/001-jade-edit-rebase-autoedit.md)
+> §4 supersede 登记）。
+
+- 后端 = **自有 `src/back`（Auto 写）**：`api.at` 契约（`#[api]` fn，
+  013-todo 形态）+ `wsys.at` 实现本体（全部 FS IO 收口；front 零
+  `fs.*`/`File.*` 内建——vue 轨 ts_adapter 将其拦为 `__vmOnly`）。
+  契约与实现同文件同 commit ⇒ 结构性无漂移（PLAN-081 的契约副本 +
+  漂移门随之退役）。
+- **边界三形态**（auto-lang main.rs:1002-1025 实证）：
+  - vm merged（默认）：`use back.api` = 进程内 CALL 直调，零 HTTP 零端口；
+  - vm split：`auto run -r vm --no-merge`（AutoVM HTTP 同进程起服）；
+  - vue：ts_adapter 生成 HTTP client + vite `/api` 代理（`AUTO_HTTP_PORT`），
+    后端独立供给 = `auto run --server vm -B <port>`（`scripts/serve-back.mjs`）。
+- **pac 纪律：不写 `api:` 字段**——服务引擎（AutoVM HTTP / a2r rust）
+  留运行期 `--server` 切换；`api:"rust"` 会杀 merged 且当前 a2r 生成器
+  缺口在册（auto-edit PLAN-003 F-R1，E0432）。旧 28 路由功能面
+  （parser/linkgraph/agenda/multipart）仍属 jade-garden 冻结功能池，后续批
+  以 Auto 形态移植。
+- 工作区根解析：`JADE_WORKSPACE`（fixture 隔离通道）→ `AUTO_PROJECT_DIR`
+  （auto-man 无条件注入工程目录——automan.rs:1435，故隔离需独立名）→
+  `"."`；相对路径 back 侧 `resolve()` 拼根（VM 渲染期 CWD 会切 src/front）。
+- wiki 域语义：`read_wiki` 只回 body（frontmatter 在 back 侧字符串层
+  保留/拼回——PLAN-081 的 VM JsonAny 损坏类结构性消除）；`updated_at`
+  补写 v0 不做（frontmatter 逐字保留，功能池后续批）。
 - fixture workspace 每次全新隔离拷贝（源 = auto-down `tmp/wiki-demo`，
-  `JADE_FIXTURE` 可覆）——测试会打字保存，源零污染。
-- split 模式：vm 轨 `AUTO_VM_MERGE=0` + `AUTO_BACKEND=<url>`；vue 轨经
-  vite `/api` 代理（`AUTO_HTTP_PORT`）。
-- VM 模式（`JADE_GARDEN_SERVER=vm`，/api 整面跑 AutoVM）= 同 exe 一 env
-  开关，**实验**（无在跑门消费），战略后续另行验证——run-back `--vm`
-  可切。契约面 `src/back/api.at` 与模式无关（副本 + 漂移门常绿）。
+  `JADE_FIXTURE` 可覆）——测试会打字保存，源零污染。Auto back 无 config
+  文件 ⇒ 旧「exe 旁陈年 config 压 env」事故类别结构性消失（belt 保留为
+  ws_root 实际根断言）。
 
-## 6. 测试体系（双轨一致性门 v0）
+## 6. 测试体系（双轨一致性门；PLAN-001 T-04 换基迁移）
 
 | 门 | 命令 | 断言域 |
 | --- | --- | --- |
-| vm 矩阵 | `node tests/vm_matrix.mjs` | 六检查（boot/tree/open/edit/save/reload）+ 结构基线零漂移（`tests/baseline/structure-v0.txt`，vnode id 为结构确定性哈希） |
-| vue build | `pnpm build` | regen + 补丁 + vue-tsc 0 错 + vite build |
-| vue e2e | `pnpm test:e2e` | playwright **同一检查单**（单 test：playwright 每 test 新页面，状态延续只在单 test 内） |
-| 契约门 | `node scripts/contract-sync.mjs --check` | 副本 ↔ auto-down 冻结源字节等价 + 四路由标记在册 |
-| 双臂总门 | `node scripts/gate.mjs` | ①vm ②vue(build+e2e) ③契约 顺序全绿 |
+| vm 矩阵（双臂） | `node tests/vm_matrix.mjs` | merged 臂（进程内直调）+ split 臂（`--no-merge` HTTP）各六检查（boot/tree/open/edit/save/reload）+ 结构基线 v1 零漂移（merged 臂锁，`tests/baseline/structure-v1.txt`；v0 留档） |
+| vue build | `pnpm build`（= regen-vue.mjs） | 生成 + 补件 + vue-tsc 0 错 + vite build |
+| vue e2e | `pnpm test:e2e` | playwright **同一检查单**（serve-back AutoVM 后端 + vite 双 webServer） |
+| 双臂总门 | `node scripts/gate.mjs` | ①vm 双臂 ②vue(build+e2e) 顺序全绿（契约漂移段已随自有源退役） |
 
 断言域 = 两轨交集（结构/文本/磁盘字节，**非像素**）；差异登记面 =
 [parity-ledger.md](parity-ledger.md)（从第一天记账）。

@@ -1,12 +1,12 @@
 ---
 plan_id: PLAN-001
-status: executing
+status: execution_done
 feature_name: jade-edit-rebase-autoedit（jade-edit 换基：以 PLAN-003 交付后的 auto-edit[双轨+front/back] 为基座，code_editor→autodown_editor 组件切换 + back 换 Auto 实现）
 author: [zhaopuming]
 created_at: 2026-09-20
 updated_at: 2026-09-21
 plan_revision: 1
-current_step: 1
+current_step: 6
 total_steps: 6
 supersedes_spec_components: [jade-edit/docs/ARCHITECTURE.md §5 后端复用（R-3 axum 裁定）]
 new_spec_components: []
@@ -217,6 +217,17 @@ code_editor vue 事件缺口，与本计划无阻塞关系）。
   next: 先评审并执行 auto-edit PLAN-003；其交付后本计划 review → work
   （需「开工」授权）。
   备注：supersedes 登记见 §4；结构基线 v0→v1 必然漂移属预期重锁非回退。
+- 2026-09-21 stage: work / PLAN-001 r1 / outcome: pass（execution_done；next: review）。
+  code_commit: fe6ccdb（T-00）→ a680661（T-02 前置交付序）→ d80f5be（T-01）
+  → 95d80b1（T-04）→ 本 commit（T-05）。
+  task_ids: T-00..T-05 全落 / evidence: gate ALL GREEN（vm merged 7/7 含
+  基线 v1 零漂移 + split 6/6 + vue build[regen+补件+vue-tsc+vite] + vue
+  e2e 六检查 1 passed）；旧面清零（run-back/contract-sync/smoke-merged 删
+  除，代码面 grep 零 JADE_GARDEN/AUTO_BACKEND/jade-garden-back 残留）；
+  SD-01..04 落地（ARCHITECTURE §5/§6 重写、README 运行矩阵、PROVENANCE
+  基座关系、parity-ledger v1 十五项）；执行序调整 T-02↔T-01 与 AC-01
+  证据改道（ctx_menu 移出 v1）见 T-00 节 / blockers: 无（上游缺口
+  D-10/D-11/D-12/F-R1 登记在册不阻塞）/ next: review（/auto-plan:review）。
 - 2026-09-21 stage: work / PLAN-001 r1 / 用户「计划001可以开工」授权
   （前置 auto-edit PLAN-003 已交付 merge，fb68b27 收据四 checkpoint 闭环）。
   outcome: T-00 pass（四勘定全落 §5 T-00 节 + AC-01 证据改道注记 +
