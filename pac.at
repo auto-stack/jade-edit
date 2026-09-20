@@ -1,0 +1,32 @@
+// pac.at — jade-edit（PLAN-081 单工程双轨首例）。
+//
+// T-00 R-1 裁定 A'（docs/plans/081-t00-rulings.md）：
+//   render: ["vm","vue"] 单声明 + 双命令分工——
+//     vm 轨：  auto run -r vm   （运行期渲染覆盖，iced 原生窗）
+//     vue 轨：auto build -r vue（build 期覆盖，生成 Vue3+Vite 工程）
+//   ⚠ 禁止裸 `auto build`：Multi 声明下选 vm 项走 C/ninja 转译路径。
+name: "jade-edit"
+version: "0.1.0"
+description: "jade-edit — AutoDown 编辑器（单工程双轨：vm 解释渲染 + vue 生成）"
+scene: "ui"
+render: ["vm","vue"]
+title: "JadeEdit"
+title_zh: "玉简编辑"
+window: "1100x750"
+front_port: 4181
+
+// PLAN-081 §10 默认裁定 #3：stylekit 跨仓相对路径 dep（auto-edit 家族栈
+// 形态；主检出需 jade-edit 与 auto-edit/auto-lang/auto-down 同居 D:/autostack）。
+dep stylekit {
+    path: "../auto-edit/specs/stylekit"
+}
+
+// bps 蓝图池（filetree：tree_util/tree_icon；L1 零副本，PLAN-002 同族形态）。
+dep bps {
+    path: "../auto-lang/blueprints"
+}
+
+// vue 轨 engine 消费（@autodown/engine 外部官方组件；出口契约 1.0 冻结）。
+npm_deps: {
+    "@autodown/engine": "link:../auto-down/autodown/packages/engine"
+}

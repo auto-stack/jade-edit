@@ -1,0 +1,133 @@
+// editor_store.at — EditorStore: tabs/脏标/保存流状态机（038/449 store
+// 形态；jade desktop TabsStore 的最小集，PLAN-081 §5.2）。
+//
+// 单源纪律：本文件是 editor_store 的唯一源，vm/vue 双轨同源消费——旧
+// jade-garden 的 front/desktop 分裂（副本+sync 脚本）不在本仓重演。
+//
+// VM 约束（auto-edit README「vm 组件边界」照执）：
+//   - view 不能调 fn（模板只读字段；派生标量由 handler 就地重算，App 侧
+//     持投影镜像）；
+//   - msg 载荷单类型（多参走单 map：Open({path})）；
+//   - typed List/数组声明纪律（裸 `var x = []` 在 VM 轨静默坏列表）；
+//   - `.find(t => ...)` 索引狩猎在册（findIndex VM 静默失效，071 delta①）。
+//
+// 保存语义（对齐 jade desktop T-04 实证）：POST 的 frontmatter 整体替换
+// 落盘（服务端仅补 updated_at）——tab 必须持有读回的 frontmatter 并在
+// save 时原样回传，否则丢 frontmatter。
+
+use back.api: read_wiki, write_wiki
+
+// ".ad" 后缀剥离（tab 标题 = path 末段去扩展，PLAN-079 标题语义收敛
+// web 单源同款）——slice 守卫，无正则字面量（a2r-clean 惯例）。
+fn strip_ad(path str) str {
+    var n = path.length
+    if n > 3 {
+        var tail = path.slice(n - 3, n)
+        if tail == ".ad" {
+            return path.slice(0, n - 3)
+        }
+    }
+    return path
+}
+
+store EditorStore {
+    model {
+        // Tab 对象（path/title/body/original_body/dirty/frontmatter）。
+        var tabs Array<str> = []
+        // str+"" 哨兵替代 ?str（跨状态对象读 624 后仍不安全，070 T-02
+        // 裁定；"" 即无活动 tab）。
+        var active_path str = ""
+        // store 侧状态注记（save-failed/read-failed/reloaded——App 投影
+        // 只读，写权在本 store）。
+        var save_note str = ""
+    }
+
+    // msg 载荷单类型（编译器约束）：Open 单 map、Edit/单 str。
+    msg Msg { Open(map), Edit(str), Save, Reload }
+
+    computed {
+        active_tab => .tabs.find(t => t.path == .active_path)
+    }
+
+    on {
+        // Open({path})：激活已载 tab 或新读（读失败 → save_note 侧记，
+        // App 投影镜像读）。
+        .Open(args) -> {
+            var path = args.path
+            var existing = .tabs.find(t => t.path == path)
+            if existing != null {
+                .active_path = path
+            } else {
+                var doc = None
+                try {
+                    doc = read_wiki(path)
+                } catch (e) {
+                    doc = None
+                }
+                if doc != null {
+                    .tabs.push({
+                        path: path,
+                        title: strip_ad(path),
+                        body: doc.body,
+                        original_body: doc.body,
+                        dirty: false,
+                        frontmatter: doc.frontmatter,
+                    })
+                    .active_path = path
+                } else {
+                    .save_note = "read-failed: " + path
+                }
+            }
+        }
+
+        // Edit(text)：INPUT_TEXT 单参全文回写（041 editor 同约定）——
+        // 就地变更 + 脏标重算（回到 original 清脏标）。
+        .Edit(text) -> {
+            var t = .active_tab
+            if t != null {
+                if t.body != text {
+                    t.body = text
+                    t.dirty = t.body != t.original_body
+                }
+            }
+        }
+
+        // Save：frontmatter 原样回传（见文件头保存语义）；成功清脏标 +
+        // original_body 前移。失败经 catch 侧记（DSL 无 throw，拒绝传播
+        // 归 App 投影读 save_note——070 同款登记偏差）。
+        .Save -> {
+            var t = .active_tab
+            if t != null {
+                try {
+                    var saved = write_wiki(t.path, t.frontmatter, t.body)
+                    var echo = saved.body
+                    if echo == t.body {
+                        t.dirty = false
+                        t.original_body = t.body
+                    }
+                } catch (e) {
+                    .save_note = "save-failed: " + t.path
+                }
+            }
+        }
+
+        // Reload：强制重读激活 tab（六检查"保存落盘 → 重载可见"通道）。
+        .Reload -> {
+            var t = .active_tab
+            if t != null {
+                var doc = None
+                try {
+                    doc = read_wiki(t.path)
+                } catch (e) {
+                    doc = None
+                }
+                if doc != null {
+                    t.body = doc.body
+                    t.original_body = doc.body
+                    t.dirty = false
+                    .save_note = "reloaded: " + t.path
+                }
+            }
+        }
+    }
+}

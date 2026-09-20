@@ -1,0 +1,219 @@
+// app.at — jade-edit 根组件（PLAN-081 §5.2 最小壳）。
+//
+// 结构（038/013 形态，auto-edit/jade desktop 双先例的最小交集）：
+//   editor_store.at  store EditorStore —— tabs/脏标/保存流（状态权威）
+//   app.at           widget App —— view 组合 + on 薄委托 + 投影镜像
+//
+// App 承担（vm 组件边界照执，交互锚留根视图——MCP 快照定位）：
+//   filetree 树行、autodown_editor 绑定、空态文本、status 行按钮。
+// 投影镜像：状态权威在 store，派发后重同步（jade desktop 同款——
+// active_title/active_body/active_dirty 三名与 store 无撞名）。
+
+use editor_store: EditorStore
+use bps.navigation.filetree.tree_util: flatten_tree, toggle_id
+use bps.navigation.filetree.tree_icon: TreeIcon
+use back.api: list_files
+use auto.http
+
+// FileNode（wire：name/path/is_dir/children）→ tree_util 节点 schema
+//（全键必填——VM Obj 字面量形状锁定，缺键访问=硬错）。
+// VM 遍历纪律：参数列表一律 while+索引（P614：for-in 对参数列表零次
+// 迭代）；children 递归经 P618 探针验证可用。
+fn to_fs_nodes(nodes List) List {
+    var out List = []
+    var i int = 0
+    while i < nodes.len() {
+        var nd = nodes[i]
+        var kids List = []
+        var kind str = "file"
+        var is_leaf bool = true
+        if nd.is_dir == true {
+            kids = to_fs_nodes(nd.children)
+            kind = "dir"
+            is_leaf = false
+        }
+        out.push({ id: nd.path, label: nd.name, children: kids, kind: kind, icon: "", is_leaf: is_leaf, badge: "" })
+        i = i + 1
+    }
+    return out
+}
+
+widget App {
+
+    msg { Init, LoadFiles, FtToggle(str), OpenFile(str), Edit(str), Save, Reload }
+
+    model {
+        var status str = "boot"
+        // —— FileTree：fs 形态节点 + 展开态 + 选中态（行派生 computed
+        // ft_rows = flatten_tree 纯函数，树行在根视图渲染）——
+        var ft_nodes = []
+        var ft_expanded = []
+        var ft_sel str = ""
+        // —— 视图投影镜像（状态权威在 EditorStore，派发后重同步）——
+        var active_title str = ""
+        var active_body str = ""
+        var active_dirty bool = false
+    }
+
+    computed {
+        ft_rows => flatten_tree(.ft_nodes, .ft_expanded, true, .ft_sel)
+    }
+
+    view {
+        col (style: "flex flex-col h-screen") {
+            // —— status 行（最小面裁定 #4：无 menubar，仅此行）——
+            row (style: "items-center gap-3 px-3 py-1.5 border-b shrink-0") {
+                text "JadeEdit" { style: "text-[13px] font-medium" }
+                text .status { style: "text-[11px] text-zinc-500" }
+                if .active_dirty {
+                    text "● unsaved" { style: "text-[11px] text-amber-400" }
+                }
+                if .save_note != "" {
+                    text .save_note { style: "text-[11px] text-zinc-500" }
+                }
+                div (style: "flex-1") {}
+                button "保存" {
+                    onclick: .Save
+                    style: "text-[12px] px-2 py-0.5"
+                }
+                button "重载" {
+                    onclick: .Reload
+                    style: "text-[12px] px-2 py-0.5"
+                }
+            }
+            row (style: "flex flex-1 gap-3 overflow-hidden") {
+                // —— filetree（bps L1 零副本；树行留根——vm 组件子树对
+                // MCP 快照不可见，041「vm 组件边界」②）——
+                col (style: "w-52 shrink-0 gap-1 overflow-auto border-r pr-2") {
+                    for r in .ft_rows {
+                        row (style: "items-center") {
+                            for g in r.guides {
+                                if g == "l" {
+                                    div (style: "w-4 h-6 flex items-center justify-center") {
+                                        div (style: "w-px h-6 bg-border") {}
+                                    }
+                                } else {
+                                    div (style: "w-4 h-6") {}
+                                }
+                            }
+                            if r.has_kids {
+                                mouse-area (onclick: .FtToggle(r.id), style: "w-5 h-5 shrink-0 items-center justify-center cursor-pointer") {
+                                    if r.open {
+                                        icon (name: "chevron-down", style: "w-3.5 h-3.5 text-muted-foreground") {}
+                                    } else {
+                                        icon (name: "chevron-right", style: "w-3.5 h-3.5 text-muted-foreground") {}
+                                    }
+                                }
+                            } else {
+                                div (style: "w-5 shrink-0") {}
+                            }
+                            TreeIcon (name: r.icon) {}
+                            button (text: r.label, variant: "text") {
+                                onclick: .OpenFile(r.id)
+                                style: "flex-1 px-1 text-left text-sm"
+                            }
+                        }
+                    }
+                }
+                // —— 编辑区（autodown_editor；key 按 path 注册——key 变即
+                // 重挂载读 content:（播种通道）；oninput: .Edit 单参全文
+                // 回写（INPUT_TEXT 通道，041 同约定）；final: true = 文档
+                // 恒终态。不调用任何 autodown_* 内建（041④ 坏字节码红线）——
+                col (style: "flex flex-1 flex-col gap-2") {
+                    if .active_path != "" {
+                        autodown_editor (key: .active_path, final: true, style: "flex-1 w-full") {
+                            content: .active_body
+                            oninput: .Edit
+                        }
+                    } else {
+                        // 空态定位锚（041 同款形态；矩阵导航锚点）。
+                        col (style: "flex-1 w-full items-center justify-center") {
+                            text "没有打开的文档 — 从左侧文件树打开" {
+                                style: "text-[13px] text-zinc-500"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    on {
+        // Init 名保留给根 widget 生命周期（store 侧 handler 不得占用）。
+        // 后端经 AUTO_BACKEND 外部服务器（split 模式：AUTO_VM_MERGE=0）；
+        // 缺席时状态落 backend-offline（不炸 boot——六检查前置卫生）。
+        .Init -> {
+            var nodes List = []
+            try {
+                nodes = list_files("", true)
+                .ft_nodes = to_fs_nodes(nodes)
+                .status = "ready"
+            } catch (e) {
+                .status = "backend-offline"
+            }
+        }
+
+        .LoadFiles -> {
+            var nodes List = []
+            try {
+                nodes = list_files("", true)
+                .ft_nodes = to_fs_nodes(nodes)
+                .status = "files-reloaded"
+            } catch (e) {
+                .status = "backend-offline"
+            }
+        }
+
+        // 目录展开/折叠（受控展开态，toggle_id 纯函数返回新 List）。
+        .FtToggle(id) -> {
+            .ft_expanded = toggle_id(.ft_expanded, id)
+        }
+
+        // 开文件（路径补 .ad 归一——树行 id 即相对路径，jade desktop
+        // 同款容错）→ store Open → 投影镜像重同步。
+        .OpenFile(path) -> {
+            var parts = path.split(".ad")
+            if parts.len() == 1 {
+                path = f"${path}.ad"
+            }
+            .ft_sel = path
+            EditorStore.Open({ path: path })
+            var t = .tabs.find(tt => tt.path == .active_path)
+            if t != null {
+                .active_title = t.title
+                .active_body = t.body
+                .active_dirty = t.dirty
+            }
+        }
+
+        // INPUT_TEXT 全文回写 → store Edit → 脏标镜像重同步。
+        .Edit(text) -> {
+            if .active_path != "" {
+                .active_body = text
+                EditorStore.Edit(text)
+                var t = .tabs.find(tt => tt.path == .active_path)
+                if t != null {
+                    .active_dirty = t.dirty
+                }
+            }
+        }
+
+        .Save -> {
+            EditorStore.Save()
+            var t = .tabs.find(tt => tt.path == .active_path)
+            if t != null {
+                .active_body = t.body
+                .active_dirty = t.dirty
+            }
+        }
+
+        .Reload -> {
+            EditorStore.Reload()
+            var t = .tabs.find(tt => tt.path == .active_path)
+            if t != null {
+                .active_body = t.body
+                .active_dirty = t.dirty
+            }
+        }
+    }
+}
