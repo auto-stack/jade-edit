@@ -23,13 +23,18 @@ import {
 } from './helpers'
 
 test('vue 六检查（vm 矩阵同单）', async ({ page }) => {
+  page.on('response', (r) => {
+    if (r.url().includes('/api/')) console.log(`    [api] ${r.status()} ${r.request().method()} …${r.url().slice(-45)}`)
+  })
+  page.on('pageerror', (e) => console.log(`    [pageerror] ${String(e).slice(0, 200)}`))
   // 1 boot
   await page.goto('/')
   await expect(page.getByText('JadeEdit', { exact: true }).first()).toBeVisible()
   await expect(page.getByText('ready', { exact: true }).first()).toBeVisible({ timeout: 15_000 })
   console.log('[1 boot] PASS')
 
-  // 2 tree
+  // 2 tree（换基后 fs.tree 层级形态：先展开 wiki 目录再断言行可见）
+  await page.getByText('wiki', { exact: true }).first().click()
   for (const name of fixtureAdNames()) {
     await expect(page.getByText(name, { exact: true }).first()).toBeVisible()
   }
@@ -40,14 +45,15 @@ test('vue 六检查（vm 矩阵同单）', async ({ page }) => {
   await expect(visibleEditor(page)).toContainText('这是一段示例文本', { timeout: 10_000 })
   console.log('[3 open] PASS — 编辑器渲染内容可见')
 
-  // 4 edit
+  // 4 edit（换基后脏标 = StatusBar「未保存」+ tab 星标；断言 StatusBar 面）
   await appendToEditor(page, ` ${EDIT_MARKER}`)
-  await expect(page.getByText('● unsaved', { exact: true }).first()).toBeVisible()
-  console.log('[4 edit] PASS — 追加输入 → 脏标 ● unsaved')
+  await expect(page.getByText('未保存', { exact: true }).first()).toBeVisible()
+  console.log('[4 edit] PASS — 追加输入 → StatusBar 未保存')
 
-  // 5 save（原文+标记+frontmatter 三验，磁盘真值）
-  await page.getByRole('button', { name: '保存' }).click()
-  await expect(page.getByText('● unsaved', { exact: true })).toHaveCount(0, { timeout: 10_000 })
+  // 5 save（原文+标记+frontmatter 三验，磁盘真值；vue toolbar 按钮 =
+  // 图标 + title 属性——:has-text 落空，按 title 锚）
+  await page.locator('button[title="保存"]').click()
+  await expect(page.getByText('未保存', { exact: true })).toHaveCount(0, { timeout: 10_000 })
   const disk = fs.readFileSync(TARGET_FILE, 'utf8')
   expect(disk, '磁盘含标记').toContain(EDIT_MARKER)
   expect(disk, '原文未被整文替换丢失').toContain('这是一段示例文本')
@@ -56,7 +62,7 @@ test('vue 六检查（vm 矩阵同单）', async ({ page }) => {
 
   // 6 reload
   fs.appendFileSync(TARGET_FILE, `\n${RELOAD_MARKER}\n`)
-  await page.getByRole('button', { name: '重载' }).click()
+  await page.locator('button[title="重载"]').click()
   await expect(visibleEditor(page)).toContainText(RELOAD_MARKER, { timeout: 10_000 })
   console.log('[6 reload] PASS — 磁盘外改 → 重载可见')
 })

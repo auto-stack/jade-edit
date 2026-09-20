@@ -1,0 +1,279 @@
+// jade-edit vm 结构基线 v1（PLAN-001 T-04 换基重锁；v0=PLAN-081 T-05 最小壳形态，留档）。
+// 终态 = 六检查后满状态：chrome 全套（menubar/toolbar/tab/tree）+ Hello World.ad 开（编辑/保存/重载后）。
+// 再生成：node tests/vm_matrix.mjs --save-baseline tests\baseline\structure-v1.txt
+## state
+State:
+  __emit_msg: "" (str)
+  __emit_payload: nil (unknown)
+  __toast: "" (str)
+  active_body: "\n# Hello World ^hello-world\n\n这是一段示例文本，包含 **粗体**、*斜体* 和 `行内代码`。 ^384bb695-4bac-4618-a34a-1eab4c6fa82e\n\n## 列表 ^heading\n\n- 项目一 ^4517d73f-c7fd-4f20-8987-1ef5dcee0370\n- 项目二 ^d6ffab27-459f-40ee-a794-2ec0b2e2408f\n  - 子项目 A ^c00221ad-44e1-4b8d-b152-af4c3877ad29\n  - 子项目 B ^e6c05cec-2560-4a2f-9291-e233babc7519\n\n## 任务列表 ^heading-1\n\n- [x] 创建知识库 ^f8ddf99a-e16b-41a6-b3c4-414c52b450ac\n- [x] 学习 AutoDown 语法 ^d2be7ed2-c0b0-47d5-869c-42e526128a77\n- [ ] 探索 [[CAP 定理]] ^8c13bf06-8121-435b-82e6-7ef71d429204\n\n## 代码块 ^heading-2\n\n```rust\nfn main() {\n    println!(\"Hello, Jade Garden!\");\n}\n```\n\n返回 [[首页]]。 ^b15b3cce-c55b-4826-8630-287584e8f330\n\n\njade-edit 冒烟标记：编辑回写可见。\n外部重载标记：重载可见。\n" (str)
+  active_dirty: false (bool)
+  active_key: "wiki/Hello World.ad" (str)
+  active_path: "wiki/Hello World.ad" (str)
+  active_title: "wiki/Hello World" (str)
+  confirm_idx: -1 (int)
+  confirm_open: false (bool)
+  console: "saved: wiki/Hello World.ad\nopen: wiki/Hello World.ad\n[boot] MCP automation on 127.0.0.1:9381\n[boot] AutoUI VM app \"App\" started (1 app window)" (str)
+  console_open: false (bool)
+  edits: 1 (int)
+  ft_expanded: ["wiki"] (list)
+  ft_nodes: [<vmref>, <vmref>] (list)
+  ft_sel: "wiki/Hello World.ad" (str)
+  open_count: 0 (int)
+  quit_confirm_open: false (bool)
+  save_note: "reloaded: wiki/Hello World.ad" (str)
+  status: "ready" (str)
+  tab: 0 (int)
+  tab_count: 1 (int)
+  tabs: [<vmref>] (list)
+  ws_name: "workspace" (str)
+
+## snapshot
+AURA Snapshot v2 (rendered)
+widget: "App"
+
+tree:
+col #vnode_14695981039346656037 {
+  style: "h-full w-full"
+  row #vnode_12642422519345821663 {
+    style: "h-8 items-center bg-muted/30 shrink-0 w-full gap-0 px-2"
+    row #vnode_4305065243889594349 {
+      style: "items-center"
+      col #vnode_4321691031005245367 {
+        button #vnode_15876414090542715893 "文件" {
+          onclick: __menubar_toggle("file")
+        }
+        col #vnode_15876396498356671042
+      }
+      col #vnode_4321673438819200516 {
+        button #vnode_15861108888683884748 "编辑" {
+          onclick: __menubar_toggle("edit")
+        }
+        col #vnode_15861126480869929599
+      }
+      col #vnode_4321726215377335069 {
+        button #vnode_15907024494260378183 "视图" {
+          onclick: __menubar_toggle("view")
+        }
+        col #vnode_15907006902074333332
+      }
+      col #vnode_4321708623191290218 {
+        button #vnode_15891719292401547038 "帮助" {
+          onclick: __menubar_toggle("help")
+        }
+        col #vnode_15891736884587591889
+      }
+    }
+    row #vnode_4305047651703549498 {
+      style: "ml-auto"
+      button #vnode_4306385829146414222 "file-plus新建" {
+        onclick: .ActNew
+      }
+      button #vnode_4306403421332459073 "folder-open打开…" {
+        onclick: .ActOpen
+      }
+      button #vnode_4306350644774324520 "save保存" {
+        onclick: .ActSave
+      }
+      button #vnode_4306368236960369371 "refresh-cw重载" {
+        onclick: .Reload
+      }
+      container #vnode_4306456197890593626 {
+        col #vnode_5950990685131874798
+      }
+      button #vnode_4306473790076638477 "undo-2撤销" {
+        onclick: .ActUndo
+      }
+      button #vnode_4306421013518503924 "redo-2重做" {
+        onclick: .ActRedo
+      }
+    }
+  }
+  row #vnode_12642404927159776812 {
+    style: "flex-1 items-stretch overflow-hidden w-full"
+    scrollable #vnode_4289760042030763204 {
+      style: "w-56 shrink-0 border-r border-border bg-card hidden md:flex flex-col gap-2 p-2 overflow-y-auto"
+      col #vnode_12781790891868631308 {
+        style: "text-[11px] text-muted-foreground px-1 pt-1 tracking-wider"
+        text #vnode_15900409796501198692 "EXPLORER"
+        text #vnode_15900427388687243543 "workspace"
+        text #vnode_15900444980873288394 "ready"
+        col #vnode_15900462573059333245 {
+          row #vnode_8812093865556519015 {
+            text #vnode_2284610096604620114 "[Image]"
+            button #vnode_2284592504418575263 "wiki"
+          }
+          row #vnode_8812076273370474164 {
+            row #vnode_2269322486931833820 {
+              container #vnode_10359918117008494292 {
+              }
+            }
+            container #vnode_2269340079117878671 {
+            }
+            text #vnode_2269357671303923522 "[Image]"
+            button #vnode_2269375263489968373 "CAP 定理.ad"
+          }
+          row #vnode_8812129049928608717 {
+            row #vnode_2315238092508327255 {
+              container #vnode_3426362608127888085 {
+              }
+            }
+            container #vnode_2315220500322282404 {
+            }
+            text #vnode_2315273276880416957 "[Image]"
+            button #vnode_2315255684694372106 "Hello World.ad"
+          }
+          row #vnode_8812111457742563866 {
+            row #vnode_2299932890649496110 {
+              container #vnode_11886462468991274026 {
+              }
+            }
+            container #vnode_2299950482835540961 {
+            }
+            text #vnode_2299897706277406408 "[Image]"
+            button #vnode_2299915298463451259 "index.ad"
+          }
+          row #vnode_8812023496812339611 {
+            row #vnode_2223406881355340385 {
+              container #vnode_17293473625889100499 {
+              }
+            }
+            container #vnode_2223389289169295534 {
+            }
+            text #vnode_2223371696983250683 "[Image]"
+            button #vnode_2223354104797205832 "Projects.ad"
+          }
+          row #vnode_8812005904626294760 {
+            row #vnode_2208101679496509240 {
+              container #vnode_7306829413042934824 {
+              }
+            }
+            container #vnode_2208119271682554091 {
+            }
+            text #vnode_2208136863868598942 "[Image]"
+            button #vnode_2208154456054643793 "Tasks.ad"
+          }
+          row #vnode_8812058681184429313 {
+            container #vnode_2254017285073002675 {
+            }
+            text #vnode_2253999692886957824 "[Image]"
+            button #vnode_2254052469445092377 "jade-garden-index.json"
+          }
+        }
+      }
+    }
+    col #vnode_4289777634216808055 {
+      style: "flex-1 overflow-hidden"
+      row #vnode_12797096093727462453 {
+        style: "h-8 items-center bg-muted/30 shrink-0 w-full gap-0"
+        col #vnode_7440309935637812751 {
+          row #vnode_8742182554021542781 {
+            button #vnode_5393886225687582055 "wiki/Hello World"
+            button #vnode_5393868633501537204 "" {
+              text #vnode_16367229749138979548 "[Image]"
+            }
+          }
+        }
+        button #vnode_7440292343451767900 "" {
+          style: "h-7 w-7 px-0 py-0 ml-1"
+          onclick: .ActOpen
+          text #vnode_8726877352162711636 "[Image]"
+        }
+      }
+      col #vnode_12797078501541417602 {
+        style: "h-px w-full bg-border shrink-0"
+      }
+      textarea #vnode_12797060909355372751 {
+        style: "flex-1 w-full"
+        value: "
+# Hello World ^hello-world
+
+这是一段示例文本，包含 **粗体**、*斜体* 和 `行内代码`。 ^384bb695-4bac-4618-a34a-1eab4c6fa82e
+
+## 列表 ^heading
+
+- 项目一 ^4517d73f-c7fd-4f20-8987-1ef5dcee0370
+- 项目二 ^d6ffab27-459f-40ee-a794-2ec0b2e2408f
+  - 子项目 A ^c00221ad-44e1-4b8d-b152-af4c3877ad29
+  - 子项目 B ^e6c05cec-2560-4a2f-9291-e233babc7519
+
+## 任务列表 ^heading-1
+
+- [x] 创建知识库 ^f8ddf99a-e16b-41a6-b3c4-414c52b450ac
+- [x] 学习 AutoDown 语法 ^d2be7ed2-c0b0-47d5-869c-42e526128a77
+- [ ] 探索 [[CAP 定理]] ^8c13bf06-8121-435b-82e6-7ef71d429204
+
+## 代码块 ^heading-2
+
+```rust
+fn main() {
+    println!("Hello, Jade Garden!");
+}
+```
+
+返回 [[首页]]。 ^b15b3cce-c55b-4826-8630-287584e8f330
+
+
+jade-edit 冒烟标记：编辑回写可见。
+外部重载标记：重载可见。
+"
+        oninput: .Edit
+      }
+    }
+  }
+  col #vnode_12642457703717911365 {
+    col #vnode_4335658055421211788 {
+      col #vnode_5832930181129193956 {
+        onclick: .ConfirmCancel
+        text #vnode_5841778465779584620 "有未保存的修改"
+        text #vnode_5841796057965629471 "关闭前要保存吗?"
+      }
+      row #vnode_5832947773315238807 {
+        onclick: .ConfirmClose
+        button #vnode_5857083667638415765 "取消"
+        button #vnode_5857066075452370914 "直接关闭"
+      }
+    }
+  }
+  col #vnode_12642440111531866514 {
+    col #vnode_4320388037934470345 {
+      col #vnode_14323640445710242187 {
+        onclick: .QuitConfirmCancel
+        text #vnode_7392318523720847153 "有未保存的修改"
+        text #vnode_7392300931534802302 "退出前要保存吗?"
+      }
+      row #vnode_14323622853524197336 {
+        onclick: .QuitDiscard
+        button #vnode_7377013321862016008 "取消"
+        button #vnode_7377030914048060859 "不保存退出"
+        button #vnode_7377048506234105710 "保存并退出"
+      }
+    }
+  }
+  col #vnode_12642352150601642259 {
+    style: "w-full shrink-0"
+    col #vnode_4243844436454269769 {
+      style: "h-px w-full bg-border"
+    }
+    row #vnode_4243826844268224918 {
+      style: "h-6 items-center bg-muted/30 shrink-0 w-full gap-3 px-2"
+      text #vnode_1253297125180854754 "JadeEdit" {
+        style: "text-[11px] text-muted-foreground"
+      }
+      text #vnode_1253314717366899605 ".ad" {
+        style: "text-[11px] text-muted-foreground"
+      }
+      text #vnode_1253261940808765052 "reloaded: wiki/Hello World.ad" {
+        style: "text-[11px] text-muted-foreground"
+      }
+      text #vnode_1253279532994809903 "docs: 1" {
+        style: "text-[11px] text-muted-foreground ml-auto"
+      }
+      button #vnode_1253226756436675350 "" {
+        style: "h-6 w-9 px-0 py-0"
+        onclick: .ToggleConsole
+        text #vnode_5924531894095156834 "[Image]"
+      }
+    }
+  }
+}

@@ -1,6 +1,7 @@
-// playwright.config.ts — PLAN-081 T-06：vue 轨六检查（与 vm 矩阵同一
-// 检查单，AC-04）。双 webServer：① run-back 隔离 fixture 后端（axum，
-// 8211）② vite dev（gen/front/vue，4181；/api 经代理 → AUTO_HTTP_PORT）。
+// playwright.config.ts — vue 轨六检查（与 vm 矩阵同一检查单）。双
+// webServer（PLAN-001 T-04 换基后配方）：① serve-back.mjs（AutoVM HTTP
+// 后端独立 serve，`auto run --server vm`，8211 + 隔离 fixture）② vite dev
+//（gen/front/vue，4181；/api 经代理 → AUTO_HTTP_PORT）。
 import { defineConfig } from '@playwright/test'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -19,8 +20,8 @@ export default defineConfig({
   use: { baseURL: `http://127.0.0.1:${FRONT_PORT}` },
   webServer: [
     {
-      command: `node "${path.join(repoRoot, 'scripts', 'run-back.mjs')}" --port ${BACK_PORT}`,
-      url: `http://127.0.0.1:${BACK_PORT}/api/health`,
+      command: `node "${path.join(repoRoot, 'scripts', 'serve-back.mjs')}" --port ${BACK_PORT}`,
+      url: `http://127.0.0.1:${BACK_PORT}/api/ws_root`,
       reuseExistingServer: false,
       timeout: 90_000,
     },
