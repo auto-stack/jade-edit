@@ -38,31 +38,133 @@ const run = (cmd, args, opts = {}) => {
   }
 }
 
-// ① 生成（围栏：-r vue 显式覆盖——禁止裸 auto build）
-run(AUTO_EXE, ['build', '-r', 'vue', '--gen-only'], { cwd: repoRoot })
+// ① 生成（围栏：-r vue 显式覆盖——禁止裸 auto build；--lenient = 基座
+// PLAN-003 T-04 同款：menubar-item 等声明式组件的 title/icon/shortcut
+// props 超 vue schema 面[text/disabled/onclick]，lenient 降为 S001 INFO，
+// 生成缺口由下方补件兜）
+run(AUTO_EXE, ['build', '-r', 'vue', '--gen-only', '--lenient'], { cwd: repoRoot })
 
-// ② 生成 api client 补丁
-let src = fs.readFileSync(apiTs, 'utf8')
-const patch = (label, from, to) => {
-  if (!src.includes(from)) throw new Error(`[regen-vue] 补丁 "${label}" pattern 未命中——生成器输出形态变了？`)
-  src = src.split(from).join(to)
+// ② 生成 api client 补丁——PLAN-001 换基后契约全标量（str/int/bool），
+// PLAN-081 时代的四个上游缺口补丁（通配 URL/List<T>/JsonAny/map 参数）
+// 随旧契约退役：新 api.ts 应零补丁直绿。若下列断言失败 = 生成器输出
+// 形态变化，按实况重审。
+{
+  const src = fs.readFileSync(apiTs, 'utf8')
+  const leftovers = [
+    '/api/wiki/{*path}',
+    'List<',
+    'JsonAny',
+    'frontmatter: map,',
+  ].filter((pat) => src.includes(pat))
+  if (leftovers.length > 0) {
+    throw new Error(`[regen-vue] 旧契约残留出现在生成的 api.ts：${leftovers.join(' / ')}——生成器读了陈旧源？`)
+  }
+  console.log('[regen-vue] api.ts 标量契约断言通过（旧四补丁已随契约退役）')
 }
-patch(
-  'read_wiki 通配 URL',
-  'fetch(`/api/wiki/{*path}?path=${encodeURIComponent(path)}`, {',
-  'fetch(`/api/wiki/${encodeURIComponent(path)}`, {'
+
+// ②b 生成器缺口补件（auto-edit PLAN-003 T-04 七类补件的 jade 形态子集——
+// 每处 pattern 断言，上游修复后 fail 提示撤除）：
+//   1. natives.d.ts——vm 宿主内建声明层（vue 轨类型门；运行期缺口登记）
+//   2. useEditorStore 自调别名——composable 内 `store.X()` 直呼闭包 fn
+//   3. ref<number>(null) → -1（null 非 number）
+//   4. button variant "text" → "ghost"（vue schema 面无 text 档）
+//   5. tree JSON 串 → JSON.parse（json.to_value 被 ts_adapter 吸收但
+//      本契约 tree 返回 str——前端补解析）
+const nativesDts = path.join(vueDir, 'src', 'natives.d.ts')
+fs.writeFileSync(
+  nativesDts,
+  [
+    '// natives.d.ts — vm 宿主内建声明层补件（gen-only 构建流；类型门用，',
+    '// 运行期缺口见 docs/README vue 限制节）',
+    'declare function console_log(...args: any[]): void',
+    'declare function console_lines(): string',
+    'declare function console_clear(): void',
+    'declare function dialog_open(filter: string): string',
+    'declare function dialog_save(default_name: string): string',
+    'declare function file_basename(p: string): string',
+    'declare const Process: { exit(code: number): void }',
+    '',
+  ].join('\n')
 )
-patch('write_wiki 通配 URL', 'fetch(`/api/wiki/{*path}`, {', 'fetch(`/api/wiki/${encodeURIComponent(path)}`, {')
-const listCount = src.split('List<').length - 1
-if (listCount === 0) throw new Error('[regen-vue] 补丁 "List<T>" pattern 未命中')
-src = src.split('List<').join('Array<')
-patch('write_wiki map 参数', 'frontmatter: map,', 'frontmatter: Record<string, unknown>,')
-const jsonAnyCount = src.split('JsonAny').length - 1
-if (jsonAnyCount === 0) throw new Error('[regen-vue] 补丁 "JsonAny" pattern 未命中')
-src = src.split('JsonAny').join('unknown')
-src = src.split('frontmatter: Record<string, unknown>,').join('frontmatter: any,')
-fs.writeFileSync(apiTs, src)
-console.log(`[regen-vue] api.ts 补丁：2 通配 URL + ${listCount} List<T> + ${jsonAnyCount} JsonAny + 1 map 参数`)
+console.log('[regen-vue] 补件：src/natives.d.ts（7 内建声明）')
+
+{
+  const storeTs = path.join(vueDir, 'src', 'stores', 'useEditorStore.ts')
+  let s = fs.readFileSync(storeTs, 'utf8')
+  const selfCalls = s.split('store.').length - 1
+  if (selfCalls === 0) throw new Error('[regen-vue] 补件 "store 自调" pattern 未命中')
+  s = s.split('store.').join('')
+  const nullRefs = s.split('ref<number>(null)').length - 1
+  if (nullRefs === 0) throw new Error('[regen-vue] 补件 "ref<number>(null)" pattern 未命中')
+  s = s.split('ref<number>(null)').join('ref<number>(-1)')
+  // tabs 强类型（v-for 源 any → 作用域推坏——T-03 实勘）
+  s = s.split('const tabs = ref<any>([])').join('const tabs = ref<any[]>([])')
+  // .remove() 非数组方法（R010 直通）→ splice
+  const removes = s.match(/tabs\.value\.remove\([^)]*\)/g)?.length ?? 0
+  if (removes === 0) throw new Error('[regen-vue] 补件 "tabs.remove" pattern 未命中')
+  s = s.replace(/tabs\.value\.remove\(([^)]*)\)/g, 'tabs.value.splice($1, 1)')
+  fs.writeFileSync(storeTs, s)
+  console.log(`[regen-vue] 补件：useEditorStore 自调别名 ×${selfCalls} + ref<number>(null)→-1 ×${nullRefs} + tabs 强类型 + remove→splice ×${removes}`)
+}
+
+// ②c tab 条双分支 v-for 拆分——vue-tsc 对 v-for 内互补兄弟 <template v-if>
+// 对的第二分支丢作用域（T-03 实勘，i/t/r 三处同症状；源级已消 explorer
+// 对[单按钮 + handler 分流]，tab 对 vm 轨需要双分支保留 → 生成后拆成
+// 两个独立 v-for 容器，结构 = 已证健康的第一分支同构）。
+{
+  const appVue = path.join(vueDir, 'src', 'App.vue')
+  let s = fs.readFileSync(appVue, 'utf8')
+  const a = '<div v-for="(t, i) in store.tabs" :key="i">'
+  const b = '<div v-for="(t, i) in store.tabs" :key="\'a-\' + i">'
+  if (s.split(a).length !== 2) throw new Error('[regen-vue] 补件 "tab v-for 拆分" 锚 A 未唯一命中')
+  s = s.split(a).join(b)
+  const c = '              </template>\n              <template v-if="i != store.tab">'
+  const d = '              </template>\n            </div>\n            <div v-for="(t, i) in store.tabs" :key="\'b-\' + i">\n              <template v-if="i != store.tab">'
+  if (s.split(c).length !== 2) throw new Error('[regen-vue] 补件 "tab v-for 拆分" 锚 C 未唯一命中')
+  s = s.split(c).join(d)
+  fs.writeFileSync(appVue, s)
+  console.log('[regen-vue] 补件：tab 条双分支拆独立 v-for（vue-tsc 兄弟模板作用域 workaround）')
+}
+
+// ②d 工具链版本钉（fresh lockfile 解析组合回归：vue-tsc 2.2.12 对 v-for
+// 兄弟模板作用域更广丢失 + 组合噪音——T-03 实测定格 3.5.35 + 2.0.29）。
+{
+  const pkgPath = path.join(vueDir, 'package.json')
+  const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'))
+  pkg.dependencies.vue = '3.5.35'
+  pkg.devDependencies['vue-tsc'] = '2.0.29'
+  fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n')
+  console.log('[regen-vue] 补件：package.json 版本钉 vue 3.5.35 + vue-tsc 2.0.29')
+}
+
+{
+  // App.vue + components/*.vue：variant="text" → "ghost"
+  const vueFiles = [path.join(vueDir, 'src', 'App.vue')]
+  const compDir = path.join(vueDir, 'src', 'components')
+  if (fs.existsSync(compDir)) for (const f of fs.readdirSync(compDir)) if (f.endsWith('.vue')) vueFiles.push(path.join(compDir, f))
+  let total = 0
+  for (const f of vueFiles) {
+    let s = fs.readFileSync(f, 'utf8')
+    const n = s.split('variant="text"').length - 1
+    if (n > 0) {
+      s = s.split('variant="text"').join('variant="ghost"')
+      fs.writeFileSync(f, s)
+      total += n
+    }
+  }
+  if (total === 0) throw new Error('[regen-vue] 补件 "variant text" pattern 未命中')
+  console.log(`[regen-vue] 补件：variant="text"→"ghost" ×${total}`)
+}
+
+{
+  const appVue = path.join(vueDir, 'src', 'App.vue')
+  let s = fs.readFileSync(appVue, 'utf8')
+  const from = 'nodes = await tree(root, 4);'
+  if (!s.includes(from)) throw new Error('[regen-vue] 补件 "tree JSON parse" pattern 未命中')
+  s = s.split(from).join('nodes = JSON.parse(await tree(root, 4));')
+  fs.writeFileSync(appVue, s)
+  console.log('[regen-vue] 补件：App.vue tree JSON.parse（json.to_value 吸收 + str 契约补解析）')
+}
 
 // ⑤ gen-only 流缺的两个支撑件（`auto run` 才写的 dev-only 面）：
 //   - src/auto-sources.ts（PLAN-646 Select Anything 源映射，dev-only、

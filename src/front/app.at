@@ -138,7 +138,9 @@ widget App {
             row (style: "flex-1 items-stretch overflow-hidden w-full") {
                 col (style: "w-56 shrink-0 border-r border-border bg-card hidden md:flex flex-col gap-2 p-2 overflow-y-auto") {
                     text "EXPLORER" { style: "text-[11px] text-muted-foreground px-1 pt-1 tracking-wider" }
-                    text "${.ws_name} · ${.status}" { style: "text-[11px] text-muted-foreground px-1 pb-1" }
+                    // 双段 ${} 插值 vue 发射错序（基座在册生成器 bug）——拆单段。
+                    text .ws_name { style: "text-[11px] text-muted-foreground px-1" }
+                    text .status { style: "text-[11px] text-muted-foreground px-1 pb-1" }
                     for r in .ft_rows {
                         row (style: "items-center") {
                             for g in r.guides {
@@ -162,20 +164,12 @@ widget App {
                                 div (style: "w-5 h-5 shrink-0") {}
                             }
                             TreeIcon (name: r.icon) {}
-                            if r.has_kids {
-                                // 目录行：点标签 = 展开/折叠（explorer 标准行为；
-                                // onclick 实参分支化在 vm 视图构建不求值——449，
-                                // 故显式双分支）。
-                                button (text: r.label, variant: "ghost") {
-                                    onclick: .FtToggle(r.id)
-                                    style: "flex-1 px-1 text-left text-sm"
-                                }
-                            }
-                            if !r.has_kids {
-                                button (text: r.label, variant: "ghost") {
-                                    onclick: .OpenFile(r.id)
-                                    style: "flex-1 px-1 text-left text-sm"
-                                }
+                            // 单按钮全行（vue 生成器对 v-for 内互补兄弟 template
+                            // 对丢作用域——T-03 实勘；目录/文件分流在 OpenFile
+                            // handler 按 .ad 后缀判别）。
+                            button (text: r.label, variant: "ghost") {
+                                onclick: .OpenFile(r.id)
+                                style: "flex-1 px-1 text-left text-sm"
                             }
                         }
                     }
@@ -298,14 +292,17 @@ widget App {
             .ft_expanded = toggle_id(.ft_expanded, id)
         }
 
-        // 开文件（路径补 .ad 归一——树行 id 即相对路径）→ store Open。
+        // 行点击分流：无 .ad 尾 = 目录行 → 展开/折叠；有 .ad 尾 = 文件行 →
+        // store Open（单按钮面——vue 兄弟模板作用域 workaround，见 view 注记；
+        // 非 .ad 文件行落 toggle 为无害 no-op，v0 容忍）。
         .OpenFile(path) -> {
             var parts = path.split(".ad")
             if parts.len() == 1 {
-                path = path + ".ad"
+                .FtToggle(path)
+            } else {
+                .ft_sel = path
+                store.Open({ path: path })
             }
-            .ft_sel = path
-            store.Open({ path: path })
         }
 
         // INPUT_TEXT 全文回写 → store Edit（投影在 store 内重算）。
