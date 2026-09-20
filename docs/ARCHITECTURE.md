@@ -2,7 +2,7 @@
 
 > 新应用首个 spec 面（本仓无既有 spec 历史）。锚定 2026-09-20 PLAN-081
 > 初始版；后续所有功能的架构锚。决策证据链：
-> [plans/081-t00-rulings.md](plans/081-t00-rulings.md)（T-00 三勘定）+
+> [plans/attachments/081-t00-rulings.md](plans/attachments/081-t00-rulings.md)（T-00 三勘定）+
 > auto-down `docs/plans/081-jade-edit-bootstrap.md`（计划本体）。
 
 ## 1. 定位

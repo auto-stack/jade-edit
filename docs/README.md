@@ -53,8 +53,9 @@ node scripts/contract-sync.mjs --check   # 契约副本漂移门
 
 - [ARCHITECTURE.md](ARCHITECTURE.md) — 架构定版（SD-01：双轨机制 /
   013 形态消费面 + C-1..C-6 双轨硬约束 / 后端复用 / 测试体系 / 纪律）
-- [plans/081-t00-rulings.md](plans/081-t00-rulings.md) — T-00 三勘定
-  决策档（双轨机制 / actions-vue 现状 / 后端选型）
+- [plans/attachments/081-t00-rulings.md](plans/attachments/081-t00-rulings.md) —
+  T-00 三勘定决策档（auto-down PLAN-081 附件；双轨机制 / actions-vue
+  现状 / 后端选型）
 - [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v0（九项三分类）
 
 ## 计划
