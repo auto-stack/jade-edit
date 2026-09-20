@@ -1,34 +1,24 @@
-// editor_store.at — EditorStore: tabs/脏标/保存流状态机（038/449 store
-// 形态 + 013 `.store.*` 视图读——vue/vm 双轨合法的消费面）。
+// editor_store.at — EditorStore：tabs/脏标/保存流 + 基座 chrome 状态
+// （PLAN-001 T-01 换基融合：骨架 = auto-edit PLAN-003 交付的 EditorStore，
+// 编辑器通道 = 本仓 PLAN-081 已实证的 autodown_editor 形态）。
 //
-// 单源纪律：本文件是 editor_store 的唯一源，vm/vue 双轨同源消费——旧
-// jade-garden 的 front/desktop 分裂（副本+sync 脚本）不在本仓重演。
-//
-// 架构（PLAN-081 T-06 实测定形，013-todo 先例）：**状态权威与显示投影
-// 全在 store**（tabs + active_path + active_title/active_body/active_dirty
-// + save_note）；App 视图经 `.store.*` 读（vue=响应式 ref 投影 / vm=合并
-// 根状态），App handler 纯薄委托不回读 store 状态——合并根状态的裸读
-// （`.tabs`/`.active_path`）只在 vm 轨成立，vue 发射为裸标识符（T-06
-// vue-tsc 实证），App 侧投影镜像方案随之退役。
-//
-// VM 约束（auto-edit README「vm 组件边界」照执）：
-//   - view 不能调 fn（模板只读字段——派生标量由 handler 就地重算进
-//     active_* 投影）；
-//   - msg 载荷单类型（多参走单 map：Open({path})）；
-//   - typed List/数组声明纪律（裸 `var x = []` 在 VM 轨静默坏列表）；
-//   - `.find(t => ...)` 索引狩猎在册（findIndex VM 静默失效，071 delta①；
-//     store computed 的 .active_tab 在 vue 发射为未声明标识符——T-06
-//     实证，computed 退役，handler 内联 find）。
-//
-// 保存语义（对齐 jade desktop T-04 实证）：POST 的 frontmatter 整体替换
-// 落盘（服务端仅补 updated_at）——须回传读到的 frontmatter，否则丢。
-// VM 轨硬约束（T-03 两轮实测）：JsonAny 经 VM 变量/Obj 字面量存取均损坏
-// （对象 id 泄漏/<vmref>），故 Save 内现读现传（见 .Save 注记）。
+// 融合要点（相对基座的差异）：
+//   - 编辑器无 code_editor_* 内建（autodown_editor 只有 key/content/final/
+//     oninput/on_focus 事件面——T-00 实勘）→ 剪贴板/undo/fold 族 handler
+//     降级 no-op + console 注记；行:列光标三元组不可得（无 oncursor）。
+//   - tab 身份 = path（untitled 走 key 兜底）；编辑器 key = active_key，
+//     key 变即重挂载读 content: 播种通道（PLAN-081 T-03 结论沿用）。
+//   - 数据面全走 back.api（merged=进程内直调 / split·vue=HTTP）：
+//     read_wiki 只回 body——frontmatter 由 back 侧保留/拼回（JsonAny
+//     损坏类结构性消除，PLAN-081 T-03 的「现读现传」绕法退役）。
+//   - 状态权威与显示投影全在 store；App 视图经 `.store.*` 读（vue/vm
+//     双轨合法消费面——PLAN-081 T-06 结论沿用：合并根状态裸读仅 vm
+//     成立；store computed 双轨皆坏，派生标量由 handler 就地重算）。
 
-use back.api: read_wiki, write_wiki
+use back.api: read_wiki, write_wiki, exists, env_str
 
-// ".ad" 后缀剥离（tab 标题 = path 末段去扩展，PLAN-079 标题语义收敛
-// web 单源同款）——slice 守卫，无正则字面量（a2r-clean 惯例）。
+// ".ad" 后缀剥离（tab 标题 = path 末段去扩展）——slice 守卫，无正则
+// 字面量（a2r-clean 惯例）。
 fn strip_ad(path str) str {
     var n = path.length
     if n > 3 {
@@ -42,124 +32,337 @@ fn strip_ad(path str) str {
 
 store EditorStore {
     model {
-        // Tab 对象（path/title/body/original_body/dirty）。
+        // Tab 对象（key/path/title/body/original_body/dirty）。typed 声明
+        // 纪律（裸 `= []` 在 VM 轨静默坏列表——PLAN-081 T-06）。
         var tabs Array<str> = []
-        // str+"" 哨兵替代 ?str（跨状态对象读 624 后仍不安全，070 T-02
-        // 裁定；"" 即无活动 tab）。
+        // str+"" 哨兵替代 ?str（"" 即无活动 tab）。
         var active_path str = ""
+        var active_key str = ""
         // —— 显示投影（视图唯一读面 `.store.*`；handler 内就地重算）——
         var active_title str = ""
         var active_body str = ""
         var active_dirty bool = false
-        // store 侧状态注记（saved/save-failed/read-failed/reloaded）。
         var save_note str = ""
+        // tab 索引镜像（tab 条分支读面；结构变化时由 handler 就地重算）。
+        var tab int = -1
+        var tab_count int = 0
+        var open_count int = 0
+        var edits int = 0
+        // console 面板（console_log/console_lines 宿主内建）。
+        var console_open bool = false
+        var console str = ""
+        // 关闭脏 tab 确认弹层（基座 Plan 420 P2）。
+        var confirm_open bool = false
+        var confirm_idx int = -1
+        // 退出/关窗确认弹层（基座 Plan 626 T-06；窗口 X 与菜单退出共口）。
+        var quit_confirm_open bool = false
     }
 
     // msg 载荷单类型（编译器约束）：Open 单 map、Edit 单 str。
-    msg Msg { Open(map), Edit(str), Save, Reload }
+    msg {
+        Open(map), Edit(str), Save, Reload,
+        CloseTab(int), RemoveAt(int), ConfirmClose, ConfirmCancel,
+        TabActivate(int), ActNew, ActOpen, ActConsole, ActSwitchTab,
+        ActUndo, ActRedo, ActCut, ActCopy, ActPaste, ActSelectAll, ActAbout,
+        ActQuit, ConsoleClear, CloseRequest, QuitDiscard, QuitSaveClose,
+        QuitConfirmCancel,
+    }
 
     on {
-        // Open({path})：激活已载 tab 或新读 → 投影重算。
+        // ---- 激活投影重算（tab 索引 → active_* 全套；tab_count 就地同步
+        // ——Open/RemoveAt/ActNew 全走此口，防漏维护） ----
+        .TabActivate(i) -> {
+            .tab_count = .tabs.len()
+            .tab = i
+            .active_path = .tabs[i].path
+            .active_key = .tabs[i].key
+            .active_title = .tabs[i].title
+            .active_body = .tabs[i].body
+            .active_dirty = .tabs[i].dirty
+        }
+
+        // ---- Open({path})：已开 tab 激活；否则 exists 守卫 + 读盘新 tab ----
+        //（TreeSelect 语义收口于此——树选/菜单打开/旁路打开同口）。
         .Open(args) -> {
             var path = args.path
-            var existing = .tabs.find(t => t.path == path)
-            if existing == null {
-                var doc = None
-                try {
-                    doc = read_wiki(path)
-                } catch (e) {
-                    doc = None
+            var found int = -1
+            var i int = 0
+            while i < .tabs.len() {
+                if .tabs[i].path == path {
+                    found = i
                 }
-                if doc != null {
-                    .tabs.push({
-                        path: path,
-                        title: strip_ad(path),
-                        body: doc.body,
-                        original_body: doc.body,
-                        dirty: false,
-                    })
-                }
+                i = i + 1
             }
-            var t = .tabs.find(t => t.path == path)
-            if t != null {
-                .active_path = path
-                .active_title = t.title
-                .active_body = t.body
-                .active_dirty = t.dirty
-            } else {
-                .save_note = "read-failed: " + path
-            }
-        }
-
-        // Edit(text)：INPUT_TEXT 单参全文回写（041 同约定，整文替换语义）
-        // ——就地变更 + 脏标重算（回到 original 清脏标）+ 投影同步
-        //（active_body 回写 = 编辑器 content: 绑定的外部 diff 臂）。
-        .Edit(text) -> {
-            var t = .tabs.find(t => t.path == .active_path)
-            if t != null {
-                if t.body != text {
-                    t.body = text
-                    t.dirty = t.body != t.original_body
-                }
-                .active_body = text
-                .active_dirty = t.dirty
-            }
-        }
-
-        // Save：frontmatter **现读现传**——Save 时重读磁盘文档，把
-        // doc.frontmatter 直接传入 write_wiki（v0 UI 无 frontmatter 编辑面，
-        // 磁盘现值即用户意图值）。原因：JsonAny 经 VM 变量/Obj 字面量存取
-        // 均损坏（T-03 两轮实测：Obj 字面量字段读回=对象 id 泄漏落盘
-        // "4000090"；map 字段赋值=<vmref>→[]），读→传不落变量即绕开。
-        // 成功清脏标 + original_body 前移 + 投影重算。
-        .Save -> {
-            var t = .tabs.find(t => t.path == .active_path)
-            if t != null {
-                var doc = None
-                try {
-                    doc = read_wiki(t.path)
-                } catch (e) {
-                    doc = None
-                }
-                if doc != null {
+            if found < 0 {
+                if exists(path) {
+                    var body str = ""
+                    var ok bool = true
                     try {
-                        var saved = write_wiki(t.path, doc.frontmatter, t.body)
-                        var echo = saved.body
-                        if echo == t.body {
-                            t.dirty = false
-                            t.original_body = t.body
-                        }
-                        .save_note = "saved: " + t.path
+                        body = read_wiki(path)
                     } catch (e) {
-                        .save_note = "save-failed: " + t.path
+                        ok = false
+                    }
+                    if ok {
+                        .tabs.push({
+                            key: path,
+                            path: path,
+                            title: strip_ad(path),
+                            body: body,
+                            original_body: body,
+                            dirty: false,
+                        })
+                        found = .tabs.len() - 1
+                        console_log("open: " + path)
+                    } else {
+                        .save_note = "read-failed: " + path
                     }
                 } else {
-                    .save_note = "save-failed-readback: " + t.path
+                    .save_note = "not-found: " + path
                 }
-                .active_dirty = t.dirty
+            }
+            if found >= 0 {
+                store.TabActivate(found)
+            }
+            .console = console_lines()
+        }
+
+        // ---- Edit(text)：INPUT_TEXT 单参全文回写（041 同约定）——就地
+        // 变更 + 脏标重算 + 投影同步（active_body = content: 绑定的外部
+        // diff 臂）。tab 定位用 while 索引扫描（.find 闭包在 --no-merge
+        // split 形态硬崩——T-01 实勘；索引循环 = 基座/本计划 Open 同款
+        // 已证形态）。
+        .Edit(text) -> {
+            var i int = 0
+            while i < .tabs.len() {
+                if .tabs[i].path == .active_path {
+                    if .tabs[i].body != text {
+                        .tabs[i].body = text
+                        .tabs[i].dirty = .tabs[i].body != .tabs[i].original_body
+                        .edits = .edits + 1
+                    }
+                    .active_body = text
+                    .active_dirty = .tabs[i].dirty
+                }
+                i = i + 1
             }
         }
 
-        // Reload：强制重读激活 tab（六检查"保存落盘 → 重载可见"通道）
-        // + 投影重算。
-        .Reload -> {
-            var t = .tabs.find(t => t.path == .active_path)
-            if t != null {
-                var doc = None
-                try {
-                    doc = read_wiki(t.path)
-                } catch (e) {
-                    doc = None
+        // ---- Save：untitled 先落路径（AUTO_SAVE_PATH 旁路 → dialog_save）；
+        // write_wiki 的 back 侧保 frontmatter（front 零 JsonAny）。
+        .Save -> {
+            var i int = 0
+            while i < .tabs.len() {
+                if .tabs[i].path == .active_path {
+                    if .tabs[i].path == "" {
+                        var p str = env_str("AUTO_SAVE_PATH")
+                        if p == "" {
+                            p = dialog_save("untitled.ad")
+                        }
+                        if p != "" {
+                            .tabs[i].path = p
+                            .tabs[i].key = p
+                            .tabs[i].title = strip_ad(p)
+                        }
+                    }
+                    if .tabs[i].path != "" {
+                        var saved bool = write_wiki(.tabs[i].path, .tabs[i].body)
+                        if saved {
+                            .tabs[i].dirty = false
+                            .tabs[i].original_body = .tabs[i].body
+                            .save_note = "saved: " + .tabs[i].path
+                            console_log("saved: " + .tabs[i].path)
+                        } else {
+                            .save_note = "save-failed: " + .tabs[i].path
+                        }
+                    } else {
+                        .save_note = "save: cancelled"
+                    }
+                    .active_path = .tabs[i].path
+                    .active_key = .tabs[i].key
+                    .active_title = .tabs[i].title
+                    .active_dirty = .tabs[i].dirty
                 }
-                if doc != null {
-                    t.body = doc.body
-                    t.original_body = doc.body
-                    t.dirty = false
-                    .active_body = doc.body
-                    .active_dirty = false
-                    .save_note = "reloaded: " + t.path
-                }
+                i = i + 1
             }
+            .console = console_lines()
+        }
+
+        // ---- Reload：强制重读激活 tab（六检查「保存落盘 → 重载可见」通道）。
+        .Reload -> {
+            var i int = 0
+            while i < .tabs.len() {
+                if .tabs[i].path == .active_path {
+                    var body str = ""
+                    var ok bool = true
+                    try {
+                        body = read_wiki(.tabs[i].path)
+                    } catch (e) {
+                        ok = false
+                    }
+                    if ok {
+                        .tabs[i].body = body
+                        .tabs[i].original_body = body
+                        .tabs[i].dirty = false
+                        .active_body = body
+                        .active_dirty = false
+                        .save_note = "reloaded: " + .tabs[i].path
+                    }
+                }
+                i = i + 1
+            }
+        }
+
+        // ---- 关闭 tab：脏 tab 先确认（基座 Plan 420 P2 弹层） ----
+        .RemoveAt(i) -> {
+            .tabs.remove(i)
+            .tab_count = .tabs.len()
+            if .tab_count > 0 {
+                if i == .tab {
+                    if i >= .tab_count {
+                        .tab = .tab_count - 1
+                    }
+                }
+                if i < .tab {
+                    .tab = .tab - 1
+                }
+                store.TabActivate(.tab)
+            } else {
+                .tab = -1
+                .active_path = ""
+                .active_key = ""
+                .active_title = ""
+                .active_body = ""
+                .active_dirty = false
+                .save_note = ""
+            }
+        }
+        .CloseTab(i) -> {
+            if .tabs[i].dirty {
+                .confirm_idx = i
+                .confirm_open = true
+            } else {
+                store.RemoveAt(i)
+                console_log("closed tab; open=" + .tab_count.str())
+            }
+            .console = console_lines()
+        }
+        .ConfirmClose -> {
+            .confirm_open = false
+            if .confirm_idx >= 0 {
+                store.RemoveAt(.confirm_idx)
+                console_log("closed dirty tab; open=" + .tab_count.str())
+            }
+            .confirm_idx = -1
+            .console = console_lines()
+        }
+        .ConfirmCancel -> {
+            .confirm_open = false
+            .confirm_idx = -1
+        }
+
+        // ---- 新建 untitled（key 兜底通道——编辑器 key 变即重挂载播种） ----
+        .ActNew -> {
+            .open_count = .open_count + 1
+            .tabs.push({
+                key: "untitled-" + .open_count.str(),
+                path: "",
+                title: "未命名",
+                body: "",
+                original_body: "",
+                dirty: false,
+            })
+            .tab_count = .tabs.len()
+            store.TabActivate(.tab_count - 1)
+            console_log("new: untitled tab")
+            .console = console_lines()
+        }
+
+        // ---- 打开（AUTO_OPEN_PATH 测试旁路 → dialog_open）→ Open 同口 ----
+        .ActOpen -> {
+            var p str = env_str("AUTO_OPEN_PATH")
+            if p == "" {
+                p = dialog_open(".ad, .md")
+            }
+            if p != "" {
+                store.Open({ path: p })
+            } else {
+                console_log("open: cancelled")
+            }
+            .console = console_lines()
+        }
+
+        // ---- 编辑器操作族降级（autodown_editor 无 builtin 通道，T-00
+        // 实勘登记；编辑器内原生快捷键仍可用） ----
+        .ActUndo -> { console_log("editor-native: undo（autodown_editor 无 builtin）"); .console = console_lines() }
+        .ActRedo -> { console_log("editor-native: redo"); .console = console_lines() }
+        .ActCut -> { console_log("editor-native: cut"); .console = console_lines() }
+        .ActCopy -> { console_log("editor-native: copy"); .console = console_lines() }
+        .ActPaste -> { console_log("editor-native: paste"); .console = console_lines() }
+        .ActSelectAll -> { console_log("editor-native: select-all"); .console = console_lines() }
+
+        .ActConsole -> {
+            .console_open = !.console_open
+            .console = console_lines()
+        }
+        .ConsoleClear -> {
+            console_clear()
+            .console = ""
+        }
+        // 循环切 tab（基座两 tab 翻转语义推广为轮转；无 % 先例——显式分支）。
+        .ActSwitchTab -> {
+            if .tab_count > 1 {
+                var nxt int = .tab + 1
+                if nxt >= .tab_count {
+                    nxt = 0
+                }
+                store.TabActivate(nxt)
+            }
+            .console = console_lines()
+        }
+        .ActAbout -> {
+            console_log("jade-edit 0.1 — auto-edit 基座 + autodown_editor（PLAN-001 换基）")
+            .console = console_lines()
+        }
+
+        // ---- 退出/关窗确认（脏 tab 有路径的落盘，untitled 放弃） ----
+        .CloseRequest -> {
+            var any bool = false
+            var i int = 0
+            while i < .tabs.len() {
+                if .tabs[i].dirty {
+                    any = true
+                }
+                i = i + 1
+            }
+            if any {
+                .quit_confirm_open = true
+            } else {
+                console_log("quit")
+                Process.exit(0)
+            }
+            .console = console_lines()
+        }
+        .ActQuit -> { store.CloseRequest() }
+        .QuitConfirmCancel -> {
+            .quit_confirm_open = false
+        }
+        .QuitSaveClose -> {
+            var i int = 0
+            while i < .tabs.len() {
+                if .tabs[i].dirty {
+                    if .tabs[i].path != "" {
+                        write_wiki(.tabs[i].path, .tabs[i].body)
+                        .tabs[i].dirty = false
+                    }
+                }
+                i = i + 1
+            }
+            console_log("quit: saved & exit")
+            Process.exit(0)
+        }
+        .QuitDiscard -> {
+            console_log("quit: discard & exit")
+            Process.exit(0)
         }
     }
 }

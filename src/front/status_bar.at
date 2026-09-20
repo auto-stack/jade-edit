@@ -1,0 +1,54 @@
+// status_bar.at — StatusBar 组件（PLAN-001 T-01 基座迁入适配）。
+//
+// 基座 Plan 449 形态：无 props（标量状态经 `use editor_store` 直读
+// .store.*），自有 msg，handler 直调 store（vm 已验证模式）。
+// 相对基座的适配：autodown_editor 无 oncursor（T-00 实勘）——「行:列」
+// 光标三元组与 Sel/Fold 读数降级退役；右端改 tab 计数 + 脏标 + 保存注记。
+// 注：组件子树对 MCP 快照不可见（vm 已知边界）——测试断言走 autoui_state。
+
+use editor_store: EditorStore
+
+style status_text = "text-[11px] text-muted-foreground"
+style status_alt = "text-[11px] text-muted-foreground"
+style mini_btn = "h-6 w-9 px-0 py-0"
+widget StatusBar {
+    msg { ToggleConsole }
+
+    view {
+        col (style: "w-full shrink-0") {
+            col (style: "h-px w-full bg-border")
+            row (style: "h-6 items-center bg-muted/30 shrink-0 w-full gap-3 px-2") {
+                text "JadeEdit" { style: status_text }
+                text ".ad" { style: status_text }
+                if .store.active_dirty {
+                    text "未保存" { style: "text-[11px] text-amber-400" }
+                }
+                if .store.save_note != "" {
+                    text .store.save_note { style: status_alt }
+                }
+
+                text "docs: ${.store.tab_count}" {
+                    style: "text-[11px] text-muted-foreground ml-auto"
+                }
+                if .store.console_open == false {
+                    button (variant: "text") {
+                        icon (name: "terminal", style: "h-3.5 w-3.5 text-muted-foreground") {}
+                        onclick: .ToggleConsole
+                        style: mini_btn
+                    }
+                }
+                if .store.console_open == true {
+                    button (variant: "text") {
+                        icon (name: "terminal", style: "h-3.5 w-3.5 text-foreground") {}
+                        onclick: .ToggleConsole
+                        style: mini_btn
+                    }
+                }
+            }
+        }
+    }
+
+    on {
+        .ToggleConsole -> { store.ActConsole() }
+    }
+}
