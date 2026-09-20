@@ -1,0 +1,132 @@
+// jade-edit vm 结构基线 v0（PLAN-081 T-05）——六检查终态满状态：boot + filetree 五 .ad + Hello World.ad 开（编辑/保存/重载后）。
+// 再生成：node tests/vm_matrix.mjs --save-baseline tests\baseline\structure-v0.txt
+## state
+State:
+  __emit_msg: "" (str)
+  __emit_payload: nil (unknown)
+  __toast: "" (str)
+  active_body: "# Hello World ^hello-world\n\n这是一段示例文本，包含 **粗体**、*斜体* 和 `行内代码`。 ^384bb695-4bac-4618-a34a-1eab4c6fa82e\n\n## 列表 ^heading\n\n- 项目一 ^4517d73f-c7fd-4f20-8987-1ef5dcee0370\n- 项目二 ^d6ffab27-459f-40ee-a794-2ec0b2e2408f\n  - 子项目 A ^c00221ad-44e1-4b8d-b152-af4c3877ad29\n  - 子项目 B ^e6c05cec-2560-4a2f-9291-e233babc7519\n\n## 任务列表 ^heading-1\n\n- [x] 创建知识库 ^f8ddf99a-e16b-41a6-b3c4-414c52b450ac\n- [x] 学习 AutoDown 语法 ^d2be7ed2-c0b0-47d5-869c-42e526128a77\n- [ ] 探索 [[CAP 定理]] ^8c13bf06-8121-435b-82e6-7ef71d429204\n\n## 代码块 ^heading-2\n\n```rust\nfn main() {\n    println!(\"Hello, Jade Garden!\");\n}\n```\n\n返回 [[首页]]。 ^b15b3cce-c55b-4826-8630-287584e8f330\n\n\njade-edit 冒烟标记：编辑回写可见。\n外部重载标记：重载可见。\n" (str)
+  active_dirty: false (bool)
+  active_path: "Hello World.ad" (str)
+  active_title: "Hello World" (str)
+  ft_expanded: [] (list)
+  ft_nodes: [<vmref>, <vmref>, <vmref>, <vmref>, <vmref>] (list)
+  ft_sel: "Hello World.ad" (str)
+  save_note: "reloaded: Hello World.ad" (str)
+  status: "ready" (str)
+  tabs: [<vmref>] (list)
+
+## snapshot
+AURA Snapshot v2 (rendered)
+widget: "App"
+
+tree:
+col #vnode_14695981039346656037 {
+  style: "flex flex-col h-screen"
+  row #vnode_12642422519345821663 {
+    style: "items-center gap-3 px-3 py-1.5 border-b shrink-0"
+    text #vnode_4305065243889594349 "JadeEdit" {
+      style: "text-[13px] font-medium"
+    }
+    text #vnode_4305047651703549498 "ready" {
+      style: "text-[11px] text-zinc-500"
+    }
+    text #vnode_4305030059517504647 "reloaded: Hello World.ad" {
+      style: "text-[11px] text-zinc-500"
+    }
+    container #vnode_4305012467331459796 {
+      style: "flex-1"
+    }
+    button #vnode_4304994875145414945 "保存" {
+      style: "text-[12px] px-2 py-0.5"
+      onclick: .Save
+    }
+    button #vnode_4304977282959370094 "重载" {
+      style: "text-[12px] px-2 py-0.5"
+      onclick: .Reload
+    }
+  }
+  row #vnode_12642404927159776812 {
+    style: "flex flex-1 gap-3 overflow-hidden"
+    scrollable #vnode_4289760042030763204 {
+      style: "w-52 shrink-0 gap-1 overflow-auto border-r pr-2"
+      col #vnode_12781790891868631308 {
+        col #vnode_15900409796501198692 {
+          style: "items-center"
+          row #vnode_8766178259980025580 {
+            style: "w-5 shrink-0"
+            container #vnode_9218183197671271172 {
+            }
+            text #vnode_9218200789857316023 "[Image]"
+            button #vnode_9218218382043360874 "CAP 定理.ad"
+          }
+          row #vnode_8766195852166070431 {
+            style: "w-4 h-4 shrink-0 text-muted-foreground"
+            container #vnode_9233488399530102317 {
+            }
+            text #vnode_9233470807344057466 "[Image]"
+            button #vnode_9233453215158012615 "Hello World.ad"
+          }
+          row #vnode_8766213444352115282 {
+            style: "flex-1 px-1 text-left text-sm"
+            onclick: .OpenFile(r.id)
+            container #vnode_9248793601388933462 {
+            }
+            text #vnode_9248811193574978313 "[Image]"
+            button #vnode_9248758417016843760 "Projects.ad"
+          }
+          row #vnode_8766231036538160133 {
+            container #vnode_9264098803247764607 {
+            }
+            text #vnode_9264081211061719756 "[Image]"
+            button #vnode_9264133987619854309 "Tasks.ad"
+          }
+          row #vnode_8766107891235846176 {
+            container #vnode_9156962390235946592 {
+            }
+            text #vnode_9156979982421991443 "[Image]"
+            button #vnode_9156997574608036294 "index.ad"
+          }
+        }
+      }
+    }
+    col #vnode_4289777634216808055 {
+      style: "flex flex-1 flex-col gap-2"
+      textarea #vnode_12797096093727462453 {
+        style: "flex-1 w-full"
+        value: "# Hello World ^hello-world
+
+这是一段示例文本，包含 **粗体**、*斜体* 和 `行内代码`。 ^384bb695-4bac-4618-a34a-1eab4c6fa82e
+
+## 列表 ^heading
+
+- 项目一 ^4517d73f-c7fd-4f20-8987-1ef5dcee0370
+- 项目二 ^d6ffab27-459f-40ee-a794-2ec0b2e2408f
+  - 子项目 A ^c00221ad-44e1-4b8d-b152-af4c3877ad29
+  - 子项目 B ^e6c05cec-2560-4a2f-9291-e233babc7519
+
+## 任务列表 ^heading-1
+
+- [x] 创建知识库 ^f8ddf99a-e16b-41a6-b3c4-414c52b450ac
+- [x] 学习 AutoDown 语法 ^d2be7ed2-c0b0-47d5-869c-42e526128a77
+- [ ] 探索 [[CAP 定理]] ^8c13bf06-8121-435b-82e6-7ef71d429204
+
+## 代码块 ^heading-2
+
+```rust
+fn main() {
+    println!("Hello, Jade Garden!");
+}
+```
+
+返回 [[首页]]。 ^b15b3cce-c55b-4826-8630-287584e8f330
+
+
+jade-edit 冒烟标记：编辑回写可见。
+外部重载标记：重载可见。
+"
+        oninput: .Edit
+      }
+    }
+  }
+}
