@@ -1,0 +1,17 @@
+# 生成器/工具链产物（T-00 R-1 围栏：vue 生成一律经 `auto build -r vue`，
+# 产物树不入库；裸 auto build 的 C 产物 build/ 同禁）
+gen/
+build/
+dist/
+
+# node / vite
+node_modules/
+
+# e2e 运行时（exe 拷贝 + fixture 隔离工作区，可再生）
+e2e/.runtime/
+
+# 日志与本地缓存
+*.log
+.am/
+__pycache__/
+*.pyc
