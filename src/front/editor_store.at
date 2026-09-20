@@ -12,8 +12,9 @@
 //   - `.find(t => ...)` 索引狩猎在册（findIndex VM 静默失效，071 delta①）。
 //
 // 保存语义（对齐 jade desktop T-04 实证）：POST 的 frontmatter 整体替换
-// 落盘（服务端仅补 updated_at）——tab 必须持有读回的 frontmatter 并在
-// save 时原样回传，否则丢 frontmatter。
+// 落盘（服务端仅补 updated_at）——须回传读到的 frontmatter，否则丢。
+// VM 轨硬约束（T-03 两轮实测）：JsonAny 经 VM 变量/Obj 字面量存取均损坏
+// （对象 id 泄漏/<vmref>），故 Save 内现读现传（见 .Save 注记）。
 
 use back.api: read_wiki, write_wiki
 
@@ -32,7 +33,7 @@ fn strip_ad(path str) str {
 
 store EditorStore {
     model {
-        // Tab 对象（path/title/body/original_body/dirty/frontmatter）。
+        // Tab 对象（path/title/body/original_body/dirty）。
         var tabs Array<str> = []
         // str+"" 哨兵替代 ?str（跨状态对象读 624 后仍不安全，070 T-02
         // 裁定；"" 即无活动 tab）。
@@ -71,7 +72,6 @@ store EditorStore {
                         body: doc.body,
                         original_body: doc.body,
                         dirty: false,
-                        frontmatter: doc.frontmatter,
                     })
                     .active_path = path
                 } else {
@@ -92,26 +92,41 @@ store EditorStore {
             }
         }
 
-        // Save：frontmatter 原样回传（见文件头保存语义）；成功清脏标 +
-        // original_body 前移。失败经 catch 侧记（DSL 无 throw，拒绝传播
-        // 归 App 投影读 save_note——070 同款登记偏差）。
+        // Save：frontmatter **现读现传**——Save 时重读磁盘文档，把
+        // doc.frontmatter 直接传入 write_wiki（v0 UI 无 frontmatter 编辑面，
+        // 磁盘现值即用户意图值）。原因：JsonAny 经 VM 变量/Obj 字面量存取
+        // 均损坏（T-03 两轮实测：Obj 字面量字段读回=对象 id 泄漏落盘
+        // "4000090"；map 字段赋值=<vmref>→[]），读→传不落变量即绕开。
+        // 成功清脏标 + original_body 前移。失败经 catch 侧记（DSL 无
+        // throw，070 同款登记偏差）。
         .Save -> {
             var t = .active_tab
             if t != null {
+                var doc = None
                 try {
-                    var saved = write_wiki(t.path, t.frontmatter, t.body)
-                    var echo = saved.body
-                    if echo == t.body {
-                        t.dirty = false
-                        t.original_body = t.body
-                    }
+                    doc = read_wiki(t.path)
                 } catch (e) {
-                    .save_note = "save-failed: " + t.path
+                    doc = None
+                }
+                if doc != null {
+                    try {
+                        var saved = write_wiki(t.path, doc.frontmatter, t.body)
+                        var echo = saved.body
+                        if echo == t.body {
+                            t.dirty = false
+                            t.original_body = t.body
+                        }
+                    } catch (e) {
+                        .save_note = "save-failed: " + t.path
+                    }
+                } else {
+                    .save_note = "save-failed-readback: " + t.path
                 }
             }
         }
 
-        // Reload：强制重读激活 tab（六检查"保存落盘 → 重载可见"通道）。
+        // Reload：强制重读激活 tab（六检查"保存落盘 → 重载可见"通道）；
+        // frontmatter 一并刷新（外改可能动 frontmatter）。
         .Reload -> {
             var t = .active_tab
             if t != null {
