@@ -62,32 +62,57 @@ fn is_delim(line str) bool {
     return false
 }
 
-/// 读文档 body：首行 = 界符 → 剥至第二个界符行，其后的行以 "\n" 重接；
-/// 无 frontmatter → 全文直通。
+/// 读文档 body：首行 = 界符 → 定位闭合界符行，其后原文直通；无
+/// frontmatter → 全文直通。
+///
+/// 实现注记（PLAN-002 执行期勘误，O(n) 化）：旧实现 split 后逐行
+/// `out = out + lines[j]` 重接——VM 字符串 `+` 每次全量 clone + 内容
+/// 去重哈希，1MB/4 万行 ≈ 8 万次 ADD ≈ 78s+ 阻塞（C-5 首个实证）。
+/// 现改为 split_once 标记法：闭合界符行（行恰为 "---"/"---\r"）的字节
+/// 等价标记 = "\n---\n" / "\n---\r\n"（\n 后紧跟 --- 再跟行尾 ⟺ 行恰为
+/// 界符），两标记首现者取其 after——split→join 同分隔符恒等原串，故
+/// after 即旧「行重接」语义逐字节等价（含尾随换行保留）；两标记字节
+/// 互斥（--- 后一位 \n vs \r），before 前缀单调保证首现比较与
+/// .length 计数语义无关。VM 无 str.join 内建，此法为唯一 O(n) 通道。
 pub fn read_body(path str) str {
     var text str = File.read_text(resolve(path))
-    var lines = text.split("\n")
-    if lines.len() > 0 {
-        if is_delim(lines[0]) {
-            var i int = 1
-            while i < lines.len() {
-                if is_delim(lines[i]) {
-                    var out str = ""
-                    var j int = i + 1
-                    while j < lines.len() {
-                        out = out + lines[j]
-                        if j < lines.len() - 1 {
-                            out = out + "\n"
-                        }
-                        j = j + 1
-                    }
-                    return out
-                }
-                i = i + 1
-            }
-        }
+    if text.starts_with("---\n") {
+        return body_after_open(text)
+    }
+    if text.starts_with("---\r\n") {
+        return body_after_open(text)
     }
     return text
+}
+
+/// 首行已确认为界符后的 body 提取（read_body 专用）。
+fn body_after_open(text str) str {
+    var p1 = text.split_once("\n---\n")
+    var p2 = text.split_once("\n---\r\n")
+    var has1 bool = p1.len() == 2
+    var has2 bool = p2.len() == 2
+    if !has1 {
+        if !has2 {
+            // 无闭合界符行：末行恰为界符（EOF 无尾换行形态）→ body 空；
+            // 否则旧语义全文直通。
+            if text.ends_with("\n---") {
+                return ""
+            }
+            if text.ends_with("\n---\r") {
+                return ""
+            }
+            return text
+        }
+        return p2[1]
+    }
+    if !has2 {
+        return p1[1]
+    }
+    // 两标记并在：before 短者先现（同为 text 前缀，含前缀单调性）
+    if p1[0].length <= p2[0].length {
+        return p1[1]
+    }
+    return p2[1]
 }
 
 /// 写文档：存在且有 frontmatter → 界符段原文保留（含界符行与段尾换行）

@@ -37,11 +37,11 @@
   },
   {
     "id": "open_large_doc",
-    "metric": "打开大文档（生成 fixture，文档尾锚可见——最坏可见位）",
-    "budget": "单列只记基线（rope 前禁调优）",
+    "metric": "打开大文档（生成 fixture，store 激活 + 首次快照恢复）",
+    "budget": "单列只记基线（1MB 实测 ~0.9s；编辑面整文回写仍 C-5 受制）",
     "tier": "ledger",
-    "validity": "blocked-upstream C-5→上游 delta：整文回写/镜像架构性受限（active_body 每键 O(n)）",
-    "unlock": "上游 rope delta/分块读（ARCHITECTURE §3 镜像语义 unlock 项）",
+    "validity": "打开链 2026-09-21 已解阻（wsys.at read_body O(n) 化，78s 阻塞→0.87s）；编辑路径每键整文回写仍受 C-5 架构限制（rope 前禁调优）",
+    "unlock": "编辑面 unlock = 上游 rope delta/分块读（ARCHITECTURE §3 SD-201）；更大文档（10MB+/100MB）打开需 read_text_range 分块读（上游 PLAN-673）",
     "unit": "ms"
   },
   {

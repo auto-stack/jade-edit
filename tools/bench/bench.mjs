@@ -343,11 +343,10 @@ async function stageProxy() {
   const tGen = performance.now()
   genLargeDoc(LARGE_DOC, LARGE_MB)
   const genS = (performance.now() - tGen) / 1000
-  // 大文档「打开完成」= store 激活态（active_key 变更）。BLOCKED-UPSTREAM
-  // 实证口径（PLAN-002 T-02 实测定型）：1MB 文档整文读链（read_wiki→VM
-  // 字符串机）在 30s 观测窗内不达 store 激活（78s 探针仍 tab_count=0、
-  // save_note 空——Open 卡在整文读，未到失败分支）——C-5 阻塞的硬证据，
-  // 记 ledger 行而非报错。
+  // 大文档「打开完成」= store 激活态（active_key 变更）+ 首次快照恢复。
+  // 历史：旧 read_body O(N·L) 逐行重接曾致 1MB 78s+ 阻塞（blocked 记录
+  // 在案）——2026-09-21 read_body O(n) 化后 1MB ~0.9s，此臂转常规测量；
+  // 超时兜底保留（更大文档/回归时降级为 blocked 记录而非炸套件）。
   let largeOpen = null
   let largeBlocked = null
   try {

@@ -91,10 +91,15 @@
   可升级 app 侧毫秒值。
 - **键入到上屏/滚动帧率**：.at 层无帧时间戳观测通道（auto-edit T-03
   同勘；内核帧时间戳插桩小供料）。
-- **整文读链阻塞（C-5 面）**：1MB 文档 `read_wiki` 30s+ 不返回
-  （整文过 VM 字符串机）——rope/分块读（auto-edit 供料 §1/§3 同源
-  推进，auto-down PLAN-673 已在途）落地后 jade bench
-  `open_large_doc` 行升可测。
+- **整文读链阻塞（C-5 面）——已于本仓解阻（2026-09-21 供料勘误）**：
+  1MB 78s+ 阻塞的根因是**本仓 wsys.at read_body 的 O(N·L) 逐行重接**
+  （VM ADD 全量 clone + 去重哈希放大常数），非上游 VM 缺陷——read_body
+  改 split_once 标记法后 1MB 打开 0.87s。**仍供料两件**：①VM 字符串
+  `+` 的全量去重哈希对大串是隐性常数放大器（建议阈值化/跳过内容
+  去重，auto-lang）；②更大文档打开需 read_text_range 分块读（上游
+  PLAN-673 已在途，现实现为整文件读后切片，分块走查前需改流式）；
+  编辑面整文回写仍受 C-5（ARCHITECTURE §3 SD-201），unlock 不变 =
+  rope delta。
 
 ---
 
