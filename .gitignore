@@ -21,3 +21,7 @@ __pycache__/
 # playwright 产物
 test-results/
 playwright-report/
+
+# bench 运行日志（环境指纹留档，可再生）
+tools/bench/logs/
+e2e/.runtime/

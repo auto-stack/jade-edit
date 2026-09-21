@@ -1,0 +1,56 @@
+[
+  {
+    "id": "first_open_warm",
+    "metric": "热态回访 press 调用往返（UI 线程响应性；换档系列最好跑）",
+    "budget": "<= 250 ms",
+    "tier": "hard",
+    "validity": "L0 debug 构建热态回归护栏（实测带 51-52ms ×~5 余量；无绝对性能效力）",
+    "unlock": "上游 time 族接线（app 侧毫秒值）+ D-03 节拍改造后可加锁总可见时",
+    "unit": "ms"
+  },
+  {
+    "id": "first_open_cold",
+    "metric": "冷态首开（新进程首个编辑器挂载，含一次性全局初始化：syntax 注册表构建+onig 编译+CJK shaping）",
+    "budget": "单列只记基线",
+    "tier": "ledger",
+    "validity": "blocked-upstream D-16：boot 期预热未落地（spawn_syntax_warm_up 在库但只在编辑器创建时点火）",
+    "unlock": "auto-lang boot 期预热 + 注册表预建（供料包 §1）；落地后升 hard 定值",
+    "unit": "ms"
+  },
+  {
+    "id": "doc_switch_visible",
+    "metric": "换档可见延迟（tab 激活 press→内容锚可见）",
+    "budget": "<= 1500 ms（观测带 500-1200ms）",
+    "tier": "ledger",
+    "validity": "ledger 记账（D-03：aura 状态同步 ~500ms idle tick 节拍 + 编辑器重挂载；vue 轨另有 D-17 blur 门控）",
+    "unlock": "上游状态同步节拍改造 + 生成器 :key 动态绑定直发（现补件③守）",
+    "unit": "ms"
+  },
+  {
+    "id": "boot_to_ready",
+    "metric": "启动到 ready（spawn → MCP ready → status ready，中位数）",
+    "budget": "单列只记基线",
+    "tier": "ledger",
+    "validity": "L0 debug 构建无绝对效力（形状分解：进程引导+VM 装载为主）",
+    "unlock": "release 构建 + 启动链瘦身（bench 分解供归因）",
+    "unit": "ms"
+  },
+  {
+    "id": "open_large_doc",
+    "metric": "打开大文档（生成 fixture，文档尾锚可见——最坏可见位）",
+    "budget": "单列只记基线（rope 前禁调优）",
+    "tier": "ledger",
+    "validity": "blocked-upstream C-5→上游 delta：整文回写/镜像架构性受限（active_body 每键 O(n)）",
+    "unlock": "上游 rope delta/分块读（ARCHITECTURE §3 镜像语义 unlock 项）",
+    "unit": "ms"
+  },
+  {
+    "id": "mem_peak",
+    "metric": "进程内存峰值（PowerShell WorkingSet64，500ms 采样）",
+    "budget": "<= 500 MB（debug 构建记账带）",
+    "tier": "ledger",
+    "validity": "ledger 记账不阻塞（整文镜像在位的直接证据面，rope 化前后对照锚点）",
+    "unlock": "上游 rope 化（去整串镜像）+ release 构建",
+    "unit": "MB"
+  }
+]
