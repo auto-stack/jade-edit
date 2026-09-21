@@ -1,6 +1,6 @@
 ---
 plan_id: PLAN-001
-status: execution_done
+status: reviewed
 feature_name: jade-edit-rebase-autoedit（jade-edit 换基：以 PLAN-003 交付后的 auto-edit[双轨+front/back] 为基座，code_editor→autodown_editor 组件切换 + back 换 Auto 实现）
 author: [zhaopuming]
 created_at: 2026-09-20
@@ -236,6 +236,33 @@ code_editor vue 事件缺口，与本计划无阻塞关系）。
   运行矩阵）、automan.rs:1435、aura_view_builder.rs:3529+、vm/native.rs
   :9771+、auto.exe v0.4.2-1588 / blockers: 无 / next: T-02（src/back
   前置）→ T-01。
+
+- 2026-09-21 stage: review / PLAN-001 r1 / outcome: **pass**（reviewed；
+  next: merge）。
+  reviewed_commit: 503e9bd（工作区 clean 实核）；base_commit: 7ab3911
+  （PLAN-081 交付后基线）；dependency_revisions: auto-edit fb68b27
+  （PLAN-003 merged main）；auto.exe v0.4.2-1588（2026-09-21 00:55）。
+  spec_inputs: docs/ARCHITECTURE.md §5/§6、README.md、PROVENANCE.md、
+  parity-ledger.md v1（T-05 后实读复核）。
+  acceptance_results: AC-01 pass（vm merged 臂快照+基线 v1 满状态锁
+  chrome 全套；autodown_editor×5 处绑定；src/ 零 code_editor 引用[负向
+  grep]）；AC-02 pass（merged 零后端进程[矩阵臂配方]+split --no-merge
+  [6/6]+rust 探针第一手登记：`auto run -r vm --server rust` → a2r 生成
+  jade-edit-back 后 cargo E0432 编译失败——与基座 F-R1 同类，AC 口径
+  「登记不阻塞」成立，parity-ledger D-06 在册）；AC-03 pass（vm 双臂
+  6/6×2 + vue e2e 六检查同单 1 passed）；AC-04 pass（gate 复现 ALL GREEN：
+  merged 7/7 含基线 v1 零漂移 + split 6/6 + vue build + vue e2e）；
+  AC-05 pass（run-back/contract-sync/smoke-merged 删除；代码面 grep 零
+  JADE_GARDEN/AUTO_BACKEND/jade-garden-back；SD-01..04 落地且描述实态；
+  R-3/#4 supersede 注记在档）。
+  findings: 无阻塞项。两条非阻塞注记：① D-03 tab 切换面未入六检查断言
+  （登记在册，后续批）；② a2r E0432 本仓第一手证据补强 D-06（原引基座
+  F-R1）。
+  evidence: 本档 §9 + 提交链 fe6ccdb..503e9bd + tests/baseline/
+  structure-v1.txt（复跑零漂移）+ 复审会话 gate 实录（clean tree @
+  503e9bd）。
+  独立性声明：复审于实现会话内进行——裁定自工件重建（门复跑/源检/
+  磁盘断言/负向 grep），未采信执行者自述。
 
 ## 10. 待澄清事项
 
