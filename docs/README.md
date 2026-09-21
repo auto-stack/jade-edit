@@ -60,7 +60,7 @@ pnpm test:e2e                       # vue 六检查（同一检查单；serve-ba
 - [plans/attachments/081-t00-rulings.md](plans/attachments/081-t00-rulings.md) —
   T-00 三勘定决策档（auto-down PLAN-081 附件；双轨机制 / actions-vue
   现状 / 后端选型）
-- [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v2（十五项三分类）
+- [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v3（十六项三分类）
 
 ## 计划
 

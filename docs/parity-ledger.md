@@ -1,4 +1,4 @@
-# jade-edit 双轨差异登记表 v2（PLAN-081 T-07 首版；PLAN-001 T-05 换基复核；2026-09-21 补件链退役复核）
+# jade-edit 双轨差异登记表 v3（PLAN-081 T-07 首版；PLAN-001 T-05 换基复核；2026-09-21 补件链退役复核 + 首开延迟登记 D-16）
 
 > 方法论继承旧 jade-garden L3 差异表（design 30 §8）：差异不静默、逐项
 > 记账（形态/处置/升级路径）。分类：**归档级**（双轨形态已对齐/不追）
@@ -9,7 +9,8 @@
 | --- | --- | --- | --- | --- | --- |
 | D-01 | 编辑器代码字体/主题 | fence mono CJK tofu 债 + hljs 主题定格（auto-lang DEBTS 041 在册） | DOM 字体栈/hljs 主题随工程 CSS | 上游 | engine/auto-lang 侧债，本仓不修；观感差异接受 |
 | D-02 | engine 平台面 | rust/VM 平台面 experimental（engine ARCHITECTURE §2） | 契约面（出口 1.0 冻结）稳定 | 上游 | engine 稳定化后续；断言域=契约面，深层行为不锁 |
-| D-03 | 编辑器播种/切换 | `key: active_key` 重挂载播种（key 变即重读 content:） | 生成 `:key` 为静态串 + `:content` prop 更新 | 组装 | 换基后多 tab 面已进入（tab 条在库）；六检查域单文档不触发切换断言——切换面 e2e 扩展批实测定夺 |
+| D-03 | 编辑器播种/切换 | `key: active_key` 重挂载播种（key 变即重读 content:） | 生成 `:key` 为静态串 + `:content` prop 更新 | 组装 | 换基后多 tab 面已进入（tab 条在库）；六检查域单文档不触发切换断言——切换面 e2e 扩展批实测定夺。**热态实测（2026-09-21 心跳探针）**：每次换档/切档内容可见延迟 0.5-1.2s（press 瞬回但 aura 状态同步走 ~500ms idle tick 节拍 + 编辑器重挂载），与首开无关、稳定复现——切换面扩展批应一并定量 |
+| D-16 | vm 首开编辑器全局初始化延迟 | 首个编辑器挂载付全部进程级一次性成本：two-face/syntect 注册表构建（首次触碰内嵌语法数据页）+ 围栏语言 onig 正则编译（debug 构建秒级，auto-lang highlight.rs 注释在册）+ 首次 CJK shaping | 不适用（vue 轨无此路径） | 上游 | 用户实录首开 2s+ 卡顿、二次开即恢复；热页缓存态复测首开 53ms 且 UI 线程零阻塞（心跳探针最差 4ms）——冷页缓存 + 系统负载（当时三兄弟 vm 实例在跑）放大所致。优化路径（auto-lang 侧）：① boot 期预热——`spawn_syntax_warm_up` 机制已在库但只在编辑器创建时才点火（必输竞速），应在应用启动即跑常见语言 + 预建注册表，把成本藏进用户看窗口的头几秒；② release 构建（onig debug 正则编译秒级为 in-tree 文档明示） |
 | D-04 | ~~生成 api client 四缺口~~ → 标量契约 | 不适用（vm 走 `use back.api` 直调） | 换基后契约全标量（str/int/bool）⇒ 旧四缺口（通配 URL/List\<T\>/JsonAny/map）**结构性消除**（regen-vue 断言守残留） | 归档 | PLAN-001 T-02 契约设计即规避；残余缺口见 D-10/D-15 |
 | D-05 | actions 面 | actions{} 双轨可用（menubar/toolbar 快照锚 + keydown 回退层） | 同左（换基后 menubar/toolbar 已进入） | 归档 | PLAN-081「v0 无 menubar 最小面裁定 #4」随换基 supersede；残余=use 深度不对称（vue 只扫一级 use）——纪律：actions 只放根 widget |
 | D-06 | ~~后端运行模式~~ | ~~split 外部 exe~~ → 换基后：自有 Auto src/back，merged 进程内直调 | HTTP（vite /api 代理 → `auto run --server vm -B`） | 归档 | PLAN-001 换基定版（supersede R-3）；a2r rust 引擎 = 上游缺口 F-R1（auto-edit PLAN-003 在册），不可用不阻塞 |
