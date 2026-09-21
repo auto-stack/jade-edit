@@ -1,6 +1,7 @@
 ---
 plan_id: PLAN-001
-status: reviewed
+status: archived
+completion_kind: delivered
 feature_name: jade-edit-rebase-autoedit（jade-edit 换基：以 PLAN-003 交付后的 auto-edit[双轨+front/back] 为基座，code_editor→autodown_editor 组件切换 + back 换 Auto 实现）
 author: [zhaopuming]
 created_at: 2026-09-20
@@ -263,6 +264,25 @@ code_editor vue 事件缺口，与本计划无阻塞关系）。
   503e9bd）。
   独立性声明：复审于实现会话内进行——裁定自工件重建（门复跑/源检/
   磁盘断言/负向 grep），未采信执行者自述。
+
+- 2026-09-21 stage: merge / PLAN-001:r1 / outcome: **pass**（五 checkpoint
+  闭环 delivered）。
+  prepared: reviewed 基线 = 503e9bd（五 AC pass）+ 955ee70（doc-only 后代
+  [diff 仅本档 +28/-1] → 合法 delivery_commit）；canonical Spec 面 = 本仓
+  docs/ 四件（PLAN-081 立项定版「spec 面=docs/」），SD-01..04 已随 T-05
+  落 delivery，无追加 spec 预备。
+  landed: main tip == 955ee70 == delivery（本仓无 worktree 约定——无
+  AGENTS.md，PLAN-081/001 均直接 main 线性提交，7 commits 自 7ab3911）；
+  main known-good 依据 = 复审 gate 实录（clean tree @503e9bd：merged 7/7
+  + split 6/6 + vue build + e2e），delivery 间代码零漂移（doc-only 证明）。
+  ledger_refreshed: N/A——本仓无 live ledger / runtime projection
+  （.autoos/specs.json 不存在实核）；parity-ledger.md v1 为派生文档已随
+  T-05 更新入 delivery。
+  archived: docs/plans/archived/001-jade-edit-rebase-autoedit.md（git mv
+  保留历史）+ status: archived + completion_kind: delivered。
+  cleaned: 无 worktree/dev 分支待清（直接 main 约定）；rust 探针产物
+  rust-workspace/jade-edit-back = gitignored 构建产物（.gitignore:7 在册），
+  非计划工件不属清理面。
 
 ## 10. 待澄清事项
 
