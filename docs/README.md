@@ -27,7 +27,8 @@
 ## 运行矩阵
 
 前置：`auto.exe` 在 PATH 或 `AUTO_EXE` env（须含上游 669 `#[api]` 实参
-装配修复，≥ 2026-09-21 构建）；`pnpm install`（仓根，playwright）。
+装配修复 + 671 vue 生成器缺口批——补件链退役面；≥ v0.4.2-1652 构建，
+本仓复验版 g055808724）；`pnpm install`（仓根，playwright）。
 工作区根：`JADE_WORKSPACE` env（缺席 = AUTO_PROJECT_DIR = 工程目录）。
 
 ```sh
@@ -40,8 +41,8 @@ JADE_WORKSPACE=<工作区> auto run -r vm --no-merge
 # —— 后端独立 serve（不开窗——vue dev / 联调用）——
 node scripts/serve-back.mjs [--port 8211]     # auto run --server vm + 隔离 fixture + ws_root belt
 
-# —— vue 轨（生成+补件+install+build 一键；dev 需代理指向后端）——
-pnpm build                          # = node scripts/regen-vue.mjs
+# —— vue 轨（裸 strict 生成+三残余补件+install+build 一键；dev 需代理指向后端）——
+pnpm build                          # = node scripts/regen-vue.mjs（补件链已随 671/646 退役）
 AUTO_HTTP_PORT=8211 AUTO_FRONT_PORT=4181 pnpm --dir gen/front/vue dev
 
 # —— 门（双轨一致性：vm 双臂矩阵 + vue build/e2e）——
@@ -59,9 +60,10 @@ pnpm test:e2e                       # vue 六检查（同一检查单；serve-ba
 - [plans/attachments/081-t00-rulings.md](plans/attachments/081-t00-rulings.md) —
   T-00 三勘定决策档（auto-down PLAN-081 附件；双轨机制 / actions-vue
   现状 / 后端选型）
-- [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v0（九项三分类）
+- [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v2（十五项三分类）
 
 ## 计划
 
-PLAN-081（jade-edit-bootstrap）执行中——计划本体与进度记录在
-auto-down 主检出 `docs/plans/081-jade-edit-bootstrap.md`（账本所在）。
+PLAN-081（bootstrap）+ PLAN-001（换基自有 back）已交付归档——后者见
+[plans/archived/001-jade-edit-rebase-autoedit.md](plans/archived/001-jade-edit-rebase-autoedit.md)；
+PLAN-081 本体在 auto-down 主检出 `docs/plans/081-jade-edit-bootstrap.md`。

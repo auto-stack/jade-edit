@@ -1,4 +1,4 @@
-# jade-edit 双轨差异登记表 v1（PLAN-081 T-07 首版；PLAN-001 T-05 换基复核）
+# jade-edit 双轨差异登记表 v2（PLAN-081 T-07 首版；PLAN-001 T-05 换基复核；2026-09-21 补件链退役复核）
 
 > 方法论继承旧 jade-garden L3 差异表（design 30 §8）：差异不静默、逐项
 > 记账（形态/处置/升级路径）。分类：**归档级**（双轨形态已对齐/不追）
@@ -16,12 +16,12 @@
 | D-07 | ~~JsonAny 契约字段~~ | ~~VM 存取损坏~~ → 换基后 front 全程零 JsonAny（frontmatter back 侧字符串层保留/拼回；read_wiki 只回 body） | 同左 | 归档 | PLAN-081 C-1「现读现传」绕法随边界内移退役；上游 JsonAny 装箱修复仍登记（旧 jade 潜在同坑在案） |
 | D-08 | 状态读面 | 合并根状态裸读可用 | 裸读发射为未声明标识符（vue-tsc 拒绝） | 归档 | 定形 `.store.*` 单一读面（013 形态）；store computed 双轨皆坏已退役 |
 | D-09 | 结构基线 | tests/baseline/structure-v1.txt 锁 state+snapshot（换基满状态；v0 留档） | 无对应（vue 轨 DOM 断言走 e2e） | 归档 | 断言域=两轨交集；vue 侧不复制 vm 基线形态 |
-| D-10 | vue-tsc v-for 兄弟模板作用域 | 不适用 | v-for 内**互补兄弟 `<template v-if>` 对的第二分支**丢循环变量作用域（i/t/r 三症状；2.0.29/2.2.12 × vue3.4/3.5 组合全试无免） | 上游 | 规避双管：源级消对（explorer 单按钮 + handler 分流）+ regen-vue 生成级 v-for 拆分补丁（tab 对——vm 轨需双分支保留）；上游候选计划 |
+| D-10 | ~~vue-tsc v-for 兄弟模板作用域~~ | 不适用 | T-03 三症状（i/t/r；2.0.29/2.2.12 × vue3.4/3.5 全试无免）随 PLAN-671 新发射形态消失——2026-09-21 裸 strict 生成 + vue-tsc 2.2.12 实测零报错，v-for 拆分补丁与版本钉（vue 3.5.35+vue-tsc 2.0.29）一并退役 | 归档 | 源级消对（explorer 单按钮 + handler 分流）保留；tab 互补双分支发射仍在但零触发——源级若再引入同类兄弟对需重验 |
 | D-11 | `.find` 闭包 split 硬崩 | merged OK；**`--no-merge` split 下 `.tabs.find(t => …)` 闭包使进程硬崩**（无 panic 输出；T-01 实勘，type/save 双复现） | 不适用（js 原生 find） | 上游 | 纪律：store 内 tab 定位一律 while 索引扫描（基座同款形态）；auto-lang 侧另立计划修复后解禁 |
 | D-12 | autodown_editor 事件面 | key/content/final/oninput/on_focus（aura_view_builder.rs 实勘）——**无 oncursor/oncontextmenu**，无 code_editor_* 内建族 | 同左 | 上游 | StatusBar 行:列降级（docs 计数+脏标替代）；ctx_menu 组件不迁入（无右键锚）；menubar 编辑项 no-op+console 注记（编辑器内原生快捷键仍可用）；engine 事件面扩展后续批 |
-| D-13 | vm 宿主内建 vue 运行期 | 不适用（宿主原生） | natives.d.ts 只过类型门；运行期 = regen-vue 补 `vm-natives.ts` 垫片（console_log 聚合/console_lines 回读=ConsolePanel 真数据；file_basename；dialog_* 返回 ""=取消；Process.exit no-op） | 组装 | 垫片为 gen 产物常驻补件；dialog 的 vue 真形态（文件选择器）属后续批 |
+| D-13 | vm 宿主内建 vue 运行期 | 不适用（宿主原生） | 类型面生成器自备（PLAN-671 ①+P2：natives.d.ts 声明层 + natives.ts 条件抛错桩，`if (!(n in g))` 先到先得）；运行期 = regen-vue 补 `vm-natives.ts` 垫片**先装覆盖**（console_log 聚合/console_lines 回读=ConsolePanel 真数据；file_basename；dialog_* 返回 ""=取消；Process.exit no-op） | 组装 | 垫片为 gen 产物常驻补件（vue 轨 e2e 热路径依赖，2026-09-21 复验共存成立）；dialog 的 vue 真形态（文件选择器）属后续批 |
 | D-14 | frontmatter updated_at 补写 | 旧 jade-garden-back 保存时服务端补 updated_at；换基 Auto back v0 **逐字保留 frontmatter**（不补写） | 同左 | 组装 | 六检查断言域不含 updated_at（磁盘原文+标记+frontmatter 三验）；补写属 wiki 域功能池后续批 |
-| D-15 | 生成器残余缺口（换基面） | 不适用 | 双段 `${}` 插值发射错序（源级拆单段规避）；`--lenient` 通道（menubar-item props 超 vue schema 面[text/disabled/onclick]）；deps/bps 部分同步 package load 告警（不阻断） | 上游 | regen-vue 补件 + 断言守；auto-edit PLAN-003 七类补件同源（其 regen_vue.py 在册） |
+| D-15 | 生成器残余缺口（换基面） | 不适用 | 双段 `${}` 插值错序（671 附a 清偿）、`--lenient` 通道（671 附b menubar 族 schema 吸收=strict 零 S001）已消——2026-09-21 补件链照 auto-edit d845e54 先例退役（残余 D-10/D-13/D-04 见各行）；**仍存**：`tabs.value.remove` 直通（R010 INFO：receiver 非证数组即原样直通——regen-vue splice 补件守，上游未清偿）、deps/bps 部分同步 package load 告警 + dropdown-menu `open` prop schema 未吸收（均 warning 级不阻断） | 上游 | 残余件上游清偿后补件断言 fail 提示撤除；auto-edit 侧七类链同日退役（d845e54 在册） |
 
 ## 增记规则
 

@@ -37,7 +37,8 @@ src/front/app.at          App 壳：filetree + 编辑区 + status 行（自有
                            ft_*/status 状态）+ on 纯薄委托
 src/front/editor_store.at EditorStore：tabs/脏标/保存流 + active_* 显示
                            投影（状态权威；视图唯一读面 .store.*）
-src/back/api.at           /api 契约副本（GENERATED，漂移门守）
+src/back/api.at           /api 契约（自有 Auto 源，与实现同 commit——
+                          契约副本与漂移门已随换基退役，见 §5）
 ```
 
 - **状态权威与显示投影全在 store**；App 视图经 `.store.*` 读（vue=响应式
@@ -53,10 +54,14 @@ src/back/api.at           /api 契约副本（GENERATED，漂移门守）
 | C-5 | INPUT_TEXT / type_text = 整文替换语义（jade 080 同裁定） | 编辑矩阵以磁盘原文构造全文 |
 | C-6 | msg 载荷单类型；裸 `var x = []` VM 静默坏列表 | 单 map 载荷；typed 声明 |
 
-- vue 生成链已知四缺口（regen-vue.mjs 内补丁 + pattern 断言，上游修复
-  后断言失败提示撤除）：通配路由 URL 不替换、`List<T>` 直译、`JsonAny`
-  直译、`map` 参数类型直译。另：`auto-sources.ts`/`env.d.ts` 为 gen-only
-  流补件（`auto run` vue 流才写真值）。
+- vue 生成链补件已随上游清偿退役（2026-09-21，照 auto-edit d845e54
+  先例；上游 PLAN-671 r1+Phase 2 + PLAN-646，工具链 ≥ v0.4.2-1652）：
+  natives 声明层/条件抛错桩、store 自调别名内联、int 负初值、button
+  text variant、menubar 族 schema 吸收（strict 零 S001，`--lenient`
+  摘除）、多段插值、auto-sources 真值、vite-env 均生成器自备。残余三
+  补件（regen-vue.mjs pattern 断言守，见 [parity-ledger.md](parity-ledger.md)
+  D-13/D-15）：vm-natives 运行期垫片（e2e 热路径）、tree JSON.parse
+  （str 标量契约）、tabs.remove→splice（R010 直通，上游未清偿）。
 
 ## 4. 编辑器消费（外部官方组件）
 
@@ -112,7 +117,7 @@ src/back/api.at           /api 契约副本（GENERATED，漂移门守）
 | 门 | 命令 | 断言域 |
 | --- | --- | --- |
 | vm 矩阵（双臂） | `node tests/vm_matrix.mjs` | merged 臂（进程内直调）+ split 臂（`--no-merge` HTTP）各六检查（boot/tree/open/edit/save/reload）+ 结构基线 v1 零漂移（merged 臂锁，`tests/baseline/structure-v1.txt`；v0 留档） |
-| vue build | `pnpm build`（= regen-vue.mjs） | 生成 + 补件 + vue-tsc 0 错 + vite build |
+| vue build | `pnpm build`（= regen-vue.mjs） | 裸 strict 生成 + 三残余补件 + vue-tsc 0 错 + vite build |
 | vue e2e | `pnpm test:e2e` | playwright **同一检查单**（serve-back AutoVM 后端 + vite 双 webServer） |
 | 双臂总门 | `node scripts/gate.mjs` | ①vm 双臂 ②vue(build+e2e) 顺序全绿（契约漂移段已随自有源退役） |
 
