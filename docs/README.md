@@ -49,9 +49,24 @@ AUTO_HTTP_PORT=8211 AUTO_FRONT_PORT=4181 pnpm --dir gen/front/vue dev
 node scripts/gate.mjs
 
 # —— 单门 ——
-node tests/vm_matrix.mjs            # 双臂（merged+split）六检查 + 基线 v1 零漂移
-pnpm test:e2e                       # vue 六检查（同一检查单；serve-back 后端）
+node tests/vm_matrix.mjs            # 双臂（merged+split）检查单 + 基线 v2 零漂移
+pnpm test:e2e                       # vue 检查单（同一检查单；serve-back 后端）
 ```
+
+## Tests（判绿口径，SD-204）
+
+检查单（PLAN-002 T-01 扩定）：`boot / tree / open / edit / save / reload`
+六检查 + **tab / editops / quit** 扩单三组——vm 矩阵与 vue e2e 同单
+（断言域 = 结构/文本/磁盘字节，非像素）。
+
+- **完成态 = RESULT 行出现且两臂全数通过**：vm 矩阵 `merged 10/10 +
+  split 9/9`（merged 多一项基线检查）+ ALL GREEN 行；vue e2e 九检查
+  日志齐 + passed。无 RESULT 行 = 工具链竞态早崩 → **重跑一次而非排查**
+  （auto-edit F-RV6 同款口径）。
+- N 定谳（2026-09-21 扩单首锁 ≥5 连跑分布）：vm 双臂 **6/6 连跑全绿**
+  （10+9 检查逐跑全过）——N = 全数，无失败集漂移。
+- 结构基线 = `tests/baseline/structure-v2.txt`：state 段逐字节 + snapshot
+  vnode id 出现序列（上游快照投影属性行双态下确定，D-18）；v1/v0 留档。
 
 ## 文档
 

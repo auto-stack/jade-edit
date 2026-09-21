@@ -13,7 +13,9 @@ const FRONT_PORT = 4181
 
 export default defineConfig({
   testDir: '.',
-  timeout: 30_000,
+  // PLAN-002 T-01 扩单（六检查 → 九检查同单）：HTTP 往返逐拍累加
+  // （D-03 切换面 0.5-1.2s/拍），单 test 预算 30s→90s。
+  timeout: 90_000,
   workers: 1,
   retries: 0,
   reporter: [['list']],

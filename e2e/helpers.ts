@@ -12,6 +12,9 @@ export const TARGET_FILE = path.join(WORKSPACE, 'wiki', 'Hello World.ad')
 export const EDIT_MARKER = 'jade-edit 冒烟标记：编辑回写可见。'
 export const RELOAD_MARKER = '外部重载标记：重载可见。'
 export const TARGET_LABEL = 'Hello World.ad'
+// 扩单三组（PLAN-002 T-01）——与 tests/vm_matrix.mjs 同名常量同源
+export const TAB_MARKER = 'tab 面标记：脏档关闭确认。'
+export const QUIT_MARKER = '退出存盘标记：QuitSaveClose 落盘。'
 
 /** 当前可见（活动）的 AutoDown 编辑器实例。 */
 export function visibleEditor(page: Page) {
