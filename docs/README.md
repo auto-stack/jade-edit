@@ -48,6 +48,11 @@ AUTO_HTTP_PORT=8211 AUTO_FRONT_PORT=4181 pnpm --dir gen/front/vue dev
 # —— 门（双轨一致性：vm 双臂矩阵 + vue build/e2e）——
 node scripts/gate.mjs
 
+# —— 测量套件（L0 代理：启动分解/首开冷热/换档/大文档/内存；SD-205）——
+node tools/bench/bench.mjs check               # 依赖自检 + 环境指纹（工具链 ≥1652）
+node tools/bench/bench.mjs proxy [--runs N]    # 测量 → results/<ts>.jsonl
+node tools/bench/bench.mjs assert              # 存量 measurements × budgets 重评
+
 # —— 单门 ——
 node tests/vm_matrix.mjs            # 双臂（merged+split）检查单 + 基线 v2 零漂移
 pnpm test:e2e                       # vue 检查单（同一检查单；serve-back 后端）
@@ -75,7 +80,10 @@ pnpm test:e2e                       # vue 检查单（同一检查单；serve-ba
 - [plans/attachments/081-t00-rulings.md](plans/attachments/081-t00-rulings.md) —
   T-00 三勘定决策档（auto-down PLAN-081 附件；双轨机制 / actions-vue
   现状 / 后端选型）
-- [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v3（十六项三分类）
+- [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v4（十八项三分类）
+- [upstream/2026-09-jade-supply.md](upstream/2026-09-jade-supply.md) —
+  上游供料包（D-16 预热 / D-15 残余 / D-17 键入发射 / D-18 投影双态，
+  期望形态+复验条件+回执方式）
 
 ## 计划
 

@@ -1,12 +1,12 @@
 ---
 plan_id: PLAN-002
-status: executing
+status: execution_done
 feature_name: jade-dualtrack-sync-batch
 author: [zhaopuming]
 created_at: 2026-09-21T21:30:00+08:00
-updated_at: 2026-09-21T22:10:00+08:00
+updated_at: 2026-09-21T23:30:00+08:00
 plan_revision: 1
-current_step: 0
+current_step: 5
 total_steps: 5
 supersedes_spec_components: []
 new_spec_components:
@@ -200,13 +200,13 @@ node（bench/矩阵/e2e 同栈）、playwright（e2e）、AutoUI MCP（vm 驱动
 
 | # | 任务 | 依赖 | 产出 | AC | 验证 |
 |---|---|---|---|---|---|
-| T-01 | 矩阵扩三组（vm_matrix+e2e 同单）+ ≥5 连跑 + 判绿口径 | — | 扩单矩阵/分布表/README 口径 | AC-01/02 | gate ALL GREEN；≥5 跑分布定 N |
-| T-02 | bench.mjs 三命令 + budgets.json + 基线入仓 + bench README | T-01（换档口径） | tools/bench 全套 | AC-03/04/07(基线) | 三命令复制执行绿 + 构造性红证 |
-| T-03 | 镜像语义固化（ARCHITECTURE §3 + ledger 指针） | — | SD-201/202 | AC-05 | 实读复核 |
-| T-04 | 上游供料包 | T-02（D-16 数据收编） | docs/upstream/…supply.md | AC-06 | 实读复核 |
-| T-05 | gate 全量收口 + README/PROVENANCE | T-01..04 | 收口收据 + SD-204/205 | AC-01/07 | gate ALL GREEN 实录 |
+| T-01 | ✅ 矩阵扩三组（vm_matrix+e2e 同单）+ ≥5 连跑 + 判绿口径 | — | 扩单矩阵/分布表/README 口径 | AC-01/02 | gate ALL GREEN；vm 双臂 6/6 连跑全绿（merged 10/10+split 9/9）→N=全数 |
+| T-02 | ✅ bench.mjs 三命令 + budgets.json + 基线入仓 + bench README | T-01（换档口径） | tools/bench 全套 | AC-03/04/07(基线) | 三命令复制执行绿 + 构造性红证（budget 10ms→exit1） |
+| T-03 | ✅ 镜像语义固化（ARCHITECTURE §3 + ledger 指针） | — | SD-201/202 | AC-05 | 实读复核（§9） |
+| T-04 | ✅ 上游供料包 | T-02（D-16 数据收编） | docs/upstream/…supply.md | AC-06 | 实读复核（六节） |
+| T-05 | ✅ gate 全量收口 + README/PROVENANCE | T-01..04 | 收口收据 + SD-204/205 | AC-01/07 | gate ALL GREEN 实录（exit 0） |
 
-执行顺序：T-01 → T-02 →（T-03/T-04 可并行）→ T-05。
+执行顺序：T-01 → T-02 →（T-03/T-04 可并行）→ T-05。✅ 全数完成（2026-09-21）。
 
 ## 9. 复审记录
 
@@ -214,9 +214,78 @@ node（bench/矩阵/e2e 同栈）、playwright（e2e）、AutoUI MCP（vm 驱动
   outcome=pass（授权=用户批准五任务形态；判绿数值 N 与 bench 是否入
   gate 已裁定为执行期决策/独立命令，无阻塞待决），next=work。
 
+- 2026-09-21 work 完成（auto-plan-work）｜stage: work｜plan_id: PLAN-002｜
+  plan_revision: 1｜outcome: **pass**｜
+  code_commit: b0efc82（T-01）→ db7c612（T-02）→ adc99d5（T-03+T-04）→
+  本 commit（T-05 收口+簿记）｜
+  task_ids: T-01..T-05 全数｜
+  evidence:
+  - **AC-01 扩单全绿**：gate 全量复跑 exit 0（终局实录：[matrix:merged]
+    10/10 + [matrix:split] 9/9 + [gate] 2 vue-build PASS + vue-e2e
+    1 passed/九检查日志齐 → [gate] ALL GREEN）。检查单 = 六检查 + tab/
+    editops/quit 三组，vm 双臂与 e2e 同单；vue quit=落盘三验断言（进程
+    退出仅 vm 附注）。
+  - **AC-02 判绿口径**：README Tests 节落盘（SD-204）+ 下附 ≥5 连跑分布表；
+    N=全数。
+  - **AC-03 bench**：`check` 绿（指纹 1798 ≥1652）；`proxy` 产出 JSONL
+    （启动分解/冷热/换档/大文档/内存五类齐）；`assert` 报告四态
+    （hard-pass/ledger/blocked-upstream/not-measured）；README 三命令行
+    复制执行均绿。
+  - **AC-04 budgets**：六行全带 tier/validity/unlock/unit；冷态首开
+    ledger+blocked-upstream(D-16)、大文档 blocked-upstream(C-5)；构造性
+    红证 = budget 调 10ms → assert exit 1 → 复原 exit 0（16:07 实录）。
+  - **AC-05 SD-201/202**：ARCHITECTURE §3 镜像语义段 + ledger v4
+    D-03/D-16 预算互指，实读复核。
+  - **AC-06 供料包**：docs/upstream/2026-09-jade-supply.md 六节
+    （§1 D-16/§2 D-15 残余+671 面 2a-2f/§3 D-17/§4 D-18/§5 附记），
+    每节期望形态/证据/复验条件/回执方式齐，实读复核。
+  - **AC-07 基线入仓**：tools/bench/results/baseline-L0-20260921.md
+    （b8bce4d 既有实测 + 本批 proxy 复跑对照，热回访/换档带同量级
+    校验过）；PROVENANCE 家族同步注记落盘。
+  - **≥5 连跑分布表**（T-01 判绿数据源，基线仪器 v2 定型后）：
+
+    | 跑次 | merged（10 检查） | split（9 检查） | 判定 |
+    |---|---|---|---|
+    | 1 | 10/10 | 9/9 | ALL GREEN |
+    | 2 | 10/10 | 9/9 | ALL GREEN |
+    | 3 | 10/10 | 9/9 | ALL GREEN |
+    | 4 | 10/10 | 9/9 | ALL GREEN |
+    | 5 | 10/10 | 9/9 | ALL GREEN |
+    | 6 | 10/10 | 9/9 | ALL GREEN |
+
+    （另：仪器定型前功能检查在全部连跑中恒 9/9+9/9——失败集仅基线
+    比对项，见裁定③。）**N 定谳 = 全数**（merged 10 + split 9，无
+    失败集漂移、无早崩）；完成态口径 = RESULT 行出现且两臂全数。
+  - **SD 落盘对照**：SD-201..205 全部落盘（ARCHITECTURE §3 / ledger
+    v4 / upstream 供料包 / README Tests 节 / README 运行矩阵 bench 行）；
+    SD-202 落地为 ledger v4（D-03/D-16 处置列 + 新增 D-17/D-18 行，
+    版本指针 README 已同步 v3→v4）。
+  - **执行期裁定记录**（证据驱动、范围中立）：
+    ① **结构基线 v1→v2 重锁**：上游快照投影属性行双态（style/onclick
+    非确定发射，1652→1784，F-RV6 家族；state 段逐字节一致、vnode id
+    不变）→ 基线仪器改 state 逐字节 + vnode id 序列，v2 重锁、v1 留档
+    （D-18 登记 + 供料包 §4）。
+    ② **regen-vue 补件链更新**：③:key 绑 active_key（D-03 切档键入
+    断链修复面）、④孤儿 dep-demo 清理（上游 676 在途 GalleryShell
+    popover TS2307，零引用守卫）；补件② tree JSON.parse 退役（1784
+    原生发射）；垫片改后装 + __vmOnly no-op（D-13 勘误）。
+    ③ **e2e D-17 适配**：切档重挂载实例键入发射 blur 门控（上游
+    engine 缺口）——中性 blur=确定性冲刷；检查单语义不变，vue 侧执行
+    机制差异登记（D-17 + 供料包 §3）。
+    ④ **bench hard 行口径实测定型**：总可见时受 D-03 节拍支配
+    （53-1946ms 双态）不可作 hard——hard 锚热回访 press 往返
+    （51-52ms 全程稳定，≤250ms）；大文档 = blocked-upstream 实证记录
+    （1MB 整文读链 30s 不达激活）。
+    ⑤ 计划文本微勘：T-01 tab 关闭确认两路的 msg 名实为
+    ConfirmClose/ConfirmCancel（QuitDiscard/QuitSaveClose 属退出弹层），
+    按实现语义覆盖（取消档留/直接关闭弃改两路均已断言）。
+  blockers: 无｜
+  next: review（auto-plan-review）
+
 ## 10. 待澄清事项
 
-- 判绿口径数值 N：执行期由 T-01 首轮 ≥5 连分布定谳（auto-edit F-RV6
-  类早崩形态若在 jade 复现，口径同型处理——无 RESULT 行=重跑条款）。
-- bench 与 gate 关系：本计划定为**独立命令**（gate 保持三段不变），
-  用户若要 bench assert 入 gate 另批。
+- ~~判绿口径数值 N~~：**已定谳**（执行期 T-01）——N=全数（merged 10 +
+  split 9），6/6 连跑全绿，分布表见 §9；无早崩形态复现，重跑条款仅作
+  完成态口径备援。
+- ~~bench 与 gate 关系~~：**已按计划定案**——bench 保持独立命令
+  （gate 三段不变）；如需 assert 入 gate 另批。
