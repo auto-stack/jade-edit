@@ -54,6 +54,19 @@ src/back/api.at           /api 契约（自有 Auto 源，与实现同 commit—
 | C-5 | INPUT_TEXT / type_text = 整文替换语义（jade 080 同裁定） | 编辑矩阵以磁盘原文构造全文 |
 | C-6 | msg 载荷单类型；裸 `var x = []` VM 静默坏列表 | 单 map 载荷；typed 声明 |
 
+- **active_body 镜像语义（SD-201，PLAN-002 T-03 固化）**：`active_body`
+  是每键整文回写的镜像——编辑器 `oninput`（vm INPUT_TEXT / vue
+  `@update:modelValue` 同源）把**整份文档**经 `.Edit(text)` 回写 store，
+  store 即文档事实源（保存/脏标/重载全走它）。这是 **vue 通道承重**
+  结构：vue 编辑器 `:content` 单向播种 + 整文回传，无区间增量面；与
+  auto-edit 的「编辑器权威 + 去镜像」形态结构性不同（jade 编辑器组件
+  不持文档事实源）。**大文档上限受制于此**：每键 O(n) 整文回传 +
+  read_wiki 整文读（实测 1MB 文档整文读链阻塞，bench `open_large_doc`
+  blocked-upstream 记账）。**unlock = 上游 rope delta/分块读**（delta
+  事件流 + back 分块读端点，见 [upstream 供料包](upstream/2026-09-jade-supply.md)
+  §1/§2）——上游落地前禁对该路径调优，测试矩阵以磁盘原文构造全文
+  （C-5）即其纪律面。
+
 - vue 生成链补件已随上游清偿退役（2026-09-21，照 auto-edit d845e54
   先例；上游 PLAN-671 r1+Phase 2 + PLAN-646，工具链 ≥ v0.4.2-1652）：
   natives 声明层/条件抛错桩、store 自调别名内联、int 负初值、button
