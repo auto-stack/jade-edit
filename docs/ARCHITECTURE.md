@@ -171,7 +171,8 @@ src/back/api.at           /api 契约（自有 Auto 源，与实现同 commit—
   index.ad = 悬空）；同名 stem 冲突取首现（walk 序）。反链派生在
   front（App 模型持链接态 + handler 触点重算——store 上下文 to_value
   损坏 + ts_adapter identifier 实参 to_value 静默恒等，双缺口 D-20）；
-  刷新触发集 v1 = Init / Save 成功 / 面板开启（无文件系统 watch，
+  刷新触发集 v1 = Init / Save 成功 / 面板开启（v1；**v2 起 SD-501 扩**
+  ——建页成功 + 树重取）（无文件系统 watch，
   后续批）；悬空 active（""）反链恒空（卫语句——否则悬空出链
   `target_path:""` 误配）。
 - **检索与快速打开域语义（SD-401，PLAN-004 第二切片）**：`search_wiki
@@ -201,18 +202,55 @@ src/back/api.at           /api 契约（自有 Auto 源，与实现同 commit—
   vm convert_input onenter→on_submit / vue @keyup.enter）；检索按需
   fetch、快开过滤纯内存——**刷新触发集 = 无**（与链接面板 Init/Save/
   面板开启触发集的结构性差异）。
+- **悬空建页语义（SD-501，PLAN-005 第三切片）**：wikilink 写闭环收口
+  ——出链行悬空（exists=false）由非点击文本改渲染为可点击 button
+  （`{target}（悬空）`，attr 单段插值——内容插值同族发射），点击 =
+  建页入口 → **确认弹层**（alert-dialog 在册族第三实例：标题「创建缺失
+  页面？」+ 描述 `[[{target}]] 尚不存在` + 路径预览 = `title_to_path`
+  front 镜像纯函数经 widget computed——**仅显示用**，权威在 back，漂移
+  =观感非正确性；弹层态居 store 两字段 create_confirm_open/create_target
+  ——confirm 族分野先例）→ 创建/取消（取消零落盘；误触防线——旧园
+  CreatePagePrompt「Create missing page?」先例移植）。back 契约
+  `create_page(title)` **POST**（D-19 同 search_wiki：悬空目标多为 CJK，
+  GET query 不解码；POST body CJK 已证）→ wsys.create_page_impl 单事务
+  ：①清洗（下）②根落位 `{safe}.ad`（清洗名恒不含分隔符，resolve 恒
+  落工作区根——无父目录创建面）③**幂等守卫**（已存在不写返回现路径
+  ——write_body 对存在档会改写 body，绝不复用作建页通道；**守卫 back
+  侧内移** = front exists 预检对 CJK 在 split/vue 臂失效[D-19] +「先
+  exists 后 write」两跳竞态的结构性消除）④模板落盘 `# {title}\n\n`
+  （title = wikilink 原文非清洗名——显示保真；无 frontmatter——D-14
+  v0 逐字保留哲学，旧园 default_ad_content 的 frontmatter 面**不搬**）
+  ⑤exists 复核；返回工作区根相对 path（"" = 空名守卫/复核失败；front
+  失败路径 = 弹层留置 + console 注记）。**清洗规则 v1
+  （title_to_path，back 权威）**：九字符 `\/:*?"<>|` → `-`（**while-
+  contains 收敛惯用法**：每字符 `while t.contains(c) { t = t.replace
+  (c, "-") }`——`.replace` 次数语义双轨未证[JS 串参=首现替换
+  ts_adapter.rs:1219；VM 全量与否未证]，惯用法首现/全量两态皆收敛，
+  免探针；D-23 纪律）+ trim + **空名守卫**（trim 空**或**九字符收敛后
+  恰 `"-"`——`///` 形全非法字符名替换后只剩分隔符、无名可立，dash-收敛
+  探针同惯用法族无 length/slice 零 CJK 字节语义暴露）→ 守卫命中返回
+  ""。**刷新触发集 v2**（SD-302 v1 扩）：v1 + **建页成功**
+  （`.CreateGo` 内 `.LinksRefreshOf(r)`——悬空行 exists 翻转，显式
+  新档 path 避 handler 内 .store 陈旧投影）+ **树重取**（`.TreeRefresh`
+  共享口：Init / 建页成功 / Save 后三触点——**Save 新档顺收**[G3]：
+  untitled 落盘后树陈旧至重开的先在面收口；Save 后恒重取，失败保存的
+  重取为无害幂等）；快开数据源 ft_nodes 随树重取自动新鲜（
+  collect_ad_paths 零额外接线）。五触点 fetch 块收口 = msg handler
+  共享口（`.LinksRefreshOf(active)` / `.TreeRefresh`）——json.to_value
+  只能 handler 体内直调（D-20⑤）+ 状态赋值需 handler 上下文 ⇒ 「局部
+  fn」以 msg 面落地（handler 互调在册先例 .FindPick→.OpenLink）。
 - fixture workspace 每次全新隔离拷贝（源 = auto-down `tmp/wiki-demo`，
   `JADE_FIXTURE` 可覆）——测试会打字保存，源零污染。Auto back 无 config
   文件 ⇒ 旧「exe 旁陈年 config 压 env」事故类别结构性消失（belt 保留为
   ws_root 实际根断言）。
 
-## 6. 测试体系（双轨一致性门；PLAN-001 T-04 换基迁移；SD-402 find 扩单）
+## 6. 测试体系（双轨一致性门；PLAN-001 T-04 换基迁移；SD-402 find 扩单；SD-502 create 扩单）
 
 | 门 | 命令 | 断言域 |
 | --- | --- | --- |
-| vm 矩阵（双臂） | `node tests/vm_matrix.mjs` | merged 臂（进程内直调）+ split 臂（`--no-merge` HTTP）各**十二组检查**（六检查 + 基线[merged] + tab/editops/link/find 扩单 + quit——PLAN-002/003/004 扩单）+ 结构基线 v4 零漂移（merged 臂锁，`tests/baseline/structure-v4.txt`；v3/v2/v1/v0 留档） |
+| vm 矩阵（双臂） | `node tests/vm_matrix.mjs` | merged 臂（进程内直调）+ split 臂（`--no-merge` HTTP）各**十二组检查**（六检查 + 基线[merged] + tab/editops/link/find 扩单 + quit——PLAN-002/003/004/005 扩单；**link 组含建页弧线子步 10c**[PLAN-005]——子步不占检查位，fail 即臂败）+ 结构基线 v5 零漂移（merged 臂锁，`tests/baseline/structure-v5.txt`；v4/v3/v2/v1/v0 留档） |
 | vue build | `pnpm build`（= regen-vue.mjs） | 裸 strict 生成 + 三残余补件 + vue-tsc 0 错 + vite build |
-| vue e2e | `pnpm test:e2e` | playwright **同一检查单**（serve-back AutoVM 后端 + vite 双 webServer） |
+| vue e2e | `pnpm test:e2e` | playwright **同一检查单**（含 10c 建页弧线——ASCII 悬空源档测试内造，零语料改动；serve-back AutoVM 后端 + vite 双 webServer） |
 | 双臂总门 | `node scripts/gate.mjs` | ①vm 双臂 ②vue(build+e2e) 顺序全绿（契约漂移段已随自有源退役） |
 
 断言域 = 两轨交集（结构/文本/磁盘字节，**非像素**）；差异登记面 =

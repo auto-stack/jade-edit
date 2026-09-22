@@ -1,12 +1,12 @@
 ---
 plan_id: PLAN-005
-status: executing
+status: execution_done
 feature_name: dangling-create-slice
 author: [zhaopuming]
 created_at: 2026-09-22T23:36:52+08:00
 updated_at: 2026-09-22T23:36:52+08:00
 plan_revision: 1
-current_step: 4
+current_step: 5
 total_steps: 5
 supersedes_spec_components: []
 new_spec_components:
@@ -465,7 +465,7 @@ pub fn create_page_impl(title str) str {
     - ④**判绿实录**：vm 双臂 **4 连跑全绿**（v5 锁后 full run ×3 +
       gate 内 ×1，逐跑 merged 13/13 + split 12/12 + B v5 零漂移；另
       v5 锁定 run merged 12/12[B 采集位不比]）；`pnpm test:e2e`
-      **6/6 连跑全绿**（10c 过，14+2 PASS 行/跑；含 gate 内 1）；
+      **6/6 连跑全绿**（10c 过，15 PASS 行/跑[14+10c]；含 gate 内 1）；
       `node scripts/gate.mjs` **ALL GREEN**（vm 双臂 + vue build
       strict + e2e 同窗连跑）。N 定谳续记（SD-403 口径）：N = 全数，
       无失败集漂移。
@@ -502,29 +502,53 @@ pub fn create_page_impl(title str) str {
   - 免探针设计：`.replace` 语义以惯用法规避（无待裁探针）；唯 §10
     观测项（D-21 波及/大小写不敏感 FS 边界）非阻塞。
 
+- **2026-09-22 work 收口（auto-plan-work）**：
+  - `stage: work`，PLAN-005，revision 1。
+  - `outcome: pass`——T-01..T-05 全完成，AC-01..06 全数在案。
+  - `code_commit: ed759fe(T-01)→1bf7d96(T-02)→6bd444a(T-03)→
+    ea1b971(T-04)→本次(T-05)`；base = 44cab26（PLAN-004 归档 tip，
+    直接 main 线性约定——本仓无 worktree/dev 分支）。
+  - `task_ids: T-01..T-05 全完成`。
+  - `evidence`：AC-01 = probe_create.mjs 双臂九案 RESULT 全过 + 双臂
+    一致；AC-02 = vm 10c 双臂（merged CJK 开档播种/split D-19 磁盘+
+    翻转面）+ e2e 10c 全弧线 + merged 冒烟全弧线八断言；AC-03 = gate
+    ALL GREEN（vm 双臂 4 连跑 13/13+12/12 + vue build strict + e2e
+    十二段[15 PASS 行/跑]）；AC-04 = 基线 v5 锁定（v4 留档）零漂移
+    4 连跑；AC-05 = 负向证四件（家族仓零接触[fixture 隔离拷贝+本仓
+    提交链+源目录实勘]/gen regen 双跑等价[hash 逐字节]/旧园零代码
+    引用[非注释 grep 空]/补件面零增量[regen-vue.mjs+helpers 零 diff，
+    残余垫片族+splice 两件不变] + 重构行为零变化[v5 4 连跑零漂移]）；
+    AC-06 = SD-501..504 落位锚注齐 + ledger v8（D-23 增补 + D-21
+    扩记）。
+  - `blockers: 无`（D-21 负载窗 7 失败重跑即绿——ledger v8 在案，
+    非阻塞）。
+  - `next: review`（worktree 保留 = 直接 main 约定，本仓无 worktree）。
+
 ## 10. 待澄清事项
 
 1. **确认弹层 vs 直接创建**（已随 r1 定，用户可改）：v1 = 确认弹层
    （旧园 CreatePagePrompt 先例 + alert-dialog 在册族 + 误触防线）；
    直接创建（Obsidian 默认形态）为备选——改口仅涉及 `.CreateClick`
-   直呼 `.CreateGo`，契约面不变。
+   直呼 `.CreateGo`，契约面不变。**已裁定（2026-09-22 交付）**：确认
+   弹层形态落地（T-02），改口面保持如上。
 2. **模板口径**（已随 r1 定，用户可改）：`# {target}\n\n` 纯 body、
-   无 frontmatter（D-14 哲学一致）；旧园含 title/created_at/
-   updated_at frontmatter 面——引入即破「逐字保留」v0 语义，若用户
-   要模板 frontmatter 需先裁 D-14 范围（另立批）。
+   无 frontmatter（D-14 哲学一致）。**已裁定（2026-09-22 交付）**：
+   无 frontmatter 落地（T-01 模板六案直证 + e2e 磁盘逐字节）。
 3. **`.replace` 次数语义**（免探针规避 + 供料候选）：while-contains
    惯用法双侧收敛（§2.2）；上游若定谳全量语义可简化为单次调用——
-   ledger v8 记账，unlock = auto-lang（VM 语义文档化/对齐）。
+   **已裁定（2026-09-22）**：ledger v8 D-23① 记账（六案双臂实测收敛
+   通过；unlock = auto-lang VM 语义文档化）。
 4. **方向确认**（用户，handoff 未否决即生效）：第三片 = 悬空建页
-   （§2.1 依据）。替代项代价：大纲只读（D-12 门控跳转，半值）、树
-   文件管理（新建/删除——Typora 线但薄）、重命名+反链改写（杀手件
-   但需「改写 vs 断链」语义决策，PLAN-006 候选首位）。
-5. **D-21 POST 波及**（观测项）：create_page POST 与 write_wiki/
-   search_wiki 同面——README 重跑口径覆盖，建页子步若复现则 ledger
-   v8 扩记；非阻塞。
+   （§2.1 依据）。**已执行**（T-01..T-05 按案交付）。
+5. **D-21 POST 波及**（观测项）：**已裁定（2026-09-22）**：执行窗
+   e2e 保存点 7 失败实录（家族会话同机并行窗；≥2 例 400 丢参签名；
+   重跑即绿）——ledger v8 D-21 扩记（复现率与同机负载正相关 +
+   try-await 负结果两枚 + 保存窗并发流 2→3 边际增量评估）；README
+   重跑口径覆盖；非阻塞。
 6. **大小写不敏感 FS 边界**（观测项）：stem 匹配精确比较下 `A.ad` 与
    `a.ad` 视为不同档，但 Windows 实盘同档——v1 记账（语料无此形态），
-  收口随重命名批（casefold 匹配裁决）一并议。
-7. **e2e 弧线语料方案**（T-04 落定）：倾向测试内经 write_wiki 造
-   ASCII 悬空源档（零语料改动、弧线全臂可跑）；备选 JADE_FIXTURE
-   增补语料。落定后进 T-04 证据块。
+   收口随重命名批（casefold 匹配裁决）一并议。**留观不变**。
+7. **e2e 弧线语料方案**（T-04 落定）：**已定谳（2026-09-22）**：ASCII
+   悬空源档测试内造（write_wiki POST 造 Create Source.ad，悬空目标
+   NewPage）——零语料改动、vue 臂全弧线可跑（语料悬空目标 首页 为
+   CJK 受 D-19 开档面）；T-04 ② 落地实录。

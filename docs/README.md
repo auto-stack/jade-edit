@@ -24,7 +24,10 @@
   （首切片 = wikilink 索引 + 反链/出链面板；**第二切片 = 查找面板**
   （SD-401，2026-09-22）：快速打开 Ctrl+P + 全文检索 Ctrl+Shift+F
   双模式；检索 = 冻结池 search.rs Page 面线性化移植，块级/倒排不迁；
-  图谱 tab 顺位后移——vm 轨组件面依赖上游），本仓零依赖其代码。
+  **第三切片 = 悬空建页闭环**（SD-501，2026-09-22）：悬空出链行点击 →
+  确认弹层 → 根落位建页 → 开档 + 索引/树刷新——wikilink 读/找/写
+  最小环收口；图谱 tab 顺位后移——vm 轨组件面依赖上游），本仓零依赖
+  其代码。
 - 编辑器内核 = `@autodown/engine`（auto-down，AutoUI 外部官方组件）：
   vue 轨 npm link 消费；vm 轨经 auto-lang `autodown_editor` 官方件位。
 
@@ -68,24 +71,28 @@ node tools/bench/bench.mjs proxy [--runs N]    # 测量 → results/<ts>.jsonl
 node tools/bench/bench.mjs assert              # 存量 measurements × budgets 重评
 
 # —— 单门 ——
-node tests/vm_matrix.mjs            # 双臂（merged+split）检查单 + 基线 v3 零漂移
+node tests/vm_matrix.mjs            # 双臂（merged+split）检查单 + 基线 v5 零漂移
 pnpm test:e2e                       # vue 检查单（同一检查单；serve-back 后端）
 ```
 
-## Tests（判绿口径，SD-204；SD-304 扩定；SD-403 再扩定）
+## Tests（判绿口径，SD-204；SD-304/403 扩定；SD-503 再扩定）
 
 检查单（PLAN-002 T-01 扩定 + PLAN-003 T-04 link 扩单 + PLAN-004 T-04
-find 扩单）：`boot / tree / open / edit / save / reload` 六检查 +
-**tab / editops / quit** 扩单三组 + **link / link-empty**（链接索引已知
-答案 + 反链面板双轨可用 + 空态——CJK 路径导航子步仅 vm merged 臂，D-19）+
-**find**（查找面板双模式：快开[files]——input 锚/空 q 全量 5 行/过滤
-Pro→Projects 独行/CJK 文件名定理→CAP 独行/拾取即关；全文检索[text]——
-未运行提示/CJK 查询「任务列表」**POST 双臂**[D-19 面无]/行导航面板保持
-开/运行后空态；CJK 文件名拾取导航子步仅 vm merged 臂——D-19 同款口径）
-——vm 矩阵与 vue e2e 同单（断言域 = 结构/文本/磁盘字节，非像素）。
+find 扩单 + PLAN-005 T-04 create 扩单）：`boot / tree / open / edit /
+save / reload` 六检查 + **tab / editops / quit** 扩单三组 + **link /
+link-empty**（链接索引已知答案 + 反链面板双轨可用 + 空态——CJK 路径
+导航子步仅 vm merged 臂，D-19）+ **create**（建页弧线子步 10c：悬空行
+点击 → 确认弹层 → 取消零落盘 → 创建 → 落盘/链接翻转/树新行/行翻转——
+CJK 开档播种子步仅 vm merged 臂[D-19 同款口径]；e2e 弧线 = ASCII 悬空
+源档测试内造零语料改动）+ **find**（查找面板双模式：快开[files]——
+input 锚/空 q 全量 5 行/过滤 Pro→Projects 独行/CJK 文件名定理→CAP
+独行/拾取即关；全文检索[text]——未运行提示/CJK 查询「任务列表」**POST
+双臂**[D-19 面无]/行导航面板保持开/运行后空态；CJK 文件名拾取导航子步
+仅 vm merged 臂——D-19 同款口径）——vm 矩阵与 vue e2e 同单（断言域 =
+结构/文本/磁盘字节，非像素）。
 
 - **完成态 = RESULT 行出现且两臂全数通过**：vm 矩阵 `merged 13/13 +
-  split 12/12`（merged 多一项基线检查）+ ALL GREEN 行；vue e2e 十一段
+  split 12/12`（merged 多一项基线检查）+ ALL GREEN 行；vue e2e 十二段
   日志齐 + passed。无 RESULT 行 = 工具链竞态早崩 → **重跑一次而非排查**
   （auto-edit F-RV6 同款口径）。
 - N 定谳（2026-09-22 link 扩单首锁 ≥5 连跑分布）：vm 双臂 **6/7 连跑
@@ -97,10 +104,17 @@ Pro→Projects 独行/CJK 文件名定理→CAP 独行/拾取即关；全文检�
   （13+12 检查逐跑全过，零早崩零重试）；vue e2e **6/6 连跑全绿**
   （gate 内 1 + 复跑 1 + 留存连跑 4，14 PASS 行/跑；search_wiki POST
   200 实录）；D-21 负载窗零复现。N = 全数，无失败集漂移。
-- 结构基线 = `tests/baseline/structure-v4.txt`：state 段逐字节 +
-  snapshot vnode id 出现序列（v2 仪器延续；v4 = PLAN-004 store
-  find_open/find_mode + App find_q/find_rows/find_ran 入 dump 的计划内
-  重锁，v3/v2/v1/v0 留档）。
+- N 定谳（2026-09-22 create 扩单首锁，SD-503）：vm 双臂 **4 连跑全绿**
+  （v5 锁后 full run ×3 + gate 内 ×1，merged 13/13 + split 12/12 +
+  基线 v5 零漂移逐跑）；vue e2e **6/6 连跑全绿**（gate 内 1 + 留存
+  连跑 5，10c 建页弧线全过）；D-21 负载窗 **7 失败实录**（家族会话
+  同机并行窗——write_wiki 保存点 400 丢参，重跑即绿，ledger v8 扩记）。
+  N = 全数，无失败集漂移。
+- 结构基线 = `tests/baseline/structure-v5.txt`：state 段逐字节 +
+  snapshot vnode id 出现序列（v2 仪器延续；v5 = PLAN-005 store
+  create_confirm_open/create_target 入 dump + 悬空行 button 化 +
+  alert-dialog 第三实例（建页确认，快照恒渲染）id 序列的计划内重锁，
+  v4/v3/v2/v1/v0 留档）。
 
 ## 文档
 
@@ -109,7 +123,7 @@ Pro→Projects 独行/CJK 文件名定理→CAP 独行/拾取即关；全文检�
 - [plans/attachments/081-t00-rulings.md](plans/attachments/081-t00-rulings.md) —
   T-00 三勘定决策档（auto-down PLAN-081 附件；双轨机制 / actions-vue
   现状 / 后端选型）
-- [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v7（SD-404 指针；二十二项三分类；PLAN-004 增补 D-22 + D-19 POST 适配注记 + D-21 执行窗零复现）
+- [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v8（SD-504 指针；二十三项三分类；PLAN-005 增补 D-23 + D-21 负载窗扩记）
 - [upstream/2026-09-jade-supply.md](upstream/2026-09-jade-supply.md) —
   上游供料包（D-16 预热 / D-15 残余 / D-17 键入发射 / D-18 投影双态，
   期望形态+复验条件+回执方式）
