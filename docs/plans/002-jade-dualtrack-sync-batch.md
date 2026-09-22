@@ -1,6 +1,6 @@
 ---
 plan_id: PLAN-002
-status: execution_done
+status: reviewed
 feature_name: jade-dualtrack-sync-batch
 author: [zhaopuming]
 created_at: 2026-09-21T21:30:00+08:00
@@ -281,6 +281,47 @@ node（bench/矩阵/e2e 同栈）、playwright（e2e）、AutoUI MCP（vm 驱动
     按实现语义覆盖（取消档留/直接关闭弃改两路均已断言）。
   blockers: 无｜
   next: review（auto-plan-review）
+
+- 2026-09-22 复审（auto-plan-review；实现会话内复审——独立性受限声明，
+  裁定全部重建自复现；执行期后两笔变更 [e9b0754 read_body 根修 /
+  5bf36e5 上游 PLAN-682 回执撤补件③④] + 工具链 1798→1914 属假设变更，
+  按规程全数重跑）｜
+  stage: review｜plan_id: PLAN-002｜plan_revision: 1｜outcome: **pass**｜
+  reviewed_commit: 5bf36e5（main；工作树 clean）｜base_commit: 3e91a55
+  （立项起草；实现链 b0efc82→db7c612→adc99d5→8050369→e9b0754→
+  5bf36e5）｜dependency_revisions: auto-lang master @ 56bfaf1fc（exe
+  v0.4.2-1914，PLAN-682 delivered 含 F-682-M1）；auto-down master @
+  fba6563（D17 引擎修复在分支 auto-lang-dev 3373a5c 未发版——e2e blur
+  适配按登记保留）｜spec_inputs: SD-201..205 已全数落盘（ARCHITECTURE
+  §3 / ledger v5 / upstream 供料包 / README Tests+运行矩阵）｜
+  acceptance_results:
+  - **AC-01 pass**（重跑）：gate exit 0（vm 双臂 10/10+9/9 + vue build
+    + e2e 九检查 ALL GREEN）——对 1914 exe 与撤补件态。
+  - **AC-02 pass**（重跑）：README Tests 节判绿口径实读在案；复审
+    5 连跑分布 = 5/5 ALL GREEN（功能检查 10/10+9/9 逐跑全数，仅 1 次
+    基线项低频漂移，见 finding F-R1）。
+  - **AC-03 pass**（重跑）：bench check/proxy/assert 三命令 exit 0。
+  - **AC-04 pass**（重跑）：budgets 六行 tier/validity/unlock/unit 全带；
+    红证重放（budget 10ms → assert exit 1 → 复原 exit 0）。
+  - **AC-05 pass**（实读）：ARCHITECTURE §3 镜像语义段 + ledger v5
+    D-03/D-16 budgets 互指（v5 中 D-18 已归档、D-03 补件③退役随上游
+    682——处置更新不弱化 SD-202 意图）。
+  - **AC-06 pass**（实读）：供料包五节 + 状态头注（§2b-e/§4 清偿、
+    §1/§2a/§2f/§3 未清偿待上游）。
+  - **AC-07 pass**（实读）：baseline-L0-20260921.md（含修复前后对照）
+    + PROVENANCE 家族同步注记。
+  findings:
+  - **F-R1（low，非阻塞）**：vm 基线检查存在低频残余漂移（复审 5 连跑
+    中 1 次，随后 8 连跑 + 4 捕获未复现；功能检查全程零失败）。v2 仪器
+    （state 逐字节 + id 序列）对已知 D-18 双态免疫，残余成分未定性
+    ——判绿口径重跑条款为操作面缓解；留观，若复现率上升供料上游
+    （D-18 已归档行可重开）。
+  - F-R2（info）：执行期后的 read_body 根修（e9b0754）使 AC-07 基线
+    文件的大文档段升级为「修复前后对照」——比原口径更强，非弱化。
+  evidence: /tmp/review-gate.log（gate exit 0）；复审 5 连跑实录（本
+  会话档）；tools/bench/results/20260922113*.jsonl（复审 proxy 产物）；
+  红证重放实录；docs/ 四档实读 grep 计数在案｜
+  next: merge（沉淀归档——本仓直接 main 线性约定，PLAN-001 先例）
 
 ## 10. 待澄清事项
 
