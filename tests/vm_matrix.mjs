@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // vm_matrix.mjs — jade-edit vm 轨检查矩阵（PLAN-001 T-04 换基双臂化；
-// PLAN-081 T-05 原始形态演进；PLAN-002 T-01 扩三组）。
+// PLAN-081 T-05 原始形态演进；PLAN-002 T-01 扩三组；PLAN-003 T-04 link 扩单）。
 //
 // 检查单（AC-03 检查单——vue 轨 playwright 断言域与此同单）：
 //   1 boot    App 起窗渲染，status=ready（Init → back tree 成功）
@@ -9,12 +9,18 @@
 //   4 edit    编辑回写（type_text → INPUT_TEXT → 脏标）
 //   5 save    保存落盘（toolbar 保存 → 脏标清 + 磁盘字节含标记 + frontmatter 保留）
 //   6 reload  重载可见（磁盘外改 → toolbar 重载 → 编辑器见新内容）
-//   B base    结构基线 v1 零漂移（仅 merged 臂；必须在 1-6 后、扩单前采集
-//             ——v1 锁的是六检查终态，扩单不漂移基线）
+//   B base    结构基线 v3 零漂移（仅 merged 臂；必须在 1-6 后、扩单前采集
+//             ——v3 锁的是六检查终态，扩单不漂移基线；v3=PLAN-003 store
+//             增 links_json/backlinks_open 字段重锁，v2/v1/v0 留档）
 //   7 tab     tab 面：开两档 → 切换（active 断言 + 内容互换）→ dirty 档
 //             关闭走确认弹层两路（取消=档留；直接关闭=弃改落盘零写入）
 //   8 editops 编辑操作族：段中回车/退格（C-5 整文构造——回车分段可见 +
 //             退格复原 + 脏标重算 body==original_body→false）
+//   10 link   链接索引+反链面板（PLAN-003）：link_index 已知答案（语料
+//             首锁：首页悬空 exists:false）→ 视图菜单开面板 → 反链三源
+//             行（index/CAP 定理/Tasks）→ 点击反链行开 index.ad → 出链
+//             行开 CAP 定理.ad → 关档空态（无反链/无出链）→ 重开恢复。
+//             执行序在 8 后 9 前（quit 杀进程恒为臂内最后一项）
 //   9 quit    退出存盘：dirty → 文件菜单退出 → CloseRequest 确认弹层 →
 //             QuitSaveClose → 磁盘三验（原文/标记/frontmatter）+ 进程退出
 //             （Process.exit 可能先于 HTTP 响应——连接断开即成功路径；
@@ -51,7 +57,7 @@ const argOf = (name) => {
   return i >= 0 ? args[i + 1] : undefined
 }
 const ARM = argOf('--arm') ?? 'all' // all | merged | split
-const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v2.txt')
+const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v3.txt')
 const SAVE_BASELINE = argOf('--save-baseline')
 
 const EDIT_MARKER = 'jade-edit 冒烟标记：编辑回写可见。'
@@ -323,10 +329,10 @@ async function runArm(arm, port) {
       const stateDump = (await callTool('autoui_state', {})).trim()
       const snapIds = JSON.stringify([...(await snapshotText()).matchAll(/#(vnode_\d+)/g)].map((m) => m[1]))
       const headerFor = (file) =>
-        `// jade-edit vm 结构基线 v2（PLAN-002 T-01 重锁；v1=PLAN-001 T-04 换基锁留档，v0=PLAN-081 T-05 最小壳留档）。\n` +
-        `// 仪器：state 段逐字节 + snapshot 段锁 vnode id 出现序列——上游快照投影属性双态\n` +
-        `//（1652→1784，F-RV6 家族）下确定；内容由 state 段锁，结构由 id 序列锁。\n` +
-        `// 终态 = 六检查后满状态：chrome 全套（menubar/toolbar/tab/tree）+ Hello World.ad 开（编辑/保存/重载后）。\n` +
+        `// jade-edit vm 结构基线 v3（PLAN-003 T-04 重锁；v2=PLAN-002 T-01、v1=PLAN-001 T-04 换基、v0=PLAN-081 T-05 均留档）。\n` +
+        `// 重锁因由：store 新增 links_json/backlinks_open 字段（PLAN-003 链接索引）进 autoui_state 全量\n` +
+        `// dump——逐字节必漂移，属计划内态扩（非漂移事故）。仪器同 v2：state 段逐字节 + snapshot\n` +
+        `// vnode id 出现序列；终态 = 六检查后满状态（chrome 全套 + Hello World.ad 开）。\n` +
         `// 再生成：node tests/vm_matrix.mjs --save-baseline ${path.relative(repoRoot, file).replace(/\\\\/g, '/')}\n`
       const baselineBodyOf = () => `## state\n${stateDump}\n\n## snapshot-ids\n${snapIds}\n`
       if (SAVE_BASELINE) {
@@ -336,9 +342,9 @@ async function runArm(arm, port) {
       } else if (fs.existsSync(BASELINE)) {
         const raw = fs.readFileSync(BASELINE, 'utf8')
         const ok = raw === headerFor(BASELINE) + baselineBodyOf()
-        check('B', 'baseline', ok, ok ? '结构基线 v2 零漂移（state 逐字节 + id 序列）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
+        check('B', 'baseline', ok, ok ? '结构基线 v3 零漂移（state 逐字节 + id 序列）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
       } else {
-        console.log('  [baseline] structure-v2 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v2.txt')
+        console.log('  [baseline] structure-v3 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v3.txt')
       }
     }
 
@@ -385,6 +391,72 @@ async function runArm(arm, port) {
     await stateHas('active_body', PARA_ANCHOR)
     await stateIs('active_dirty', 'false')
     check('8', 'editops', true, '段中回车分段可见（active_body 含转义换行锚）+ 退格复原 + 脏标重算 body==original→false')
+
+    // 10 link（PLAN-003 T-04）：链接索引已知答案 + 反链面板 + 点击开档 +
+    // 空态。执行序在 quit 前（quit 杀进程恒为臂内最后一项）；id 10 = 扩单
+    // 序号延续。期望值 = T-02 语料首锁（docs/plans/003 §8 T-02 证据）：
+    //   Hello World 出链 {CAP 定理:true, 首页:false(悬空)}；
+    //   反链源 = index/CAP 定理/Tasks 三档；index 无反链（首页悬空）。
+    await stateHas('links_json', 'wiki/Hello World.ad')
+    // state dump 对字符串值引号转义（\" 形态）——锚用转义形（T-04 实勘）。
+    await stateHas('links_json', '{\\"target\\":\\"首页\\",\\"anchor\\":\\"\\",\\"exists\\":false,\\"target_path\\":\\"\\"}')
+    await pressButton('视图', { exact: true })
+    await pressButton('切换反链', { exact: true })
+    await stateIs('backlinks_open', 'true')
+    const blBtn1 = await waitButton('wiki/index.ad', { exact: true })
+    const blBtn1Id = elementIdOf(blBtn1)
+    await waitButton('wiki/CAP 定理.ad', { exact: true })
+    await waitButton('wiki/Tasks.ad', { exact: true })
+    const panelText1 = await snapshotText()
+    const panelOk = panelText1.includes('首页（悬空）') && panelText1.includes('CAP 定理')
+    check('10', 'link', panelOk, `link_index 已知答案（首页悬空存在判）+ 面板反链三源（index/CAP 定理/Tasks）+ 出链段（CAP 定理钮/首页悬空文本）=${panelOk}`)
+    // 点击反链行 → 开来源档 index.ad（ASCII 路径——HTTP 通道可导航；
+    // CJK 路径 GET query 解码缺口见 D-19，CJK 导航子步仅 merged 臂）
+    await callTool('autoui_action', { element_id: blBtn1Id, action: 'press' })
+    await stateIs('active_title', 'wiki/index')
+    await stateHas('active_body', 'Jade Garden 测试知识库')
+    // index 无反链 → 空态文本（text 节点，非 button——快照包含轮询）
+    const emptyDeadline = Date.now() + 6000
+    let emptyIdx = ''
+    for (;;) {
+      emptyIdx = await snapshotText()
+      if (emptyIdx.includes('（无反链）')) break
+      if (Date.now() > emptyDeadline) throw new Error('empty-state text （无反链） never appeared for index.ad')
+      await sleep(300)
+    }
+    // 出链行点击（ASCII 目标 Hello World——两轨同单）；随后 CJK 目标子步
+    // 仅 merged（D-19 上游缺口：HTTP GET query UTF-8 不解码，CJK 路径
+    // exists/read_wiki 全败——先在缺口，vue/split 轨点 CJK 树行同败，
+    // 本切片首测暴露；unlock = 上游 HTTP 层解码修复）
+    await pressButton('Hello World', { exact: true })
+    await stateIs('active_title', tabTitleOf(TARGET_LABEL))
+    await stateHas('active_body', PARA_ANCHOR)
+    if (arm === 'merged') {
+      await pressButton('CAP 定理', { exact: true })
+      await stateIs('active_title', 'wiki/CAP 定理')
+      await stateHas('active_body', 'CAP 定理指出')
+    }
+    // 空态（无激活档）：文件→新建（untitled，path 空 → 行集空）→ 双空态
+    // 文本（stateIs 通过后视图渲染滞后一拍——轮询快照，同上款）
+    await pressButton('文件', { exact: true })
+    await pressButton('新建', { exact: true })
+    await stateIs('active_title', '未命名')
+    const untDeadline = Date.now() + 6000
+    let emptyText = ''
+    for (;;) {
+      emptyText = await snapshotText()
+      if (emptyText.includes('（无反链）') && emptyText.includes('（无出链）')) break
+      if (Date.now() > untDeadline) break
+      await sleep(300)
+    }
+    const emptyOk = emptyText.includes('（无反链）') && emptyText.includes('（无出链）')
+    // 关 untitled（未脏直接关）→ 重开 Hello World（树仍展开；Open 已开即
+    // 激活）→ 反链行恢复，quit 检查前置状态还原（此时 tabs = HW/index/CAP）
+    await pressActiveTabClose('未命名')
+    await pressButton(TARGET_LABEL)
+    await stateIs('active_title', tabTitleOf(TARGET_LABEL))
+    await waitButton('wiki/CAP 定理.ad', { exact: true })
+    check('10b', 'link-empty', emptyOk, `点击反链行开 index.ad + 出链行开 CAP 定理.ad + 空态（untitled 激活）双文本=${emptyOk} + 重开行恢复`)
 
     // 9 退出存盘：dirty → 文件菜单退出 → 确认弹层 → QuitSaveClose →
     // 磁盘三验 + 进程退出。恒为臂内最后一项（Process.exit 杀进程）。
@@ -440,5 +512,5 @@ for (const { arm, results } of all) {
 }
 if (failed > 0) process.exitCode = 1
 if (all.every(({ results }) => results.every((r) => r.ok))) {
-  console.log(`[matrix] ALL GREEN：${arms.join(' + ')} 臂检查单全过（六检查 + 基线[merged] + tab/editops/quit 扩单三组）`)
+  console.log(`[matrix] ALL GREEN：${arms.join(' + ')} 臂检查单全过（六检查 + 基线[merged] + tab/editops/link 扩单 + quit）`)
 }

@@ -11,6 +11,9 @@
 //   7 tab     tab 面：开两档 → 切换（active 断言 + 内容互换）→ dirty 档
 //             关闭确认两路（取消=档留；直接关闭=弃改落盘零写入）
 //   8 editops 编辑操作族：段中回车/退格（真键盘 + caret 定位达成同语义）
+//   10 link   链接索引+反链面板（PLAN-003；vm 矩阵 check 10/10b 同单——
+//             ASCII 路径导航；CJK 目标子步 vm merged 专属（HTTP GET query
+//             UTF-8 解码缺口 D-19，vue 轨同败故跳过）
 //   9 quit    退出存盘：dirty → 退出入口 → CloseRequest 确认弹层 →
 //             QuitSaveClose → 磁盘三验（原文/标记/frontmatter）。
 //             进程退出断言仅 vm 附注——vue 轨 Process.exit = 垫片 no-op
@@ -156,6 +159,41 @@ test('vue 六检查（vm 矩阵同单）', async ({ page }) => {
   await neutralBlur()
   await expect(page.getByText('未保存', { exact: true })).toHaveCount(0, { timeout: 10_000 })
   console.log('[8 editops] PASS — 插入/退格复原 + 脏标重算（C-5 同语义弧线）')
+
+  // 10 link（vm 矩阵 check 10/10b 同单）：反链面板 + 反链/出链行 + 点击
+  // 开档 + 空态。期望值 = T-02 语料首锁（Hello World 反链三源 index/CAP
+  // 定理/Tasks；首页悬空；index 无反链）。导航全走 ASCII 路径；CJK 目标
+  // 子步（出链点 CAP 定理）仅 vm merged 臂——HTTP GET query UTF-8 解码
+  // 缺口（D-19 上游先在缺口），vue 轨同败故跳过（D-17 先例：轨内机制
+  // 差异注记）。
+  await page.getByText('视图', { exact: true }).click()
+  await page.getByText('切换反链', { exact: true }).click()
+  await expect(page.getByText('LINKS', { exact: true })).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByRole('button', { name: 'wiki/index.ad', exact: true })).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByRole('button', { name: 'wiki/CAP 定理.ad', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'wiki/Tasks.ad', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'CAP 定理', exact: true })).toBeVisible()
+  await expect(page.getByText('首页（悬空）', { exact: true })).toBeVisible()
+  console.log('[10 link] PASS — 面板开 + 反链三源行 + 出链段（CAP 定理钮/首页悬空文本）')
+  // 点击反链行 → index.ad（ASCII）
+  await page.getByRole('button', { name: 'wiki/index.ad', exact: true }).click()
+  await expect(visibleEditor(page)).toContainText('Jade Garden 测试知识库', { timeout: 15_000 })
+  await expect(page.getByText('（无反链）', { exact: true })).toBeVisible({ timeout: 10_000 })
+  // 出链行点击 → Hello World.ad（ASCII；两轨同单上限）
+  await page.getByRole('button', { name: 'Hello World', exact: true }).click()
+  await expect(visibleEditor(page)).toContainText('这是一段示例文本', { timeout: 15_000 })
+  console.log('[10 link] PASS — 反链行开 index.ad（空态文本）+ 出链行开 Hello World.ad')
+  // 空态（无激活档）：文件→新建（untitled，path 空 → 行集空）
+  await page.getByText('文件', { exact: true }).click()
+  await page.getByText('新建', { exact: true }).click()
+  await expect(page.getByText('（无反链）', { exact: true })).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByText('（无出链）', { exact: true })).toBeVisible()
+  // 关 untitled（未脏直接关）→ 树重开 Hello World → 反链行恢复
+  await activeTabX.click()
+  await page.getByText('Hello World.ad', { exact: true }).first().click()
+  await expect(visibleEditor(page)).toContainText('这是一段示例文本', { timeout: 15_000 })
+  await expect(page.getByRole('button', { name: 'wiki/index.ad', exact: true })).toBeVisible({ timeout: 10_000 })
+  console.log('[10 link] PASS — untitled 空态双文本 + 重开行恢复')
 
   // 9 退出存盘（vm 矩阵 check 9 同单；vue 形态差异两处——见文件头注记）：
   // ① 退出入口 = 文件菜单 → 退出项（1784 起 menubar 族为真组件 popover

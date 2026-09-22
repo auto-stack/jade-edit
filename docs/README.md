@@ -60,24 +60,30 @@ node tools/bench/bench.mjs proxy [--runs N]    # 测量 → results/<ts>.jsonl
 node tools/bench/bench.mjs assert              # 存量 measurements × budgets 重评
 
 # —— 单门 ——
-node tests/vm_matrix.mjs            # 双臂（merged+split）检查单 + 基线 v2 零漂移
+node tests/vm_matrix.mjs            # 双臂（merged+split）检查单 + 基线 v3 零漂移
 pnpm test:e2e                       # vue 检查单（同一检查单；serve-back 后端）
 ```
 
 ## Tests（判绿口径，SD-204）
 
-检查单（PLAN-002 T-01 扩定）：`boot / tree / open / edit / save / reload`
-六检查 + **tab / editops / quit** 扩单三组——vm 矩阵与 vue e2e 同单
+检查单（PLAN-002 T-01 扩定 + PLAN-003 T-04 link 扩单）：`boot / tree /
+open / edit / save / reload` 六检查 + **tab / editops / quit** 扩单三组 +
+**link / link-empty**（链接索引已知答案 + 反链面板双轨可用 + 空态——
+CJK 路径导航子步仅 vm merged 臂，D-19）——vm 矩阵与 vue e2e 同单
 （断言域 = 结构/文本/磁盘字节，非像素）。
 
-- **完成态 = RESULT 行出现且两臂全数通过**：vm 矩阵 `merged 10/10 +
-  split 9/9`（merged 多一项基线检查）+ ALL GREEN 行；vue e2e 九检查
+- **完成态 = RESULT 行出现且两臂全数通过**：vm 矩阵 `merged 12/12 +
+  split 11/11`（merged 多一项基线检查）+ ALL GREEN 行；vue e2e 十段
   日志齐 + passed。无 RESULT 行 = 工具链竞态早崩 → **重跑一次而非排查**
   （auto-edit F-RV6 同款口径）。
-- N 定谳（2026-09-21 扩单首锁 ≥5 连跑分布）：vm 双臂 **6/6 连跑全绿**
-  （10+9 检查逐跑全过）——N = 全数，无失败集漂移。
-- 结构基线 = `tests/baseline/structure-v2.txt`：state 段逐字节 + snapshot
-  vnode id 出现序列（上游快照投影属性行双态下确定，D-18）；v1/v0 留档。
+- N 定谳（2026-09-22 link 扩单首锁 ≥5 连跑分布）：vm 双臂 **6/7 连跑
+  全绿**（12+11 检查逐跑全过；1 次无 RESULT 行早崩，重跑即绿——F-R1
+  同类口径）；vue e2e **5/5 连跑全绿**（注：紧邻 `pnpm build` 的同负载
+  窗内竞态敏感——regen 后即跑属已知敏感窗，README 口径覆盖）。
+  N = 全数，无失败集漂移。
+- 结构基线 = `tests/baseline/structure-v3.txt`：state 段逐字节 +
+  snapshot vnode id 出现序列（v2 仪器延续；v3 = PLAN-003 store 链接
+  面板态字段入 dump 的计划内重锁，v2/v1/v0 留档）。
 
 ## 文档
 
