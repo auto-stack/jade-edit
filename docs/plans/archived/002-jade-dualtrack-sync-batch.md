@@ -1,6 +1,7 @@
 ---
 plan_id: PLAN-002
-status: reviewed
+status: archived
+completion_kind: delivered
 feature_name: jade-dualtrack-sync-batch
 author: [zhaopuming]
 created_at: 2026-09-21T21:30:00+08:00
@@ -322,6 +323,27 @@ node（bench/矩阵/e2e 同栈）、playwright（e2e）、AutoUI MCP（vm 驱动
   会话档）；tools/bench/results/20260922113*.jsonl（复审 proxy 产物）；
   红证重放实录；docs/ 四档实读 grep 计数在案｜
   next: merge（沉淀归档——本仓直接 main 线性约定，PLAN-001 先例）
+
+- 2026-09-22 merge（auto-plan-merge）｜PLAN-002:r1｜五 checkpoint 闭环：
+  - **prepared**：canonical 面 = 四文档（ARCHITECTURE/README/ledger/
+    upstream——PLAN-001 归档回执记录的本仓 spec 先例，PLAN-002 复审按
+    此面验证）；SD-201..205 落地已随 reviewed 链在 main（§3 镜像语义
+    adc99d5 / ledger v5 5bf36e5 / README 口径+bench 行 b0efc82+5bf36e5 /
+    PROVENANCE 8050369）；delta 与 HEAD 逐项核对一致；delivery_commit =
+    50a389e（reviewed tip == main tip；其后仅本归档簿记）。
+  - **landed**：本仓直接 main 线性约定（PLAN-001 先例，无 dev 分支/
+    worktree）——main tip == 50a389e == delivery（ancestry 直证）；冒烟
+    = vm_matrix merged 臂 10/10 ALL GREEN（归档前重跑）。
+  - **ledger_refreshed**：parity-ledger v5 在 main（5bf36e5，复审实读
+    十八项；D-18 归档/D-03 归档/D-13/D-15 处置随 682 回执更新）；无
+    live ledger 服务（PLAN-001 同判）——派生面 = 本文件，零外部投影。
+  - **archived**：git mv → docs/plans/archived/002-jade-dualtrack-sync-
+    batch.md + status: archived + completion_kind: delivered。
+  - **cleaned**：无 worktree/dev 分支待清（直接 main 约定）；e2e/.runtime
+    探针产物 gitignored 非计划工件。
+  非阻塞遗留（移交后续批）：F-R1 基线低频漂移留观（重开 D-18 供料
+  触发条件见复审 finding）；D17 引擎修复在 auto-down 分支 auto-lang-dev
+  （3373a5c）待 changeset 流——发版后撤 e2e blur 适配。
 
 ## 10. 待澄清事项
 
