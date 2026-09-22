@@ -95,3 +95,19 @@ pub fn link_index(path str, depth int) str {
 pub fn search_wiki(query str, limit int) str {
     return wsys.search_json(query, limit)
 }
+
+/// 悬空建页（PLAN-005 第三切片；wikilink 写闭环收口）：title 清洗 →
+/// 工作区根落位 {safe}.ad。已存在 = **幂等不写**返回现路径（守卫 back
+/// 侧内移——front exists 预检对 CJK 在 split/vue 臂失效[D-19]，且
+/// 「先 exists 后 write」两跳有竞态；write_body 对存在档会改写 body，
+/// 绝不复用作建页通道）；成功返回工作区根相对 path；"" = 空名守卫/
+/// 落盘复核失败。模板 = "# {title}\n\n"（title = wikilink 原文非清洗名
+/// ——显示保真；无 frontmatter——D-14 逐字保留哲学）。清洗规则见
+/// wsys.title_to_path（SD-501 定文）。
+/// **POST 而非 GET**（D-19 同 search_wiki：悬空目标多为 CJK，GET query
+/// 不解码；POST body CJK 已证）。
+/// POST /api/create_page
+#[api(method = "POST", path = "/api/create_page")]
+pub fn create_page(title str) str {
+    return wsys.create_page_impl(title)
+}

@@ -405,3 +405,61 @@ pub fn search_json(query str, limit int) str {
     }
     return "[" + out + "]"
 }
+
+// ===== 悬空建页（PLAN-005 T-01；知识库第三切片 back 半） =====
+
+/// title → 落盘名（back 权威；front app.at 有镜像纯函数——仅弹层路径
+/// 预览显示用，漂移=观感非正确性）。规则 v1（SD-501）：
+///   ①九字符 `\/:*?"<>|` → `-`——**while-contains 收敛惯用法**（每字符
+///     `while t.contains(c) { t = t.replace(c, "-") }`）：.replace 次数
+///     语义双轨未证（JS 串参=首现替换 ts_adapter.rs:1219；VM 全量与否
+///     未证），惯用法首现/全量两态皆收敛，免探针；
+///   ②trim；
+///   ③空名守卫（清洗后空名）：trim 空或九字符收敛后恰 "-"（`///` 形
+///     ——全非法字符名替换后只剩分隔符，无名可立）→ ""；
+///   ④非空拼 ".ad"（根落位——safe 恒不含分隔符，resolve 恒落工作区根）。
+fn title_to_path(title str) str {
+    var bad List = ["\\", "/", ":", "*", "?", "\"", "<", ">", "|"]
+    var t str = title
+    var i int = 0
+    while i < bad.len() {
+        // ⚠ D-20②：列表元素先拷局部变量再调方法。
+        var c str = bad[i]
+        while t.contains(c) {
+            t = t.replace(c, "-")
+        }
+        i = i + 1
+    }
+    t = t.trim()
+    if t == "" {
+        return ""
+    }
+    var probe str = t
+    while probe.contains("--") {
+        probe = probe.replace("--", "-")
+    }
+    if probe == "-" {
+        return ""
+    }
+    return t + ".ad"
+}
+
+/// 悬空建页本体（api.create_page 实现）：清洗 → 根落位 → **幂等守卫**
+///（已存在不写返回现路径——单事务守卫，front 侧预检缺口/竞态见 api.at
+/// 注）→ 模板落盘（"# {title}\n\n"，title = 原文）→ exists 复核。
+/// 返回工作区根相对 path；"" = 空名守卫/复核失败。
+pub fn create_page_impl(title str) str {
+    var safe str = title_to_path(title)
+    if safe == "" {
+        return ""
+    }
+    var full str = resolve(safe)
+    if File.exists(full) {
+        return safe
+    }
+    File.write_text(full, "# " + title + "\n\n")
+    if File.exists(full) {
+        return safe
+    }
+    return ""
+}
