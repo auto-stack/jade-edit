@@ -1,10 +1,10 @@
 ---
 plan_id: PLAN-006
-status: execution_done
+status: reviewed
 feature_name: rename-rewrite-slice
 author: [zhaopuming]
 created_at: 2026-09-23T00:53:44+08:00
-updated_at: 2026-09-23T21:00:00+08:00
+updated_at: 2026-09-23T21:40:00+08:00
 plan_revision: 1
 current_step: 5
 total_steps: 5
@@ -531,6 +531,40 @@ T-01 探针 A 理论可并行——保守线性）。
     为授权内 §10.1 fallback 落地，实现第④步定文随 SD-601。
   - `blockers`: 无。
   - `next: review`。
+
+- **2026-09-23 复审（auto-plan-review，实现会话内复审）**：
+  - `stage: review` | PLAN-006 | revision 1 | `outcome: pass` |
+    reviewed_commit = b92e07a | base_commit = 1d1b20d（PLAN-005 归档
+    tip） | dependency_revisions = auto 0.1.0+v0.4.2-1914-g56bfaf1fc-
+    dirty（与 PLAN-005 交付同版，零变化） | spec_inputs = ARCHITECTURE
+    bbb34407 + README 8a73e75d + ledger 8b154803（git hash-object @
+    b92e07a）。
+  - 独立性受限声明：实现会话内复审，裁定自工件重建（重跑门禁 + 直读
+    diff + canonical 对读），不依赖执行期总结。
+  - `acceptance_results`: **AC-01..06 全 PASS**——AC-01 = probe_rename
+    八案双臂复现全绿（`node tests/probe_rename.mjs` exit 0，双臂一致
+    =true）；AC-02 = gate 复现含 vm rename 组七子步 + e2e rename 段
+    （十三段全过，双轨同断言域）；AC-03 = gate ALL GREEN 复现
+    （e2e/.runtime/review-gate2.log，exit 0）；AC-04 = 基线 v6 零漂移
+    复现（review-m1.log B PASS + gate2 内 B PASS）；AC-05 = 负向证四件
+    重验（auto-down status 干净/auto-lang 只读[blueprints 删除面为先在
+    外来 WIP 不触碰]/gen 补件断言守绿[vue-build PASS]/旧园零代码引用/
+    副作用圈定=probe 案①）；AC-06 = SD-601..604 锚注齐 + canonical
+    对读=实测行为（含 fallback① 定文与实现逐条对应：五步/改写规则/
+    卫语句/front 四步流/触发集 v3）+ casefold 裁决定文 + ledger v9。
+  - `findings`: **F-R6-1（低，留观）基线 v6 比对瞬态失配首例**——gate
+    复现第 1 跑 B FAIL，同代码即时复跑 PASS 且正文+id 序列逐字节一致
+    （仅我方临时保存路径致 header 行差异）；疑捕获点渲染时序敏感
+    （D-21 家族留观新形态，不判 AC-04 失败——以复现 PASS 记，处置=
+    留观如实记）。F-R6-2（备注）e2e D-21 失败面与本批 rename POST 无关
+    （11 失败全落 write_wiki 先在保存点——SD-601 单事务设计支持证，
+    ledger 已记）。无阻塞项；无范围缩减/无验收弱化；授权内实勘调整
+    （fallback①/menubar 摘 enabled/casefold 计数断言）均有 in-plan
+    记录 + ledger 入册。
+  - `evidence`: 本节命令与日志路径（e2e/.runtime/review-*.log 为会话期
+    产物，可按 §8 各任务验证命令复现）；工件持久面 = 计划 §8 证据块 +
+    docs/ 三 canonical（hash 上）+ tests/probe_rename.mjs（入库直证）。
+  - `next: merge`（status → reviewed）。
 
 ## 10. 待澄清事项
 
