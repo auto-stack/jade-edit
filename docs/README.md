@@ -7,7 +7,7 @@
 
 ## 是什么 / 不是什么
 
-- **产品定位（2026-09-22 Q1 裁定）**：jade-edit = **知识库方向**的
+- **产品定位（SD-303，2026-09-22 Q1 裁定）**：jade-edit = **知识库方向**的
   AutoDown 编辑器，与 auto-edit（轻量级编辑器）**长期并存、两套产品**
   ——不做产品合并；组件尽量共用，未来组件插件化时升级为插件级共用；
   家族栈（stylekit/bps/@autodown/engine）维持。裁定全文见
@@ -64,7 +64,7 @@ node tests/vm_matrix.mjs            # 双臂（merged+split）检查单 + 基线
 pnpm test:e2e                       # vue 检查单（同一检查单；serve-back 后端）
 ```
 
-## Tests（判绿口径，SD-204）
+## Tests（判绿口径，SD-204；SD-304 扩定）
 
 检查单（PLAN-002 T-01 扩定 + PLAN-003 T-04 link 扩单）：`boot / tree /
 open / edit / save / reload` 六检查 + **tab / editops / quit** 扩单三组 +

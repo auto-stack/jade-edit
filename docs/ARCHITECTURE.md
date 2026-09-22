@@ -14,7 +14,7 @@ jade-edit = **知识库方向的 AutoDown（`.ad`）编辑器**，AutoUI 单工�
 front/desktop VM twin 副本）的教训不在此重演。溯源（全新应用非拷贝、
 家族/冻结池关系）：[PROVENANCE.md](PROVENANCE.md)。
 
-**产品定位裁定（2026-09-22，Q1 收口）**——授权源 = 用户口述（auto-edit
+**产品定位裁定（SD-301，2026-09-22 Q1 收口）**——授权源 = 用户口述（auto-edit
 战略 `docs/strategy/002-north-star-v2.md` §9-Q1 就此收口）：
 
 - **长期并存，两套产品**：auto-edit 保持轻量级编辑器；jade-edit 向
