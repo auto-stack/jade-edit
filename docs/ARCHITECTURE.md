@@ -7,12 +7,27 @@
 
 ## 1. 定位
 
-jade-edit = AutoDown（`.ad`）编辑器，**AutoUI 单工程双轨首例**：同一份
-`src/front/*.at` 单源，vm 轨解释渲染（iced 原生窗）、vue 轨生成 Vue3+Vite
-工程。双轨一致性从初始版起同日落地（gate 双臂同断言域），不积累组装级
-差异——旧 jade-garden 两工程分裂（front/auto vue + front/desktop VM
-twin 副本）的教训不在此重演。溯源（全新应用非拷贝、家族/冻结池关系）：
-[PROVENANCE.md](PROVENANCE.md)。
+jade-edit = **知识库方向的 AutoDown（`.ad`）编辑器**，AutoUI 单工程双轨
+首例：同一份 `src/front/*.at` 单源，vm 轨解释渲染（iced 原生窗）、vue 轨
+生成 Vue3+Vite 工程。双轨一致性从初始版起同日落地（gate 双臂同断言域），
+不积累组装级差异——旧 jade-garden 两工程分裂（front/auto vue +
+front/desktop VM twin 副本）的教训不在此重演。溯源（全新应用非拷贝、
+家族/冻结池关系）：[PROVENANCE.md](PROVENANCE.md)。
+
+**产品定位裁定（2026-09-22，Q1 收口）**——授权源 = 用户口述（auto-edit
+战略 `docs/strategy/002-north-star-v2.md` §9-Q1 就此收口）：
+
+- **长期并存，两套产品**：auto-edit 保持轻量级编辑器；jade-edit 向
+  **知识库方向**发展（wikilink 关系面/反链/图谱/检索族——旧 jade-garden
+  冻结功能池以 Auto 形态逐步移植，`[[..]]` 链接索引 + 反链/出链面板为
+  首切片）。超越原 §9-Q1 两择框架（jade 非「web 轻量版」改向知识库）。
+- **组件尽量共用**；未来实现组件插件化时，共用升级为**插件级共用**
+  （展望项，落地属插件化后续批，本裁定只记账方向）。
+- **家族栈维持**：stylekit dep / bps L1 零副本 / `@autodown/engine`
+  官方组件——不做产品合并，不做仓库合并。
+- auto-edit 侧的 Q1 落账由其 M2 首计划携带（§8 兄弟仓分工表 jade 行
+  随之收口），本仓不代写；战略面若后续扩容（多裁定成簇）再议独立
+  战略档，届时本节裁定块迁出。
 
 ## 2. 单工程双轨机制（T-00 R-1 裁定 A'）
 

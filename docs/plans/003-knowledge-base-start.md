@@ -1,12 +1,12 @@
 ---
 plan_id: PLAN-003
-status: drafting
+status: executing
 feature_name: knowledge-base-start
 author: [zhaopuming]
 created_at: 2026-09-22T19:53:53+08:00
-updated_at: 2026-09-22T19:53:53+08:00
+updated_at: 2026-09-22T20:45:00+08:00
 plan_revision: 1
-current_step: 0
+current_step: 1
 total_steps: 5
 supersedes_spec_components: []
 new_spec_components:
@@ -270,9 +270,16 @@ parity-ledger：本切片预期无新增双轨差异（全走既有同构通道�
 
 ## 8. 执行步骤
 
-- **T-01 Q1 落账**（无依赖，doc-only）
+- **T-01 Q1 落账**（无依赖，doc-only）✅ 已完成
   - 文件：`docs/ARCHITECTURE.md` §1、`docs/README.md`
   - 产出：SD-301/303 文本（§5.1 要素全）；验证：AC-01 命令。
+  - 证据（2026-09-22）：ARCHITECTURE §1 定位句改「知识库方向的 AutoDown
+    编辑器」+ Q1 裁定块（日期/授权源/四要素/家族栈/插件级共用展望/
+    auto-edit 战略档指针——其 M2 首计划落 auto-edit 侧）；README 标题+
+    「是什么/不是什么」同步（产品定位条 + 冻结池移植线升级注记）；
+    AC-01 grep 实录：ARCHITECTURE 命中 知识库/长期并存/插件级（L10/20/
+    21/24），README 命中（L1/10/11/18）；PROVENANCE 实读=家族溯源表述
+    （基座/工具链/功能池），无产品定位句冲突。
 - **T-02 back 链接索引**（依赖 T-01 无，可与 T-01 并行）
   - 文件：`src/back/api.at`（link_index 契约）、`src/back/wsys.at`
     （links_json：walk+标记法提取+stem 解析+JSON 装配）

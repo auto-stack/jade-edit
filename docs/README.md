@@ -1,4 +1,4 @@
-# jade-edit — AutoDown 编辑器（独立仓，auto-edit 家族）
+# jade-edit — 知识库方向的 AutoDown 编辑器（独立仓，auto-edit 家族）
 
 > jade-edit：`.ad`（AutoDown/markdown-wiki）文件的桌面编辑器，**AutoUI
 > 单工程双轨**首例——同一份 `src/front/*.at` 单源，vm 轨解释渲染（iced
@@ -7,10 +7,16 @@
 
 ## 是什么 / 不是什么
 
+- **产品定位（2026-09-22 Q1 裁定）**：jade-edit = **知识库方向**的
+  AutoDown 编辑器，与 auto-edit（轻量级编辑器）**长期并存、两套产品**
+  ——不做产品合并；组件尽量共用，未来组件插件化时升级为插件级共用；
+  家族栈（stylekit/bps/@autodown/engine）维持。裁定全文见
+  [ARCHITECTURE.md](ARCHITECTURE.md) §1。
 - **全新应用**（非 examples 拷贝、非旧 jade-garden 迁移）——溯源见
   [PROVENANCE.md](PROVENANCE.md)。
-- 旧 `auto-down/jade-garden` = **冻结功能池**（反链/图谱/检索等后续批
-  逐步以 AutoUI 组件/BP 形态移植过来），本仓零依赖其代码。
+- 旧 `auto-down/jade-garden` = **冻结功能池**——其链接族（反链/图谱/
+  检索等）即知识库方向的移植主线，逐步以 AutoUI 组件/BP 形态移植过来
+  （首切片 = wikilink 索引 + 反链/出链面板），本仓零依赖其代码。
 - 编辑器内核 = `@autodown/engine`（auto-down，AutoUI 外部官方组件）：
   vue 轨 npm link 消费；vm 轨经 auto-lang `autodown_editor` 官方件位。
 
