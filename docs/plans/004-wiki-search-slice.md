@@ -1,6 +1,6 @@
 ---
 plan_id: PLAN-004
-status: execution_done
+status: reviewed
 feature_name: wiki-search-slice
 author: [zhaopuming]
 created_at: 2026-09-22T21:40:26+08:00
@@ -513,6 +513,56 @@ pub fn search_json(query str, limit int) str {
   期 gen 源检+vm 冒烟」三级证据定谳（真实消费代码即 fixture）；③find
   组 CJK 文件名拾取导航子步仅 merged 臂（D-19 同款口径，检索 POST 面
   双臂不降）。
+- **2026-09-22 复审 pass（auto-plan-review，revision 2 保持）**：
+  `stage: review | plan_id: PLAN-004 | plan_revision: 2 | outcome: pass |
+  reviewed_commit: cb9c65b | base_commit: 58aec8e | dependency_revisions:
+  auto.exe v0.4.2-1914-g56bfaf1fc-dirty（19:17 构建全程同构）+ auto-down
+  3373a5c + auto-edit fda9cdb + deps 物化态未动 | spec_inputs:
+  ARCHITECTURE@cb9c65b（§1/§5/§6）+ README@cb9c65b（Tests/是什么文档）+
+  ledger v7@cb9c65b | acceptance_results: AC-01..06 全数 pass | findings:
+  F-R1（minor 非阻塞，见下） | evidence: 本节下方 | next: merge`。
+  **独立性受限声明**：实现会话内复审（同会话先 work 后 review），裁定
+  从工件重建——gate 全门重放、探针 B 六案独立重放、负向证重采、canonical
+  工件 grep 核验，不采信执行期总结（PLAN-003 复审同款裁定）。
+  - **AC-01**：探针 B 复审重放——六案（张三/tags 值[]/原型设计/任务
+    limit=1 截断/index title-only snippet=""/CAP 定理四页 walk 序）+
+    空守卫（`"   "` → `[]`）+ **钳制边界专项**（limit=51/99 → 50 钳、
+    0/-3 → 1 钳，服务端存活）+ 形状双解包检视（顶层裸数组、四命中
+    walk 序、字段恰 path/title/snippet）——全数 200 逐案合 SD-401
+    定文；传输层 = JSON 字符串信封（str 标量契约，front json.to_value
+    对应）。`node scripts/gate.mjs` 重放 ALL GREEN（merged 13/13 +
+    split 12/12 + 基线 v4 零漂移 + vue build + e2e 十一段）。
+  - **AC-02**：复审 gate 重放中 find 段双臂 PASS 实录（merged 含 CJK
+    拾取开档；split 按 D-19 口径注记跳 CJK 拾取、CJK 检索 POST 照跑）
+    + e2e find 两段 PASS；快开/检索双模式语义源检（FindPick 分流
+    FindClose/保持开、find_ran 空态两形门控、file_rows_of 空q全量）。
+  - **AC-03**：gate 全门重放 exit=0（见 AC-01）；两条 warning = ledger
+    D-15 在册残余（warning 级不阻断）。
+  - **AC-04**：structure-v4.txt 头注 + dump 五字段（find_open/find_mode/
+    find_q/find_rows/find_ran）逐一在案；v3..v0 五代留档；复审重放零
+    漂移（历史 4 次见 T-04 证据）。
+  - **AC-05**：负向证复审重采——auto-down porcelain **0 行**；auto-edit
+    3 行 / auto-lang 68 行（全 blueprints/ 删除面，PLAN-003 在案外部
+    既有 WIP，族内自漂 1 行、零非 blueprints 条目——本计划零接触维持）；
+    旧园代码引用 0；regen-vue.mjs 全窗零 diff（补件面零增量）；gen/
+    零 tracked（无 committed 漂移面）。
+  - **AC-06**：工件 grep 核验——SD-401..405 锚注 ARCHITECTURE 3 处 +
+    README 5 处 + ledger 2 处；SD-405 四要素关键词 5 命中；ledger 22 项
+    （D-22/D-19 POST 注记/D-21 零复现在位）；README 判绿口径
+    13/13+12/12+十一段+structure-v4 指针齐；plan frontmatter
+    new_spec_components 五 ID 与增量表逐一对读一致、supersedes=[]（无
+    retire 面）、touched_goals=[]（本仓无 goals 体系，PLAN-003 同判）。
+  - **规范增量对读**：SD-401 定文与实测行为逐条合（POST 通道/stem+body
+    面[case ② frontmatter-exclusive 实证]/裸数组/to_lower 双侧/walk 序/
+    钳 1..50/depth=4/snippet 首行整行/title-only ""/collect_ad_pages
+    单点/快开纯 front/拾取即关 vs 保持开/触发钮+Enter/刷新触发集=无）；
+    文本为持续行为描述非执行日记。
+  - **F-R1（minor 非阻塞）**：复审探针窗一次 serve-back 进程死亡
+    （ECONNREFUSED，④b limit=99 调用前后）；专项复现 ×9（含同参
+    limit=99 与更苛 51/0/-3）全绿不可复现，gate/六案/钳制面均不受累。
+    定性 = AutoVM HTTP 服务进程偶发退出（D-21 负载窗家族的更重形态，
+    上游级留观）；**merge 阶段建议**：ledger 补 D-21 行观测注记或立案
+    D-23（独立一次进程死亡实录，供料包候选项），本复审不动 ledger。
 
 ## 10. 待澄清事项
 
