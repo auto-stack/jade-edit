@@ -135,6 +135,26 @@ src/back/api.at           /api 契约（自有 Auto 源，与实现同 commit—
 - wiki 域语义：`read_wiki` 只回 body（frontmatter 在 back 侧字符串层
   保留/拼回——PLAN-081 的 VM JsonAny 损坏类结构性消除）；`updated_at`
   补写 v0 不做（frontmatter 逐字保留，功能池后续批）。
+- **链接域语义（SD-302，PLAN-003 首切片）**：`link_index(path, depth)`
+  返回页面数组 JSON 字符串 `[{path,title,links:[{target,anchor,exists,
+  target_path}]}]`（**顶层裸数组**——front `json.to_value` 顶层 map 产物
+  入态 = 裸 vmref 损坏（C-1 亚型，T-04 实勘），顶层 array = Init
+  ft_nodes 已证形态）。walk = `fs.tree` 同源遍历（覆盖 = 文件树：忽略
+  .git/target/build/node_modules/gen/dist/点开头；确定性序 = dirs-first
+  + 名称 casefold；depth 直通 1..8 钳制；`fs.walk_files` 原语在册未接
+  .at 调用面——D-20）。wikilink 文法 v1 = `[[Target]]` /
+  `[[Target#anchor]]`：split/split_once 标记法提取（AutoVM 无正则面）；
+  忽略 = 无闭合 `]]` / 跨行候选 / trim 空候选 / `#` 后空 target；`#`
+  首现拆分——前段 target 参与 stem 匹配、后段 anchor 透传（D-12：无
+  定位事件面）；逐括号转义 `\[\[` = 字面量非链接（`[[` 子串不存在）。
+  exists = target 严格等于**文件 stem** 首现命中（旧园 links.rs rebuild
+  title=file_stem 同语义；frontmatter title 不参与——`[[首页]]` 对
+  index.ad = 悬空）；同名 stem 冲突取首现（walk 序）。反链派生在
+  front（App 模型持链接态 + handler 触点重算——store 上下文 to_value
+  损坏 + ts_adapter identifier 实参 to_value 静默恒等，双缺口 D-20）；
+  刷新触发集 v1 = Init / Save 成功 / 面板开启（无文件系统 watch，
+  后续批）；悬空 active（""）反链恒空（卫语句——否则悬空出链
+  `target_path:""` 误配）。
 - fixture workspace 每次全新隔离拷贝（源 = auto-down `tmp/wiki-demo`，
   `JADE_FIXTURE` 可覆）——测试会打字保存，源零污染。Auto back 无 config
   文件 ⇒ 旧「exe 旁陈年 config 压 env」事故类别结构性消失（belt 保留为
@@ -144,7 +164,7 @@ src/back/api.at           /api 契约（自有 Auto 源，与实现同 commit—
 
 | 门 | 命令 | 断言域 |
 | --- | --- | --- |
-| vm 矩阵（双臂） | `node tests/vm_matrix.mjs` | merged 臂（进程内直调）+ split 臂（`--no-merge` HTTP）各六检查（boot/tree/open/edit/save/reload）+ 结构基线 v1 零漂移（merged 臂锁，`tests/baseline/structure-v1.txt`；v0 留档） |
+| vm 矩阵（双臂） | `node tests/vm_matrix.mjs` | merged 臂（进程内直调）+ split 臂（`--no-merge` HTTP）各十一组检查（六检查 + 基线[merged] + tab/editops/link 扩单 + quit——PLAN-002/003 扩单）+ 结构基线 v3 零漂移（merged 臂锁，`tests/baseline/structure-v3.txt`；v2/v1/v0 留档） |
 | vue build | `pnpm build`（= regen-vue.mjs） | 裸 strict 生成 + 三残余补件 + vue-tsc 0 错 + vite build |
 | vue e2e | `pnpm test:e2e` | playwright **同一检查单**（serve-back AutoVM 后端 + vite 双 webServer） |
 | 双臂总门 | `node scripts/gate.mjs` | ①vm 双臂 ②vue(build+e2e) 顺序全绿（契约漂移段已随自有源退役） |

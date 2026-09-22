@@ -92,7 +92,7 @@ CJK 路径导航子步仅 vm merged 臂，D-19）——vm 矩阵与 vue e2e 同�
 - [plans/attachments/081-t00-rulings.md](plans/attachments/081-t00-rulings.md) —
   T-00 三勘定决策档（auto-down PLAN-081 附件；双轨机制 / actions-vue
   现状 / 后端选型）
-- [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v5（十八项三分类；D-18 归档）
+- [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v6（二十一项三分类；D-18 归档 + PLAN-003 增补 D-19/D-20/D-21）
 - [upstream/2026-09-jade-supply.md](upstream/2026-09-jade-supply.md) —
   上游供料包（D-16 预热 / D-15 残余 / D-17 键入发射 / D-18 投影双态，
   期望形态+复验条件+回执方式）

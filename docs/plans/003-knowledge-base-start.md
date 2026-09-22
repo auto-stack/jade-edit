@@ -1,12 +1,12 @@
 ---
 plan_id: PLAN-003
-status: executing
+status: execution_done
 feature_name: knowledge-base-start
 author: [zhaopuming]
 created_at: 2026-09-22T19:53:53+08:00
-updated_at: 2026-09-22T20:45:00+08:00
+updated_at: 2026-09-22T21:10:00+08:00
 plan_revision: 1
-current_step: 2
+current_step: 5
 total_steps: 5
 supersedes_spec_components: []
 new_spec_components:
@@ -306,22 +306,80 @@ parity-ledger：本切片预期无新增双轨差异（全走既有同构通道�
     扫描同判）；同名 stem 无冲突场景。最小 fixture 交叉验证（A/B/C/D+
     定理.ad）：[[B]]/[[B#x]]/[[定理]] CJK stem 解析+锚透传全对。
   - AC-02 后端半达成（vm 矩阵 link 检查 T-04 补齐前端半）。
-- **T-03 front 反链面板**（依赖 T-02）
+- **T-03 front 反链面板**（依赖 T-02）✅ 已完成
   - 文件：`src/front/backlinks_panel.at`（新）、`src/front/editor_store.at`
     （links_json/backlinks_open 态 + 三 handler）、`src/front/app.at`
     （actions view.backlinks + 右栏挂点 + 行渲染留根/computed 派生 +
     Init/Save 刷新接线）
   - 产出：SD-302 前端半 + 面板组件；验证：AC-03（vm 臂手工冒烟 → e2e）。
-- **T-04 测试扩单与判绿首锁**（依赖 T-03）
+  - 证据（2026-09-22，commit 0a27890 + 前置实勘迭代）：①面板形态裁定 =
+    壳组件（ConsolePanel 同构）+ 行集/空态留根（组件子树对 MCP 快照
+    不可见——console_panel 头注先例，T-03 执行期裁定点落定「留根」
+    侧）；②架构改道（实勘驱动）：链接态居 **App 模型**（非 store 非
+    computed）——store 上下文 json.to_value 产物 = 裸 vmref 损坏（三形
+    态复现：直赋/typed 局部中转/handler 内联均 `<vmref> (unknown)`；
+    App 模型 + 顶层数组 = Init ft_nodes 已证健康——C-1 亚型，link_index
+    顶层随之改裸数组契约 10c9206）；App computed 对 .store.* 入参静默
+    失效（嵌套/单层两试均不渲染）；handler 内 .store 读 = 陈旧投影
+    （OpenLink 后读 active_path 得旧值）→ 派生触点显式化（显式 path/
+    显式空 active；CloseTab/ActOpen/ActSwitchTab 不重算——两轨一致留
+    到下触点，v0 限制记账）；tab 条按钮改发 OpenLink(t.path)（Open 已
+    开即激活 + 行派生共用口）；③ts_adapter identifier 实参 to_value
+    静默恒等（call-arg 才发射 JSON.parse）→ 双取形 workaround；④悬空
+    链接 target_path:"" 误配空 active 反链（untitled 空态出 2 幽灵行）
+    → 派生卫语句；⑤strip_ad CJK heap 串 .length 字节语义错位（同族
+    第三例）→ split 法修复；⑥vm merged 臂冒烟 11/11（T-04 锁基线后
+    12/12）。三项新缺口/习语随 D-20 登记（T-05）。
+- **T-04 测试扩单与判绿首锁**（依赖 T-03）✅ 已完成
   - 文件：`tests/vm_matrix.mjs`（link 检查 + 期望值首锁）、
     `e2e/matrix.spec.ts`（同单）、`docs/README.md` Tests 节（SD-304）
   - 产出：十检查检查单 + ≥5 连跑分布实录；验证：AC-03/06。
-- **T-05 收口与 gate 全量**（依赖 T-04）
+  - 证据（2026-09-22，commit 8d56ab3）：①检查单扩至十一组（1-9 + B +
+    10 link + 10b link-empty；10/10b 执行序在 8 后 9 前——quit 恒臂内
+    末项）；期望值 = T-02 首锁（state dump 引号转义形锚——`\"` 转义
+    实勘注记）；②**CJK 导航子步仅 merged 臂**：HTTP GET query UTF-8
+    解码缺口实勘（serve-back 8251 探针：encoded CJK → exists:0/
+    read_wiki:""；%20/%2F 正常）——先在缺口非本切片引入（vue 今日点
+    CJK 树行同败），D-19 立案，跨轨步骤全走 ASCII；③基线 v3 重锁
+    （计划内：链接态字段入 state dump 逐字节必漂移——§6「基线 v2 零
+    漂移」与本计划自身态扩矛盾，按 v3 重锁 + v2/v1/v0 留档 + README
+    注记）；④判绿首锁实录：vm 双臂 6/7 连跑全绿（12/12+11/11 逐跑全
+    过；1 次无 RESULT 行早崩重跑即绿——F-R1 同类口径）+ vue e2e 独立
+    连跑 5/5（7.7-8.4s）；e2e 对新引擎 dist（auto-down D17 修复 3373a5c
+    落 master → dist 重建）全绿——外部变更吸收证据：980bcf6 临时验证
+    worktree + 新 dist 同样绿（front 改动前基线，归因排除）；e2e 失败
+    集曾现于「pnpm build 紧邻」负载窗（README 口径注记）。
+- **T-05 收口与 gate 全量**（依赖 T-04）✅ 已完成
   - 文件：`docs/README.md`（运行矩阵/文档指针）、`docs/ARCHITECTURE.md`
     §5（SD-302 语义段定稿）、`docs/parity-ledger.md`（仅当执行期实勘
     新差异时增记）
   - 产出：gate ALL GREEN 实录 + AC-05 负向证 + §9 work 记录；验证：
     AC-04/05。
+  - 证据（2026-09-22）：①ARCHITECTURE §5 增「链接域语义（SD-302）」
+    段（裸数组契约/walk 面/wikilink 文法 v1/stem exists 语义/反链派生
+    位置/刷新触发集/空 active 卫语句）+ §6 表更新（十一组检查 + 基线
+    v3）；②parity-ledger v5→v6：D-19（HTTP GET query UTF-8 解码缺口
+    ——上游先在）+ D-20（AutoVM/生成器原语面六件实勘集——walk_files
+    未接调用面/元素链式方法调用/CJK heap .length/store to_value vmref
+    /ts_adapter identifier to_value 恒等/悬空误配已修）+ D-21（gate
+    负载窗 write_wiki POST 丢参留观——api-err-body 实录，疑似上游
+    HTTP 装配竞态，独立 6/7 绿）+ README 文档节指针 v6 二十一项；
+    ③AC-05 负向证：`git diff 5b5071d..HEAD -- scripts/` 空（regen-vue
+    全计划窗口零变化，三补件断言面原样：splice/vm-natives/__vmOnly
+    实测在）+ 负向 grep：src/ 无 rope/chunked/分块读/673 端点族实做
+    （ts_adapter 仅注释引用缺口登记）；④**gate ALL GREEN 实录**（闲置
+    后）：vm 双臂 12/12+11/11 → vue build PASS（dashboard reference
+    告警 = warning 级已知类）→ e2e passed（7.7s）→ `[gate] ALL GREEN`
+    ——AC-04 达成；gate 语境 e2e 曾 2/3 败（负载窗，D-21 留观）。
+  - 阻碍事件（外部，已路由）：执行收口时家族仓遭并发外部重组——
+    auto-edit 主检出 specs/stylekit 两文件未提交删除 + auto-lang 主检
+    出 blueprints 全树未提交删除（20:47 目录时间戳，非本会话所为——
+    同窗口 auto-down 落 D17 修复 3373a5c）→ jade dep sync 中断 +
+    deps/ 物化被清 → vm 轨 bps 导入炸。处置：**零接触对方工作树**，
+    deps/bps + deps/stylekit 从 auto-lang/auto-edit **git HEAD 对象库
+    archive 物化**（本仓生成目录，不入库）→ 全部门复绿。unblock 前置
+    （对 merge/复审者）：家族仓工作树恢复后跑一次 `pnpm build` 让
+    sync 重新接管 deps 物化即可。
 
 执行约定：每任务一 commit（PLAN-002 惯例）；status drafting → executing
 （T-01 开工时）→ execution_done（T-05）→ review → merge。
@@ -330,17 +388,39 @@ parity-ledger：本切片预期无新增双轨差异（全走既有同构通道�
 
 - 2026-09-22 stage: new, plan_revision: 1 —— 立项起草（/auto-plan:new），
   接地证据链 §4.2；outcome: pass（授权范围内可开工）；next: work。
+- 2026-09-22 stage: work | plan_id: PLAN-003 | plan_revision: 1 |
+  outcome: **pass** | code_commit: 8d56ab3（T-04；T-05 文档面随本记录
+  提交） | task_ids: T-01..T-05 全数 | evidence: §8 各任务证据块 +
+  AC-01..06（§7 验证命令全数实录：AC-01 grep 过/AC-02 HTTP 探针 + vm
+  link 检查双臂过/AC-03 vm 12+11 + e2e 十段/AC-04 gate ALL GREEN/
+  AC-05 负向证齐/AC-06 vm 6/7 + e2e 5/5 连跑分布） | blockers: 无阻塞
+  （D-19/D-21 上游级留观不阻塞本计划验收；家族仓外部重组已路由绕行
+  ——deps git 物化，恢复动作见 §8 T-05） | next: review。
+  work 侧补充（供复审）：计划内三处执行期修订均依 §10 默认裁定授权
+  落地——①link_index 顶层裸数组（§2.3 包壳为形状示意）②基线 v3 重锁
+  （§6 v2 零漂移与自身态扩矛盾）③CJK 导航子步 merged-only（D-19 先在
+  缺口，D-17 先例）——均不涉验收语义弱化（AC 逐条仍全数可达）；store
+  侧三 handler 收敛为 backlinks_open + BacklinksToggle（数据派生因
+  vmref 缺口上移 App 模型，§2.4 形态注记同步 §5 语义段）。
 
 ## 10. 待澄清事项
 
 均**默认裁定不阻塞**（执行期可依实勘调整，涉语义变更才升 revision）：
 
 1. **面板落位右栏**（默认）：旧园右栏三面板先例 + console 已占底栏；
-   若用户要独立 tab/底栏形态，复审时改 §2.4。
+   若用户要独立 tab/底栏形态，复审时改 §2.4。（已按右栏落地）
 2. **同名 stem 冲突取首现**（默认）：语料无同名档；出现歧义语义（报歧义
    vs 取首现）留检索/图谱批再议。
 3. **刷新触发集 v1 = Init/Save/面板开启**（默认）：外部编辑器改动文件
-   不感知（无 watch）——live 索引属后续批。
+   不感知（无 watch）——live 索引属后续批。（已按此落地；CloseTab/
+   ActOpen/ActSwitchTab 后行集留到下触点校正——两轨一致的 v0 限制，
+   D-20/D-21 同批登记）
 4. **跨行 `[[...]]` 链接不支持**（默认）：语料无此形态，v1 忽略不完整
-   标记对。
+   标记对。（已按此落地）
 5. 未链接提及/图谱 tab/块锚导航排期：后续批立项时定（本计划非目标）。
+6. （执行期新增，默认裁定不阻塞）**CJK 路径 HTTP 导航缺口 D-19**：
+   检查单 CJK 导航子步 merged-only，跨轨解锁 = auto-lang HTTP 层修复
+   （供料候选）；届时撤除轨内差异注记即回全单同单。
+7. （执行期新增，默认裁定不阻塞）**gate 负载窗 e2e 抖动 D-21**：
+   write_wiki POST 负载下丢参疑似上游 HTTP 装配竞态——README 重跑
+   口径覆盖；复审如复现按该口径重跑一次。

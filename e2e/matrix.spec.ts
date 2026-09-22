@@ -41,7 +41,10 @@ import {
 
 test('vue 六检查（vm 矩阵同单）', async ({ page }) => {
   page.on('response', (r) => {
-    if (r.url().includes('/api/')) console.log(`    [api] ${r.status()} ${r.request().method()} …${r.url().slice(-45)}`)
+    if (r.url().includes('/api/')) {
+      console.log(`    [api] ${r.status()} ${r.request().method()} …${r.url().slice(-45)}`)
+      if (r.status() >= 400) r.text().then((t) => console.log('    [api-err-body]', t.slice(0, 300))).catch(() => {})
+    }
   })
   page.on('pageerror', (e) => console.log(`    [pageerror] ${String(e).slice(0, 200)}`))
   // D-17 中性 blur 冲刷件（vue 轨机制；7/8/9 及 4→5 保存赛跑规避共用）
