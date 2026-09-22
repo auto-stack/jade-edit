@@ -20,22 +20,20 @@
 // 撤除。
 //
 // 残余补件（非上游清偿面；pattern 断言，形态变化即 fail 按实重审）：
-//   1. vm-natives.ts 运行期垫片——jade vue 轨有运行期 e2e（检查单热路径
-//      console_*/file_basename/dialog 取消语义），生成器 natives.ts 为
-//      条件抛错桩（先到先得）——垫片先装即覆盖（parity-ledger D-13）
+//   1. vm-natives.ts 运行期垫片——jade vue 轨运行期语义面：dialog_*
+//      取消语义（"" = 取消）、Process.exit/__vmOnly no-op（QuitSaveClose
+//      落盘后终止在 vue 收敛为无害 no-op）、console_* 聚合（ConsolePanel
+//      真数据）。上游 682 F3 后 natives.ts R-tier 带先到先得守卫，垫片
+//      后装语义稳定（parity-ledger D-13）
 //   2. tabs.value.remove → splice——生成器 R010 直通缺口（上游未清偿，
 //      auto-edit 同源在案；类型面 any 无感、vue 轨运行期地雷，e2e
 //      断言域外）——上游修复后 pattern 断言 fail 提示撤除
-//   3. AutoDownEditor :key 静态串 → store.active_key 绑定——生成器把
-//      key: 绑定表达式发射为字面静态串（D-03 形态）：切档只换 :content
-//      不重挂载，引擎换料后键入 update:modelValue 永不回传（PLAN-002
-//      T-01 扩单探针实证：切档键入 DOM 收字、store 零回传）——补件恢复
-//      vm 同款「key 变即重挂载播种」语义；上游发射动态绑定后撤除
-//   4. 孤儿 dep-demo 清理——bps gallery-shell import @/components/ui/
-//      popover 而 wrapper 未物化 → vue-tsc TS2307（上游 auto-lang
-//      bd64d8df6 在案：Plan 676 外部在途阻塞；件为 dep bp demo，jade
-//      App/store 零引用）——仅零引用守卫下移除生成件；上游 676 物化
-//      popover 后本补件自然 no-op，pattern 提示撤除
+//
+// 三批退役（2026-09-22 回执步，上游 PLAN-682 全周期 delivered 合入
+// master、主检出 exe = v0.4.2-1914-g56bfaf1fc）：③编辑器 :key 绑回
+// （1914 原生直发 :key="store.active_key"，含合并期修复 F-682-M1 布局
+// 臂双 :key 根修 6830b0b2b）；④孤儿 dep-demo 清理（gen-only 物化扫描
+// 落地，popover 冷删即重物化）。快照投影双态（D-18）同步终结。
 //
 // vue 面 = 纯生成物（gen/ 不入库）：jade-edit 无手写 vue 文件，不走
 // demo/jade 的 deploy-into-src 步（零 committed 漂移面）。
@@ -175,41 +173,8 @@ console.log('[regen-vue] 补件：src/vm-natives.ts 运行期垫片（console �
   console.log(`[regen-vue] 补件：tabs.value.remove→splice ×${removes}`)
 }
 
-// ②d 补件 3：AutoDownEditor :key 静态串 → store.active_key 绑定
-// （D-03 切档键入断裂修复面；pattern 断言守生成器发射形态，形态漂移
-// 即 fail 按实重审；上游 key: 绑定直发后撤除）
-{
-  const appVue = path.join(vueDir, 'src', 'App.vue')
-  let s = fs.readFileSync(appVue, 'utf8')
-  const el = s.match(/<AutoDownEditor\b[^>]*\/>/)?.[0]
-  if (!el) throw new Error('[regen-vue] 补件 "editor key" pattern 未命中：AutoDownEditor 元素缺席')
-  if (!el.includes(`:key="'AutoDownEditor-`)) {
-    throw new Error('[regen-vue] 补件 "editor key" pattern 未命中：静态 :key 形态变化——上游已发动态绑定？按实重审')
-  }
-  s = s.replace(el, el.replace(/:key="'AutoDownEditor-\d+'"/, ':key="store.active_key"'))
-  fs.writeFileSync(appVue, s)
-  console.log('[regen-vue] 补件：AutoDownEditor :key → store.active_key（切档重挂载播种，D-03）')
-}
-
-// ②f 补件 4：孤儿 dep-demo 清理（上游 Plan 676 在途缺口，见头注）
-{
-  const compDir = path.join(vueDir, 'src', 'components')
-  const appVue = fs.readFileSync(path.join(vueDir, 'src', 'App.vue'), 'utf8')
-  const storeTs = fs.readFileSync(path.join(vueDir, 'src', 'stores', 'useEditorStore.ts'), 'utf8')
-  for (const f of fs.readdirSync(compDir)) {
-    if (!f.endsWith('.vue')) continue
-    const p = path.join(compDir, f)
-    const s = fs.readFileSync(p, 'utf8')
-    if (!s.includes('@/components/ui/popover')) continue
-    if (fs.existsSync(path.join(compDir, 'ui', 'popover'))) continue // 上游已物化——no-op
-    const name = f.replace(/\.vue$/, '')
-    if (appVue.includes(name) || storeTs.includes(name)) {
-      throw new Error(`[regen-vue] 补件 "orphan popover demo"：${f} 已被 App/store 引用而 popover wrapper 缺物化——不可移除，按实重审`)
-    }
-    fs.rmSync(p)
-    console.log(`[regen-vue] 补件：移除孤儿 dep-demo ${f}（popover wrapper 未物化，上游 676 在途；零引用守卫过）`)
-  }
-}
+// ②d/②e（补件 3/4）已随上游 PLAN-682 delivered 撤除（2026-09-22 回执步，
+// 见头注三批退役：1914 原生直发 :key 绑定 + gen-only 物化扫描落地）。
 
 // ③ engine dist 新鲜度卫兵（并行会话 src 领先 dist 的白屏债务，jade
 // e2e-prepare 同款 fail-fast）
@@ -222,4 +187,4 @@ if (fs.existsSync(ENGINE_DIST_GUARD)) {
 // ④ install + build（vue-tsc 0 错 + vite build 绿）
 run('pnpm', ['install'], { cwd: vueDir, shell: true })
 run('pnpm', ['build'], { cwd: vueDir, shell: true })
-console.log('[regen-vue] OK: vue 面裸 strict 重建 + build 绿（补件链已随 671/646 退役，残余三件）')
+console.log('[regen-vue] OK: vue 面裸 strict 重建 + build 绿（补件链随 671/646/682 退役，残余垫片族 + splice 两件）')

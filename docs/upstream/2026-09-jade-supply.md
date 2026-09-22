@@ -1,5 +1,11 @@
 # jade-edit → 上游（auto-lang / auto-down engine）供料包（2026-09-21）
 
+> **2026-09-22 状态更新**：上游 PLAN-682 全周期 delivered 合入 auto-lang
+> master（exe v0.4.2-1914），jade 侧回执完成——§2b/2c/2d/2e 清偿（补件
+> ③④退役）、§4 D-18 归档（F1 落地）；§1 D-16 预热、§2a R010、§2f
+> __vmOnly 语义、§3 D-17 引擎键入发射（auto-down 分支 auto-lang-dev
+> 3373a5c 在库待走 changeset 流）仍未清偿。
+
 > 来源：jade-edit 仓 PLAN-002（T-01 扩单实测 + T-02 测量套件）。模式沿
 > 669 先例——本仓登记诉求与证据，上游走自己的 plan 流程立项修复；各件
 > 修复落上游后，jade-edit 侧以**零改动或最小改动复验解阻**（669 先例：
