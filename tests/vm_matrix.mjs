@@ -21,6 +21,12 @@
 //             行（index/CAP 定理/Tasks）→ 点击反链行开 index.ad → 出链
 //             行开 CAP 定理.ad → 关档空态（无反链/无出链）→ 重开恢复。
 //             执行序在 8 后 9 前（quit 杀进程恒为臂内最后一项）
+//   11 find   查找面板双模式（PLAN-004）：快开（Ctrl+P·files——开面板/
+//             input 锚/type_text 过滤[Pro→Projects 独行 + CJK 定理→CAP
+//             独行；CJK 拾取导航子步仅 merged 臂——D-19 同款口径]）+
+//             全文检索（Ctrl+Shift+F·text——切模式/未运行提示/CJK 查询
+//             「任务列表」[POST 通道——D-19 面无，双臂同跑]/行导航面板
+//             保持开/运行后空态）。执行序在 10b 后 9 前
 //   9 quit    退出存盘：dirty → 文件菜单退出 → CloseRequest 确认弹层 →
 //             QuitSaveClose → 磁盘三验（原文/标记/frontmatter）+ 进程退出
 //             （Process.exit 可能先于 HTTP 响应——连接断开即成功路径；
@@ -57,7 +63,7 @@ const argOf = (name) => {
   return i >= 0 ? args[i + 1] : undefined
 }
 const ARM = argOf('--arm') ?? 'all' // all | merged | split
-const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v3.txt')
+const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v4.txt')
 const SAVE_BASELINE = argOf('--save-baseline')
 
 const EDIT_MARKER = 'jade-edit 冒烟标记：编辑回写可见。'
@@ -329,10 +335,12 @@ async function runArm(arm, port) {
       const stateDump = (await callTool('autoui_state', {})).trim()
       const snapIds = JSON.stringify([...(await snapshotText()).matchAll(/#(vnode_\d+)/g)].map((m) => m[1]))
       const headerFor = (file) =>
-        `// jade-edit vm 结构基线 v3（PLAN-003 T-04 重锁；v2=PLAN-002 T-01、v1=PLAN-001 T-04 换基、v0=PLAN-081 T-05 均留档）。\n` +
-        `// 重锁因由：store 新增 links_json/backlinks_open 字段（PLAN-003 链接索引）进 autoui_state 全量\n` +
-        `// dump——逐字节必漂移，属计划内态扩（非漂移事故）。仪器同 v2：state 段逐字节 + snapshot\n` +
-        `// vnode id 出现序列；终态 = 六检查后满状态（chrome 全套 + Hello World.ad 开）。\n` +
+        `// jade-edit vm 结构基线 v4（PLAN-004 T-04 重锁；v3=PLAN-003 T-04、v2=PLAN-002 T-01、\n` +
+        `// v1=PLAN-001 T-04 换基、v0=PLAN-081 T-05 均留档）。\n` +
+        `// 重锁因由：store 新增 find_open/find_mode 字段 + App 模型新增 find_q/find_rows/find_ran 字段\n` +
+        `//（PLAN-004 查找面板）进 autoui_state 全量 dump——逐字节必漂移，属计划内态扩（非漂移事故）。\n` +
+        `// 仪器同 v2/v3：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态\n` +
+        `//（chrome 全套 + Hello World.ad 开；查找面板未开——find_* 全为默认值入 dump）。\n` +
         `// 再生成：node tests/vm_matrix.mjs --save-baseline ${path.relative(repoRoot, file).replace(/\\\\/g, '/')}\n`
       const baselineBodyOf = () => `## state\n${stateDump}\n\n## snapshot-ids\n${snapIds}\n`
       if (SAVE_BASELINE) {
@@ -342,9 +350,9 @@ async function runArm(arm, port) {
       } else if (fs.existsSync(BASELINE)) {
         const raw = fs.readFileSync(BASELINE, 'utf8')
         const ok = raw === headerFor(BASELINE) + baselineBodyOf()
-        check('B', 'baseline', ok, ok ? '结构基线 v3 零漂移（state 逐字节 + id 序列）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
+        check('B', 'baseline', ok, ok ? '结构基线 v4 零漂移（state 逐字节 + id 序列）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
       } else {
-        console.log('  [baseline] structure-v3 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v3.txt')
+        console.log('  [baseline] structure-v4 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v4.txt')
       }
     }
 
@@ -458,6 +466,82 @@ async function runArm(arm, port) {
     await waitButton('wiki/CAP 定理.ad', { exact: true })
     check('10b', 'link-empty', emptyOk, `点击反链行开 index.ad + 出链行开 CAP 定理.ad + 空态（untitled 激活）双文本=${emptyOk} + 重开行恢复`)
 
+    // 11 find（PLAN-004 T-04）：查找面板双模式。执行序在 quit 前（quit
+    // 恒为臂内最后一项）；先关反链面板（check 10 开着）——find 行断言免
+    // 反链行 .ad 路径文本重叠。快开：input 锚 + 空 q 全量 5 行 + 过滤
+    //（Pro→Projects 独行；CJK 定理→CAP 独行——纯前端 casefold contains
+    // 双臂同跑）+ 拾取即关（Projects[ASCII 双臂]；CAP[CJK 导航——仅
+    // merged 臂，D-19 同款口径：HTTP GET query CJK 不解码 split 全败]）。
+    // 检索：text 切模式 + 未运行提示 + CJK 查询「任务列表」（POST 通道
+    // ——D-19 面无，双臂同跑）→ Hello World 行（ASCII 路径导航双臂）+
+    // 面板保持开 + 运行后空态。
+    await pressButton('视图', { exact: true })
+    await pressButton('切换反链', { exact: true })
+    await stateIs('backlinks_open', 'false')
+    await pressButton('视图', { exact: true })
+    await pressButton('快速打开', { exact: true })
+    await stateIs('find_open', 'true')
+    await stateIs('find_mode', 'files')
+    const findTree0 = await snapshot()
+    const findInput0 = findFirst(findTree0, (n) => n.head.startsWith('input ') && elementIdOf(n))
+    if (!findInput0) throw new Error('find input not found in snapshot（快开子步）')
+    const findRowsAll = await snapshotText()
+    const allFive = ['wiki/CAP 定理.ad', 'wiki/Hello World.ad', 'wiki/index.ad', 'wiki/Projects.ad', 'wiki/Tasks.ad']
+      .every((p) => findRowsAll.includes(`"${p}"`))
+    if (!allFive) throw new Error('empty-q 快开应列全量 5 行')
+    await callTool('autoui_action', { element_id: elementIdOf(findInput0), action: 'type_text', value: 'Pro' })
+    await stateHas('find_q', 'Pro')
+    const findRowsPro = await snapshotText()
+    const proOk = findRowsPro.includes('"wiki/Projects.ad"')
+      && !findRowsPro.includes('"wiki/CAP 定理.ad"')
+      && !findRowsPro.includes('"wiki/index.ad"')
+    if (!proOk) throw new Error('files 过滤 "Pro" 未隔离 Projects.ad 独行')
+    await callTool('autoui_action', { element_id: elementIdOf(await waitButton('wiki/Projects.ad', { exact: true })), action: 'press' })
+    await stateIs('active_title', 'wiki/Projects')
+    await stateIs('find_open', 'false')
+    // CJK 文件名过滤（重开面板；行断言双臂，拾取导航子步仅 merged）
+    await pressButton('视图', { exact: true })
+    await pressButton('快速打开', { exact: true })
+    const findTree1 = await snapshot()
+    const findInput1 = findFirst(findTree1, (n) => n.head.startsWith('input ') && elementIdOf(n))
+    await callTool('autoui_action', { element_id: elementIdOf(findInput1), action: 'type_text', value: '定理' })
+    await stateHas('find_q', '定理')
+    const findRowsCjk = await snapshotText()
+    const cjkFilterOk = findRowsCjk.includes('"wiki/CAP 定理.ad"') && !findRowsCjk.includes('"wiki/Projects.ad"')
+    if (!cjkFilterOk) throw new Error('CJK 文件名过滤「定理」未隔离 CAP 定理.ad')
+    if (arm === 'merged') {
+      await callTool('autoui_action', { element_id: elementIdOf(await waitButton('wiki/CAP 定理.ad', { exact: true })), action: 'press' })
+      await stateIs('active_title', 'wiki/CAP 定理')
+      await stateIs('find_open', 'false')
+    }
+    // 检索子步（text 模式）
+    await pressButton('视图', { exact: true })
+    await pressButton('全文检索', { exact: true })
+    await stateIs('find_mode', 'text')
+    await stateIs('find_open', 'true')
+    const notRanOk = (await snapshotText()).includes('（输入查询词后检索）')
+    if (!notRanOk) throw new Error('text 未运行空态提示缺失')
+    const findTree2 = await snapshot()
+    const findInput2 = findFirst(findTree2, (n) => n.head.startsWith('input ') && elementIdOf(n))
+    await callTool('autoui_action', { element_id: elementIdOf(findInput2), action: 'type_text', value: '任务列表' })
+    await stateHas('find_q', '任务列表')
+    await pressButton('检索', { exact: true })
+    await stateIs('find_ran', 'true')
+    const hitRows = await snapshotText()
+    const hitOk = hitRows.includes('"wiki/Hello World.ad"')
+    if (!hitOk) throw new Error('CJK 检索「任务列表」未出 Hello World.ad 行（POST 通道双臂）')
+    await callTool('autoui_action', { element_id: elementIdOf(await waitButton('wiki/Hello World.ad', { exact: true })), action: 'press' })
+    await stateIs('active_title', tabTitleOf(TARGET_LABEL))
+    await stateIs('find_open', 'true')
+    const findTree3 = await snapshot()
+    const findInput3 = findFirst(findTree3, (n) => n.head.startsWith('input ') && elementIdOf(n))
+    await callTool('autoui_action', { element_id: elementIdOf(findInput3), action: 'type_text', value: 'zzz-无此词-xyz' })
+    await stateHas('find_q', 'zzz-无此词-xyz')
+    await pressButton('检索', { exact: true })
+    const emptyFindOk = (await snapshotText()).includes('（无结果）')
+    check('11', 'find', allFive && proOk && cjkFilterOk && notRanOk && hitOk && emptyFindOk,
+      `快开（input 锚/空q全量5行/Pro→Projects 独行拾取即关/定理→CAP 独行${arm === 'merged' ? '+CJK 拾取开档' : '（CJK 拾取仅 merged 臂 D-19）'}）+ 检索（text 切换/未运行提示/CJK「任务列表」POST 双臂命中/行导航面板保持开/运行后空态）`)
+
     // 9 退出存盘：dirty → 文件菜单退出 → 确认弹层 → QuitSaveClose →
     // 磁盘三验 + 进程退出。恒为臂内最后一项（Process.exit 杀进程）。
     await typeWholeDoc(`${bodyOf(fs.readFileSync(targetFile, 'utf8'))}\n\n${QUIT_MARKER}`)
@@ -512,5 +596,5 @@ for (const { arm, results } of all) {
 }
 if (failed > 0) process.exitCode = 1
 if (all.every(({ results }) => results.every((r) => r.ok))) {
-  console.log(`[matrix] ALL GREEN：${arms.join(' + ')} 臂检查单全过（六检查 + 基线[merged] + tab/editops/link 扩单 + quit）`)
+  console.log(`[matrix] ALL GREEN：${arms.join(' + ')} 臂检查单全过（六检查 + 基线[merged] + tab/editops/link/find 扩单 + quit）`)
 }

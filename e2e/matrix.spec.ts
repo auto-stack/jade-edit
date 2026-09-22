@@ -14,6 +14,15 @@
 //   10 link   链接索引+反链面板（PLAN-003；vm 矩阵 check 10/10b 同单——
 //             ASCII 路径导航；CJK 目标子步 vm merged 专属（HTTP GET query
 //             UTF-8 解码缺口 D-19，vue 轨同败故跳过）
+//   11 find   查找面板双模式（PLAN-004；vm 矩阵 check 11 同单）：快开
+//             （文件模式——空 q 全量/过滤 Pro→Projects/拾取即关）+ 全文
+//             检索（text 模式——未运行提示/CJK 查询「任务列表」[POST 通道
+//             ——D-19 面无，vue 臂无 GET query 环节]/行导航面板保持开/
+//             运行后空态）。入口 = 视图菜单项（键位面 = 真键盘，e2e 不
+//             覆盖）；检索触发 = 检索钮（契约底线；Enter @keyup.enter
+//             随 fill() 不发 keyup 不覆盖——按钮面已证触发链）。
+//             执行序在 10 后 9 前（先关反链面板——find 行断言免反链行
+//             文本重叠）
 //   9 quit    退出存盘：dirty → 退出入口 → CloseRequest 确认弹层 →
 //             QuitSaveClose → 磁盘三验（原文/标记/frontmatter）。
 //             进程退出断言仅 vm 附注——vue 轨 Process.exit = 垫片 no-op
@@ -197,6 +206,45 @@ test('vue 六检查（vm 矩阵同单）', async ({ page }) => {
   await expect(visibleEditor(page)).toContainText('这是一段示例文本', { timeout: 15_000 })
   await expect(page.getByRole('button', { name: 'wiki/index.ad', exact: true })).toBeVisible({ timeout: 10_000 })
   console.log('[10 link] PASS — untitled 空态双文本 + 重开行恢复')
+
+  // 11 find（vm 矩阵 check 11 同单）：查找面板双模式。input = 真 DOM
+  // （fill() 即发 input 事件 → oninput——无 D-17 通道约束，该门控仅编辑
+  // 器组件）；行断言域与 vm 同单（path 按钮/空态文本）。
+  await page.getByText('视图', { exact: true }).click()
+  await page.getByText('切换反链', { exact: true }).click()
+  await expect(page.getByText('LINKS', { exact: true })).toHaveCount(0, { timeout: 10_000 })
+  // 快开子步：开面板（文件模式）→ 空 q 全量 5 行 → 过滤 → 拾取即关
+  await page.getByText('视图', { exact: true }).click()
+  await page.getByText('快速打开', { exact: true }).click()
+  const findInput = page.getByPlaceholder('过滤文件名…')
+  await expect(findInput).toBeVisible({ timeout: 10_000 })
+  for (const p of ['wiki/CAP 定理.ad', 'wiki/Hello World.ad', 'wiki/index.ad', 'wiki/Projects.ad', 'wiki/Tasks.ad']) {
+    await expect(page.getByRole('button', { name: p, exact: true })).toBeVisible()
+  }
+  await findInput.fill('Pro')
+  await expect(page.getByRole('button', { name: 'wiki/Projects.ad', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'wiki/CAP 定理.ad', exact: true })).toHaveCount(0)
+  await page.getByRole('button', { name: 'wiki/Projects.ad', exact: true }).click()
+  await expect(visibleEditor(page)).toContainText('当前进行中的项目', { timeout: 15_000 })
+  await expect(findInput).toHaveCount(0, { timeout: 10_000 })
+  console.log('[11 find] PASS — 快开：空 q 全量 5 行 + 过滤 Pro→Projects 独行 + 拾取开档即关')
+  // 检索子步：text 模式 → 未运行提示 → CJK 查询（POST 通道）→ 行导航
+  // 面板保持开 → 运行后空态
+  await page.getByText('视图', { exact: true }).click()
+  await page.getByText('全文检索', { exact: true }).click()
+  const searchText = page.getByPlaceholder('输入查询词…')
+  await expect(searchText).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByText('（输入查询词后检索）', { exact: true })).toBeVisible()
+  await searchText.fill('任务列表')
+  await page.getByRole('button', { name: '检索', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'wiki/Hello World.ad', exact: true })).toBeVisible({ timeout: 10_000 })
+  await page.getByRole('button', { name: 'wiki/Hello World.ad', exact: true }).click()
+  await expect(visibleEditor(page)).toContainText('这是一段示例文本', { timeout: 15_000 })
+  await expect(searchText).toBeVisible()
+  await searchText.fill('zzz-无此词-xyz')
+  await page.getByRole('button', { name: '检索', exact: true }).click()
+  await expect(page.getByText('（无结果）', { exact: true })).toBeVisible({ timeout: 10_000 })
+  console.log('[11 find] PASS — 检索：未运行提示 + CJK「任务列表」命中/行导航面板保持开 + 运行后空态')
 
   // 9 退出存盘（vm 矩阵 check 9 同单；vue 形态差异两处——见文件头注记）：
   // ① 退出入口 = 文件菜单 → 退出项（1784 起 menubar 族为真组件 popover
