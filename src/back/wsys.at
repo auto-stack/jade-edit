@@ -249,6 +249,47 @@ fn extract_links_json(body str, stems List, rels List) str {
     return out
 }
 
+/// 文件树 .ad 页面收集（links_json / search_json 共享——PLAN-004 T-01
+/// 自 links_json 提取；覆盖 = 文件树不变式单点：忽略面/depth 钳制/walk 序
+/// 同源维护）。返回 List，元素 = {stem, rel} map（消费面先拷局部变量再取
+/// 字段——D-20② 纪律）。收集法 = 树 JSON 段标记法（split `{"id":` 每段一
+/// 节点，file 节点 = 叶子故自身 `"kind":"file"` 落本段内；dir 段只含头 +
+/// 空 children 开括号不误收）；id 本为 `/` 分隔相对路径免剥前缀。带引号
+/// 壳 id 用 split 法去壳（不用 length+slice——CJK heap 串 .length 字节
+/// 语义会错位，T-02 实勘）。stem = 末段去 .ad 尾（split 法；文件名内嵌
+/// ".ad" 的病理形态 v1 不支持——语料与常规命名不含）。遍历序 = fs.tree
+/// 同源（dirs-first + 名称 casefold，确定性，首锁友好）；depth 语义直通
+///（1..8 钳制同 tree；fs.walk_files 原语在册未接 .at 调用面——D-20①，
+/// 故走已证 fs.tree）。
+pub fn collect_ad_pages(path str, depth int) List {
+    var tree str = fs.tree(resolve(path), depth)
+    var pages List = []
+    var segs = tree.split("{\"id\":")
+    var i int = 1
+    while i < segs.len() {
+        var seg str = segs[i]
+        if seg.contains("\"kind\":\"file\"") {
+            var head = seg.split_once(",\"label\":")
+            if head.len() == 2 {
+                var idq str = head[0]
+                var qparts = idq.split("\"")
+                if qparts.len() >= 2 {
+                    var rel str = qparts[1]
+                    if rel.ends_with(".ad") {
+                        var fsegs = rel.split("/")
+                        var fname str = fsegs[fsegs.len() - 1]
+                        var astrips = fname.split(".ad")
+                        var stem str = astrips[0]
+                        pages.push({ stem: stem, rel: rel })
+                    }
+                }
+            }
+        }
+        i = i + 1
+    }
+    return pages
+}
+
 /// 工作区链接索引 JSON：页面数组 [{"path","title","links":[…]},…]。
 /// ⚠ 顶层形状 = 裸数组（无 {"pages":…} 包壳）：front json.to_value 消费
 /// 面只对顶层 array 产物健康（App ft_nodes 同款已证；顶层 map 产物入态
@@ -257,62 +298,110 @@ fn extract_links_json(body str, stems List, rels List) str {
 /// stem（旧园 links.rs rebuild 同语义：title = file_stem，非 frontmatter
 /// title——[[首页]] 对 index.ad = 悬空）；links = 出链对象
 /// {target,anchor,exists,target_path}。
-/// 三步：①walk = fs.tree 同源遍历（本切片实测：fs.walk_files 原语在册
-/// 未接 .at 调用面——Undefined symbol，2026-09-22 探针实证——故走已证
-/// fs.tree：depth 语义直通（1..8 钳制同 tree），遍历序 = dirs-first +
-/// 名称 casefold 序（确定性，首锁友好），忽略面 = tree 同款（.git/
-/// target/build/node_modules/gen/dist/__pycache__/点开头——索引覆盖 =
-/// 文件树覆盖，所见即所索引）②逐档 read_body 后 extract_links_json
-/// 标记法提取 ③stem 解析装配。节点收集 = 树 JSON 段标记法：split
-/// `{"id":` 每段一节点，file 节点 = 叶子（children:[] 空）故自身
-/// `"kind":"file"` 落本段内；dir 段只含头 + 空 children 开括号（子节点
-/// 各起新段）不误收。id 本为 `/` 分隔相对路径免剥前缀。装配逐页 `+`
-/// 重接：v0 规模 O(P²) 前缀复制可接受（对照 read_body 78s 案 ≈ 8 万次
-/// ADD；此处 P ≤ 数百），规模上量随检索批换 StringBuilder（native 160
-/// 族）。
+/// 三步：①walk = collect_ad_pages（本切片 T-01 提取共享——链接/检索两面
+/// 覆盖一致）②逐档 read_body 后 extract_links_json 标记法提取 ③stem 解析
+/// 装配。装配逐页 `+` 重接：v0 规模 O(P²) 前缀复制可接受（对照 read_body
+/// 78s 案 ≈ 8 万次 ADD；此处 P ≤ 数百），规模上量随检索批换 StringBuilder
+///（native 160 族）。
 pub fn links_json(path str, depth int) str {
-    var tree str = fs.tree(resolve(path), depth)
+    var pages List = collect_ad_pages(path, depth)
     var stems List = []
     var rels List = []
-    var segs = tree.split("{\"id\":")
-    var i int = 1
-    while i < segs.len() {
-        var seg str = segs[i]
-        if seg.contains("\"kind\":\"file\"") {
-            var head = seg.split_once(",\"label\":")
-            if head.len() == 2 {
-                // 带引号壳 id（"…"）——split 法去壳，不用 length+slice
-                //（CJK heap 串 .length 字节语义会错位——T-02 实勘）。
-                var idq str = head[0]
-                var qparts = idq.split("\"")
-                if qparts.len() >= 2 {
-                    var rel str = qparts[1]
-                    if rel.ends_with(".ad") {
-                        // stem = 末段去 .ad 尾（split 法；文件名内嵌 ".ad"
-                        // 的病理形态 v1 不支持——语料与常规命名不含）
-                        var fsegs = rel.split("/")
-                        var fname str = fsegs[fsegs.len() - 1]
-                        var astrips = fname.split(".ad")
-                        var stem str = astrips[0]
-                        stems.push(stem)
-                        rels.push(rel)
-                    }
-                }
-            }
-        }
+    var i int = 0
+    while i < pages.len() {
+        var p = pages[i]
+        stems.push(p.stem)
+        rels.push(p.rel)
         i = i + 1
     }
-    var pages str = ""
+    var pages_out str = ""
     var j int = 0
     while j < rels.len() {
         var body str = read_body(rels[j])
         var links str = extract_links_json(body, stems, rels)
-        if pages != "" {
-            pages = pages + ","
+        if pages_out != "" {
+            pages_out = pages_out + ","
         }
-        pages = pages + "{\"path\":\"" + json_esc(rels[j]) + "\",\"title\":\"" + json_esc(stems[j])
-        pages = pages + "\",\"links\":[" + links + "]}"
+        pages_out = pages_out + "{\"path\":\"" + json_esc(rels[j]) + "\",\"title\":\"" + json_esc(stems[j])
+        pages_out = pages_out + "\",\"links\":[" + links + "]}"
         j = j + 1
     }
-    return "[" + pages + "]"
+    return "[" + pages_out + "]"
+}
+
+/// 工作区全文检索 JSON：命中数组 [{"path","title","snippet"},…]
+///（PLAN-004 T-01；知识库第二切片 back 半，移植自冻结池 jade-garden
+/// search.rs Page 面线性化——v1 = 线性扫描，块级/倒排不迁）。
+/// ⚠ 顶层裸数组（links_json 同裁定——front json.to_value 消费面）。
+/// 匹配语义（SD-401）：query trim 空守卫 → []；命中 = stem 含 q 或 body
+///（read_body，frontmatter 剥离面）含 q；大小写 = 两侧 to_lower（探针 A
+/// 定谳：vue 发射在册——ts_adapter.rs:1610 `to_lower→toLowerCase`，T-02
+/// 构建期 gen 树源检复核）；命中序 = collect_ad_pages walk 序（确定性）；
+/// limit 钳 1..50（front 传 20 = 旧园 default_limit 同值）；walk depth = 4
+/// 内部常量（Init tree 首屏同值——快开/检索/链接三面覆盖一致）。
+/// snippet = body 中首条命中行 trim 后整行（⚠ D-20③：禁 .length 截断
+/// ——CJK heap 串字节语义；CRLF 行尾 \r 剥离——is_delim 同族容错，
+/// 行终止符非内容）；title-only 命中 = ""。装配 = json_esc + 逐项 `+`
+/// 重接（links_json 同款）。
+pub fn search_json(query str, limit int) str {
+    var q str = query.trim()
+    if q == "" {
+        return "[]"
+    }
+    var n int = limit
+    if n < 1 {
+        n = 1
+    }
+    if n > 50 {
+        n = 50
+    }
+    var ql str = q.to_lower()
+    var pages List = collect_ad_pages("", 4)
+    var out str = ""
+    var hits int = 0
+    var i int = 0
+    while i < pages.len() {
+        if hits < n {
+            // ⚠ D-20②：列表元素先拷局部变量再取字段/调方法。
+            var p = pages[i]
+            var stem_l str = p.stem.to_lower()
+            var body str = read_body(p.rel)
+            var body_l str = body.to_lower()
+            var is_hit bool = false
+            if stem_l.contains(ql) {
+                is_hit = true
+            }
+            if !is_hit {
+                if body_l.contains(ql) {
+                    is_hit = true
+                }
+            }
+            if is_hit {
+                // snippet = 首条命中行 trim 整行（跨多行命中只取首行；
+                // title-only 命中 = ""）。
+                var snip str = ""
+                var lines = body.split("\n")
+                var k int = 0
+                while k < lines.len() {
+                    if snip == "" {
+                        var line str = lines[k]
+                        line = line.replace("\r", "")
+                        var line_l str = line.to_lower()
+                        if line_l.contains(ql) {
+                            snip = line.trim()
+                        }
+                    }
+                    k = k + 1
+                }
+                if hits > 0 {
+                    out = out + ","
+                }
+                out = out + "{\"path\":\"" + json_esc(p.rel) + "\",\"title\":\"" + json_esc(p.stem)
+                out = out + "\",\"snippet\":\"" + json_esc(snip) + "\"}"
+                hits = hits + 1
+            }
+        }
+        i = i + 1
+    }
+    return "[" + out + "]"
 }

@@ -83,3 +83,15 @@ pub fn env_str(name str) str {
 pub fn link_index(path str, depth int) str {
     return wsys.links_json(path, depth)
 }
+
+/// 工作区全文检索（JSON 字符串；stem+body 线性扫描，命中=
+/// [{path,title,snippet}]——PLAN-004 知识库第二切片。标量 JSON 纪律同
+/// link_index：顶层裸数组，front 侧 json.to_value 解析）。
+/// **POST 而非 GET**：D-19（AutoVM HTTP 对 GET query 的 UTF-8 百分号
+/// 序列不解码——CJK 查询词在 split/vue 臂全败）；POST body CJK 已证
+///（write_wiki 同款）。匹配语义见 wsys.search_json（SD-401 定文）。
+/// POST /api/search_wiki
+#[api(method = "POST", path = "/api/search_wiki")]
+pub fn search_wiki(query str, limit int) str {
+    return wsys.search_json(query, limit)
+}
