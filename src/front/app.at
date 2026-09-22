@@ -28,7 +28,7 @@ use backlinks_panel: BacklinksPanel
 use find_panel: FindPanel
 use bps.navigation.filetree.tree_util: flatten_tree, toggle_id
 use bps.navigation.filetree.tree_icon: TreeIcon
-use back.api: tree, ws_root, link_index, search_wiki
+use back.api: tree, ws_root, link_index, search_wiki, create_page
 
 style warn_label = "text-[12px] text-amber-400 mr-1"
 
@@ -165,6 +165,38 @@ fn file_rows_of(paths List, q str) List {
     }
     return out
 }
+
+/// 悬空建页路径预览（PLAN-005 T-02）——back wsys.title_to_path 的 front
+/// 镜像纯函数（同一 while-contains 收敛惯用法 + dash-收敛空名探针）。
+/// **仅弹层显示用**：权威在 back（create_page 落盘名），漂移=观感非
+/// 正确性。规则 v1（SD-501）：九字符 `\/:*?"<>|` → `-`（首现/全量两态
+/// 皆收敛——.replace 次数语义双轨未证）+ trim；空名守卫（trim 空或
+/// 收敛后恰 "-"——`///` 形）→ ""；非空拼 ".ad"。
+fn title_to_path(title str) str {
+    var bad List = ["\\", "/", ":", "*", "?", "\"", "<", ">", "|"]
+    var t str = title
+    var i int = 0
+    while i < bad.len() {
+        // ⚠ D-20②：列表元素先拷局部变量再调方法。
+        var c str = bad[i]
+        while t.contains(c) {
+            t = t.replace(c, "-")
+        }
+        i = i + 1
+    }
+    t = t.trim()
+    if t == "" {
+        return ""
+    }
+    var probe str = t
+    while probe.contains("--") {
+        probe = probe.replace("--", "-")
+    }
+    if probe == "-" {
+        return ""
+    }
+    return t + ".ad"
+}
 widget App {
     msg {
         Init, FtToggle(str), OpenFile(str), Reload,
@@ -176,6 +208,7 @@ widget App {
         CloseRequest, QuitDiscard, QuitSaveClose, QuitConfirmCancel,
         ActBacklinks, LinksRefresh, OpenLink(str),
         FindEdit(str), FindRun, ActFindFiles, ActFindText, FindPick(str),
+        CreateClick(str), CreateGo, CreateCancel,
     }
 
     model {
@@ -205,6 +238,9 @@ widget App {
 
     computed {
         ft_rows => flatten_tree(.ft_nodes, .ft_expanded, true, .ft_sel)
+        // 悬空建页弹层路径预览（PLAN-005）：title_to_path 镜像消费
+        // .store.create_target（widget computed——ft_rows 同族先例）。
+        create_preview => title_to_path(.store.create_target)
     }
 
     // —— actions 声明块（Plan 451 三源绑定：shortcut / toolbar 占位合成 /
@@ -497,9 +533,13 @@ widget App {
                                         style: "w-full justify-start px-3 h-6 text-left text-[12px]"
                                     }
                                 }
+                                // 悬空行 button 化（PLAN-005）——建页入口
+                                //（旧「非点击文本」形态随本切片退役；确认
+                                // 弹层误触防线，§2.3）。
                                 if !r.exists {
-                                    text "${r.target}（悬空）" {
-                                        style: "text-[12px] text-muted-foreground px-3"
+                                    button (text: "${r.target}（悬空）", variant: "ghost") {
+                                        onclick: .CreateClick(r.target)
+                                        style: "w-full justify-start px-3 h-6 text-left text-[12px] text-muted-foreground"
                                     }
                                 }
                             }
@@ -533,6 +573,24 @@ widget App {
                         alert-dialog-cancel "取消" { onclick: .QuitConfirmCancel }
                         alert-dialog-action "不保存退出" { onclick: .QuitDiscard }
                         alert-dialog-action "保存并退出" { onclick: .QuitSaveClose }
+                    }
+                }
+            }
+
+            // —— 悬空建页确认（PLAN-005 第三切片；旧园 CreatePagePrompt
+            //「Create missing page?」先例移植——alert-dialog 在册族第三
+            // 实例）。路径预览 = title_to_path front 镜像（create_preview
+            // computed——仅显示，权威在 back）。——
+            alert-dialog (open: .store.create_confirm_open) {
+                alert-dialog-content {
+                    alert-dialog-header {
+                        alert-dialog-title "创建缺失页面？"
+                        alert-dialog-description "[[${.store.create_target}]] 尚不存在"
+                    }
+                    text "将创建：${.create_preview}" { style: "text-[12px] text-muted-foreground px-1" }
+                    alert-dialog-footer {
+                        alert-dialog-cancel "取消" { onclick: .CreateCancel }
+                        alert-dialog-action "创建" { onclick: .CreateGo }
                     }
                 }
             }
@@ -750,6 +808,36 @@ widget App {
             .OpenLink(path)
             if .store.find_mode == "files" {
                 store.FindClose()
+            }
+        }
+
+        // —— 悬空建页（PLAN-005 T-02/T-03）——悬空行点击 → 确认弹层
+        //（store 弹层态）→ 创建流或取消。CreateGo：back 契约直调
+        //（try/catch 落 console——backend-offline 不炸）→ 成功 = 关弹层
+        // + 开新档（OpenLink 共用导航口——显式 path 两轨一致）；失败/
+        // 空名守卫 = 弹层留置 + console 注记（用户可取消）。链接索引/
+        // 树重取接线在 T-03（触发集 v2）。
+        .CreateClick(target) -> {
+            store.CreateConfirmOpen(target)
+        }
+        .CreateCancel -> {
+            store.CreateConfirmCancel()
+        }
+        .CreateGo -> {
+            var r str = ""
+            var ok bool = true
+            try {
+                r = create_page(.store.create_target)
+            } catch (e) {
+                ok = false
+            }
+            if !ok {
+                console_log("create: failed")
+                .console = console_lines()
+            }
+            if r != "" {
+                store.CreateConfirmCancel()
+                .OpenLink(r)
             }
         }
         .ActSwitchTab -> { store.ActSwitchTab() }

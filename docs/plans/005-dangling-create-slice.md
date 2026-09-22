@@ -366,6 +366,33 @@ pub fn create_page_impl(title str) str {
     纯函数（路径预览）。
   - 验证：merged 手动冒烟（悬空行点击→弹层快照→取消零落盘）+
     `pnpm build` PASS。
+  - **证据（2026-09-22）**：
+    - ①实现 = editor_store.at `create_confirm_open`/`create_target` 两
+      字段 + `CreateConfirmOpen(str)`/`CreateConfirmCancel` msg 对（弹层
+      态居 store——confirm 族分野先例；Cancel 只关弹层，target 留置待
+      覆写）；app.at = `use back.api` 增 create_page + `title_to_path`
+      front 镜像纯函数（与 back 同规则同惯用法，含 T-01 dash-收敛守卫）
+      + widget computed `create_preview`（ft_rows 同族——computed over
+      store 态双轨可用，冒烟实证）+ msg `CreateClick(str)/CreateGo/
+      CreateCancel` + 悬空行 `text` → `button（text: "${r.target}（悬空）"）`
+      （attr 单段插值——span 内容插值同族发射，gen App.vue 源检
+      `{{ r.target }}` 同构）+ alert-dialog 第三实例（标题/描述
+      `[[${target}]] 尚不存在`/预览 `将创建：${.create_preview}`/取消+
+      创建双钮）+ `.CreateGo` 核心流（create_page try/catch → 成功关弹
+      层 + OpenLink(r) 开新档；失败/守卫空名弹层留置 + console 注记）。
+    - ②`pnpm build` PASS（裸 strict 生成 + vue-tsc 0 错 + vite build
+      绿——attr 插值/第三弹层/镜像 fn 的 vue 轨编译证）。
+    - ③**merged 冒烟全过**（e2e/.runtime/smoke-t02.mjs，六断言）：悬空
+      行点击 → `create_confirm_open=true`/`create_target=首页` + 弹层
+      标题「创建缺失页面？」/描述「[[首页]] 尚不存在」/预览「将创建：
+      首页.ad」三断言在快照；取消 → 弹层闭 + **磁盘零落盘**；再开 →
+      创建 → `active_title=首页`（**跨分发读 .store.create_target 无
+      陈旧投影**——T-03 实勘陈旧面仅同分发内改后读）+ active_body 播种
+      `# 首页` + 磁盘 首页.ad 在。
+    - ④实勘附记（测试面）：vm 快照中三 alert-dialog 内容恒渲染且弹层
+      根为**匿名 col**（无 alert-dialog 头标）——弹层按钮 press 须按
+      「创建」钮（全树唯一）的父 footer 行兄弟域定位（smoke
+      pressInCreateDialog；T-04 矩阵复用此锚）。
 - **T-03 创建流收口 + 共享重构**（AC-02 后半 + G3）
   - `.CreateGo` 四步流；`refresh_links()` 提取（五触点收口）+
     `refresh_tree()` 提取（Init/建页/Save 新档三触点）。

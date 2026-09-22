@@ -63,6 +63,10 @@ store EditorStore {
         // store 上下文解析产物损坏，链接态先例）。
         var find_open bool = false
         var find_mode str = "files"
+        // 悬空建页确认弹层（PLAN-005；基线 v5 面）：目标名 + 开态——
+        // 弹层面状态居 store（confirm_open/quit_confirm_open 在册分野）。
+        var create_confirm_open bool = false
+        var create_target str = ""
     }
 
     // msg 载荷单类型（编译器约束）：Open 单 map、Edit 单 str。
@@ -75,6 +79,7 @@ store EditorStore {
         QuitConfirmCancel,
         BacklinksToggle,
         FindOpen(str), FindToggle, FindClose,
+        CreateConfirmOpen(str), CreateConfirmCancel,
     }
 
     on {
@@ -394,6 +399,19 @@ store EditorStore {
         }
         .FindClose -> {
             .find_open = false
+            .console = console_lines()
+        }
+
+        // ---- 悬空建页确认弹层（PLAN-005）：入口 = App .CreateClick
+        //（悬空出链行 button）。Open 只置弹层态两字段；Cancel 只关弹层
+        //——target 留置无害（下次 Open 覆写；弹层闭态不渲染）。----
+        .CreateConfirmOpen(target) -> {
+            .create_confirm_open = true
+            .create_target = target
+            .console = console_lines()
+        }
+        .CreateConfirmCancel -> {
+            .create_confirm_open = false
             .console = console_lines()
         }
     }
