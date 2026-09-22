@@ -28,6 +28,14 @@
 //             随 fill() 不发 keyup 不覆盖——按钮面已证触发链）。
 //             执行序在 10 后 9 前（先关反链面板——find 行断言免反链行
 //             文本重叠）
+//   12 rename 重命名+反链改写全弧线（PLAN-006；vm 矩阵 check 12 同单，
+//             七子步——禁用态 untitled+脏档[handler 守卫，弹层不开]/
+//             弹层锚[预填+影响面预览]/取消零落盘/改名弧线[active/tab
+//             更新+磁盘改写 index·CAP 定理]/面板+树新 stem/case-only 拒
+//             [弹层留置+casefold 计数]/状态复原。素材 Projects.ad ASCII
+//             ——D-19 面无；vue Dialog 闭态=卸载（radix-vue——vm 恒渲染
+//             的轨内差异，断言以 visible/hidden 表达））。执行序在 11 后
+//             9 前
 //   9 quit    退出存盘：dirty → 退出入口 → CloseRequest 确认弹层 →
 //             QuitSaveClose → 磁盘三验（原文/标记/frontmatter）。
 //             进程退出断言仅 vm 附注——vue 轨 Process.exit = 垫片 no-op
@@ -289,6 +297,105 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await page.getByRole('button', { name: '检索', exact: true }).click()
   await expect(page.getByText('（无结果）', { exact: true })).toBeVisible({ timeout: 10_000 })
   console.log('[11 find] PASS — 检索：未运行提示 + CJK「任务列表」命中/行导航面板保持开 + 运行后空态')
+
+  // 12 rename（PLAN-006 T-04；vm 矩阵 check 12 同单）：重命名+反链改写
+  // 全弧线。素材 Projects.ad（ASCII——D-19 面无；入链 index/CAP 定理 两
+  // 页两处 = 预览/改写断言域）。vue 轨 Dialog 闭态 = 卸载（radix-vue 形
+  // 态——vm 恒渲染的轨内差异，断言以 visible/hidden 表达，语义同单）。
+  // 入口 = 文件菜单→重命名…（键位面 = 真键盘，e2e 不覆盖——11 同口径）。
+  // ① untitled 禁用（handler 守卫——弹层不开）
+  await page.getByText('文件', { exact: true }).click()
+  await page.getByText('新建', { exact: true }).click()
+  await expect(page.getByRole('button', { name: '未命名', exact: true })).toBeVisible({ timeout: 10_000 })
+  await page.getByText('文件', { exact: true }).click()
+  await page.getByText('重命名…', { exact: true }).click()
+  await expect(page.getByText('重命名页面')).toBeHidden({ timeout: 5_000 })
+  console.log('[12 rename] untitled 禁用 — 入口 press 后弹层不开（handler 守卫）')
+  await page.locator('button:has(svg.lucide-xicon)').first().click()
+  // ①b 脏档禁用：HW 追加 → 未保存 → 入口 → 弹层不开 → 重载复原
+  await appendToEditor(page, ' rename 脏档标记。')
+  await neutralBlur()
+  await expect(page.getByText('未保存', { exact: true }).first()).toBeVisible({ timeout: 10_000 })
+  await page.getByText('文件', { exact: true }).click()
+  await page.getByText('重命名…', { exact: true }).click()
+  await expect(page.getByText('重命名页面')).toBeHidden({ timeout: 5_000 })
+  await page.locator('button[title="重载"]').click()
+  await expect(page.getByText('未保存', { exact: true })).toHaveCount(0, { timeout: 10_000 })
+  console.log('[12 rename] 脏档禁用 — 弹层不开 + 重载复原')
+  // ② 弹层内容锚：开 Projects.ad → 入口 → 弹层（预填 Projects + 预览
+  // 「将改写 2 页 2 处链接」）
+  await page.getByText('Projects.ad', { exact: true }).first().click()
+  await expect(visibleEditor(page)).toContainText('当前进行中的项目', { timeout: 15_000 })
+  await page.getByText('文件', { exact: true }).click()
+  await page.getByText('重命名…', { exact: true }).click()
+  await expect(page.getByText('重命名页面')).toBeVisible({ timeout: 10_000 })
+  const renameInput = page.getByPlaceholder('新名称…')
+  await expect(renameInput).toHaveValue('Projects')
+  await expect(page.getByText('将改写 2 页 2 处链接', { exact: true })).toBeVisible()
+  console.log('[12 rename] 弹层锚 — 预填 Projects + 影响面预览 2 页 2 处')
+  // ③ 取消零落盘
+  const projectsFile = path.join(WORKSPACE, 'wiki', 'Projects.ad')
+  const renamedFile = path.join(WORKSPACE, 'wiki', 'Project X.ad')
+  await page.getByRole('button', { name: '取消', exact: true }).last().click()
+  await expect(page.getByText('重命名页面')).toBeHidden({ timeout: 10_000 })
+  expect(fs.existsSync(projectsFile), '取消零落盘（Projects.ad 在）').toBe(true)
+  expect(fs.existsSync(renamedFile), '取消零落盘（Project X.ad 不在）').toBe(false)
+  console.log('[12 rename] 取消零落盘')
+  // ④ 改名弧线：Projects → Project X——tab/激活更新 + 磁盘（旧消失新
+  // 在 + index.ad/CAP 定理.ad 源文改写）
+  await page.getByText('文件', { exact: true }).click()
+  await page.getByText('重命名…', { exact: true }).click()
+  await expect(renameInput).toHaveValue('Projects', { timeout: 10_000 })
+  await renameInput.fill('Project X')
+  await page.getByRole('button', { name: '重命名', exact: true }).click()
+  await expect(page.getByText('重命名页面')).toBeHidden({ timeout: 10_000 })
+  await expect(page.getByRole('button', { name: 'wiki/Project X', exact: true })).toBeVisible({ timeout: 15_000 })
+  expect(fs.existsSync(projectsFile), '旧档消失').toBe(false)
+  expect(fs.existsSync(renamedFile), '新档在').toBe(true)
+  const indexDisk = fs.readFileSync(path.join(WORKSPACE, 'wiki', 'index.ad'), 'utf8')
+  const capDisk = fs.readFileSync(path.join(WORKSPACE, 'wiki', 'CAP 定理.ad'), 'utf8')
+  expect(indexDisk, 'index.ad 源文改写').toContain('[[Project X]]')
+  expect(capDisk, 'CAP 定理.ad 源文改写').toContain('[[Project X]]')
+  console.log('[12 rename] 改名弧线 — active/tab 更新 + 磁盘改名 + 双页源文改写')
+  // ⑤ 跨页改写可见：开 index.ad → 反链面板（index 反链空态 + 出链行新
+  // stem『Project X』——『Projects』行消失）→ **出链行点击导航到新档**
+  //（tab wiki/Project X——改写链接可走通）+ 树新行（Project X.ad 在、
+  // Projects.ad 消失）。（index 无反链——Project X 零真实出链[语料转义
+  // 面]故非任何页反链源；反链行新 stem 正证面 = probe_rename 案①。）
+  await page.getByText('index.ad', { exact: true }).first().click()
+  await expect(visibleEditor(page)).toContainText('Jade Garden 测试知识库', { timeout: 15_000 })
+  await page.getByText('视图', { exact: true }).click()
+  await page.getByText('切换反链', { exact: true }).click()
+  await expect(page.getByText('（无反链）', { exact: true })).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByRole('button', { name: 'Project X', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Projects', exact: true })).toHaveCount(0, { timeout: 10_000 })
+  await expect(page.getByText('Project X.ad', { exact: true }).first()).toBeVisible()
+  await expect(page.getByText('Projects.ad', { exact: true })).toHaveCount(0, { timeout: 10_000 })
+  await page.getByRole('button', { name: 'Project X', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'wiki/Project X', exact: true })).toBeVisible({ timeout: 15_000 })
+  await expect(visibleEditor(page)).toContainText('当前进行中的项目', { timeout: 15_000 })
+  await page.getByText('视图', { exact: true }).click()
+  await page.getByText('切换反链', { exact: true }).click()
+  console.log('[12 rename] 跨页改写可见 — 出链新 stem + 点击导航到新档 + 树新行')
+  // ⑥ case-only 拒（G3）：project x → 弹层留置 + 磁盘零变化（目录清单
+  // casefold 计数——Windows 大小写不敏感 FS exists 对同档恒真）→ 取消
+  await page.getByText('文件', { exact: true }).click()
+  await page.getByText('重命名…', { exact: true }).click()
+  await expect(page.getByText('重命名页面')).toBeVisible({ timeout: 10_000 })
+  await renameInput.fill('project x')
+  await page.getByRole('button', { name: '重命名', exact: true }).click()
+  await expect(page.getByText('重命名页面')).toBeVisible({ timeout: 10_000 })
+  const pxCount = fs
+    .readdirSync(path.join(WORKSPACE, 'wiki'))
+    .filter((f) => f.endsWith('.ad') && f.toLowerCase() === 'project x.ad').length
+  expect(pxCount, 'case-only 拒磁盘零变化（无第二档）').toBe(1)
+  await page.getByRole('button', { name: '取消', exact: true }).last().click()
+  await expect(page.getByText('重命名页面')).toBeHidden({ timeout: 10_000 })
+  console.log('[12 rename] PASS — case-only 拒（弹层留置 + 磁盘零变化）')
+  // ⑦ 状态复原：回 Hello World tab（quit 检查前置）
+  await page.getByRole('button', { name: 'wiki/Hello World', exact: true }).click()
+  await expect(visibleEditor(page)).toContainText('这是一段示例文本', { timeout: 15_000 })
+  console.log('[12 rename] PASS — rename 组全弧线（七子步；状态复原 Hello World）')
 
   // 9 退出存盘（vm 矩阵 check 9 同单；vue 形态差异两处——见文件头注记）：
   // ① 退出入口 = 文件菜单 → 退出项（1784 起 menubar 族为真组件 popover

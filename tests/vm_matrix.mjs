@@ -32,6 +32,12 @@
 //             全文检索（Ctrl+Shift+F·text——切模式/未运行提示/CJK 查询
 //             「任务列表」[POST 通道——D-19 面无，双臂同跑]/行导航面板
 //             保持开/运行后空态）。执行序在 10b 后 9 前
+//   12 rename 重命名+反链改写全弧线（PLAN-006；七子步——禁用态 untitled
+//             +脏档/弹层锚[预填+影响面预览]/取消零落盘/改名弧线[active
+//             投影+磁盘改写 index·CAP 定理]/面板+树新 stem/case-only 拒
+//             [弹层留置]/状态复原。素材 Projects.ad ASCII 双臂——D-19
+//             面无；CJK 改名/自链/清洗/冲突/缺失案由 tests/probe_rename
+//             .mjs 八案双臂直证覆盖）。执行序在 11 后 9 前
 //   9 quit    退出存盘：dirty → 文件菜单退出 → CloseRequest 确认弹层 →
 //             QuitSaveClose → 磁盘三验（原文/标记/frontmatter）+ 进程退出
 //             （Process.exit 可能先于 HTTP 响应——连接断开即成功路径；
@@ -68,7 +74,7 @@ const argOf = (name) => {
   return i >= 0 ? args[i + 1] : undefined
 }
 const ARM = argOf('--arm') ?? 'all' // all | merged | split
-const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v5.txt')
+const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v6.txt')
 const SAVE_BASELINE = argOf('--save-baseline')
 
 const EDIT_MARKER = 'jade-edit 冒烟标记：编辑回写可见。'
@@ -80,6 +86,14 @@ const TAB_ANCHOR = '原型设计'
 const TAB_MARKER = 'tab 面标记：脏档关闭确认。'
 const QUIT_MARKER = '退出存盘标记：QuitSaveClose 落盘。'
 const PARA_ANCHOR = '这是一段示例文本'
+// rename 组（PLAN-006 T-04）——素材 Projects.ad（ASCII 双臂；入链 index/
+// CAP 定理 两页两处——预览/改写断言域）
+const RENAME_LABEL = 'Projects.ad'
+const RENAME_OLD_TITLE = 'wiki/Projects'
+const RENAME_NEW_NAME = 'Project X'
+const RENAME_NEW_TITLE = 'wiki/Project X'
+const RENAME_NEW_REL = 'wiki/Project X.ad'
+const RENAME_DIRTY_MARKER = 'rename 组脏档标记。'
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
@@ -198,7 +212,12 @@ async function runArm(arm, port) {
           (exact ? ownText(n) === label : ownText(n) === label || ownText(n).endsWith(label)),
       )
       if (hit) return hit
-      if (Date.now() > deadline) throw new Error(`button "${label}" not found in the snapshot`)
+      if (Date.now() > deadline) {
+        const dbg = await snapshotText()
+        const dbgState = await callTool('autoui_state', {})
+        fs.writeFileSync(`e2e/.runtime/fail-snap-${Date.now()}.txt`, dbg + '\n=====STATE=====\n' + dbgState)
+        throw new Error(`button "${label}" not found (full snap+state dumped)`)
+      }
       await sleep(300)
     }
   }
@@ -340,13 +359,13 @@ async function runArm(arm, port) {
       const stateDump = (await callTool('autoui_state', {})).trim()
       const snapIds = JSON.stringify([...(await snapshotText()).matchAll(/#(vnode_\d+)/g)].map((m) => m[1]))
       const headerFor = (file) =>
-        `// jade-edit vm 结构基线 v5（PLAN-005 T-04 重锁；v4=PLAN-004 T-04、v3=PLAN-003 T-04、\n` +
-        `// v2=PLAN-002 T-01、v1=PLAN-001 T-04 换基、v0=PLAN-081 T-05 均留档）。\n` +
-        `// 重锁因由：①store 新增 create_confirm_open/create_target 字段（PLAN-005 悬空建页确认弹层）\n` +
-        `// 进 autoui_state 全量 dump；②悬空行 text→button + alert-dialog 第三实例（建页确认）——\n` +
-        `// vm 快照弹层内容恒渲染，snapshot vnode id 序列计划内扩（非漂移事故）。\n` +
-        `// 仪器同 v2/v3/v4：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态\n` +
-        `//（chrome 全套 + Hello World.ad 开；查找面板/建页弹层未开——find_*/create_* 全为默认值入 dump）。\n` +
+        `// jade-edit vm 结构基线 v6（PLAN-006 T-04 重锁；v5=PLAN-005 T-04、v4=PLAN-004 T-04、\n` +
+        `// v3=PLAN-003 T-04、v2=PLAN-002 T-01、v1=PLAN-001 T-04 换基、v0=PLAN-081 T-05 均留档）。\n` +
+        `// 重锁因由：①store 新增 rename_open 字段 + App 新增 rename_q 字段（PLAN-006 重命名弹层）\n` +
+        `// 进 autoui_state 全量 dump；②dialog 第三弹层（重命名，内嵌 input + 影响面预览 + 双钮）——\n` +
+        `// vm 快照弹层内容恒渲染（D-23③ dialog 族同判），snapshot vnode id 序列计划内扩（非漂移事故）。\n` +
+        `// 仪器同 v2/v3/v4/v5：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态\n` +
+        `//（chrome 全套 + Hello World.ad 开；查找面板/建页弹层/重命名弹层未开——find_*/create_*/rename_* 全为默认值入 dump）。\n` +
         `// 再生成：node tests/vm_matrix.mjs --save-baseline ${path.relative(repoRoot, file).replace(/\\\\/g, '/')}\n`
       const baselineBodyOf = () => `## state\n${stateDump}\n\n## snapshot-ids\n${snapIds}\n`
       if (SAVE_BASELINE) {
@@ -356,9 +375,9 @@ async function runArm(arm, port) {
       } else if (fs.existsSync(BASELINE)) {
         const raw = fs.readFileSync(BASELINE, 'utf8')
         const ok = raw === headerFor(BASELINE) + baselineBodyOf()
-        check('B', 'baseline', ok, ok ? '结构基线 v5 零漂移（state 逐字节 + id 序列）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
+        check('B', 'baseline', ok, ok ? '结构基线 v6 零漂移（state 逐字节 + id 序列）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
       } else {
-        console.log('  [baseline] structure-v5 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v5.txt')
+        console.log('  [baseline] structure-v6 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v6.txt')
       }
     }
 
@@ -655,6 +674,157 @@ async function runArm(arm, port) {
     check('11', 'find', allFive && proOk && cjkFilterOk && notRanOk && hitOk && emptyFindOk,
       `快开（input 锚/空q全量5行/Pro→Projects 独行拾取即关/定理→CAP 独行${arm === 'merged' ? '+CJK 拾取开档' : '（CJK 拾取仅 merged 臂 D-19）'}）+ 检索（text 切换/未运行提示/CJK「任务列表」POST 双臂命中/行导航面板保持开/运行后空态）`)
 
+    // 12 rename（PLAN-006 T-04）：重命名+反链改写全弧线（七子步——组内
+    // 子步不占检查位，fail 即臂败，10c 同款）。素材 Projects.ad（ASCII
+    // 双臂——D-19 面无；入链 index/CAP 定理 两页两处 = 预览/改写断言
+    // 域）。弹层钮定位 = 「重命名」锚父行兄弟域（多弹层恒渲染同名取消
+    // 钮纪律——10c pressInCreateDialog 同款）；rename input = 快照序最
+    // 后 input（弹层在右面板之后渲染——check 11 find 面板开着亦然）。
+    const pressInRenameDialog = async (buttonText) => {
+      const dl = Date.now() + 8000
+      for (;;) {
+        const t = await snapshot()
+        const rnBtn = findFirst(t, (n) => n.head.startsWith('button ') && elementIdOf(n) && ownText(n) === '重命名')
+        if (rnBtn) {
+          if (buttonText === '重命名') {
+            const res = await callTool('autoui_action', { element_id: elementIdOf(rnBtn), action: 'press' })
+            if (!/status: ok/.test(res)) throw new Error(`press 重命名 not ok: ${res}`)
+            return
+          }
+          const row = findParent(t, rnBtn)
+          const btn = row.children.find((c) => c !== rnBtn && c.head.startsWith('button ') && elementIdOf(c) && ownText(c) === buttonText)
+          if (btn) {
+            const res = await callTool('autoui_action', { element_id: elementIdOf(btn), action: 'press' })
+            if (!/status: ok/.test(res)) throw new Error(`press ${buttonText} not ok: ${res}`)
+            return
+          }
+        }
+        if (Date.now() > dl) throw new Error(`button "${buttonText}" in rename-dialog row not found`)
+        await sleep(300)
+      }
+    }
+    const typeIntoRenameInput = async (text) => {
+      const tree = await snapshot()
+      const inputs = []
+      const collect = (n) => {
+        if (n.head.startsWith('input ') && elementIdOf(n)) inputs.push(n)
+        for (const c of n.children) collect(c)
+      }
+      collect(tree)
+      const dlgInput = inputs[inputs.length - 1]
+      if (!dlgInput) throw new Error('rename input not found in snapshot')
+      const res = await callTool('autoui_action', { element_id: elementIdOf(dlgInput), action: 'type_text', value: text })
+      if (!/status: ok/.test(res)) throw new Error(`rename type_text not ok: ${res}`)
+    }
+    const renameProjectsFile = path.join(FIXTURE, 'wiki', RENAME_LABEL)
+    const renamedFile = path.join(FIXTURE, RENAME_NEW_REL)
+    // ① 禁用态两形：untitled（文件→新建——path 空）+ 脏档——入口 press
+    // 后 rename_open 恒 false（handler 守卫；menubar 项无 enabled——vm
+    // boot 冻结缺口 T-02 实勘，action enabled_if 为权威面）。
+    await pressButton('文件', { exact: true })
+    await pressButton('新建', { exact: true })
+    await stateIs('active_title', '未命名')
+    await pressButton('文件', { exact: true })
+    await pressButton('重命名…', { exact: true })
+    await stateIs('rename_open', 'false')
+    await pressActiveTabClose('未命名')
+    await typeWholeDoc(`${bodyOf(fs.readFileSync(targetFile, 'utf8'))}\n\n${RENAME_DIRTY_MARKER}`)
+    await stateIs('active_dirty', 'true')
+    await pressButton('文件', { exact: true })
+    await pressButton('重命名…', { exact: true })
+    await stateIs('rename_open', 'false')
+    await pressButton('重载')
+    await stateIs('active_dirty', 'false')
+    // ② 弹层内容锚（D-23③ 纪律）：开 Projects → 入口 → rename_open +
+    // rename_q 预填 + 影响面预览行（「将改写 2 页 2 处链接」——index/CAP
+    // 定理 两页各一出链）。
+    await pressButton(RENAME_LABEL)
+    await stateIs('active_title', RENAME_OLD_TITLE)
+    await pressButton('文件', { exact: true })
+    await pressButton('重命名…', { exact: true })
+    await stateIs('rename_open', 'true')
+    await stateIs('rename_q', 'Projects')
+    const dlgSnap = await snapshotText()
+    const dlgOk = dlgSnap.includes('重命名页面') && dlgSnap.includes('将改写 2 页 2 处链接')
+    // ③ 取消零落盘
+    await pressInRenameDialog('取消')
+    await stateIs('rename_open', 'false')
+    const renameCancelOk = fs.existsSync(renameProjectsFile) && !fs.existsSync(renamedFile)
+    if (!renameCancelOk) throw new Error('rename 取消零落盘失守（Projects.ad 应在、Project X.ad 不应在）')
+    // ④ 改名弧线：Projects → Project X——active 投影 + 磁盘（旧消失新
+    // 在 + index.ad/CAP 定理.ad 源文改写）。
+    await pressButton('文件', { exact: true })
+    await pressButton('重命名…', { exact: true })
+    await stateIs('rename_open', 'true')
+    await typeIntoRenameInput(RENAME_NEW_NAME)
+    await stateHas('rename_q', 'Project X')
+    await pressInRenameDialog('重命名')
+    await stateIs('active_title', RENAME_NEW_TITLE)
+    await stateIs('active_path', RENAME_NEW_REL)
+    const renamedExists = fs.existsSync(renamedFile)
+    const oldGone = !fs.existsSync(renameProjectsFile)
+    const indexDisk = fs.readFileSync(path.join(FIXTURE, 'wiki', 'index.ad'), 'utf8')
+    const capDisk = fs.readFileSync(path.join(FIXTURE, 'wiki', 'CAP 定理.ad'), 'utf8')
+    const rewriteOk = indexDisk.includes('[[Project X]]') && capDisk.includes('[[Project X]]')
+      && !indexDisk.includes('[[Projects]]')
+    if (!(renamedExists && oldGone && rewriteOk)) throw new Error(`rename 磁盘断言失守（renamed=${renamedExists} oldGone=${oldGone} rewrite=${rewriteOk}）`)
+    // ⑤ 跨页改写可见：开 index.ad（ASCII 双臂）→ 反链面板（index 反链空
+    // 态 + 出链行新 stem『Project X』『CAP Theorem』）→ **出链行点击导航
+    // 到新档**（active_title = wiki/Project X——改写链接可走通）+ 树刷新
+    //（Project X.ad 行在、Projects.ad 行消失）。（index 无反链——Project
+    // X 零真实出链[语料转义面]故非任何页反链源；反链行新 stem 的正证面
+    // = probe_rename 案①index/Tasks 改写逐字节。）
+    await pressButton('index.ad')
+    await stateIs('active_title', 'wiki/index')
+    await pressButton('视图', { exact: true })
+    await pressButton('切换反链', { exact: true })
+    await stateIs('backlinks_open', 'true')
+    let renamePanelOk = false
+    let renameTreeOk = false
+    let panelDbg = ''
+    for (const dl = Date.now() + 8000; ; ) {
+      const pt = await snapshotText()
+      panelDbg = pt
+      renamePanelOk = pt.includes('（无反链）') && pt.includes('"Project X"') && !pt.includes('"Projects"')
+      renameTreeOk = pt.includes('"Project X.ad"') && !pt.includes('"Projects.ad"')
+      if (renamePanelOk && renameTreeOk) break
+      if (Date.now() > dl) break
+      await sleep(300)
+    }
+    if (!(renamePanelOk && renameTreeOk)) {
+      fs.writeFileSync(`e2e/.runtime/fail-panel-${Date.now()}.txt`, panelDbg)
+      throw new Error(`rename 面板/树断言失守（panel=${renamePanelOk} tree=${renameTreeOk}）`)
+    }
+    await pressButton('Project X', { exact: true })
+    await stateIs('active_title', RENAME_NEW_TITLE)
+    await pressButton('视图', { exact: true })
+    await pressButton('切换反链', { exact: true })
+    await stateIs('backlinks_open', 'false')
+    // ⑥ case-only 拒（G3）：Project X → project x → ""（弹层留置 + 磁
+    // 盘零变化——无第二个 project x.ad）→ 取消复原。
+    await pressButton('文件', { exact: true })
+    await pressButton('重命名…', { exact: true })
+    await stateIs('rename_open', 'true')
+    await typeIntoRenameInput('project x')
+    await pressInRenameDialog('重命名')
+    await sleep(500)
+    const rejState = await callTool('autoui_state', { fields: ['rename_open', 'rename_q'] })
+    // Windows 大小写不敏感 FS——exists(lower) 对同档恒真，第二档判定 =
+    // 目录清单 casefold 计数（probe_rename ⑧ 同款）。
+    const wikiDirNow = fs.readdirSync(path.join(FIXTURE, 'wiki')).filter((f) => f.endsWith('.ad'))
+    const pxCount = wikiDirNow.filter((f) => f.toLowerCase() === 'project x.ad').length
+    const rejOk = /rename_open:\s*true/.test(rejState) && fs.existsSync(renamedFile) && pxCount === 1
+    await pressInRenameDialog('取消')
+    await stateIs('rename_open', 'false')
+    if (!rejOk) throw new Error(`case-only 拒断言失守（弹层应留置 + 磁盘零变化）state=[${rejState.replace(/\n/g, ' | ').trim()}] pxCount=${pxCount} wiki=${JSON.stringify(wikiDirNow)}`)
+    // ⑦ 状态复原：回 Hello World tab（quit 检查前置——typeWholeDoc 目
+    // 标档）。CJK 改名导航子步不设——probe_rename 八案已直证 CJK 面，
+    // 本组素材 ASCII 双臂（D-19 口径注记同 10c）。
+    await pressButton('wiki/Hello World', { exact: true })
+    await stateIs('active_title', tabTitleOf(TARGET_LABEL))
+    check('12', 'rename', dlgOk && renameCancelOk && renamedExists && oldGone && rewriteOk && renamePanelOk && renameTreeOk && rejOk,
+      `rename 组七子步（禁用态 untitled+脏档/弹层锚 预填+预览 2页2处/取消零落盘/改名弧线 active+磁盘+双页改写/面板+树新 stem/case-only 拒弹层留置/状态复原）`)
+
     // 9 退出存盘：dirty → 文件菜单退出 → 确认弹层 → QuitSaveClose →
     // 磁盘三验 + 进程退出。恒为臂内最后一项（Process.exit 杀进程）。
     await typeWholeDoc(`${bodyOf(fs.readFileSync(targetFile, 'utf8'))}\n\n${QUIT_MARKER}`)
@@ -709,5 +879,5 @@ for (const { arm, results } of all) {
 }
 if (failed > 0) process.exitCode = 1
 if (all.every(({ results }) => results.every((r) => r.ok))) {
-  console.log(`[matrix] ALL GREEN：${arms.join(' + ')} 臂检查单全过（六检查 + 基线[merged] + tab/editops/link/create/find 扩单 + quit）`)
+  console.log(`[matrix] ALL GREEN：${arms.join(' + ')} 臂检查单全过（六检查 + 基线[merged] + tab/editops/link/create/find/rename 扩单 + quit）`)
 }

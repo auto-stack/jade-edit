@@ -4,9 +4,9 @@ status: executing
 feature_name: rename-rewrite-slice
 author: [zhaopuming]
 created_at: 2026-09-23T00:53:44+08:00
-updated_at: 2026-09-23T17:40:00+08:00
+updated_at: 2026-09-23T20:10:00+08:00
 plan_revision: 1
-current_step: 1
+current_step: 4
 total_steps: 5
 supersedes_spec_components: []
 new_spec_components:
@@ -441,11 +441,35 @@ fn rewrite_links(body str, old str, new str) str {
     重锁**；link/find/create 组功能检查全过零回归）+ `pnpm build`
     PASS（保留字修正后）。e2e rename 段随 T-04 官方落位（同断言域
     一次成文）。
-- **T-04 测试扩单 + 基线 v6 + 判绿首锁**（AC-02/03/04）
-  - vm rename 组七子步 + e2e rename 段 + 基线 v6 重锁。
+- **T-04 测试扩单 + 基线 v6 + 判绿首锁**（AC-02/03/04）✅ 已完成
+  - vm rename 组七子步 + e2e rename 段 + 基线 v6 重锁。**[✅ 已完成]**
+    实勘四项：①②弹层钮/输入定位 = 「重命名」锚父行兄弟域 + 快照序最
+    后 input（多弹层恒渲染同名钮纪律，10c 同款）；③**case-only 磁盘断
+    言 = 目录清单 casefold 计数**（Windows 大小写不敏感 FS——exists(lower)
+    对同档恒真，probe_rename ⑧ 同款）；④⑤ 跨页改写断言 = **index 出链
+    行新 stem + 出链行点击导航到新档**（初版误设反链行断言——Project X
+    零真实出链[语料转义面]非任何页反链源；vm 快照侧初版靠出链 onclick
+    求值串误过，两轨修正为行为级断言；另 fixtures index 内联码 `[[页面
+    名]]` = 既有悬空链[SD-302 v1 忽略面不含内联码]，非漂移）。
   - 验证：`node tests/vm_matrix.mjs` 双臂全绿 + `pnpm test:e2e`
     连跑 ≥5 + `node scripts/gate.mjs` ALL GREEN（判绿实录 + N 定谳
-    续记）。
+    续记）。**[✅ 已完成] 判绿实录**：
+    - vm 双臂：merged **14/14** + split **13/13** ALL GREEN ×5
+      （final1/final4/gate×3；基线 v6 零漂移逐跑）；无-RESULT 早崩
+      2 次（split 臂 check-2 树行 6s 超时——`status=ready 但 ft_nodes/ws_name
+      空` 形态，独占重跑即绿，D-21 家族新形态留观）。
+    - 基线 v6：`tests/baseline/structure-v6.txt` 首锁（store rename_open
+      + App rename_q 入 dump + dialog 第三弹层 id 序列计划内扩；v5
+      留档）；后续 7+ 跑零漂移。
+    - e2e（断言修正后 24 跑）：**13 绿 / 11 失败全数 D-21 签名**
+      （write_wiki POST 400 丢参 ×9[check-5 保存点/quit 保存点，
+      api-err-body 签名同 v8 记载] + ECONNRESET ×2[check-5]）；失败
+      全部重跑即绿；最长连绿 4（run18-21）；rename 组在每个完成跑
+      内全过；隔离 serve-back 连发实证 **write_wiki 50/50 + read 20/20**
+      （参数装配本体健康——400 仅 vite 代理 e2e 语境突发簇形态，
+      D-21 v9 扩记素材）。
+    - gate：**第 3 跑 ALL GREEN**（gate1/2 = D-21 400 于 e2e 段，如实
+      记；长冷却后过——突发簇形态与 D-21 窗口相关口径一致）。
 - **T-05 文档 + ledger v9 + 收口**（AC-05/06）
   - SD-601..604 canonical 落位（锚注齐 + casefold 裁决定文）；
     ledger v8→v9（探针 A/B 结论 + `File.rename` 别名缺口 + 非原子
