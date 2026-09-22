@@ -408,17 +408,12 @@ pub fn search_json(query str, limit int) str {
 
 // ===== 悬空建页（PLAN-005 T-01；知识库第三切片 back 半） =====
 
-/// title → 落盘名（back 权威；front app.at 有镜像纯函数——仅弹层路径
-/// 预览显示用，漂移=观感非正确性）。规则 v1（SD-501）：
-///   ①九字符 `\/:*?"<>|` → `-`——**while-contains 收敛惯用法**（每字符
-///     `while t.contains(c) { t = t.replace(c, "-") }`）：.replace 次数
-///     语义双轨未证（JS 串参=首现替换 ts_adapter.rs:1219；VM 全量与否
-///     未证），惯用法首现/全量两态皆收敛，免探针；
-///   ②trim；
-///   ③空名守卫（清洗后空名）：trim 空或九字符收敛后恰 "-"（`///` 形
-///     ——全非法字符名替换后只剩分隔符，无名可立）→ ""；
-///   ④非空拼 ".ad"（根落位——safe 恒不含分隔符，resolve 恒落工作区根）。
-fn title_to_path(title str) str {
+/// title → stem 清洗（title_to_path 的去 ".ad" 拼装段版——rename_page
+/// 用：new_name 是 stem 非文件名）。规则 v1（SD-501 钉定态 + dash-收敛
+/// 守卫，T-01 案⑤ 同惯用法族）：九字符 `\/:*?"<>|` → `-`（while-
+/// contains 收敛惯用法——D-23①）+ trim + 空名守卫（trim 空或九字符
+/// 收敛后恰 "-"——`///` 形）→ ""。
+fn title_to_path_stem(title str) str {
     var bad List = ["\\", "/", ":", "*", "?", "\"", "<", ">", "|"]
     var t str = title
     var i int = 0
@@ -439,6 +434,21 @@ fn title_to_path(title str) str {
         probe = probe.replace("--", "-")
     }
     if probe == "-" {
+        return ""
+    }
+    return t
+}
+
+/// title → 落盘名（back 权威；front app.at 有镜像纯函数——仅弹层路径
+/// 预览显示用，漂移=观感非正确性）。规则 v1（SD-501）：
+///   ①九字符 `\/:*?"<>|` → `-`——while-contains 收敛惯用法（本文件
+///     title_to_path_stem 内注）；
+///   ②trim；
+///   ③空名守卫（清洗后空名）：trim 空或九字符收敛后恰 "-" → ""；
+///   ④非空拼 ".ad"（根落位——safe 恒不含分隔符，resolve 恒落工作区根）。
+fn title_to_path(title str) str {
+    var t str = title_to_path_stem(title)
+    if t == "" {
         return ""
     }
     return t + ".ad"
@@ -462,4 +472,156 @@ pub fn create_page_impl(title str) str {
         return safe
     }
     return ""
+}
+
+// ===== 页面重命名 + 反链源文改写（PLAN-006 T-01；知识库第四切片 back
+// 半）——知识完整性核心件：改名即断链的结构性消除。旧园 rename 只补内
+// 存索引（files.rs:177 + index.rs:221 四表补丁）不改源文；jade 链接面
+// 纯派生（link_index 每次全量 walk）无索引可补丁 → **源文改写是唯一一
+// 致口径**（Obsidian「更新链接」同形态；本仓首创设计，无旧园先例）。
+
+/// 路径目录段（"sub/Page.ad" → "sub/"；根档 → ""）——split 法拼回
+///（D-20③：禁 length+slice——CJK heap 串字节语义）。
+fn dir_of(path str) str {
+    var segs = path.split("/")
+    var n int = segs.len()
+    if n < 2 {
+        return ""
+    }
+    var d str = ""
+    var i int = 0
+    var m int = n - 1
+    while i < m {
+        // ⚠ D-20②：列表元素先拷局部变量再拼接。
+        var seg str = segs[i]
+        d = d + seg + "/"
+        i = i + 1
+    }
+    return d
+}
+
+/// 文件 stem（"sub/Old.ad" → "Old"）——split 法去 ".ad" 尾（front
+/// strip_ad 同族；文件名内嵌 ".ad" 病理形态不支持——与 front 镜像同限）。
+fn stem_of(path str) str {
+    var segs = path.split("/")
+    var fname str = segs[segs.len() - 1]
+    if fname.ends_with(".ad") {
+        var parts = fname.split(".ad")
+        return parts[0]
+    }
+    return fname
+}
+
+/// casefold 相等（G3 裁决面：case-only 重命名拒——两侧 to_lower 比较；
+/// to_lower 双轨在册已证 D-22①）。
+fn casefold_eq(a str, b str) bool {
+    return a.to_lower() == b.to_lower()
+}
+
+/// body 内 [[Old]] / [[Old#anchor]] 精确 stem 匹配改写为 [[New]]/…：
+/// split("[[") 分段 + 段内 split_once("]]") 取候选（与 extract_links_json
+/// 同一忽略面：无闭合 / 跨行 / trim 空候选不涉改写）；target = trim 后
+/// "#" 前段，== old **精确相等**（G3：casefold 不采用）才改写。改写 =
+/// 候选 split_once(old) 首现拆分重组 before+new+after（候选内——old 非
+/// 空白串、target 又位于候选头部（前导只可能是空白），首现即 target 位
+/// ：anchor 段与前后空白逐字节透传（含 `[[ Old ]]` 空白保真、`[[Old#Old]]`
+/// 锚内同名不误伤——split_once 只取首现））**+ "]]"+rest 段尾回接**
+///（T-01 实勘：漏回接 = 改写档自 "]]" 起截断——八案首跑实录）。段间
+/// "[[" 重接：split→join 同族 O(n) 通道（VM 无 str.join）。返回改写后
+/// body（无匹配 = 原文等价返回——调用面以「改写 ≠ 原文」门控 write_body
+/// 回写）。
+fn rewrite_links(body str, old str, new str) str {
+    if old == "" {
+        return body
+    }
+    var segs = body.split("[[")
+    var out str = segs[0]
+    var i int = 1
+    while i < segs.len() {
+        // ⚠ D-20②：列表元素先拷局部变量再调方法。
+        var seg str = segs[i]
+        var seg_out str = seg
+        var pair = seg.split_once("]]")
+        if pair.len() == 2 {
+            var cand str = pair[0]
+            var rest str = pair[1]
+            var nl = cand.split("\n")
+            if nl.len() < 2 {
+                var trimmed str = cand.trim()
+                if trimmed.length > 0 {
+                    var hp = trimmed.split_once("#")
+                    var target str = trimmed
+                    if hp.len() == 2 {
+                        target = hp[0]
+                    }
+                    if target == old {
+                        var rp = cand.split_once(old)
+                        if rp.len() == 2 {
+                            seg_out = rp[0] + new + rp[1] + "]]" + rest
+                        }
+                    }
+                }
+            }
+        }
+        out = out + "[[" + seg_out
+        i = i + 1
+    }
+    return out
+}
+
+/// 页面重命名本体（api.rename_page 实现；SD-601）——POST 单事务五步：
+/// ①校验（old 在盘；new_name 清洗非空）②同目录路径合成 ③冲突/case-only
+/// 卫语句（**casefold 相等同拒**——G3：Windows 实盘同档 copy 后对自身
+/// 复制未定义，且裁决维持精确匹配口径）④改名——**read_text+write_text
+/// +delete 组合**（探针 A 定谳 2026-09-23：`File.copy` 别名双表在册
+/// [native_catalog 1007/2602] 但 `copy` 为 Auto 硬关键字[Plan 122 弃用
+/// 参数模式]，dot 访问解析器拒绝 → 模块 boot 即 fatal——**解析层不可调
+/// ，比 D-20① 链接层缺口更深一层**；fallback① 字节整迁等价；⚠ File.
+/// delete 恒返 0 吞错[stdlib shim 忽略 remove_file 结果] → exists 双复
+/// 核必须）⑤反链源文改写（collect_ad_pages walk 全页面——含被改名档新
+/// 路径[自链改写]；read_body → rewrite_links → 有变更才 write_body 回写
+/// ——frontmatter 保留）。返回工作区根相对新 path；"" = 任一卫语句拒。
+pub fn rename_page_impl(old_path str, new_name str) str {
+    if !File.exists(resolve(old_path)) {
+        return ""
+    }
+    var safe str = title_to_path_stem(new_name)
+    if safe == "" {
+        return ""
+    }
+    var new_rel str = dir_of(old_path) + safe + ".ad"
+    if File.exists(resolve(new_rel)) {
+        return ""
+    }
+    if casefold_eq(new_rel, old_path) {
+        return ""
+    }
+    var old_full str = resolve(old_path)
+    var new_full str = resolve(new_rel)
+    var text str = File.read_text(old_full)
+    File.write_text(new_full, text)
+    File.delete(old_full)
+    if !File.exists(new_full) {
+        return ""
+    }
+    if File.exists(old_full) {
+        return ""
+    }
+    var old_stem str = stem_of(old_path)
+    if old_stem != "" {
+        var pages List = collect_ad_pages("", 4)
+        var i int = 0
+        while i < pages.len() {
+            // ⚠ D-20②：列表元素先拷局部变量再取字段/调方法。
+            var p = pages[i]
+            var rel str = p.rel
+            var body str = read_body(rel)
+            var rewritten str = rewrite_links(body, old_stem, safe)
+            if rewritten != body {
+                write_body(rel, rewritten)
+            }
+            i = i + 1
+        }
+    }
+    return new_rel
 }

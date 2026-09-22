@@ -111,3 +111,18 @@ pub fn search_wiki(query str, limit int) str {
 pub fn create_page(title str) str {
     return wsys.create_page_impl(title)
 }
+
+/// 页面重命名 + 反链源文改写（PLAN-006 第四切片；知识完整性件——jade
+/// 链接面纯派生无索引可补丁，源文改写是唯一一致口径，Obsidian「更新链
+/// 接」同形态）：同目录 stem 变更；全部 [[Old]]/[[Old#anchor]] 精确
+/// stem 匹配改写（anchor 保留；含被改名档自链；frontmatter 经 write_body
+/// 保留；转义 `\[\[` 字面量不涉）。成功返回工作区根相对新 path；"" =
+/// 任一卫语句拒（old 缺失/清洗空名/目标冲突/**case-only**——G3 裁决：
+/// stem 匹配维持精确比较，case-only 重命名拒）。**POST 而非 GET**（D-19
+/// ：old_path/new_name 均 body 传参——old_path 工作区相对 CJK 常态）。
+/// POST 单事务五步流程见 wsys.rename_page_impl（SD-601 定文）。
+/// POST /api/rename_page
+#[api(method = "POST", path = "/api/rename_page")]
+pub fn rename_page(old_path str, new_name str) str {
+    return wsys.rename_page_impl(old_path, new_name)
+}
