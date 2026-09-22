@@ -1,0 +1,35 @@
+// backlinks_panel.at — 反链/出链面板壳（PLAN-003 T-03；知识库首切片）。
+//
+// ConsolePanel 同构（013 组件纪律）：无 props，经 `use editor_store` 直读
+// .store，自有 msg，handler 直调 store（vm 已验证模式）。
+//
+// vm 组件边界（console_panel 同判：组件子树对 MCP 快照不可见——测试断言
+// 走 autoui_state、点击锚留根视图）：本组件 = 面板壳（标题/收起/激活档
+// 名）；反链/出链行集与空态文本在 App 根视图右栏渲染（013 树行/tab 条
+// 同款留根纪律）。刷新为自动化（Init/Save 成功/面板开启——触发集 v1），
+// 无手动刷新钮（watch 后续批）。
+
+use editor_store: EditorStore
+
+style links_meta = "text-[11px] text-muted-foreground ml-auto"
+
+widget BacklinksPanel {
+    msg { Toggle }
+
+    view {
+        row (style: "h-7 items-center bg-muted/30 shrink-0 gap-3 px-2 w-full") {
+            text "LINKS" {
+                style: "text-[11px] font-bold text-muted-foreground"
+            }
+            button (text: "收起", variant: "text") {
+                onclick: .Toggle
+                style: "text-[11px] h-5 px-1 text-muted-foreground"
+            }
+            text .store.active_title { style: links_meta }
+        }
+    }
+
+    on {
+        .Toggle -> { store.BacklinksToggle() }
+    }
+}

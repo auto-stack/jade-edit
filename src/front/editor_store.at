@@ -17,15 +17,14 @@
 
 use back.api: read_wiki, write_wiki, exists, env_str
 
-// ".ad" 后缀剥离（tab 标题 = path 末段去扩展）——slice 守卫，无正则
-// 字面量（a2r-clean 惯例）。
+// ".ad" 后缀剥离（tab 标题 = path 末段去扩展）。⚠ split 法（T-03 实勘）：
+// length+slice 在 CJK heap 串上字节/字符错位（.length 字节语义）——
+// ends_with 判定 + split(".ad")[0] 剥尾（文件名内嵌 ".ad" 病理形态不支
+// 持——与 wsys stem 同限）。
 fn strip_ad(path str) str {
-    var n = path.length
-    if n > 3 {
-        var tail = path.slice(n - 3, n)
-        if tail == ".ad" {
-            return path.slice(0, n - 3)
-        }
+    if path.ends_with(".ad") {
+        var parts = path.split(".ad")
+        return parts[0]
     }
     return path
 }
@@ -56,6 +55,9 @@ store EditorStore {
         var confirm_idx int = -1
         // 退出/关窗确认弹层（基座 Plan 626 T-06；窗口 X 与菜单退出共口）。
         var quit_confirm_open bool = false
+        // 反链面板开关（PLAN-003；面板壳/菜单 checked_if 消费。链接数据
+        // 态在 App 模型——vm 轨 store 上下文 json.to_value 产物损坏，T-03）。
+        var backlinks_open bool = false
     }
 
     // msg 载荷单类型（编译器约束）：Open 单 map、Edit 单 str。
@@ -66,6 +68,7 @@ store EditorStore {
         ActUndo, ActRedo, ActCut, ActCopy, ActPaste, ActSelectAll, ActAbout,
         ActQuit, ConsoleClear, CloseRequest, QuitDiscard, QuitSaveClose,
         QuitConfirmCancel,
+        BacklinksToggle,
     }
 
     on {
@@ -363,6 +366,12 @@ store EditorStore {
         .QuitDiscard -> {
             console_log("quit: discard & exit")
             Process.exit(0)
+        }
+
+        // 反链面板开关（PLAN-003；数据刷新/行派生在 App 侧 ActBacklinks）。
+        .BacklinksToggle -> {
+            .backlinks_open = !.backlinks_open
+            .console = console_lines()
         }
     }
 }

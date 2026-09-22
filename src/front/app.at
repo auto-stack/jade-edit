@@ -24,11 +24,80 @@
 use editor_store: EditorStore
 use status_bar: StatusBar
 use console_panel: ConsolePanel
+use backlinks_panel: BacklinksPanel
 use bps.navigation.filetree.tree_util: flatten_tree, toggle_id
 use bps.navigation.filetree.tree_icon: TreeIcon
-use back.api: tree, ws_root
+use back.api: tree, ws_root, link_index
 
 style warn_label = "text-[12px] text-amber-400 mr-1"
+
+// —— 链接面板派生（PLAN-003 T-03）。数据态在 App 模型（⚠ 不入 store：
+// vm 轨 store 上下文 json.to_value 产物直落裸 vmref 损坏——T-03 三形态
+// 实测，dump `link_pages: <vmref> (unknown)`、.len() 消费即零；App 上下
+// 文 = Init ft_nodes 同款已证。vue 轨无此分野，单源两轨同走 App 态）。
+// 入参 = link_index 标量契约原文（页面数组 [{path,title,links:
+// [{target,anchor,exists,target_path}]}]）。遍历 while+索引（P614：
+// for-in 参数列表零迭代）。
+// ⚠ json.to_value 只能在 handler 体内直调（T-04 实勘：模块函数体内该
+// 调用被 ts_adapter 静默发射为恒等 `out = j`——上游生成器缺口；handler
+// 体 `x = json.to_value(y)` 正确发射 JSON.parse——Init tree 同款）。故
+// 解析内联在各 fetch 触点（Init/ActBacklinks/ActSave/LinksRefresh），
+// 本组函数只做已解析 List 的行派生。
+
+/// 反链行集：全页面出链扫描，target_path 命中激活档 → {source_path}；
+/// 自链接天然排除（source == active 跳过——SD-302：自链接计入出链不计
+/// 入反链）。active = ""（untitled/无激活档）→ 恒空（卫语句——否则悬空
+/// 出链 target_path:"" 会误配空路径，T-04 实勘）。
+fn backlink_rows_of(pages List, active str) List {
+    var out List = []
+    if active == "" {
+        return out
+    }
+    var i int = 0
+    while i < pages.len() {
+        var page = pages[i]
+        var ppath str = page.path
+        if ppath != active {
+            var links List = page.links
+            var k int = 0
+            while k < links.len() {
+                var lnk = links[k]
+                var ltp str = lnk.target_path
+                if ltp == active {
+                    out.push({ source_path: ppath, anchor: "" })
+                }
+                k = k + 1
+            }
+        }
+        i = i + 1
+    }
+    return out
+}
+
+/// 出链行集：激活档 links 原序 {target, exists, target_path}（悬空行
+/// exists=false 由视图渲染为非点击文本）。
+fn outlink_rows_of(pages List, active str) List {
+    var out List = []
+    var i int = 0
+    while i < pages.len() {
+        var page = pages[i]
+        var ppath str = page.path
+        if ppath == active {
+            var links List = page.links
+            var k int = 0
+            while k < links.len() {
+                var lnk = links[k]
+                var t str = lnk.target
+                var tp str = lnk.target_path
+                var ex bool = lnk.exists
+                out.push({ target: t, exists: ex, target_path: tp })
+                k = k + 1
+            }
+        }
+        i = i + 1
+    }
+    return out
+}
 widget App {
     msg {
         Init, FtToggle(str), OpenFile(str), Reload,
@@ -38,6 +107,7 @@ widget App {
         ActUndo, ActRedo, ActCut, ActCopy, ActPaste, ActSelectAll,
         ActConsole, ActSwitchTab, ActAbout,
         CloseRequest, QuitDiscard, QuitSaveClose, QuitConfirmCancel,
+        ActBacklinks, LinksRefresh, OpenLink(str),
     }
 
     model {
@@ -50,6 +120,13 @@ widget App {
         var ft_expanded = []
         var ft_sel str = ""
         var ws_name str = ""
+        // —— 链接索引（PLAN-003；触发点：Init / Save 成功 / 面板开启——
+        // fetch+parse 在 App 上下文；行派生触点 = 一切激活档可能变化的
+        // handler，见 on 块「链接行重算」注）——
+        var links_json str = ""
+        var link_pages List = []
+        var bl_rows List = []
+        var ol_rows List = []
     }
 
     computed {
@@ -72,6 +149,8 @@ widget App {
         action (id: "edit.select-all", handler: .ActSelectAll, title: "全选", shortcut: "Ctrl+A")
         action (id: "view.console",    handler: .ActConsole,    title: "切换 Console", icon: "terminal", shortcut: "Ctrl+J",
                 checked_if: ".store.console_open")
+        action (id: "view.backlinks",  handler: .ActBacklinks,  title: "切换反链", icon: "link-2", shortcut: "Ctrl+L",
+                checked_if: ".store.backlinks_open")
         action (id: "view.switch-tab", handler: .ActSwitchTab,  title: "切换 Tab", shortcut: "Ctrl+D")
         action (id: "view.reload",    handler: .Reload,    title: "重载",  icon: "refresh-cw",   shortcut: "F5",
                 enabled_if: ".store.tab_count > 0")
@@ -120,6 +199,7 @@ widget App {
                         menubar-trigger "视图"
                         menubar-content {
                             menubar-checkbox-item (title: "切换 Console", icon: "terminal", checked: .store.console_open, shortcut: "Ctrl+J") { onclick: .ActConsole }
+                            menubar-checkbox-item (title: "切换反链", icon: "link-2", checked: .store.backlinks_open, shortcut: "Ctrl+L") { onclick: .ActBacklinks }
                             menubar-item (title: "切换 Tab", shortcut: "Ctrl+D") { onclick: .ActSwitchTab }
                             menubar-item (title: "重载", icon: "refresh-cw", shortcut: "F5", enabled: .store.tab_count > 0) { onclick: .Reload }
                         }
@@ -177,12 +257,14 @@ widget App {
 
                 col (style: "flex-1 overflow-hidden") {
                     // —— tab 条（激活/非激活双分支留根：形状定位锚）——
+                    // tab 标题钮 = OpenLink(t.path)（Open 已开即激活 + 链接
+                    // 行派生共用口；TabActivate 索引口留 store 内部用）。
                     row (style: "h-8 items-center bg-muted/30 shrink-0 w-full gap-0") {
                         for i, t in .store.tabs {
                             if i == .store.tab {
                                 row (style: "items-center bg-[#1C1D24]") {
                                     button (text: t.title, variant: "text") {
-                                        onclick: .TabActivate(i)
+                                        onclick: .OpenLink(t.path)
                                         style: "h-8 px-3 text-[12px] text-foreground font-medium"
                                     }
                                     if t.dirty {
@@ -198,7 +280,7 @@ widget App {
                             if i != .store.tab {
                                 row (style: "items-center") {
                                     button (text: t.title, variant: "text") {
-                                        onclick: .TabActivate(i)
+                                        onclick: .OpenLink(t.path)
                                         style: "h-8 px-3 text-[12px] text-muted-foreground"
                                     }
                                     if t.dirty {
@@ -232,6 +314,47 @@ widget App {
 
                     if .store.console_open {
                         ConsolePanel()
+                    }
+                }
+
+                // —— 右栏：反链/出链面板（PLAN-003；旧园右栏三面板先例）——
+                // 壳 = BacklinksPanel 组件；行集/空态留根（MCP 快照锚不进
+                // 组件子树，console_panel 同判——T-03 执行期裁定点落定）。
+                // 行数据 = App 模型（vm 轨 store 上下文解析损坏，见模型注）。
+                if .store.backlinks_open {
+                    col (style: "w-72 shrink-0 border-l border-border bg-card hidden md:flex flex-col overflow-y-auto") {
+                        BacklinksPanel()
+                        row (style: "h-6 items-center shrink-0 px-3") {
+                            text "反链" { style: "text-[11px] font-bold text-muted-foreground" }
+                        }
+                        if .bl_rows.len() == 0 {
+                            text "（无反链）" { style: "text-[11px] text-muted-foreground px-3" }
+                        }
+                        for r in .bl_rows {
+                            button (text: r.source_path, variant: "ghost") {
+                                onclick: .OpenLink(r.source_path)
+                                style: "w-full justify-start px-3 h-6 text-left text-[12px]"
+                            }
+                        }
+                        row (style: "h-6 items-center shrink-0 px-3") {
+                            text "出链" { style: "text-[11px] font-bold text-muted-foreground" }
+                        }
+                        if .ol_rows.len() == 0 {
+                            text "（无出链）" { style: "text-[11px] text-muted-foreground px-3" }
+                        }
+                        for r in .ol_rows {
+                            if r.exists {
+                                button (text: r.target, variant: "ghost") {
+                                    onclick: .OpenLink(r.target_path)
+                                    style: "w-full justify-start px-3 h-6 text-left text-[12px]"
+                                }
+                            }
+                            if !r.exists {
+                                text "${r.target}（悬空）" {
+                                    style: "text-[12px] text-muted-foreground px-3"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -285,6 +408,27 @@ widget App {
             } catch (e) {
                 .status = "backend-offline"
             }
+            // —— 链接索引首刷（触发集 v1：Init/Save 成功/面板开启）——
+            // fetch+parse 在 App 上下文（store 侧 vmref 损坏，见模型注）。
+            // ⚠ to_value 双取形：ts_adapter 只对 call-arg 发射 JSON.parse
+            //（identifier 实参静默降恒等——T-04 实勘，上游缺口），原文态
+            // links_json 与解析态分两次取（fetch 幂等，v0 规模双取无害）。
+            var lj str = ""
+            var lp List = []
+            var lok bool = true
+            try {
+                lj = link_index("", 4)
+                .links_json = lj
+                lp = json.to_value(link_index("", 4))
+            } catch (e) {
+                lok = false
+            }
+            if !lok {
+                console_log("links: refresh failed")
+            }
+            .link_pages = lp
+            .bl_rows = backlink_rows_of(.link_pages, .store.active_path)
+            .ol_rows = outlink_rows_of(.link_pages, .store.active_path)
         }
 
         // 目录展开/折叠（受控展开态，toggle_id 纯函数返回新 List）。
@@ -302,6 +446,10 @@ widget App {
             } else {
                 .ft_sel = path
                 store.Open({ path: path })
+                // 链接行重算（显式 path——handler 内 .store 读为陈旧投影，
+                // T-03 实勘；Open 即激活入参 path，两轨一致）
+                .bl_rows = backlink_rows_of(.link_pages, path)
+                .ol_rows = outlink_rows_of(.link_pages, path)
             }
         }
 
@@ -315,9 +463,36 @@ widget App {
         .CloseTab(i) -> { store.CloseTab(i) }
         .ConfirmClose -> { store.ConfirmClose() }
         .ConfirmCancel -> { store.ConfirmCancel() }
-        .ActNew -> { store.ActNew() }
+        .ActNew -> {
+            store.ActNew()
+            // 链接行重算（显式空 active——untitled 激活；不读 .store，两轨一致）
+            .bl_rows = backlink_rows_of(.link_pages, "")
+            .ol_rows = outlink_rows_of(.link_pages, "")
+        }
         .ActOpen -> { store.ActOpen() }
-        .ActSave -> { store.Save() }
+        .ActSave -> {
+            store.Save()
+            // 保存改变出链面 → 链接索引重取（触发集：Save 成功）+ 行重算。
+            // Save 对具名档不改 active——.store.active_path 读此处安全
+            //（untitled 先落路径的 rare 分支 vm 轨留陈旧行，下次触点校正）。
+            // to_value 双取形见 Init 注（ts_adapter call-arg 缺口）。
+            var lj str = ""
+            var lp List = []
+            var lok bool = true
+            try {
+                lj = link_index("", 4)
+                .links_json = lj
+                lp = json.to_value(link_index("", 4))
+            } catch (e) {
+                lok = false
+            }
+            if !lok {
+                console_log("links: refresh failed")
+            }
+            .link_pages = lp
+            .bl_rows = backlink_rows_of(.link_pages, .store.active_path)
+            .ol_rows = outlink_rows_of(.link_pages, .store.active_path)
+        }
         .ActQuit -> { store.ActQuit() }
         .ActUndo -> { store.ActUndo() }
         .ActRedo -> { store.ActRedo() }
@@ -326,6 +501,59 @@ widget App {
         .ActPaste -> { store.ActPaste() }
         .ActSelectAll -> { store.ActSelectAll() }
         .ActConsole -> { store.ActConsole() }
+        .ActBacklinks -> {
+            store.BacklinksToggle()
+            if .store.backlinks_open {
+                // 面板开启 → 链接索引重取（触发集：面板开启）+ 行重算
+                //（to_value 双取形见 Init 注）
+                var lj str = ""
+                var lp List = []
+                var lok bool = true
+                try {
+                    lj = link_index("", 4)
+                    .links_json = lj
+                    lp = json.to_value(link_index("", 4))
+                } catch (e) {
+                    lok = false
+                }
+                if !lok {
+                    console_log("links: refresh failed")
+                }
+                .link_pages = lp
+                .bl_rows = backlink_rows_of(.link_pages, .store.active_path)
+                .ol_rows = outlink_rows_of(.link_pages, .store.active_path)
+            }
+        }
+        .LinksRefresh -> {
+            // 手动/程序化刷新入口（触发集外补充；当前 UI 无直连入口，
+            // 保留 msg 面——面板壳刷新钮后续批接线）。
+            // to_value 双取形见 Init 注（ts_adapter call-arg 缺口）。
+            var lj str = ""
+            var lp List = []
+            var lok bool = true
+            try {
+                lj = link_index("", 4)
+                .links_json = lj
+                lp = json.to_value(link_index("", 4))
+            } catch (e) {
+                lok = false
+            }
+            if !lok {
+                console_log("links: refresh failed")
+            }
+            .link_pages = lp
+            .bl_rows = backlink_rows_of(.link_pages, .store.active_path)
+            .ol_rows = outlink_rows_of(.link_pages, .store.active_path)
+        }
+        .OpenLink(path) -> {
+            if path != "" {
+                store.Open({ path: path })
+                // 链接行重算（显式 path——tab 条/面板行点击共用本口：
+                // Open 已开即激活语义 + 行派生）
+                .bl_rows = backlink_rows_of(.link_pages, path)
+                .ol_rows = outlink_rows_of(.link_pages, path)
+            }
+        }
         .ActSwitchTab -> { store.ActSwitchTab() }
         .ActAbout -> { store.ActAbout() }
         .CloseRequest -> { store.CloseRequest() }
