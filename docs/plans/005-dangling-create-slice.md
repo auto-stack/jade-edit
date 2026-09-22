@@ -1,6 +1,6 @@
 ---
 plan_id: PLAN-005
-status: execution_done
+status: reviewed
 feature_name: dangling-create-slice
 author: [zhaopuming]
 created_at: 2026-09-22T23:36:52+08:00
@@ -523,6 +523,50 @@ pub fn create_page_impl(title str) str {
   - `blockers: 无`（D-21 负载窗 7 失败重跑即绿——ledger v8 在案，
     非阻塞）。
   - `next: review`（worktree 保留 = 直接 main 约定，本仓无 worktree）。
+
+- **2026-09-23 复审 pass（auto-plan-review）**：
+  - `stage: review`，PLAN-005，revision 1。
+  - `outcome: pass`，`next: merge`。
+  - `reviewed_commit: 8b7e4d2`（base = 44cab26；工作树零 WIP；单
+    worktree 直接 main 约定；依赖 = auto v0.4.2-1914-g56bfaf1fc-dirty
+    + fixture 源 auto-down tmp/wiki-demo 零污染）。
+  - **独立性声明**：实现会话内复审（独立性受限，PLAN-004 同判）——
+    裁定自工件重建：全门重放 + 直证重跑 + 负向证重采 + diff 全窗口
+    对读，不依赖执行期摘要。
+  - `acceptance_results`：**AC-01 pass**（probe_create.mjs 复跑——
+    双臂九案 RESULT 全过 + 双臂一致=true，模板/幂等/守卫磁盘复核全过）
+    ；**AC-02 pass**（本审 gate 重放 vm 10c 双臂 PASS[merged CJK 开档
+    播种 + split D-19 磁盘/翻转面] + e2e 10c PASS；T-04 窗 merged 全
+    弧线冒烟八断言在案）；**AC-03 pass**（gate ALL GREEN 重放——
+    merged 13/13 + split 12/12 + vue build strict + e2e 十二段
+    [15 PASS 行]）；**AC-04 pass**（B v5 零漂移——v5 锁后第 6 次
+    全门全绿：T-04 4 + T-05 复跑 1 + 本审重放 1，间隔仅 docs-only
+    提交，≥3 达标）；**AC-05 pass**（重采：gen regen 后树 hash
+    `25bf3f48ff8a3634d5c7c75c58d70ba1` 与 T-05 双跑值逐字节一致 +
+    regen-vue.mjs/e2e helpers 零 diff[补件面=垫片族+splice 两件不变]
+    + 旧园非注释引用零 + fixture 源 5 档完好 + 本仓工作树零变更[家族
+    仓写入仅 e2e/.runtime 隔离拷贝]）；**AC-06 pass**（锚注核验：
+    ARCHITECTURE SD-501 §5 行 205 + SD-502 §6 行 247、README SD-503
+    Tests 行 78 + SD-504 ledger v8 指针行 126、ledger 23 项含 D-23）。
+  - `spec_inputs`：§5.3 SD-501..504 落位文本逐条对读 = 实测行为
+    （SD-501 清洗规则 v1 含 T-01 案⑤钉定的 dash-收敛空名守卫/幂等守卫
+    back 内移/模板无 frontmatter/触发集 v2/五触点 msg 共享口——与
+    wsys.at/api.at/app.at diff 逐条吻合；SD-502 十二组+10c 子步+v5
+    指针；SD-503 检查单 create 弧线+N 定谳续记；SD-504 第三切片条目
+    +v8 指针）；frontmatter `new_spec_components` 四 ID 对读一致，
+    `supersedes_spec_components=[]`、`touched_goals=[]` 维持。
+  - `findings`：无阻塞项。非阻塞备注两项：①AC-03 计划原文「e2e
+    十一段」实落为十二段（10c 独立 PASS 行）——§8 T-04 ②/§9 work
+    记录已如实记载，段内子步扩授权内；②D-21 负载窗 7 失败为上游
+    留观项（ledger v8 D-21 扩记），README 重跑口径覆盖，非本切片
+    缺陷。
+  - `evidence`：本节 + §8 全块；canonical 冻结（reviewed_commit
+    8b7e4d2）——ARCHITECTURE.md md5 42d54ca2b5cc8c11f0a22b531b0f2c1d /
+    README.md 6c8d7d53059e9baeeb7f851343f98ca8 / parity-ledger.md
+    a21a7560dc3d3d5469a3d1589380341f / 本计划
+    97c62ee0c6e1875537387a611403a4d5；探针工件 tests/probe_create.mjs
+    入库可复放；直证/门禁日志为会话内过程件（判绿行已摘录本节）。
+  - `next: merge`。
 
 ## 10. 待澄清事项
 
