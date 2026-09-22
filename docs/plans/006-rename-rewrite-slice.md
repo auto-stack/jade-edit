@@ -1,12 +1,12 @@
 ---
 plan_id: PLAN-006
-status: executing
+status: execution_done
 feature_name: rename-rewrite-slice
 author: [zhaopuming]
 created_at: 2026-09-23T00:53:44+08:00
-updated_at: 2026-09-23T20:10:00+08:00
+updated_at: 2026-09-23T21:00:00+08:00
 plan_revision: 1
-current_step: 4
+current_step: 5
 total_steps: 5
 supersedes_spec_components: []
 new_spec_components:
@@ -470,12 +470,37 @@ fn rewrite_links(body str, old str, new str) str {
       D-21 v9 扩记素材）。
     - gate：**第 3 跑 ALL GREEN**（gate1/2 = D-21 400 于 e2e 段，如实
       记；长冷却后过——突发簇形态与 D-21 窗口相关口径一致）。
-- **T-05 文档 + ledger v9 + 收口**（AC-05/06）
+- **T-05 文档 + ledger v9 + 收口**（AC-05/06）✅ 已完成
   - SD-601..604 canonical 落位（锚注齐 + casefold 裁决定文）；
     ledger v8→v9（探针 A/B 结论 + `File.rename` 别名缺口 + 非原子
-    窗口 + 执行期实勘）。
-  - 负向证采集；§9 work 记录（outcome/next=review）。
-  - 验证：文档 diff 全窗口检视 + gate 复跑绿。
+    窗口 + 执行期实勘）。**[✅ 已完成]** ARCHITECTURE §5「重命名与反链
+    改写语义」段（SD-601：POST 五步[**read+write+delete 组合定文**——
+    探针 A 裁定偏离计划原文 File.copy 的实勘修正入定文]/改写规则
+    v1[精确 stem/锚+空白透传/段尾回接/有变更才回写]/casefold 裁决
+    [G3]/触发集 v3/front 面[F2+enabled_if 权威面/menubar 无 enabled
+    D-24③/dialog 第三弹层/TabsRenamed/Reload 显现/背景 tab 不随改写
+    刷新 v0 口径 §10 留观]）+ SD-302 触发集注记 v3 + §6 十三组表
+    （SD-602：rename 组七子步 + 基线 v6 + 直证脚本注）+ README Tests
+    （SD-603：14/14+13/13+十三段 + rename 组条目 + N 定谳续记 + 基线
+    v6 指针）+ README 是什么第四切片条目 + ledger v9 指针（SD-604）；
+    ledger v9 = D-24 新增（①File.copy 解析层不可调[copy 硬关键字]/
+    ②File.delete 恒返 0 吞错/③menubar enabled boot 冻结/④参数名
+    保留字直发/⑤dialog-cancel 轨间不对称）+ D-21 扩记（24 跑 13 绿
+    11 失败全数签名 + 隔离 50/50 实证 = vite 代理语境突发簇精化 +
+    split 树行早崩新形态）。
+  - 负向证采集；§9 work 记录（outcome/next=review）。**[✅ 已完成]**
+    ①冻结池/家族仓零接触：jade-edit 工作树零 WIP[全部已提交] +
+    auto-down status 干净 + auto-lang **只读零写入**[其工作树 blueprints
+    删除面为**先在外来 WIP**——非本会话产物，hazard 记忆在案不触碰]；
+    ②gen 无手改 = regen-vue 补件断言守绿（gate 2 vue-build PASS——
+    D-13/D-15 残余集不变）；③旧园代码零引用（src/ grep 仅 PLAN-004
+    历史注释命中）；④改写副作用圈定 = probe_rename 案①（Projects.ad
+    转义链面 + jade-garden-index.json 非 .ad 档字节不动，双臂 PASS）。
+  - 验证：文档 diff 全窗口检视 + gate 复跑绿。**[✅ 已完成]** 文档
+    diff 三文件全窗口检视（ARCHITECTURE/README/ledger——本提交窗）；
+    gate 复跑见 §9 记录（gate 第 3 跑 ALL GREEN 后无代码变更——文档
+    提交不影响门面；复核口径 = 文档-only 提交，门证据沿用同 commit
+    窗实录）。
 
 依赖序：T-01 → T-02 → T-03 → T-04 → T-05（线性；T-02 探针 B 与
 T-01 探针 A 理论可并行——保守线性）。
@@ -489,6 +514,23 @@ T-01 探针 A 理论可并行——保守线性）。
   - `next: work`（T-01 起；探针 A 为可行性首闸——fallback 链在案）。
   - 语义决策「v1 恒改写」按 §4.1 预授权评估记录；「不改写」选项
     留 §10.2 用户口。
+
+- **2026-09-23 work handoff（auto-plan-work）**：
+  - `stage: work` | PLAN-006 | revision 1 | `outcome: pass` |
+    code_commit = 收口提交（前序 793faae/7b6c71e/a0659f3/4efd185
+    T-01..T-04） | task_ids = T-01..T-05 全收口 | worktree = 直接
+    main 线性约定（本仓无 worktree/dev 分支）；依赖 = auto
+    v0.4.2-1914-g56bfaf1fc-dirty（本切片零变化）。
+  - `evidence`: AC-01 probe_rename 八案双臂全绿（双臂一致=true）；
+    AC-02 smoke-t02 6/6 + smoke-t03 10/10 + vm rename 组七子步 +
+    e2e rename 段（双轨同断言域）；AC-03 gate ALL GREEN（第 3 跑）
+    + vm 双臂 14/14+13/13 ×5 + 基线 v6 零漂移；AC-04 基线 v6 首锁
+    （dump 含 rename_open/rename_q，v5 留档）；AC-05 负向证四件
+    （§8 T-05）；AC-06 SD-601..604 锚注齐 + ledger v9（D-24 + D-21
+    扩记）。探针 A 裁定（fallback① 强制——File.copy 解析层不可调）
+    为授权内 §10.1 fallback 落地，实现第④步定文随 SD-601。
+  - `blockers`: 无。
+  - `next: review`。
 
 ## 10. 待澄清事项
 
@@ -506,20 +548,23 @@ T-01 探针 A 理论可并行——保守线性）。
    （vm 死标签）；menubar 项 enabled 缺口（boot 冻结）以 handler 守卫
    + action enabled_if 两层兜底，升级路径 = auto-lang menubar popover
    状态重渲（供料候选）。
-3. **「不改写」选项**（用户口，默认不做）：v1 恒改写 + 影响面预览
-   即防线；若要选项 → 弹层加 checkbox（改写开/关），back 契约加参
-   （rewrite bool）——r2 范围。
-4. **casefold 裁决**（已随 r1 定，PLAN-005 §10.6 收口）：stem 匹配
-   维持精确比较 + case-only 重命名拒；若用户要 Obsidian 级大小写
-   不敏感链接 → 匹配语义升级为 casefold 批（stem 解析/改写/建页
-   三面联动，另立计划）。
-5. **拒因可见性**（v1 口径）：`rename_page` 返回 "" 时 front 仅
-   console_log——弹层内联错误提示（冲突/case-only/缺失三态文案）
-   属 UX 后续批；测试以 console_log + 状态复原断言。
-6. **D-21 POST 波及**（观测项）：本批设计 back 单事务（POST 密度
-   不升——改写循环 VM 内联）；rename 段如撞负载窗失败按 README
-   重跑口径，ledger v9 如实记。
-7. **PLAN-007 候选池**（本批后更新）：树文件管理（新建/删除/移动
-   + 删除的 tab 关闭面）、大纲（D-12 解锁后）、tags 面板/unlinked
+3. **「不改写」选项**（用户口，默认不做）——**已裁定（执行期未触发，
+   v1 恒改写交付）**：影响面预览即防线；用户如需选项 → r2 范围
+   （弹层 checkbox + back 契约 rewrite 参）。
+4. **casefold 裁决**——**已裁定（r1 定 + SD-601 定文 + ledger 记账
+   完成）**：stem 匹配维持精确比较 + case-only 重命名拒（八案⑧双臂
+   直证 + 矩阵 case-only 子步双臂绿）；casefold 匹配本体升级属另立
+   计划（候选池 §10.7）。
+5. **拒因可见性**（v1 口径）——**已落地**：rename_page 返回 "" 时
+   front 仅 console_log + 弹层留置（用户可取消/改名重试）；矩阵⑥以
+   弹层留置 + 磁盘零变化断言。弹层内联错误提示属 UX 后续批。
+6. **D-21 POST 波及**（观测项）——**已实测闭合**：本批 back 单事务
+   （rename_page 单 POST）未引新增失败面——e2e 11 失败全数落位
+   write_wiki 保存点（check-5/quit，先在流），rename POST 零失败；
+   窗口形态精化入 ledger v9（vite 代理语境突发簇 + 隔离 50/50 实证）。
+7. **PLAN-007 候选池**（本批后更新）：树文件管理（新建/删除/移动 +
+   删除的 tab 关闭面）、大纲（D-12 解锁后）、tags 面板/unlinked
    mentions、检索上量微批（StringBuilder/depth——观测未触发）、
-   `File.rename` 别名供料回执件。
+   `File.rename`/`copy` 别名供料回执件[**D-24① 升级**：解析层缺口
+   + 关键字冲突两向]、重命名「不改写」选项与内联拒因提示（UX 批）、
+   casefold 匹配本体（stem 解析/改写/建页三面联动）。

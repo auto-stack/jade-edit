@@ -26,8 +26,13 @@
   双模式；检索 = 冻结池 search.rs Page 面线性化移植，块级/倒排不迁；
   **第三切片 = 悬空建页闭环**（SD-501，2026-09-22）：悬空出链行点击 →
   确认弹层 → 根落位建页 → 开档 + 索引/树刷新——wikilink 读/找/写
-  最小环收口；图谱 tab 顺位后移——vm 轨组件面依赖上游），本仓零依赖
-  其代码。
+  最小环收口；**第四切片 = 重命名 + 反链改写**（SD-601，2026-09-23）：
+  F2/菜单 → dialog 弹层（预填 + 影响面预览）→ 磁盘改名 + 全部入链
+  `[[wikilink]]` 源文自动改写（知识完整性件——旧园 rename 只补内存
+  索引不改源文，jade 纯派生链接面下源文改写为本仓首创设计；casefold
+  裁决随批落定：stem 匹配维持精确比较、case-only 拒；casefold 匹配本
+  体属另立计划）；图谱 tab 顺位后移——vm 轨组件面依赖上游），本仓零
+  依赖其代码。
 - 编辑器内核 = `@autodown/engine`（auto-down，AutoUI 外部官方组件）：
   vue 轨 npm link 消费；vm 轨经 auto-lang `autodown_editor` 官方件位。
 
@@ -71,28 +76,34 @@ node tools/bench/bench.mjs proxy [--runs N]    # 测量 → results/<ts>.jsonl
 node tools/bench/bench.mjs assert              # 存量 measurements × budgets 重评
 
 # —— 单门 ——
-node tests/vm_matrix.mjs            # 双臂（merged+split）检查单 + 基线 v5 零漂移
+node tests/vm_matrix.mjs            # 双臂（merged+split）检查单 + 基线 v6 零漂移
 pnpm test:e2e                       # vue 检查单（同一检查单；serve-back 后端）
 ```
 
-## Tests（判绿口径，SD-204；SD-304/403 扩定；SD-503 再扩定）
+## Tests（判绿口径，SD-204；SD-304/403 扩定；SD-503 再扩定；SD-603 再扩定）
 
 检查单（PLAN-002 T-01 扩定 + PLAN-003 T-04 link 扩单 + PLAN-004 T-04
-find 扩单 + PLAN-005 T-04 create 扩单）：`boot / tree / open / edit /
-save / reload` 六检查 + **tab / editops / quit** 扩单三组 + **link /
-link-empty**（链接索引已知答案 + 反链面板双轨可用 + 空态——CJK 路径
-导航子步仅 vm merged 臂，D-19）+ **create**（建页弧线子步 10c：悬空行
-点击 → 确认弹层 → 取消零落盘 → 创建 → 落盘/链接翻转/树新行/行翻转——
-CJK 开档播种子步仅 vm merged 臂[D-19 同款口径]；e2e 弧线 = ASCII 悬空
-源档测试内造零语料改动）+ **find**（查找面板双模式：快开[files]——
-input 锚/空 q 全量 5 行/过滤 Pro→Projects 独行/CJK 文件名定理→CAP
-独行/拾取即关；全文检索[text]——未运行提示/CJK 查询「任务列表」**POST
-双臂**[D-19 面无]/行导航面板保持开/运行后空态；CJK 文件名拾取导航子步
-仅 vm merged 臂——D-19 同款口径）——vm 矩阵与 vue e2e 同单（断言域 =
-结构/文本/磁盘字节，非像素）。
+find 扩单 + PLAN-005 T-04 create 扩单 + PLAN-006 T-04 rename 扩单）：
+`boot / tree / open / edit / save / reload` 六检查 + **tab / editops /
+quit** 扩单三组 + **link / link-empty**（链接索引已知答案 + 反链面板双轨
+可用 + 空态——CJK 路径导航子步仅 vm merged 臂，D-19）+ **create**（建页
+弧线子步 10c：悬空行点击 → 确认弹层 → 取消零落盘 → 创建 → 落盘/链接
+翻转/树新行/行翻转——CJK 开档播种子步仅 vm merged 臂[D-19 同款口径]；
+e2e 弧线 = ASCII 悬空源档测试内造零语料改动）+ **find**（查找面板双模
+式：快开[files]——input 锚/空 q 全量 5 行/过滤 Pro→Projects 独行/CJK
+文件名定理→CAP 独行/拾取即关；全文检索[text]——未运行提示/CJK 查询
+「任务列表」**POST 双臂**[D-19 面无]/行导航面板保持开/运行后空态；CJK
+文件名拾取导航子步仅 vm merged 臂——D-19 同款口径）+ **rename**（重命
+名七子步：入口禁用态[untitled+脏档——handler 守卫，D-24③]/弹层锚[预填
+stem + 影响面预览 N 页 M 处]/取消零落盘/改名弧线[active 投影 + tab 更新
++ 磁盘改名 + 双页源文改写]/跨页改写可见[出链行新 stem + 点击导航新档 +
+树新行]/case-only 拒[弹层留置 + casefold 计数断言]/状态复原——素材
+Projects.ad ASCII 双臂[D-19 面无]；CJK 改名/自链/锚透传/清洗/冲突/
+缺失案 = `tests/probe_rename.mjs` 八案双臂直证覆盖）——vm 矩阵与 vue
+e2e 同单（断言域 = 结构/文本/磁盘字节，非像素）。
 
-- **完成态 = RESULT 行出现且两臂全数通过**：vm 矩阵 `merged 13/13 +
-  split 12/12`（merged 多一项基线检查）+ ALL GREEN 行；vue e2e 十二段
+- **完成态 = RESULT 行出现且两臂全数通过**：vm 矩阵 `merged 14/14 +
+  split 13/13`（merged 多一项基线检查）+ ALL GREEN 行；vue e2e 十三段
   日志齐 + passed。无 RESULT 行 = 工具链竞态早崩 → **重跑一次而非排查**
   （auto-edit F-RV6 同款口径）。
 - N 定谳（2026-09-22 link 扩单首锁 ≥5 连跑分布）：vm 双臂 **6/7 连跑
@@ -110,11 +121,20 @@ input 锚/空 q 全量 5 行/过滤 Pro→Projects 独行/CJK 文件名定理→
   连跑 5，10c 建页弧线全过）；D-21 负载窗 **7 失败实录**（家族会话
   同机并行窗——write_wiki 保存点 400 丢参，重跑即绿，ledger v8 扩记）。
   N = 全数，无失败集漂移。
-- 结构基线 = `tests/baseline/structure-v5.txt`：state 段逐字节 +
-  snapshot vnode id 出现序列（v2 仪器延续；v5 = PLAN-005 store
-  create_confirm_open/create_target 入 dump + 悬空行 button 化 +
-  alert-dialog 第三实例（建页确认，快照恒渲染）id 序列的计划内重锁，
-  v4/v3/v2/v1/v0 留档）。
+- N 定谳（2026-09-23 rename 扩单首锁，SD-603）：vm 双臂 **5 连跑全绿**
+  （final×2 + gate 内 ×3，merged **14/14** + split **13/13** + 基线 v6
+  零漂移逐跑；无-RESULT 早崩 2 次如实记——split 臂 check-2 树行超时
+  [state=ready 而 ft_nodes 空，独占重跑即绿，D-21 v9 新形态]）；vue
+  e2e 断言修正后 **24 跑 13 绿**（11 失败全数 D-21 签名[400 丢参 ×9 +
+  ECONNRESET ×2，check-5/quit 保存点]，重跑即绿，最长连绿 4；隔离
+  serve-back 连发 write_wiki **50/50** 实证 = 400 仅 vite 代理 e2e
+  语境突发簇——D-21 v9 扩记）；gate **第 3 跑 ALL GREEN**（前 2 跑
+  e2e 段 D-21 失败如实记）。rename 组零失败漂移。
+- 结构基线 = `tests/baseline/structure-v6.txt`：state 段逐字节 +
+  snapshot vnode id 出现序列（v2 仪器延续；v6 = PLAN-006 store
+  rename_open + App rename_q 入 dump + dialog 第三弹层（重命名，内嵌
+  input + 影响面预览 + 双钮）id 序列的计划内重锁，v5/v4/v3/v2/v1/v0
+  留档）。
 
 ## 文档
 
@@ -123,7 +143,7 @@ input 锚/空 q 全量 5 行/过滤 Pro→Projects 独行/CJK 文件名定理→
 - [plans/attachments/081-t00-rulings.md](plans/attachments/081-t00-rulings.md) —
   T-00 三勘定决策档（auto-down PLAN-081 附件；双轨机制 / actions-vue
   现状 / 后端选型）
-- [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v8（SD-504 指针；二十三项三分类；PLAN-005 增补 D-23 + D-21 负载窗扩记）
+- [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v9（SD-604 指针；二十四项三分类；PLAN-006 增补 D-24 + D-21 vite 代理语境精化/split 树行早崩新形态）
 - [upstream/2026-09-jade-supply.md](upstream/2026-09-jade-supply.md) —
   上游供料包（D-16 预热 / D-15 残余 / D-17 键入发射 / D-18 投影双态，
   期望形态+复验条件+回执方式）

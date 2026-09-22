@@ -172,8 +172,8 @@ src/back/api.at           /api 契约（自有 Auto 源，与实现同 commit—
   front（App 模型持链接态 + handler 触点重算——store 上下文 to_value
   损坏 + ts_adapter identifier 实参 to_value 静默恒等，双缺口 D-20）；
   刷新触发集 v1 = Init / Save 成功 / 面板开启（v1；**v2 起 SD-501 扩**
-  ——建页成功 + 树重取）（无文件系统 watch，
-  后续批）；悬空 active（""）反链恒空（卫语句——否则悬空出链
+  ——建页成功 + 树重取；**v3 起 SD-601 扩**——重命名成功）（无文件系统
+  watch，后续批）；悬空 active（""）反链恒空（卫语句——否则悬空出链
   `target_path:""` 误配）。
 - **检索与快速打开域语义（SD-401，PLAN-004 第二切片）**：`search_wiki
   (query, limit)` 返回命中数组 JSON 字符串 `[{path,title,snippet}]`
@@ -239,19 +239,68 @@ src/back/api.at           /api 契约（自有 Auto 源，与实现同 commit—
   共享口（`.LinksRefreshOf(active)` / `.TreeRefresh`）——json.to_value
   只能 handler 体内直调（D-20⑤）+ 状态赋值需 handler 上下文 ⇒ 「局部
   fn」以 msg 面落地（handler 互调在册先例 .FindPick→.OpenLink）。
+- **重命名与反链改写语义（SD-601，PLAN-006 第四切片）**：知识完整性
+  核心件——改名即断链的结构性消除。旧园 rename 只补内存索引
+  （files.rs:177 + index.rs:221 四表补丁）不改源文，jade 链接面纯派生
+  （link_index 每次全量 walk）无索引可补丁 → **源文改写是唯一一致口
+  径**（Obsidian「更新链接」同形态；本仓首创设计，无旧园先例）。
+  back 契约 `rename_page(old_path, new_name)` **POST**（D-19 同款：
+  old_path/new_name 均 body 传参，old_path 工作区相对 CJK 常态）→
+  wsys.rename_page_impl **单事务五步**：①校验（old 在盘；new_name 清洗
+  非空——title_to_path_stem 复用 SD-501 清洗规则去 ".ad" 拼装段，dash-
+  收敛守卫钉定态）②同目录路径合成（dir_of split 法——根档落根）③
+  冲突/case-only 卫语句（exists(new) 拒 + **casefold 相等同拒**——G3
+  裁决见下）④改名（**read_text+write_text+delete 组合**——探针 A 定谳
+  [D-24①]：`File.copy` 别名双表在册但 `copy` 为 Auto 硬关键字，解析层
+  不可调，boot 即 fatal；字节整迁等价直证；⚠ `File.delete` 恒返 0 吞错
+  [D-24②] → exists 双复核内建；**组合非原子**——崩溃窗双档残留 v0
+  记账，`File.rename` 别名供料候选）⑤反链源文改写（collect_ad_pages
+  walk 全页面——含被改名档新路径[自链改写]；read_body → rewrite_links
+  → **有变更才 write_body 回写**——frontmatter 保留；改写副作用圈定 =
+  非链接档字节不动）。**改写规则 v1**：`[[Old]]`/`[[Old#anchor]]` 精确
+  stem 匹配（与 extract_links_json 同一忽略面：无闭合/跨行/trim 空候选
+  不涉；转义 `\[\[` 字面量不涉——`[[` 子串不存在）；anchor 段与前导
+  空白逐字节透传（`[[ Old ]]` 空白保真、`[[Old#Old]]` 锚内同名不误伤
+  ——候选 split_once(old) 首现拆分重组 + `"]]"+rest` 段尾回接）；返回
+  新 rel（"" = 任一卫语句拒；拒因前端不可见——v1 口径 §10，front 失败
+  路径 = console 注记 + 弹层留置）。**casefold 裁决（PLAN-005 §10.6
+  收口，G3）**：stem 匹配维持**精确比较**（casefold 不采用）；case-only
+  重命名拒（Windows 实盘同档 + 精确匹配下 copy 组合对自身复制未定义）
+  ——匹配语义升级为 casefold 属另立计划（stem 解析/改写/建页三面联动）。
+  **front 面**：action `file.rename`（**F2**——VS Code/Typora 惯例，
+  `enabled_if: active_path 非空 && 非 active_dirty` 权威面）+ menubar
+  文件项「重命名…」（**不挂 enabled**——D-24③ vm boot 冻结缺口，禁用
+  语义由 `.RenameOpen` handler 守卫兜底）→ **dialog 第三弹层**（dialog
+  控件族首用例——内嵌 input 预填现 stem[path_stem split 法] + 影响面
+  预览行[rename_impact_text 纯函数经 widget computed：link_pages 扫
+  target == 现 stem 精确计数→「将改写 N 页 M 处链接」/「无入链」——仅
+  显示，权威在 back] + 双钮[普通 button——D-24⑤ dialog-cancel/action
+  轨间不对称禁用]；闭态恒渲染 D-23③ dialog 族同判）→ 改名流四步：
+  rename_page 直调 → `TabsRenamed(old, new)`（while 扫描 tabs[D-11]
+  path==old 档全量更新 path/title/key——**激活/后台同名档全量**；key 变
+  即重挂载播种）→ `Reload`（**自链改写 Reload 显现**——store body 是改
+  名前镜像，重读磁盘即改写后文；handler 内 TabsRenamed→Reload 顺序 +
+  渲染滞后于 handler 完成 → 重挂载播种即新文）→ LinksRefreshOf(新
+  path 显式传参) + TreeRefresh + ft_sel 同步。**刷新触发集 v3**（SD-302
+  v2 扩）：v2 + **重命名成功**（.RenameGo 内链接重取 + 树重取——反链/
+  出链面板立即反映新 stem、EXPLORER 旧行消失新行在）。⚠ 已开后台 tab
+  的 store body 不随改写刷新（v0 口径——改写后从磁盘重开即新文；背景
+  tab 脏保存回退改写的窗口 §10 留观）。
 - fixture workspace 每次全新隔离拷贝（源 = auto-down `tmp/wiki-demo`，
   `JADE_FIXTURE` 可覆）——测试会打字保存，源零污染。Auto back 无 config
   文件 ⇒ 旧「exe 旁陈年 config 压 env」事故类别结构性消失（belt 保留为
   ws_root 实际根断言）。
 
-## 6. 测试体系（双轨一致性门；PLAN-001 T-04 换基迁移；SD-402 find 扩单；SD-502 create 扩单）
+## 6. 测试体系（双轨一致性门；PLAN-001 T-04 换基迁移；SD-402 find 扩单；SD-502 create 扩单；SD-602 rename 扩单）
 
 | 门 | 命令 | 断言域 |
 | --- | --- | --- |
-| vm 矩阵（双臂） | `node tests/vm_matrix.mjs` | merged 臂（进程内直调）+ split 臂（`--no-merge` HTTP）各**十二组检查**（六检查 + 基线[merged] + tab/editops/link/find 扩单 + quit——PLAN-002/003/004/005 扩单；**link 组含建页弧线子步 10c**[PLAN-005]——子步不占检查位，fail 即臂败）+ 结构基线 v5 零漂移（merged 臂锁，`tests/baseline/structure-v5.txt`；v4/v3/v2/v1/v0 留档） |
+| vm 矩阵（双臂） | `node tests/vm_matrix.mjs` | merged 臂（进程内直调）+ split 臂（`--no-merge` HTTP）各**十三组检查**（六检查 + 基线[merged] + tab/editops/link/find/rename 扩单 + quit——PLAN-002/003/004/005/006 扩单；**link 组含建页弧线子步 10c**[PLAN-005]、**rename 组含七子步**[PLAN-006：禁用态/弹层锚/取消零落盘/改名弧线/面板+树/case-only 拒/状态复原]——子步不占检查位，fail 即臂败）+ 结构基线 v6 零漂移（merged 臂锁，`tests/baseline/structure-v6.txt`；v5/v4/v3/v2/v1/v0 留档） |
 | vue build | `pnpm build`（= regen-vue.mjs） | 裸 strict 生成 + 三残余补件 + vue-tsc 0 错 + vite build |
-| vue e2e | `pnpm test:e2e` | playwright **同一检查单**（含 10c 建页弧线——ASCII 悬空源档测试内造，零语料改动；serve-back AutoVM 后端 + vite 双 webServer） |
+| vue e2e | `pnpm test:e2e` | playwright **同一检查单**（含 10c 建页弧线 + 12 rename 七子步；serve-back AutoVM 后端 + vite 双 webServer） |
 | 双臂总门 | `node scripts/gate.mjs` | ①vm 双臂 ②vue(build+e2e) 顺序全绿（契约漂移段已随自有源退役） |
+
+另：契约直证脚本 `tests/probe_create.mjs`（PLAN-005 create_page 六案）/ `tests/probe_rename.mjs`（PLAN-006 rename_page 八案——改写逐字节/锚透传/自链/CJK/清洗/三拒/副作用圈定，双臂返回值逐案对读）独立于矩阵按需跑（入库源，全案期望值 = SD-501/SD-601 定文）。
 
 断言域 = 两轨交集（结构/文本/磁盘字节，**非像素**）；差异登记面 =
 [parity-ledger.md](parity-ledger.md)（从第一天记账）。
