@@ -1,6 +1,6 @@
 ---
 plan_id: PLAN-003
-status: execution_done
+status: reviewed
 feature_name: knowledge-base-start
 author: [zhaopuming]
 created_at: 2026-09-22T19:53:53+08:00
@@ -396,6 +396,37 @@ parity-ledger：本切片预期无新增双轨差异（全走既有同构通道�
   AC-05 负向证齐/AC-06 vm 6/7 + e2e 5/5 连跑分布） | blockers: 无阻塞
   （D-19/D-21 上游级留观不阻塞本计划验收；家族仓外部重组已路由绕行
   ——deps git 物化，恢复动作见 §8 T-05） | next: review。
+
+- 2026-09-22 stage: review | plan_id: PLAN-003 | plan_revision: 1 |
+  outcome: **pass** | reviewed_commit: 15894e4 | base_commit: 5b5071d |
+  dependency_revisions: auto-lang exe=target/debug 构建 19:17（tip
+  80f96a95a 为文档收据提交，exe 未随之重建——全程同构）/ auto-down
+  3373a5c（D17 修复落 master，engine dist 已随重建）/ auto-edit
+  fda9cdb（plan008 已合并；stylekit 两文件工作树删除仍未提交——外部
+  重组在飞，本仓 deps 为 git HEAD archive 物化态） | spec_inputs:
+  ARCHITECTURE.md（§1 定位裁定块/§5 链接域语义段/§6 测试表）+ README.md
+  （是什么/不是什么/Tests/文档指针）@ 15894e4；parity-ledger v6 |
+  acceptance_results: AC-01 pass（grep 重放：定位句/四要素/日期/指针
+  逐条命中 ARCHITECTURE L10-24 + README L1-18；PROVENANCE 无冲突）/
+  AC-02 pass（gate vm 双臂 link+link-empty 检查过——已知答案/stem/
+  悬空/锚透传/反链三源断言）| AC-03 pass（面板双轨：vm merged+split
+  开关/行/点击开档/空态 + e2e 十段 passed 8.9s）| AC-04 pass（复审
+  gate 重放：首试 e2e 段撞 D-21 负载窗签名「missing param path」——
+  按 README 口径重跑一次 → ALL GREEN）| AC-05 pass（重放：regen-vue
+  全窗口 diff 空 + 三补件在 + 负向 grep 空）| AC-06 pass（执行期分布
+  vm 6/7 + e2e 5/5 采信——理由：code=8d56ab3 未变/exe 同构建/检查单
+  未变；复审日 gate 复现绿 ×1 + D-21 再现 1 次与已登记率一致） |
+  findings: F-R1（minor/非阻塞）SD-301/303/304 缺 canonical 文中锚注
+  （SD-302 已锚 §5；组件表在计划 frontmatter）——merge 的 canonical
+  face prepared 阶段补引，对齐 SD-201/204 文中锚先例；D-21 复审再证
+  1 次（gate 语境 ~2/5 率），留观项维持；计划三处执行期修订（裸数组
+  契约/基线 v3/CJK 导航 merged-only）逐条复核 = §10 默认裁定授权内、
+  不弱化验收（CJK 子步受阻于先在上游缺口 D-19，非本计划代码面） |
+  evidence: 本记录命令/结果摘要 + §8 任务证据块（工件均在 main，
+  无 worktree 清理风险） | next: merge。
+  独立性声明：复审在实现会话内进行（无独立会话授权）——以工件重建
+  裁定：全部 AC 命令复审日重放、规范增量逐条对读、执行期摘要仅作
+  导览不采信。
   work 侧补充（供复审）：计划内三处执行期修订均依 §10 默认裁定授权
   落地——①link_index 顶层裸数组（§2.3 包壳为形状示意）②基线 v3 重锁
   （§6 v2 零漂移与自身态扩矛盾）③CJK 导航子步 merged-only（D-19 先在
