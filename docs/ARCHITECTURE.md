@@ -29,6 +29,25 @@ front/desktop VM twin 副本）的教训不在此重演。溯源（全新应用�
   随之收口），本仓不代写；战略面若后续扩容（多裁定成簇）再议独立
   战略档，届时本节裁定块迁出。
 
+**北标裁定（SD-405，2026-09-22 用户口述）**——授权源 = 用户会话口述
+「我们短期的目标是对标Typora；长期目标是对标Obsidian；Notion；以及
+飞书。」：
+
+- **层级**：短期对标 **Typora**（编辑体验线）；长期对标 **Obsidian、
+  Notion、飞书**（本地知识库 → 块级协作工作台线）。
+- **与 SD-301 的关系 = 细化而非替代**：知识库方向（SD-301）在北标下
+  具体化为 Obsidian 段（长期主目标）；auto-edit 并存两产品、组件共用、
+  家族栈维持等裁定全部不变。
+- **Typora 核心差距大头在上游**：所见即所得、大文档键入、秒开、行:列、
+  右键等承载面 = 上游供料包（D-16 预热 / D-17 键入发射 / rope delta
+  分块读 / D-12 事件面扩展，见 [upstream 供料包](upstream/2026-09-jade-supply.md)）；
+  本仓落地件 = 编辑器周边（快速打开、大纲等），不替上游做核心。
+- **Notion/飞书（块标识/协作后端）远期只记账不动手**；图谱 tab（vm 轨
+  图/canvas 组件族依赖上游）主线顺位后移。
+- **切片优先级裁决口径**：短期 Typora 线件与长期 Obsidian 线件双线各有
+  交付、可合片共享机制（首例 = PLAN-004 查找面板——快开[Typora 线] +
+  全文检索[Obsidian 线]）。
+
 ## 2. 单工程双轨机制（T-00 R-1 裁定 A'）
 
 pac.at 单声明 `render: ["vm","vue"]` + **双命令分工**：
@@ -155,16 +174,43 @@ src/back/api.at           /api 契约（自有 Auto 源，与实现同 commit—
   刷新触发集 v1 = Init / Save 成功 / 面板开启（无文件系统 watch，
   后续批）；悬空 active（""）反链恒空（卫语句——否则悬空出链
   `target_path:""` 误配）。
+- **检索与快速打开域语义（SD-401，PLAN-004 第二切片）**：`search_wiki
+  (query, limit)` 返回命中数组 JSON 字符串 `[{path,title,snippet}]`
+ （**顶层裸数组**——link_index 同裁定）。**POST 而非 GET**（D-19 依据：
+  HTTP 对 GET query 的 UTF-8 百分号序列不解码，CJK 查询词 GET 全败；
+  POST body CJK 已证——write_wiki 同款）。检索面 = **stem + body**
+  （read_body frontmatter 剥离面；frontmatter 的 title/tags/summary 均
+  不入检索——tags 检索后续批）；title = 文件 stem（链接域同语义）。
+  匹配语义 v1：query trim 空守卫 → `[]`；大小写 = **两侧 to_lower**
+  （探针 A 定谳：vue 发射在册——ts_adapter Plan 053 M1
+  `to_lower→toLowerCase` + 构建期 gen 源检）；命中序 = walk 序
+  （dirs-first + 名称 casefold，确定性）；limit 钳 1..50（front 传常量
+  20 = 旧园 default_limit 同值）；walk depth = 4 内部常量（Init tree
+  首屏同值——快开/检索/链接三面覆盖一致）。snippet = body 中首条命中行
+  trim 后整行（CRLF 行尾 `\r` 剥离——行终止符非内容；**禁 `.length`
+  截断**——D-20③ CJK heap 串字节语义）；title-only 命中 = `""`。
+  页面收集 = `collect_ad_pages()` **links_json/search_json 共享单点**
+ （覆盖 = 文件树不变式：忽略面/depth/walk 序一处维护）。装配 = json_esc
+  + 逐项 `+` 重接（O(P²) v0 规模接受，上量换 StringBuilder native 160
+  族）。**快速打开 = 纯 front 件**（零 back 增量）：数据源 = Init 已取
+  `tree(root,4)` 的 ft_nodes，`collect_ad_paths` 栈式 while 展开（禁递归）
+  + `file_rows_of` 双侧 to_lower contains 过滤（空 q = 全量清单——
+  VS Code Ctrl+P 同形态）；**拾取即关**（files 模式行点击 = OpenLink +
+  FindClose store 关口），text 模式行点击**面板保持开**（检索结果浏览
+  语义）。检索触发 = 检索钮 + Enter（onenter 双轨在册——探针 C 定谳：
+  vm convert_input onenter→on_submit / vue @keyup.enter）；检索按需
+  fetch、快开过滤纯内存——**刷新触发集 = 无**（与链接面板 Init/Save/
+  面板开启触发集的结构性差异）。
 - fixture workspace 每次全新隔离拷贝（源 = auto-down `tmp/wiki-demo`，
   `JADE_FIXTURE` 可覆）——测试会打字保存，源零污染。Auto back 无 config
   文件 ⇒ 旧「exe 旁陈年 config 压 env」事故类别结构性消失（belt 保留为
   ws_root 实际根断言）。
 
-## 6. 测试体系（双轨一致性门；PLAN-001 T-04 换基迁移）
+## 6. 测试体系（双轨一致性门；PLAN-001 T-04 换基迁移；SD-402 find 扩单）
 
 | 门 | 命令 | 断言域 |
 | --- | --- | --- |
-| vm 矩阵（双臂） | `node tests/vm_matrix.mjs` | merged 臂（进程内直调）+ split 臂（`--no-merge` HTTP）各十一组检查（六检查 + 基线[merged] + tab/editops/link 扩单 + quit——PLAN-002/003 扩单）+ 结构基线 v3 零漂移（merged 臂锁，`tests/baseline/structure-v3.txt`；v2/v1/v0 留档） |
+| vm 矩阵（双臂） | `node tests/vm_matrix.mjs` | merged 臂（进程内直调）+ split 臂（`--no-merge` HTTP）各**十二组检查**（六检查 + 基线[merged] + tab/editops/link/find 扩单 + quit——PLAN-002/003/004 扩单）+ 结构基线 v4 零漂移（merged 臂锁，`tests/baseline/structure-v4.txt`；v3/v2/v1/v0 留档） |
 | vue build | `pnpm build`（= regen-vue.mjs） | 裸 strict 生成 + 三残余补件 + vue-tsc 0 错 + vite build |
 | vue e2e | `pnpm test:e2e` | playwright **同一检查单**（serve-back AutoVM 后端 + vite 双 webServer） |
 | 双臂总门 | `node scripts/gate.mjs` | ①vm 双臂 ②vue(build+e2e) 顺序全绿（契约漂移段已随自有源退役） |

@@ -1,12 +1,12 @@
 ---
 plan_id: PLAN-004
-status: executing
+status: execution_done
 feature_name: wiki-search-slice
 author: [zhaopuming]
 created_at: 2026-09-22T21:40:26+08:00
 updated_at: 2026-09-22T21:49:28+08:00
 plan_revision: 2
-current_step: 3
+current_step: 5
 total_steps: 5
 supersedes_spec_components: []
 new_spec_components:
@@ -457,12 +457,31 @@ pub fn search_json(query str, limit int) str {
   - 验证：`node tests/vm_matrix.mjs` 双臂全绿 + `pnpm test:e2e`
     连跑 ≥5 + `node scripts/gate.mjs` ALL GREEN（判绿实录：双臂连跑
     分布 + e2e 连跑，N 定谳口径）。
-- **T-05 文档 + ledger v7 + 北标落账 + 收口**（AC-05/06）
+- **T-05 文档 + ledger v7 + 北标落账 + 收口**（AC-05/06）[✅ 已完成]
   - SD-401..405 canonical 落位（文中锚注齐；§1 北标裁定块 + §5 查找
     域段 + §6 表 + README 三处）；parity-ledger v6→v7（探针 A/C/D
     结论 + 执行期新实勘）。
   - 负向证采集（AC-05 三件）；§9 work 记录（outcome/next=review）。
   - 验证：文档 diff 全窗口检视 + gate 复跑绿。
+  - **证据（2026-09-22）**：①canonical 五件落位且文中锚注齐（SD-405
+    = ARCHITECTURE §1 北标裁定块——层级/授权源/与 SD-301 细化关系/
+    上游承载口径/切片裁决口径五要素全数；SD-401 = §5「检索与快速打开
+    域语义」定稿段——POST 通道/stem+body 检索面/裸数组/匹配语义含
+    探针 A/C 定谳落文/snippet 整行禁截断/collect_ad_pages 共享/快开
+    面/刷新触发集=无；SD-402 = §6 表十二组检查 + 基线 v4（标题行锚
+    注）；SD-403 = README Tests 节（find 组口径 13/13+12/12+十一段 +
+    N 定谳补记 + 基线 v4 指针，标题行锚注）；SD-404 = README「是什么/
+    文档」节——北标条目 + 第二切片条目 + 图谱顺位后移注记 + ledger
+    v7 指针（锚注两处）。②ledger v6→v7：D-22 增补（三项探针定谳
+    全通=归档级 + O(P²)/depth=4/limit 钳观测项记账）+ D-19 POST 适配
+    注记（GET 缺口本身不变，检索域已适配）+ D-21 执行窗零复现续留观。
+    ③AC-05 负向证三件：家族仓 git status——auto-down **零变更**、
+    auto-edit/auto-lang 工作树为 PLAN-003 在案的外部既有 WIP
+    （stylekit/blueprints 删除面+计划文档，本计划零新增接触——
+    deps 物化态未动）；gen/ 无手改（不入库面 + regen 于 gate 双跑
+    再生等价 + regen-vue.mjs 零 diff = D-13/D-15 补件面零增量）；旧园
+    零代码引用（grep 唯一命中 = wsys.at 注释移植参照引用）。④gate
+    复跑绿（T-05 末次全门）。
 
 依赖序：T-01 → T-02 → T-03 → T-04 → T-05（线性；T-02 可与 T-01 探针
 并行无冲突——保守起见线性）。
@@ -481,6 +500,19 @@ pub fn search_json(query str, limit int) str {
     13/12/十一段不变——组内子步扩）；任务 T-02/T-03/T-05 相应扩容。
   - `stage: new`（ drafting 修订，未起 work）；`outcome: pass`；
     `next: work`（T-01 起）。探针 A/B/C/D 不变。
+- **2026-09-22 work 收口（auto-plan-work）**：
+  `stage: work | plan_id: PLAN-004 | plan_revision: 2 | outcome: pass |
+  code_commit: 0e8097e(T-01)→fcac994(T-02+03)→6ef3222(T-04)→本次(T-05) |
+  task_ids: T-01..T-05 全完成 | evidence: AC-01..06 全数在案（六案
+  known-answer 探针 B 双臂、gate ALL GREEN 首跑+复跑、基线 v4 零漂移
+  4 次、vm 双臂 4 连跑 13/13+12/12、e2e 6 连跑十一段、探针 A/C/D 全通
+  定谳、SD-401..405 canonical 锚注齐、AC-05 负向证三件）| blockers: 无 |
+  next: review`。status → `execution_done`。
+  执行期修订三项（§10 授权内，不弱化验收）：①T-02 携带 actions/menubar
+  登记（MCP 无 msg 派发通道，冒烟需 UI 锚）；②探针 A/C 以「源级+构建
+  期 gen 源检+vm 冒烟」三级证据定谳（真实消费代码即 fixture）；③find
+  组 CJK 文件名拾取导航子步仅 merged 臂（D-19 同款口径，检索 POST 面
+  双臂不降）。
 
 ## 10. 待澄清事项
 
@@ -507,8 +539,9 @@ pub fn search_json(query str, limit int) str {
 5. **键位口径**（已随 r2 定，用户可再改）：Ctrl+P = 快开（VS Code/
    Typora 惯例）、Ctrl+Shift+F = 全文检索（VS Code/Obsidian 惯例）；
    Esc 全局关闭/面板自动聚焦 v1 不做（§1 非目标，后续批）。
-6. **D-21 对 search 段波及**（观测项）：gate 负载窗 POST flake 若在
-   search 段复现 → README 口径内重跑 + ledger v7 扩记；非阻塞。
+6. **D-21 对 search 段波及**（观测项——执行窗已闭合：2026-09-22 gate
+   首跑 + 复跑 + vm 双臂 4 连跑 + e2e 6 连跑 + search_wiki POST 双臂
+   全过，**零复现**）；ledger v7 D-21 行已续记执行窗实录；非阻塞。
 7. **O(P²) 装配上量阈值**（观测项）：v0 语料规模（≤数百页）接受；
    bench 面证据触发时换 StringBuilder native 160 族（另立微批，非本
    计划）。
