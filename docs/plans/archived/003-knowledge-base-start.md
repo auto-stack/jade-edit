@@ -1,6 +1,7 @@
 ---
 plan_id: PLAN-003
-status: reviewed
+status: archived
+completion_kind: delivered
 feature_name: knowledge-base-start
 author: [zhaopuming]
 created_at: 2026-09-22T19:53:53+08:00
@@ -427,6 +428,23 @@ parity-ledger：本切片预期无新增双轨差异（全走既有同构通道�
   独立性声明：复审在实现会话内进行（无独立会话授权）——以工件重建
   裁定：全部 AC 命令复审日重放、规范增量逐条对读、执行期摘要仅作
   导览不采信。
+
+- 2026-09-22 stage: merge | PLAN-003:r1 | outcome: **pass** |
+  delivery_commit: 7c068af（docs-only descendant of reviewed 0ae447a——
+  F-R1 canonical 锚注三行，实现/依赖零变化核验） | checkpoints:
+  prepared=canonical 面 ARCHITECTURE/README/parity-ledger @ reviewed 链
+  （SD-301/302/303/304 锚注齐——本仓无 docs/specs/，精简文档面惯例 =
+  立项档 §2.1 记录 + PLAN-001/002 归档先例，复审通过随案）；
+  landed=main tip == 7c068af == delivery（直接 main 线性约定，无 dev
+  分支/worktree——PLAN-001/002 先例；归档前冒烟 merged 12/12 + 基线
+  v3 零漂移 + link 检查绿）；ledger_refreshed=parity-ledger v6
+  （21 项：D-19/D-20/D-21 本计划增记）在 main（tracked 文件即派生面
+  ——无 live ledger 服务，PLAN-001 同判）；archived=git mv 本档至
+  docs/plans/archived/ + status archived + completion_kind delivered；
+  cleaned=无 worktree/dev 分支待清（直接 main 约定；分支清单=仅 main，
+  bisect 临时 worktree 已于执行期移除验证）。 | canonical_paths:
+  docs/ARCHITECTURE.md（§1/§5/§6）+ docs/README.md + docs/parity-ledger.md |
+  next: —（全 checkpoint 闭环 delivered）。
   work 侧补充（供复审）：计划内三处执行期修订均依 §10 默认裁定授权
   落地——①link_index 顶层裸数组（§2.3 包壳为形状示意）②基线 v3 重锁
   （§6 v2 零漂移与自身态扩矛盾）③CJK 导航子步 merged-only（D-19 先在
