@@ -6,7 +6,7 @@ author: [zhaopuming]
 created_at: 2026-09-22T19:53:53+08:00
 updated_at: 2026-09-22T20:45:00+08:00
 plan_revision: 1
-current_step: 1
+current_step: 2
 total_steps: 5
 supersedes_spec_components: []
 new_spec_components:
@@ -280,11 +280,32 @@ parity-ledger：本切片预期无新增双轨差异（全走既有同构通道�
     AC-01 grep 实录：ARCHITECTURE 命中 知识库/长期并存/插件级（L10/20/
     21/24），README 命中（L1/10/11/18）；PROVENANCE 实读=家族溯源表述
     （基座/工具链/功能池），无产品定位句冲突。
-- **T-02 back 链接索引**（依赖 T-01 无，可与 T-01 并行）
+- **T-02 back 链接索引**（依赖 T-01 无，可与 T-01 并行）✅ 已完成
   - 文件：`src/back/api.at`（link_index 契约）、`src/back/wsys.at`
     （links_json：walk+标记法提取+stem 解析+JSON 装配）
   - 产出：契约+实现+约定 JSON schema；验证：AC-02（vm 矩阵 link 检查
     后端半——直接调 link_index 断言 JSON）。
+  - 证据（2026-09-22，serve-back HTTP 探针实录）：①walk 实勘改道——
+    `fs.walk_files` 原语在册未接 .at 调用面（Undefined symbol 探针实
+    证），改走已证 `fs.tree`：depth 直通（=1 → pages:[] 实录）、遍历
+    确定性（dirs-first+名称序）、覆盖=文件树（忽略面 .git/target/
+    node_modules/点开头等，fs_tree_skipped 实读）；②两处 VM 实勘新纪
+    律：(a) 列表元素链式方法调用错乱（heap 接收者 CALL_SPEC 错位，
+    `segs[i].split_once(..)` 返回垃圾长度——dbg 探针 pairlen=7 实录），
+    元素必须先拷局部再调方法；(b) CJK heap 串 `.length` 字节语义
+    （TAG_STRING 臂=字符数 PLAN-055，heap 臂=字节——ASCII 掩盖），
+    定长截断改 split 法去壳/去尾。两者归入 parity-ledger（T-05 增记）。
+    ③语料期望值首锁（HTTP 全量实录）：CAP 定理→{Hello World,Projects}
+    全 exists:true；Hello World→{CAP 定理 true, 首页 **false**（stem
+    语义悬空——§2.3 示例 JSON 的 exists:true 为形状示意，以 §2.3/§5.2
+    stem 规则为准，旧园 links.rs rebuild title=file_stem 同语义）}；
+    index→{Hello World,CAP 定理,Projects true + 页面名 false}；Tasks→
+    {Hello World true, CAP 定理#block-consistency 锚透传 true}；
+    Projects→**空**（语料 `\[\[` 为逐括号转义=\[ 与 [ 隔断，`[[` 子
+    串不存在——nsegs=1 实录，转义链接=字面量非 wikilink，旧园逐字符
+    扫描同判）；同名 stem 无冲突场景。最小 fixture 交叉验证（A/B/C/D+
+    定理.ad）：[[B]]/[[B#x]]/[[定理]] CJK stem 解析+锚透传全对。
+  - AC-02 后端半达成（vm 矩阵 link 检查 T-04 补齐前端半）。
 - **T-03 front 反链面板**（依赖 T-02）
   - 文件：`src/front/backlinks_panel.at`（新）、`src/front/editor_store.at`
     （links_json/backlinks_open 态 + 三 handler）、`src/front/app.at`

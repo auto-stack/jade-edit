@@ -73,3 +73,13 @@ pub fn exists(path str) bool {
 pub fn env_str(name str) str {
     return wsys.env_lookup(name)
 }
+
+/// 工作区链接索引（JSON 字符串；fs.tree 同源遍历收 .ad（覆盖=文件树、
+/// 确定性序）：stem 解析 + [[Target]]/[[Target#anchor]] 提取 + exists
+/// 判定——PLAN-003 知识库首切片。标量 JSON 纪律同 tree：C-1/D-04，
+/// front 侧 json.to_value 解析）
+/// GET /api/link_index?path=..&depth=..
+#[api(method = "GET", path = "/api/link_index")]
+pub fn link_index(path str, depth int) str {
+    return wsys.links_json(path, depth)
+}

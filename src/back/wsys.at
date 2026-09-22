@@ -168,3 +168,148 @@ pub fn path_exists(path str) bool {
 pub fn env_lookup(name str) str {
     return Env.get(name)
 }
+
+// ===== 工作区链接索引（PLAN-003 T-02；知识库首切片 back 半） =====
+
+/// JSON 字符串字面量转义（先 \\ 后 \"——次序颠倒会产生假转义；换行不出
+/// 现在被转义串内：链接候选提取时已切、rel 为 OS 路径段）。手工装配
+/// 纪律：全程 str，零 JsonAny（C-1 同 tree 先例）。
+fn json_esc(s str) str {
+    var r str = s.replace("\\", "\\\\")
+    r = r.replace("\"", "\\\"")
+    return r
+}
+
+/// stem 集内解析 target → rel（首现命中——同名 stem 冲突 v1 取首现，
+/// walk 序，§10 默认裁定）；未命中 = ""。
+fn stem_resolve(stems List, rels List, target str) str {
+    var hit str = ""
+    var i int = 0
+    while i < stems.len() {
+        if hit == "" {
+            if stems[i] == target {
+                hit = rels[i]
+            }
+        }
+        i = i + 1
+    }
+    return hit
+}
+
+/// body 内 [[Target]] / [[Target#anchor]] 标记法提取（read_body 根修同
+/// 族的 split/split_once 标记法——AutoVM 无正则面，VM 无 str.join 故
+/// 此为已证 O(n) 通道族）→ link 对象 JSON 数组（逗号前置连接）。忽略
+/// 面：无闭合 ]]（不完整对）/ 候选含换行（跨行链接 v1 不做，语料无此
+/// 形态）/ trim 后空候选（旧园 links_gen 空标题同忽略）/ # 后空 target。
+/// # 首现拆分：前段 target 参与 stem 匹配，后段 anchor 透传（D-12：无
+/// 定位事件面，仅显示）。exists 判定 = stem_resolve 命中。
+/// ⚠ VM 纪律（T-02 实勘）：列表元素上的链式方法调用错乱（heap 接收者
+/// CALL_SPEC 错位——`segs[i].split_once(..)` 返回垃圾长度），元素必须
+/// 先拷局部变量再调方法（links_json 节点收集循环同款已证形态）。
+fn extract_links_json(body str, stems List, rels List) str {
+    var out str = ""
+    var segs = body.split("[[")
+    var i int = 1
+    while i < segs.len() {
+        var seg str = segs[i]
+        var pair = seg.split_once("]]")
+        if pair.len() == 2 {
+            var cand str = pair[0]
+            var nl = cand.split("\n")
+            if nl.len() < 2 {
+                var trimmed str = cand.trim()
+                if trimmed.length > 0 {
+                    var target str = trimmed
+                    var anchor str = ""
+                    var hp = trimmed.split_once("#")
+                    if hp.len() == 2 {
+                        var t0 str = hp[0]
+                        var a0 str = hp[1]
+                        target = t0
+                        anchor = a0
+                    }
+                    if target.length > 0 {
+                        var tp str = stem_resolve(stems, rels, target)
+                        if out != "" {
+                            out = out + ","
+                        }
+                        out = out + "{\"target\":\"" + json_esc(target) + "\",\"anchor\":\"" + json_esc(anchor)
+                        out = out + "\",\"exists\":"
+                        if tp != "" {
+                            out = out + "true,\"target_path\":\"" + json_esc(tp) + "\"}"
+                        } else {
+                            out = out + "false,\"target_path\":\"\"}"
+                        }
+                    }
+                }
+            }
+        }
+        i = i + 1
+    }
+    return out
+}
+
+/// 工作区链接索引 JSON：{"pages":[{"path","title","links":[…]}]}。
+/// path = 工作区根相对路径（/ 分隔——fs.tree id 同 convention，store.Open
+/// 直吃）；title = 文件 stem（旧园 links.rs rebuild 同语义：title =
+/// file_stem，非 frontmatter title——[[首页]] 对 index.ad = 悬空）；
+/// links = 出链对象 {target,anchor,exists,target_path}。
+/// 三步：①walk = fs.tree 同源遍历（本切片实测：fs.walk_files 原语在册
+/// 未接 .at 调用面——Undefined symbol，2026-09-22 探针实证——故走已证
+/// fs.tree：depth 语义直通（1..8 钳制同 tree），遍历序 = dirs-first +
+/// 名称 casefold 序（确定性，首锁友好），忽略面 = tree 同款（.git/
+/// target/build/node_modules/gen/dist/__pycache__/点开头——索引覆盖 =
+/// 文件树覆盖，所见即所索引）②逐档 read_body 后 extract_links_json
+/// 标记法提取 ③stem 解析装配。节点收集 = 树 JSON 段标记法：split
+/// `{"id":` 每段一节点，file 节点 = 叶子（children:[] 空）故自身
+/// `"kind":"file"` 落本段内；dir 段只含头 + 空 children 开括号（子节点
+/// 各起新段）不误收。id 本为 `/` 分隔相对路径免剥前缀。装配逐页 `+`
+/// 重接：v0 规模 O(P²) 前缀复制可接受（对照 read_body 78s 案 ≈ 8 万次
+/// ADD；此处 P ≤ 数百），规模上量随检索批换 StringBuilder（native 160
+/// 族）。
+pub fn links_json(path str, depth int) str {
+    var tree str = fs.tree(resolve(path), depth)
+    var stems List = []
+    var rels List = []
+    var segs = tree.split("{\"id\":")
+    var i int = 1
+    while i < segs.len() {
+        var seg str = segs[i]
+        if seg.contains("\"kind\":\"file\"") {
+            var head = seg.split_once(",\"label\":")
+            if head.len() == 2 {
+                // 带引号壳 id（"…"）——split 法去壳，不用 length+slice
+                //（CJK heap 串 .length 字节语义会错位——T-02 实勘）。
+                var idq str = head[0]
+                var qparts = idq.split("\"")
+                if qparts.len() >= 2 {
+                    var rel str = qparts[1]
+                    if rel.ends_with(".ad") {
+                        // stem = 末段去 .ad 尾（split 法；文件名内嵌 ".ad"
+                        // 的病理形态 v1 不支持——语料与常规命名不含）
+                        var fsegs = rel.split("/")
+                        var fname str = fsegs[fsegs.len() - 1]
+                        var astrips = fname.split(".ad")
+                        var stem str = astrips[0]
+                        stems.push(stem)
+                        rels.push(rel)
+                    }
+                }
+            }
+        }
+        i = i + 1
+    }
+    var pages str = ""
+    var j int = 0
+    while j < rels.len() {
+        var body str = read_body(rels[j])
+        var links str = extract_links_json(body, stems, rels)
+        if pages != "" {
+            pages = pages + ","
+        }
+        pages = pages + "{\"path\":\"" + json_esc(rels[j]) + "\",\"title\":\"" + json_esc(stems[j])
+        pages = pages + "\",\"links\":[" + links + "]}"
+        j = j + 1
+    }
+    return "{\"pages\":[" + pages + "]}"
+}
