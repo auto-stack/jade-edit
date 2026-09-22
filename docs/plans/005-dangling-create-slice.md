@@ -398,6 +398,39 @@ pub fn create_page_impl(title str) str {
     `refresh_tree()` 提取（Init/建页/Save 新档三触点）。
   - 验证：merged 冒烟全弧线（创建→开档→树新行→翻转）+ link/find/
     boot 组回归（重构等价证）+ e2e link 段冒烟。
+  - **证据（2026-09-22）**：
+    - ①实现 = `.CreateGo` 四步流补全（①create_page try/catch ②关弹层
+      + OpenLink(r) 开新档+行重算 ③`.LinksRefreshOf(r)` 链接重取——
+      触发集 v2 建页成功，显式 r 避 handler 内 .store 陈旧投影 ④
+      `.TreeRefresh()` 树重取——EXPLORER 新行 + 快开 ft_nodes 随新）；
+      共享重构 = 五触点 fetch 块收口进 msg handler **`.LinksRefreshOf
+      (active str)`**（Init("")/ActSave/ActBacklinks/LinksRefresh 传
+      .store.active_path、CreateGo 传 r）+ **`.TreeRefresh`**（Init/
+      ActSave/CreateGo）——「局部 fn」落为 msg handler 形态（语言无
+      handler 内局部 fn 实证 + json.to_value 只能 handler 体内直调
+      [ts_adapter 恒等缺口 D-20⑤] + 状态赋值需 handler 上下文，msg 面
+      = 在册共享通道[.FindPick→.OpenLink 先例]）；G3 = ActSave 接线
+      `.TreeRefresh()`（**Save 后恒重取**——失败保存重取无害幂等，省
+      store 成功态读回的陈旧投影面）。
+    - ②**merged 冒烟全弧线全过**（e2e/.runtime/smoke-t03.mjs 八断言）：
+      取消零落盘 / 创建→active_title=首页→播种 `# 首页` → links_json
+      exists 翻转（`"exists":true,"target_path":"首页.ad"`）→ EXPLORER
+      快照含根档 `首页.ad`（TreeRefresh）→ 出链行翻转（首页可点击钮）
+      → **G3 Save 新档**：untitled 打字保存（AUTO_SAVE_PATH 旁路）→
+      EXPLORER 快照含 `g3-saved.ad`（先在陈旧面收口实证）+ 落盘。
+    - ③e2e 冒烟 = `pnpm build`（T-03 重建）+ `pnpm test:e2e` **全绿**
+      （vue 轨全检查单含 link 段——button 化后旧断言兼容[getByText 命中
+      悬空钮]；write_wiki POST 200 实录）。**D-21 留观续**：本窗 e2e
+      连败 3 例后重跑即绿——三例均在 write_wiki 保存点、一例显式 400
+      `missing param path` api-err-body 实录（D-21 形态①签名；首例
+      quit-save 路径无 ActSave 并发——纯上游窗，非本切片引入）；执行期
+      注记 = ActSave 窗内并发 GET 2→3（TreeRefresh 增一），竞态面评估
+      为边际增量（D-21 本为任意并发下服务端装配竞态），ledger v8 续记。
+    - ④重构等价证 = link/find/boot 组回归随 T-04 基线 v5 锁定后的双臂
+      矩阵全绿落账（v4→v5 结构漂移属计划内——第三弹层节点入快照，
+      T-03 窗口 v4 基线必漂，组回归以 v5 锁定后全绿为准证；boot/link
+      面行为等价已由冒烟 ②③ 预证：Init 共享化后 ready 树链全面 +
+      ActBacklinks 共享化后悬空行/反链行全过）。
 - **T-04 测试扩单 + 基线 v5 + 判绿首锁**（AC-02/03/04）
   - vm link 组建页子步五步弧线（ASCII 悬空源档测试内造档方案落定）；
     e2e link 段同弧线；基线 v5 重锁。

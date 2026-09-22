@@ -209,6 +209,7 @@ widget App {
         ActBacklinks, LinksRefresh, OpenLink(str),
         FindEdit(str), FindRun, ActFindFiles, ActFindText, FindPick(str),
         CreateClick(str), CreateGo, CreateCancel,
+        TreeRefresh, LinksRefreshOf(str),
     }
 
     model {
@@ -604,38 +605,12 @@ widget App {
         // merged 形态 = 进程内直调；split/vue = HTTP——缺席容错落
         // backend-offline（不炸 boot——六检查前置卫生）。
         .Init -> {
-            var root str = ""
-            var nodes List = []
-            try {
-                root = ws_root()
-                nodes = json.to_value(tree(root, 4))
-                .ft_nodes = nodes
-                .ws_name = file_basename(root)
-                .status = "ready"
-            } catch (e) {
-                .status = "backend-offline"
-            }
-            // —— 链接索引首刷（触发集 v1：Init/Save 成功/面板开启）——
-            // fetch+parse 在 App 上下文（store 侧 vmref 损坏，见模型注）。
-            // ⚠ to_value 双取形：ts_adapter 只对 call-arg 发射 JSON.parse
-            //（identifier 实参静默降恒等——T-04 实勘，上游缺口），原文态
-            // links_json 与解析态分两次取（fetch 幂等，v0 规模双取无害）。
-            var lj str = ""
-            var lp List = []
-            var lok bool = true
-            try {
-                lj = link_index("", 4)
-                .links_json = lj
-                lp = json.to_value(link_index("", 4))
-            } catch (e) {
-                lok = false
-            }
-            if !lok {
-                console_log("links: refresh failed")
-            }
-            .link_pages = lp
-            .bl_rows = backlink_rows_of(.link_pages, .store.active_path)
-            .ol_rows = outlink_rows_of(.link_pages, .store.active_path)
+            // Init 名保留给根 widget 生命周期（store 侧 handler 不得占用）。
+            // 树取段/链接首刷提取共享（TreeRefresh/LinksRefreshOf——PLAN-005
+            // T-03 重构，语句等价迁移；merged 缺席容错落 backend-offline
+            // 不炸 boot——六检查前置卫生，原形态保留在共享口内）。
+            .TreeRefresh()
+            .LinksRefreshOf("")
         }
 
         // 目录展开/折叠（受控展开态，toggle_id 纯函数返回新 List）。
@@ -679,26 +654,14 @@ widget App {
         .ActOpen -> { store.ActOpen() }
         .ActSave -> {
             store.Save()
-            // 保存改变出链面 → 链接索引重取（触发集：Save 成功）+ 行重算。
-            // Save 对具名档不改 active——.store.active_path 读此处安全
-            //（untitled 先落路径的 rare 分支 vm 轨留陈旧行，下次触点校正）。
-            // to_value 双取形见 Init 注（ts_adapter call-arg 缺口）。
-            var lj str = ""
-            var lp List = []
-            var lok bool = true
-            try {
-                lj = link_index("", 4)
-                .links_json = lj
-                lp = json.to_value(link_index("", 4))
-            } catch (e) {
-                lok = false
-            }
-            if !lok {
-                console_log("links: refresh failed")
-            }
-            .link_pages = lp
-            .bl_rows = backlink_rows_of(.link_pages, .store.active_path)
-            .ol_rows = outlink_rows_of(.link_pages, .store.active_path)
+            // 保存改变出链面 → 链接索引重取（触发集：Save 成功）+ **树重取
+            //（G3 新档顺收：untitled 落盘后树陈旧至重开的先在面——Save 后
+            // 恒重取，失败保存的重取为无害幂等，省 store 成功态读回的
+            // 陈旧投影面）**。行 active = .store.active_path 读回（Save 对
+            // 具名档不改 active；untitled 先落路径 rare 分支 vm 轨留陈旧
+            // 行，下次触点校正——先在语义保持）。
+            .TreeRefresh()
+            .LinksRefreshOf(.store.active_path)
         }
         .ActQuit -> { store.ActQuit() }
         .ActUndo -> { store.ActUndo() }
@@ -712,29 +675,43 @@ widget App {
             store.BacklinksToggle()
             if .store.backlinks_open {
                 // 面板开启 → 链接索引重取（触发集：面板开启）+ 行重算
-                //（to_value 双取形见 Init 注）
-                var lj str = ""
-                var lp List = []
-                var lok bool = true
-                try {
-                    lj = link_index("", 4)
-                    .links_json = lj
-                    lp = json.to_value(link_index("", 4))
-                } catch (e) {
-                    lok = false
-                }
-                if !lok {
-                    console_log("links: refresh failed")
-                }
-                .link_pages = lp
-                .bl_rows = backlink_rows_of(.link_pages, .store.active_path)
-                .ol_rows = outlink_rows_of(.link_pages, .store.active_path)
+                .LinksRefreshOf(.store.active_path)
             }
         }
         .LinksRefresh -> {
             // 手动/程序化刷新入口（触发集外补充；当前 UI 无直连入口，
             // 保留 msg 面——面板壳刷新钮后续批接线）。
-            // to_value 双取形见 Init 注（ts_adapter call-arg 缺口）。
+            .LinksRefreshOf(.store.active_path)
+        }
+
+        // —— 树取共享口（PLAN-005 T-03 提取自 Init 内联段；G3 触点 =
+        // 建页成功 / Save 新档 + Init）。fetch+parse 必须 handler 体内
+        //（json.to_value 模块函数体被 ts_adapter 静默恒等——T-04 实勘；
+        // store 上下文 vmref 损坏 D-20④）——故共享以 msg handler 形态
+        // 收口（五触点同款理由）。
+        .TreeRefresh -> {
+            var root str = ""
+            var nodes List = []
+            try {
+                root = ws_root()
+                nodes = json.to_value(tree(root, 4))
+                .ft_nodes = nodes
+                .ws_name = file_basename(root)
+                .status = "ready"
+            } catch (e) {
+                .status = "backend-offline"
+            }
+        }
+
+        // —— 链接索引重取共享口（PLAN-005 T-03 提取；触发集 v2 = Init/
+        // Save 成功/面板开启/**建页成功**（.CreateGo）+ 手动口
+        // LinksRefresh）。⚠ to_value 双取形：ts_adapter 只对 call-arg
+        // 发射 JSON.parse（identifier 实参静默降恒等——D-20⑤），原文态
+        // links_json 与解析态分两次取（fetch 幂等，v0 规模双取无害）。
+        // active 显式入参：开档流（CreateGo）传新档 path——handler 内
+        // .store 读为陈旧投影（T-03 实勘），其余触点传 .store.active_path
+        //（语义同前提）。
+        .LinksRefreshOf(active str) -> {
             var lj str = ""
             var lp List = []
             var lok bool = true
@@ -749,8 +726,8 @@ widget App {
                 console_log("links: refresh failed")
             }
             .link_pages = lp
-            .bl_rows = backlink_rows_of(.link_pages, .store.active_path)
-            .ol_rows = outlink_rows_of(.link_pages, .store.active_path)
+            .bl_rows = backlink_rows_of(.link_pages, active)
+            .ol_rows = outlink_rows_of(.link_pages, active)
         }
         .OpenLink(path) -> {
             if path != "" {
@@ -812,17 +789,20 @@ widget App {
         }
 
         // —— 悬空建页（PLAN-005 T-02/T-03）——悬空行点击 → 确认弹层
-        //（store 弹层态）→ 创建流或取消。CreateGo：back 契约直调
-        //（try/catch 落 console——backend-offline 不炸）→ 成功 = 关弹层
-        // + 开新档（OpenLink 共用导航口——显式 path 两轨一致）；失败/
-        // 空名守卫 = 弹层留置 + console 注记（用户可取消）。链接索引/
-        // 树重取接线在 T-03（触发集 v2）。
+        //（store 弹层态）→ 创建流或取消。CreateGo 四步流（§2.3）：
         .CreateClick(target) -> {
             store.CreateConfirmOpen(target)
         }
         .CreateCancel -> {
             store.CreateConfirmCancel()
         }
+        // CreateGo 四步流（§2.3）：
+        // ①back 契约直调（try/catch 落 console——backend-offline 不炸）
+        // ②成功 = 关弹层 + 开新档（OpenLink 共用导航口——显式 path 两轨
+        //  一致 + 行重算）③链接索引重取（触发集 v2：建页成功——悬空行
+        //  exists 翻转）④树重取（G3——EXPLORER 新行 + 快开 ft_nodes
+        //  数据源随之新鲜）。失败/空名守卫 = 弹层留置 + console 注记
+        //（用户可取消）。
         .CreateGo -> {
             var r str = ""
             var ok bool = true
@@ -838,6 +818,8 @@ widget App {
             if r != "" {
                 store.CreateConfirmCancel()
                 .OpenLink(r)
+                .LinksRefreshOf(r)
+                .TreeRefresh()
             }
         }
         .ActSwitchTab -> { store.ActSwitchTab() }
