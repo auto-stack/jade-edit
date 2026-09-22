@@ -1,10 +1,10 @@
 ---
 plan_id: PLAN-006
-status: reviewed
+status: archived
 feature_name: rename-rewrite-slice
 author: [zhaopuming]
 created_at: 2026-09-23T00:53:44+08:00
-updated_at: 2026-09-23T21:40:00+08:00
+updated_at: 2026-09-23T22:20:00+08:00
 plan_revision: 1
 current_step: 5
 total_steps: 5
@@ -565,6 +565,28 @@ T-01 探针 A 理论可并行——保守线性）。
     产物，可按 §8 各任务验证命令复现）；工件持久面 = 计划 §8 证据块 +
     docs/ 三 canonical（hash 上）+ tests/probe_rename.mjs（入库直证）。
   - `next: merge`（status → reviewed）。
+
+- **2026-09-23 merge 归档（auto-plan-merge）`PLAN-006:r1`**：
+  - `stage: merge` | outcome: **pass** | completion_kind: **delivered**。
+  - **prepared** = reviewed 基线（reviewed_commit=b92e07a + 复审 ef75569
+    为其 docs-only 后代[diff 全窗口仅计划文件 +36/-2，实现/依赖零变化
+    ——delivery_commit=ef75569 资格成立]）；canonical delta = SD-601..
+    604 已于 T-05 落位 docs/ 根三件（本仓知识库约定——PLAN-001..005
+    在案先例，无 docs/specs/ 面）。
+  - **landed** = main tip == ef75569 == delivery（直接 main 线性约定，
+    本仓无 worktree/dev 分支；ancestry 1d1b20d→ef75569 六提交线性直
+    证）；归档前冒烟 merged **14/14 + 基线 v6 零漂移** ALL GREEN
+    （e2e/.runtime/merge-smoke.log）。
+  - **ledger_refreshed** = docs/parity-ledger.md v9 于 main 读回
+    （header v9 + D-24 在册 + D-21 vite 代理语境精化语料在文）——无
+    live ledger 服务，PLAN-001/005 同判（tracked 派生面即账本）。
+  - **archived** = git mv → docs/plans/archived/006-rename-rewrite-
+    slice.md + status: archived + completion_kind: delivered。
+  - **cleaned** = 无 worktree/dev 分支待清（直接 main 约定；worktree
+    清单仅主检出 D:/autostack/jade-edit、分支清单仅 main+origin/main，
+    工作树零 WIP——唯一未跟踪件 docs/plans/007-file-manage-slice.md
+    为**并行会话外来产物**，非本计划范围，保留不动）。
+  - `next: —`（闭环；后续入口 = PLAN-007 新计划）。
 
 ## 10. 待澄清事项
 
