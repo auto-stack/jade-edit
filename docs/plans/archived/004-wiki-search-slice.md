@@ -1,6 +1,7 @@
 ---
 plan_id: PLAN-004
-status: reviewed
+status: archived
+completion_kind: delivered
 feature_name: wiki-search-slice
 author: [zhaopuming]
 created_at: 2026-09-22T21:40:26+08:00
@@ -563,6 +564,36 @@ pub fn search_json(query str, limit int) str {
     定性 = AutoVM HTTP 服务进程偶发退出（D-21 负载窗家族的更重形态，
     上游级留观）；**merge 阶段建议**：ledger 补 D-21 行观测注记或立案
     D-23（独立一次进程死亡实录，供料包候选项），本复审不动 ledger。
+  - **F-R1（minor 非阻塞）**：复审探针窗一次 serve-back 进程死亡
+    （ECONNREFUSED，④b limit=99 调用前后）；专项复现 ×9（含同参
+    limit=99 与更苛 51/0/-3）全绿不可复现，gate/六案/钳制面均不受累。
+    定性 = AutoVM HTTP 服务进程偶发退出（D-21 负载窗家族的更重形态，
+    上游级留观）；**merge 阶段建议**：ledger 补 D-21 行观测注记或立案
+    D-23（独立一次进程死亡实录，供料包候选项），本复审不动 ledger。
+- **2026-09-22 归档 handoff（auto-plan-merge，revision 2 保持）**：
+  `stage: merge | plan_id: PLAN-004:r2 | outcome: pass | delivery_commit:
+  e04f16b | canonical: docs/ARCHITECTURE.md §1(SD-405)/§5(SD-401)/§6(SD-402)
+  + docs/README.md Tests(SD-403)/是什么·文档(SD-404) | ledger: parity-ledger
+  v7+补记 22 项@main | archive: docs/plans/archived/004-wiki-search-slice.md
+  | cleanup: 无 worktree/dev 分支可清 | completion_kind: delivered`。
+  五 checkpoint 实录：
+  - `prepared` = e04f16b（canonical-face F-R1 补记：ledger D-21 增进程
+    死亡形态两形态并记 + 头注标记；docs-only descendant of
+    reviewed_commit e534671——diff 全窗口核验实现/依赖零变化，本提交即
+    delivery_commit）。
+  - `landed` = main tip == e04f16b（直接 main 线性约定——PLAN-001..003
+    同判，无 dev 分支无 ff-only 步）；归档前冒烟 = merged 臂全单
+    13/13 + 基线 v4 零漂移 + find 双子步绿（e04f16b 上实跑）。
+  - `ledger_refreshed` = parity-ledger v7 22 项 + F-R1 补记在 main
+    （grep 实录：D-21 进程死亡形态/头注补记标记；无 live ledger 服务
+    ——PLAN-001 同判，派生跟踪文件随 Git 交付）。
+  - `archived` = git mv → docs/plans/archived/004-wiki-search-slice.md +
+    status: archived + completion_kind: delivered；frontmatter 五 SD 组件
+    与 canonical 在位一致；复审 F-R1 建议项（ledger 补记）已随 prepared
+    落账。
+  - `cleaned` = 分支清单仅 main（+origin/main）；worktree 清单仅主检出
+    D:/autostack/jade-edit（直接 main 约定——无 plan-004-dev、无
+    独立 worktree，无组目录可清；wt-guard 对象不存在即无残留）。
 
 ## 10. 待澄清事项
 
