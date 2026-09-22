@@ -197,6 +197,54 @@ fn title_to_path(title str) str {
     }
     return t + ".ad"
 }
+/// 路径文件 stem（"wiki/Old.ad" → "Old"；根档 "Old.ad" → "Old"）——
+/// split 法（D-20③ 同族纪律；wsys.stem_of 的 front 镜像——rename_q 预填
+/// /影响面预览共用；文件名内嵌 ".ad" 病理形态不支持，与 back 同限）。
+fn path_stem(path str) str {
+    var segs = path.split("/")
+    var fname str = segs[segs.len() - 1]
+    if fname.ends_with(".ad") {
+        var parts = fname.split(".ad")
+        return parts[0]
+    }
+    return fname
+}
+
+/// 重命名影响面预览纯函数（PLAN-006 T-02）——link_pages 全页面出链扫
+/// target == stem **精确相等**（G3 同口径；与 back rewrite_links 匹配语
+/// 义一致）。返回「将改写 N 页 M 处链接」/「无入链」。**仅弹层显示用**
+/// ：真实改写在 back 单事务（rename_page），此处计数 = 预览非权威；与
+/// back 覆盖差（walk depth 4 同源 collect_ad_pages——一致）。
+fn rename_impact_text(pages List, stem str) str {
+    var n int = 0
+    var m int = 0
+    var i int = 0
+    while i < pages.len() {
+        // ⚠ D-20②：列表元素先拷局部变量再取字段。
+        var page = pages[i]
+        var links List = page.links
+        var hit int = 0
+        var k int = 0
+        while k < links.len() {
+            var lnk = links[k]
+            var t str = lnk.target
+            if t == stem {
+                hit = hit + 1
+            }
+            k = k + 1
+        }
+        if hit > 0 {
+            n = n + 1
+            m = m + hit
+        }
+        i = i + 1
+    }
+    if n == 0 {
+        return "无入链"
+    }
+    return "将改写 " + n.str() + " 页 " + m.str() + " 处链接"
+}
+
 widget App {
     msg {
         Init, FtToggle(str), OpenFile(str), Reload,
@@ -210,6 +258,7 @@ widget App {
         FindEdit(str), FindRun, ActFindFiles, ActFindText, FindPick(str),
         CreateClick(str), CreateGo, CreateCancel,
         TreeRefresh, LinksRefreshOf(str),
+        RenameOpen, RenameEdit(str), RenameGo, RenameCancel,
     }
 
     model {
@@ -235,6 +284,9 @@ widget App {
         var find_q str = ""
         var find_rows List = []
         var find_ran bool = false
+        // —— 重命名弹层数据态（PLAN-006）：input 值（RenameOpen handler
+        // 预填现 stem）——find_q 同构，不入 store（D-20④ 同款裁定）。
+        var rename_q str = ""
     }
 
     computed {
@@ -242,6 +294,9 @@ widget App {
         // 悬空建页弹层路径预览（PLAN-005）：title_to_path 镜像消费
         // .store.create_target（widget computed——ft_rows 同族先例）。
         create_preview => title_to_path(.store.create_target)
+        // 重命名影响面预览（PLAN-006）：link_pages × 现 stem 精确计数
+        //（rename_impact_text 纯函数——仅弹层显示，权威在 back）。
+        rename_preview => rename_impact_text(.link_pages, path_stem(.store.active_path))
     }
 
     // —— actions 声明块（Plan 451 三源绑定：shortcut / toolbar 占位合成 /
@@ -251,6 +306,8 @@ widget App {
         action (id: "file.open",   handler: .ActOpen,   title: "打开…", icon: "folder-open", shortcut: "Ctrl+O")
         action (id: "file.save",   handler: .ActSave,   title: "保存",  icon: "save",        shortcut: "Ctrl+S",
                 enabled_if: ".store.tab_count > 0")
+        action (id: "file.rename", handler: .RenameOpen, title: "重命名…", shortcut: "F2",
+                enabled_if: ".store.active_path != \"\" && !.store.active_dirty")
         action (id: "file.quit",   handler: .ActQuit,   title: "退出",  shortcut: "Alt+F4")
         action (id: "edit.undo",   handler: .ActUndo,   title: "撤销",  icon: "undo-2",      shortcut: "Ctrl+Z")
         action (id: "edit.redo",   handler: .ActRedo,   title: "重做",  icon: "redo-2",      shortcut: "Ctrl+Y")
@@ -293,6 +350,12 @@ widget App {
                             menubar-item (title: "新建", icon: "file-plus", shortcut: "Ctrl+N") { onclick: .ActNew }
                             menubar-item (title: "打开…", icon: "folder-open", shortcut: "Ctrl+O") { onclick: .ActOpen }
                             menubar-item (title: "保存", icon: "save", shortcut: "Ctrl+S", enabled: .store.tab_count > 0) { onclick: .ActSave }
+                            // 重命名项不挂 enabled——vm 轨 menubar-item 状态相关
+                            // enabled boot 冻结（T-02 实勘：boot 渲染定 handler 有
+                            // 无，状态变化不重评；复合式 `!`/`&&` 更致节点整丢）
+                            // ——禁用语义由 .RenameOpen handler 守卫兜底（action
+                            // enabled_if 仍为权威面），差异入 ledger v9。
+                            menubar-item (title: "重命名…", shortcut: "F2") { onclick: .RenameOpen }
                             menubar-separator
                             menubar-item (title: "退出", icon: "log-out", shortcut: "Alt+F4") { onclick: .ActQuit }
                         }
@@ -596,6 +659,31 @@ widget App {
                 }
             }
 
+            // —— 重命名弹层（PLAN-006 第四切片；dialog 控件族首个用例——
+            // 内嵌 input 探针 B 定谳形态：双钮 = 普通 button[dialog-cancel/
+            // action vm 轨死标签轨间不对称，禁用]、闭态恒渲染 D-23③ 同判
+            // ——测试定位锚内容制）。影响面预览 = rename_preview computed
+            //（仅显示，权威在 back 单事务改写）。——
+            dialog (open: .store.rename_open) {
+                dialog-content {
+                    dialog-header {
+                        dialog-title "重命名页面"
+                        dialog-description "现名：${.store.active_title}"
+                    }
+                    input {
+                        value: .rename_q
+                        oninput: .RenameEdit
+                        placeholder: "新名称…"
+                        style: "w-full h-7 px-2 text-[12px] border rounded bg-background"
+                    }
+                    text .rename_preview { style: "text-[12px] text-muted-foreground px-1" }
+                    dialog-footer {
+                        button (text: "取消", variant: "outline") { onclick: .RenameCancel }
+                        button (text: "重命名", variant: "ghost") { onclick: .RenameGo }
+                    }
+                }
+            }
+
             StatusBar()
         }
     }
@@ -828,5 +916,30 @@ widget App {
         .QuitDiscard -> { store.QuitDiscard() }
         .QuitSaveClose -> { store.QuitSaveClose() }
         .QuitConfirmCancel -> { store.QuitConfirmCancel() }
+
+        // —— 重命名流（PLAN-006 T-02/T-03）——
+        // 入口（action F2/menubar 共口）：守卫与 enabled_if 同公式
+        //（vm 轨 menubar enabled 对 press 的门控双轨未证——handler 侧
+        // 复核为语义兜底，禁用态断言以此为准）；预填 = 现 stem（split 法
+        // 剥目录/尾——path_stem）。
+        .RenameOpen -> {
+            if .store.active_path != "" {
+                if !.store.active_dirty {
+                    store.RenameOpen()
+                    .rename_q = path_stem(.store.active_path)
+                }
+            }
+        }
+        .RenameEdit(q) -> {
+            .rename_q = q
+        }
+        .RenameCancel -> {
+            store.RenameClose()
+        }
+        // T-03 换四步流（rename_page 直调 → TabsRenamed → Reload →
+        // refresh_links/refresh_tree + 行重算）。
+        .RenameGo -> {
+            store.RenameClose()
+        }
     }
 }

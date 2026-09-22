@@ -67,6 +67,10 @@ store EditorStore {
         // 弹层面状态居 store（confirm_open/quit_confirm_open 在册分野）。
         var create_confirm_open bool = false
         var create_target str = ""
+        // 重命名弹层开态（PLAN-006；基线 v6 面）：弹层面分野同上——
+        // input 值/影响面预览在 App 模型（数据态不入 store——D-20④ 同裁
+        // 裁定：find_q/链接态先例）。
+        var rename_open bool = false
     }
 
     // msg 载荷单类型（编译器约束）：Open 单 map、Edit 单 str。
@@ -80,6 +84,7 @@ store EditorStore {
         BacklinksToggle,
         FindOpen(str), FindToggle, FindClose,
         CreateConfirmOpen(str), CreateConfirmCancel,
+        RenameOpen, RenameClose,
     }
 
     on {
@@ -412,6 +417,18 @@ store EditorStore {
         }
         .CreateConfirmCancel -> {
             .create_confirm_open = false
+            .console = console_lines()
+        }
+
+        // ---- 重命名弹层（PLAN-006）：Open/Close 只翻开态（入口守卫与
+        // rename_q 预填在 App 侧 .RenameOpen——action enabled_if 同公式）。
+        // Cancel = Close（取消零落盘——无 back 调用）。----
+        .RenameOpen -> {
+            .rename_open = true
+            .console = console_lines()
+        }
+        .RenameClose -> {
+            .rename_open = false
             .console = console_lines()
         }
     }

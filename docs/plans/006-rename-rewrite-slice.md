@@ -385,14 +385,38 @@ fn rewrite_links(body str, old str, new str) str {
   - 验证：直证脚本全绿 + `node tests/vm_matrix.mjs`（link/find/
     create 组回归零变化）。**[✅ 已完成]** merged 13/13 + split 12/12
     ALL GREEN（基线 v5 零漂移——回归零变化）。
-- **T-02 front 弹层 + 入口**（AC-02 前半）
+- **T-02 front 弹层 + 入口**（AC-02 前半）✅ 已完成
   - 探针 B（dialog 弹层内嵌 input 双轨形态）：最小 dialog+input 用
     例 → `pnpm build` gen 源检 + vm 冒烟快照 → 定谳（fallback 链见
-    §10.2）。
+    §10.2）。**[✅ 已完成] 定谳 = dialog+input 双轨全通**（2026-09-23，
+    探针工程 probe-c 双臂）：
+    - `dialog (open:)` 双轨通：vm 模态 Popover 臂（开合态翻转+快照面）
+      / vue `Dialog v-model:open`；
+    - **弹层内嵌 input 全链通**：vm 闭态恒渲染（D-23③ dialog 族同判，
+      闭态双 input 均在树）+ type_text→oninput→state 同步；vue
+      `v-model + @input` 双绑发射（冗余无害）；
+    - **双钮 = 普通 `button`**：`dialog-cancel`/`dialog-action` 标签
+      **轨间不对称**——vm 轨死标签（不成钮、静默丢弃）/ vue 轨反 Button
+      化（outline/ghost 预设）+ schema S002 warning——禁用（vm 死钮为
+      硬伤）；dialog-footer 内普通 button 双轨全通（press→handler→
+      state_changes 面板实录）。
   - store rename_open/RenameOpen/RenameClose + app.at actions F2/
     menubar + dialog 弹层（预填 + `rename_impact` 预览 + 双钮）。
+    **[✅ 已完成]** 实勘调整两项（授权内）：①menubar 项**不挂
+    enabled**——vm 轨 menubar-item 状态相关 enabled **boot 冻结**
+    （boot 渲染定 handler 有无，状态变化不重评；复合式 `!`/`&&` 更致
+    节点整丢——基座保存项同病在案[其矩阵面走 toolbar 钮从未暴露]），
+    禁用语义由 `.RenameOpen` handler 守卫兜底（action `enabled_if` 仍
+    为权威面），差异入 ledger v9；②影响面预览期望值实勘校正——Hello
+    World 入链 = index/Tasks/CAP 定理 **3 页 3 处**（语料相关链接段
+    补数）。
   - 验证：merged 手动冒烟（F2 禁用态/弹层/取消零落盘）+ `pnpm
-    build` PASS。
+    build` PASS。**[✅ 已完成]** e2e/.runtime/smoke-t02.mjs **6/6
+    PASS**（①禁用守卫[press=ok+rename_open 恒 false]②弹层开+预填
+    `rename_q: "" -> "Hello World"`[press 响应 state_changes 实录]+
+    预览「将改写 3 页 3 处链接」③input 键入同步+取消零落盘[多弹层恒
+    渲染同名钮——「重命名」父行兄弟域定位，10c 同款纪律]④确认钮在）
+    + `pnpm build` PASS（vue-tsc 0 错 + vite build 绿）。
 - **T-03 改名流收口**（AC-02 后半）
   - `.RenameGo` 四步流 + `store.TabsRenamed`（while 扫描全量更新）
     + Reload 显现 + refresh_links/refresh_tree 接线（触发集 v3）+
@@ -434,10 +458,12 @@ T-01 探针 A 理论可并行——保守线性）。
    ①`File.rename`/`fs.rename` 无 `.at` 别名（原记）②`copy` 关键字冲突
    解除（`File.copy` shim 已在册但语法层不可达——上游 dot 访问解析器
    白名单扩或关键字退役，两向任一）。fallback②（全 blocked）不触发。
-2. **dialog 弹层内嵌 input 双轨形态**（探针 B，T-02）：无 jade 先例
-   （在册弹层 = 纯钮 alert-dialog）。fallback 链：①dialog 根形态
-   异常 → alert-dialog + input 同探（同族 DOM）；②弹层内嵌全败 →
-   非弹层内联形态（右栏 FindPanel 同构改名行——保底可交付）。
+2. **dialog 弹层内嵌 input 双轨形态**（探针 B，T-02）——**已裁定
+   （2026-09-23）**：dialog+input 双轨全通，主形态落定（证据见 T-02）；
+   fallback 链不触发。附带定谳：双钮禁用 dialog-cancel/action 标签
+   （vm 死标签）；menubar 项 enabled 缺口（boot 冻结）以 handler 守卫
+   + action enabled_if 两层兜底，升级路径 = auto-lang menubar popover
+   状态重渲（供料候选）。
 3. **「不改写」选项**（用户口，默认不做）：v1 恒改写 + 影响面预览
    即防线；若要选项 → 弹层加 checkbox（改写开/关），back 契约加参
    （rewrite bool）——r2 范围。
