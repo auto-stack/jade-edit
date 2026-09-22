@@ -14,6 +14,11 @@
 //   10 link   链接索引+反链面板（PLAN-003；vm 矩阵 check 10/10b 同单——
 //             ASCII 路径导航；CJK 目标子步 vm merged 专属（HTTP GET query
 //             UTF-8 解码缺口 D-19，vue 轨同败故跳过）
+//   10c create 悬空建页弧线（PLAN-005；vm 矩阵 10c 同单）：ASCII 悬空源
+//             档测试内造（write_wiki POST——语料悬空目标 CJK 受 D-19 开档
+//             面，ASCII 造档 = 全弧线全臂可跑，零语料改动）——悬空行点击
+//             → 确认弹层三断言 → 取消零落盘 → 创建 → 开新档（模板播种）
+//             → 树新行 → 面板翻转 → 模板逐字节
 //   11 find   查找面板双模式（PLAN-004；vm 矩阵 check 11 同单）：快开
 //             （文件模式——空 q 全量/过滤 Pro→Projects/拾取即关）+ 全文
 //             检索（text 模式——未运行提示/CJK 查询「任务列表」[POST 通道
@@ -36,7 +41,9 @@
 // 对应——playwright 每 test 新页面，串行 describe 不保状态延续）。
 import { expect, test } from '@playwright/test'
 import fs from 'node:fs'
+import path from 'node:path'
 import {
+  WORKSPACE,
   EDIT_MARKER,
   QUIT_MARKER,
   RELOAD_MARKER,
@@ -48,7 +55,7 @@ import {
   visibleEditor,
 } from './helpers'
 
-test('vue 六检查（vm 矩阵同单）', async ({ page }) => {
+test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   page.on('response', (r) => {
     if (r.url().includes('/api/')) {
       console.log(`    [api] ${r.status()} ${r.request().method()} …${r.url().slice(-45)}`)
@@ -206,6 +213,43 @@ test('vue 六检查（vm 矩阵同单）', async ({ page }) => {
   await expect(visibleEditor(page)).toContainText('这是一段示例文本', { timeout: 15_000 })
   await expect(page.getByRole('button', { name: 'wiki/index.ad', exact: true })).toBeVisible({ timeout: 10_000 })
   console.log('[10 link] PASS — untitled 空态双文本 + 重开行恢复')
+
+  // 10c 建页弧线（PLAN-005 T-04；vm 矩阵 10c 同单）：ASCII 悬空源档测试内
+  // 造（write_wiki POST 造 Create Source.ad，悬空目标 NewPage——语料悬空
+  // 目标 首页 为 CJK，vue 臂开档面受 D-19，ASCII 造档 = 全弧线全臂可跑；
+  // 零语料改动——§6/T-04 落定方案）。goto 重载 = Init 重取链接索引（外部
+  // 写入方入索引面）。
+  const wRes = await request.post('/api/write_wiki', {
+    data: { path: 'Create Source.ad', body: '# Create Source\n\nsee [[NewPage]].\n' },
+  })
+  expect(wRes.ok(), 'write_wiki 造源档 POST ok').toBe(true)
+  await page.goto('/')
+  await expect(page.getByText('ready', { exact: true }).first()).toBeVisible({ timeout: 15_000 })
+  await page.getByText('wiki', { exact: true }).first().click()
+  await page.getByText('Create Source.ad', { exact: true }).first().click()
+  await expect(visibleEditor(page)).toContainText('see', { timeout: 15_000 })
+  await page.getByText('视图', { exact: true }).click()
+  await page.getByText('切换反链', { exact: true }).click()
+  await expect(page.getByText('NewPage（悬空）', { exact: true })).toBeVisible({ timeout: 10_000 })
+  // 取消路：弹层三断言 → 取消 → 弹层闭 + 零落盘
+  await page.getByText('NewPage（悬空）', { exact: true }).click()
+  await expect(page.getByText('创建缺失页面？')).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByText('[[NewPage]] 尚不存在')).toBeVisible()
+  await expect(page.getByText('将创建：NewPage.ad')).toBeVisible()
+  await page.getByRole('button', { name: '取消', exact: true }).click()
+  await expect(page.getByText('创建缺失页面？')).toBeHidden({ timeout: 10_000 })
+  expect(fs.existsSync(path.join(WORKSPACE, 'NewPage.ad')), '取消零落盘').toBe(false)
+  // 创建路：弹层 → 创建 → 开新档（编辑器播种模板）+ 树新行 + 面板翻转
+  await page.getByText('NewPage（悬空）', { exact: true }).click()
+  await page.getByRole('button', { name: '创建', exact: true }).click()
+  await expect(page.getByText('创建缺失页面？')).toBeHidden({ timeout: 10_000 })
+  await expect(visibleEditor(page)).toContainText('NewPage', { timeout: 15_000 })
+  await expect(page.getByText('NewPage.ad', { exact: true }).first()).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByRole('button', { name: 'NewPage', exact: true }).first()).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByText('NewPage（悬空）', { exact: true })).toHaveCount(0)
+  const npDisk = fs.readFileSync(path.join(WORKSPACE, 'NewPage.ad'), 'utf8')
+  expect(npDisk, '模板逐字节（# {target}\\n\\n 无 frontmatter）').toBe('# NewPage\n\n')
+  console.log('[10c create] PASS — 建页弧线（取消零落盘/创建→开档 # NewPage/树新行/面板翻转/模板逐字节；ASCII 源档测试内造）')
 
   // 11 find（vm 矩阵 check 11 同单）：查找面板双模式。input = 真 DOM
   // （fill() 即发 input 事件 → oninput——无 D-17 通道约束，该门控仅编辑

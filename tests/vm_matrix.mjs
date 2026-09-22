@@ -21,6 +21,11 @@
 //             行（index/CAP 定理/Tasks）→ 点击反链行开 index.ad → 出链
 //             行开 CAP 定理.ad → 关档空态（无反链/无出链）→ 重开恢复。
 //             执行序在 8 后 9 前（quit 杀进程恒为臂内最后一项）
+//   10c create 悬空建页弧线（PLAN-005）：悬空行点击 → 确认弹层 → 取消
+//             零落盘 → 创建 → 落盘 + 链接翻转（触发集 v2）→ 树新行
+//             （G3）→ 行翻转；CJK 开档播种子步仅 merged 臂（D-19 同款
+//             口径——split 以磁盘/翻转面断言替代）。子步不占检查位
+//             （组数不变 12），fail 即臂败
 //   11 find   查找面板双模式（PLAN-004）：快开（Ctrl+P·files——开面板/
 //             input 锚/type_text 过滤[Pro→Projects 独行 + CJK 定理→CAP
 //             独行；CJK 拾取导航子步仅 merged 臂——D-19 同款口径]）+
@@ -63,7 +68,7 @@ const argOf = (name) => {
   return i >= 0 ? args[i + 1] : undefined
 }
 const ARM = argOf('--arm') ?? 'all' // all | merged | split
-const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v4.txt')
+const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v5.txt')
 const SAVE_BASELINE = argOf('--save-baseline')
 
 const EDIT_MARKER = 'jade-edit 冒烟标记：编辑回写可见。'
@@ -335,12 +340,13 @@ async function runArm(arm, port) {
       const stateDump = (await callTool('autoui_state', {})).trim()
       const snapIds = JSON.stringify([...(await snapshotText()).matchAll(/#(vnode_\d+)/g)].map((m) => m[1]))
       const headerFor = (file) =>
-        `// jade-edit vm 结构基线 v4（PLAN-004 T-04 重锁；v3=PLAN-003 T-04、v2=PLAN-002 T-01、\n` +
-        `// v1=PLAN-001 T-04 换基、v0=PLAN-081 T-05 均留档）。\n` +
-        `// 重锁因由：store 新增 find_open/find_mode 字段 + App 模型新增 find_q/find_rows/find_ran 字段\n` +
-        `//（PLAN-004 查找面板）进 autoui_state 全量 dump——逐字节必漂移，属计划内态扩（非漂移事故）。\n` +
-        `// 仪器同 v2/v3：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态\n` +
-        `//（chrome 全套 + Hello World.ad 开；查找面板未开——find_* 全为默认值入 dump）。\n` +
+        `// jade-edit vm 结构基线 v5（PLAN-005 T-04 重锁；v4=PLAN-004 T-04、v3=PLAN-003 T-04、\n` +
+        `// v2=PLAN-002 T-01、v1=PLAN-001 T-04 换基、v0=PLAN-081 T-05 均留档）。\n` +
+        `// 重锁因由：①store 新增 create_confirm_open/create_target 字段（PLAN-005 悬空建页确认弹层）\n` +
+        `// 进 autoui_state 全量 dump；②悬空行 text→button + alert-dialog 第三实例（建页确认）——\n` +
+        `// vm 快照弹层内容恒渲染，snapshot vnode id 序列计划内扩（非漂移事故）。\n` +
+        `// 仪器同 v2/v3/v4：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态\n` +
+        `//（chrome 全套 + Hello World.ad 开；查找面板/建页弹层未开——find_*/create_* 全为默认值入 dump）。\n` +
         `// 再生成：node tests/vm_matrix.mjs --save-baseline ${path.relative(repoRoot, file).replace(/\\\\/g, '/')}\n`
       const baselineBodyOf = () => `## state\n${stateDump}\n\n## snapshot-ids\n${snapIds}\n`
       if (SAVE_BASELINE) {
@@ -350,9 +356,9 @@ async function runArm(arm, port) {
       } else if (fs.existsSync(BASELINE)) {
         const raw = fs.readFileSync(BASELINE, 'utf8')
         const ok = raw === headerFor(BASELINE) + baselineBodyOf()
-        check('B', 'baseline', ok, ok ? '结构基线 v4 零漂移（state 逐字节 + id 序列）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
+        check('B', 'baseline', ok, ok ? '结构基线 v5 零漂移（state 逐字节 + id 序列）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
       } else {
-        console.log('  [baseline] structure-v4 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v4.txt')
+        console.log('  [baseline] structure-v5 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v5.txt')
       }
     }
 
@@ -465,6 +471,113 @@ async function runArm(arm, port) {
     await stateIs('active_title', tabTitleOf(TARGET_LABEL))
     await waitButton('wiki/CAP 定理.ad', { exact: true })
     check('10b', 'link-empty', emptyOk, `点击反链行开 index.ad + 出链行开 CAP 定理.ad + 空态（untitled 激活）双文本=${emptyOk} + 重开行恢复`)
+
+    // 10c 建页弧线（PLAN-005 T-04；子步不占检查位——组数不变 12）：悬空行
+    // 点击 → 确认弹层（create_confirm_open/create_target 态）→ 取消零落盘
+    // → 创建 → 落盘 → 链接翻转（触发集 v2）→ 树新行（G3）→ 行翻转；
+    // CJK 开档导航子步仅 merged 臂（D-19 同款口径——split 以磁盘/翻转面
+    // 断言替代，active 保持 Hello World）。取消路前置（创建后行翻转为可
+    // 点击钮——同一悬空行素材先走取消路）。弹层按钮 press = 「创建」钮
+    // （全树唯一）父 footer 行兄弟域（三弹恒渲染 + 弹层根匿名 col——T-02
+    // 实勘）。
+    const pressInCreateDialog = async (buttonText) => {
+      const dl = Date.now() + 8000
+      for (;;) {
+        const t = await snapshot()
+        const createBtn = findFirst(t, (n) => n.head.startsWith('button ') && elementIdOf(n) && ownText(n) === '创建')
+        if (createBtn) {
+          if (buttonText === '创建') {
+            const res = await callTool('autoui_action', { element_id: elementIdOf(createBtn), action: 'press' })
+            if (!/status: ok/.test(res)) throw new Error(`press 创建 not ok: ${res}`)
+            return
+          }
+          const row = findParent(t, createBtn)
+          const btn = row.children.find((c) => c !== createBtn && c.head.startsWith('button ') && elementIdOf(c) && ownText(c) === buttonText)
+          if (btn) {
+            const res = await callTool('autoui_action', { element_id: elementIdOf(btn), action: 'press' })
+            if (!/status: ok/.test(res)) throw new Error(`press ${buttonText} not ok: ${res}`)
+            return
+          }
+        }
+        if (Date.now() > dl) throw new Error(`button "${buttonText}" in create-dialog row not found`)
+        await sleep(300)
+      }
+    }
+    const newPageFile = path.join(FIXTURE, '首页.ad')
+    await pressButton('首页（悬空）', { exact: true })
+    await stateIs('create_confirm_open', 'true')
+    await stateIs('create_target', '首页')
+    await pressInCreateDialog('取消')
+    await stateIs('create_confirm_open', 'false')
+    const cancelOk = !fs.existsSync(newPageFile)
+    if (!cancelOk) throw new Error('建页取消路零落盘失守（首页.ad 不应在）')
+    await pressButton('首页（悬空）', { exact: true })
+    await stateIs('create_confirm_open', 'true')
+    await pressInCreateDialog('创建')
+    await stateIs('create_confirm_open', 'false')
+    let createDiskOk = false
+    for (const dl = Date.now() + 8000; ; ) {
+      createDiskOk = fs.existsSync(newPageFile)
+      if (createDiskOk || Date.now() > dl) break
+      await sleep(200)
+    }
+    if (!createDiskOk) throw new Error('建页落盘失守（首页.ad 缺）')
+    await stateHas('links_json', '{\\"target\\":\\"首页\\",\\"anchor\\":\\"\\",\\"exists\\":true,\\"target_path\\":\\"首页.ad\\"}')
+    // 回源档语境再断言面板行翻转（创建成功即开新档——新档自身出链为空，
+    // 翻转行只在本源档[Hello World]出链段可见）。merged 从新档 tab 返回；
+    // split 同按 tab 题钮（ASCII 路径——行重算随 OpenLink 显式 path，原地
+    // 激活语义）。
+    await pressButton('wiki/Hello World', { exact: true })
+    await stateIs('active_title', tabTitleOf(TARGET_LABEL))
+    // 翻转断言：悬空钮消失 + 面板行钮在（'首页' 与 tab 题钮同名[merged 新
+    // 档 tab 在]——计数消歧：merged ≥2[tab+行]、split ≥1[行]；行钮 = 快照
+    // 序最后一个——tab 条先于右面板渲染）。
+    let treeRowOk = false
+    let flipBtnOk = false
+    for (const dl = Date.now() + 8000; ; ) {
+      const t = await snapshotText()
+      const tree = await snapshot()
+      const homeBtns = []
+      const collect = (n) => {
+        if (n.head.startsWith('button ') && elementIdOf(n) && ownText(n) === '首页') homeBtns.push(n)
+        for (const c of n.children) collect(c)
+      }
+      collect(tree)
+      treeRowOk = t.includes('"首页.ad"')
+      flipBtnOk = !t.includes('首页（悬空）') && homeBtns.length >= (arm === 'merged' ? 2 : 1)
+      if (treeRowOk && flipBtnOk) break
+      if (Date.now() > dl) break
+      await sleep(300)
+    }
+    let navNote = ''
+    if (arm === 'merged') {
+      // CJK 导航子步：press 面板翻转行（快照序最后一个 '首页' 钮）→ 开档
+      // + 播种模板断言。
+      const t = await snapshot()
+      const homeBtns = []
+      const collect = (n) => {
+        if (n.head.startsWith('button ') && elementIdOf(n) && ownText(n) === '首页') homeBtns.push(n)
+        for (const c of n.children) collect(c)
+      }
+      collect(t)
+      const rowBtn = homeBtns[homeBtns.length - 1]
+      const res = await callTool('autoui_action', { element_id: elementIdOf(rowBtn), action: 'press' })
+      if (!/status: ok/.test(res)) throw new Error(`press 首页 row not ok: ${res}`)
+      await stateIs('active_title', '首页')
+      await stateHas('active_body', '# 首页')
+      navNote = '/CJK 开档播种（merged）'
+    } else {
+      // split 臂 D-19 口径：CJK 开档导航全败（GET query 不解码）——active
+      // 保持 Hello World（Open not-found 落 save_note；弹层已闭/重取已翻）。
+      await stateIs('active_title', tabTitleOf(TARGET_LABEL))
+      navNote = '/CJK 开档仅 merged（D-19；split 以磁盘+翻转断言替代）'
+    }
+    const createOk = cancelOk && createDiskOk && treeRowOk && flipBtnOk
+    console.log(`  [10c create] ${createOk ? 'PASS' : 'FAIL'} — 建页弧线（取消零落盘/创建落盘/链接翻转/树新行/行翻转${navNote}）`)
+    if (!createOk) {
+      results.push({ id: '10c', name: 'create', ok: false })
+      throw new Error('10c 建页弧线断言失守')
+    }
 
     // 11 find（PLAN-004 T-04）：查找面板双模式。执行序在 quit 前（quit
     // 恒为臂内最后一项）；先关反链面板（check 10 开着）——find 行断言免
@@ -596,5 +709,5 @@ for (const { arm, results } of all) {
 }
 if (failed > 0) process.exitCode = 1
 if (all.every(({ results }) => results.every((r) => r.ok))) {
-  console.log(`[matrix] ALL GREEN：${arms.join(' + ')} 臂检查单全过（六检查 + 基线[merged] + tab/editops/link/find 扩单 + quit）`)
+  console.log(`[matrix] ALL GREEN：${arms.join(' + ')} 臂检查单全过（六检查 + 基线[merged] + tab/editops/link/create/find 扩单 + quit）`)
 }

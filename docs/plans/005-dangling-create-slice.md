@@ -6,7 +6,7 @@ author: [zhaopuming]
 created_at: 2026-09-22T23:36:52+08:00
 updated_at: 2026-09-22T23:36:52+08:00
 plan_revision: 1
-current_step: 1
+current_step: 4
 total_steps: 5
 supersedes_spec_components: []
 new_spec_components:
@@ -437,6 +437,53 @@ pub fn create_page_impl(title str) str {
   - 验证：`node tests/vm_matrix.mjs` 双臂全绿 + `pnpm test:e2e`
     连跑 ≥5 + `node scripts/gate.mjs` ALL GREEN（判绿实录 + N 定谳
     续记）。
+  - **证据（2026-09-22）**：
+    - ①vm 矩阵 10c 建页子步（子步不占检查位——组数不变 12，fail 即
+      臂败）：取消路前置（创建后行翻转即失悬空素材——同弧线素材先走
+      取消路，§6 顺序微调授权内记录）→ 弹层态断言
+      （create_confirm_open/create_target）→ 取消零落盘 → 创建 → 落盘
+      → links_json 翻转（state 级）→ **回源档语境**（OpenLink
+      wiki/Hello World.ad——创建成功即开新档、新档自身出链为空，翻转行
+      只在源档出链段可见——两臂同按 tab 题钮重算行）→ 面板行翻转
+      （悬空钮消失 + '首页' 钮计数消歧：merged ≥2[新档 tab+行]、split
+      ≥1[行]——tab 条先于右面板渲染，行钮=快照序末个）→ merged CJK
+      开档播种（press 行钮 → active_title=首页 + body `# 首页`）；split
+      臂 D-19 口径（active 保持 Hello World，以磁盘/翻转面断言替代）。
+    - ②e2e 10c 建页弧线：**ASCII 源档测试内造**落定（§10.7 倾向方案
+      定谳）——`request.post('/api/write_wiki')` 造 Create Source.ad
+      （悬空目标 NewPage，全 ASCII = vue 臂全弧线可跑[语料悬空目标
+      首页为 CJK 受 D-19 开档面]；零语料改动）→ `page.goto('/')` 重载
+      （外部写入经 Init 重取方入索引面）→ 弹层三断言（标题/描述/预览）
+      → 取消零落盘 → 创建 → 开新档（编辑器渲染 NewPage 标题——**vue
+      编辑器 markdown 渲染：DOM 断言用渲染文 '# ' 不落 DOM，逐字节模板
+      断言走磁盘**）→ 树新行 → 面板翻转（dangling count=0 + NewPage 钮
+      在）→ 磁盘模板逐字节 `# NewPage\n\n`。
+    - ③**基线 v5 锁定**（tests/baseline/structure-v5.txt，v4 留档）：
+      重锁因由 = store create_confirm_open/create_target 入 dump + 悬空
+      行 button 化 + alert-dialog 第三实例（快照恒渲染——id 序列计划内
+      扩）；仪器同 v4（state 逐字节 + snapshot id 序列）。
+    - ④**判绿实录**：vm 双臂 **4 连跑全绿**（v5 锁后 full run ×3 +
+      gate 内 ×1，逐跑 merged 13/13 + split 12/12 + B v5 零漂移；另
+      v5 锁定 run merged 12/12[B 采集位不比]）；`pnpm test:e2e`
+      **6/6 连跑全绿**（10c 过，14+2 PASS 行/跑；含 gate 内 1）；
+      `node scripts/gate.mjs` **ALL GREEN**（vm 双臂 + vue build
+      strict + e2e 同窗连跑）。N 定谳续记（SD-403 口径）：N = 全数，
+      无失败集漂移。
+    - ⑤**D-21 负载窗实录（留观续，非阻塞）**：本任务窗 e2e 判绿前
+      7 失败（均 write_wiki 保存点：check 5 ×6 + check 9 quit ×1；
+      ≥2 例显式 400 `missing param path` api-err-body；重跑即绿）——
+      窗口期本机**并发家族会话实勘**（lang-692 `run -r vue --server
+      vm` + musk-084 release `run --render vm` 与本仓测试同机并行，
+      非本会话进程、未触碰）；**时序实验两枚（负结果入账）**：try 包裹
+      `store.Save()` **不**发射 await（ts_adapter try-体 await 仅限
+      api-client 调用，handler/store 调用均直发——vue 轨 handler 内
+      无法对 store 调用定序，保存写 POST 与 App 侧重取 GET 的并发窗
+      属生成器形态上限）；ActSave 保存窗并发流 2→3（TreeRefresh 增
+      一流）为边际增量评估。处置 = README 重跑口径 + ledger v8 扩记
+      （T-05）。
+    - ⑥重构等价证（T-03 遗留项闭合）：v5 锁定后 link/find/boot/tab/
+      editops/quit 全组双臂 4 连跑零漂移——LinksRefreshOf/TreeRefresh
+      收口行为等价（基线 state 段含 links_json 全文逐字节等价）。
 - **T-05 文档 + ledger v8 + 收口**（AC-05/06）
   - SD-501..504 canonical 落位（锚注齐）；ledger v7→v8（`.replace`
     语义纪律 + 执行期实勘）；README Tests/产品条。
