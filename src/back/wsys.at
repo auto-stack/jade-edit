@@ -249,11 +249,14 @@ fn extract_links_json(body str, stems List, rels List) str {
     return out
 }
 
-/// 工作区链接索引 JSON：{"pages":[{"path","title","links":[…]}]}。
-/// path = 工作区根相对路径（/ 分隔——fs.tree id 同 convention，store.Open
-/// 直吃）；title = 文件 stem（旧园 links.rs rebuild 同语义：title =
-/// file_stem，非 frontmatter title——[[首页]] 对 index.ad = 悬空）；
-/// links = 出链对象 {target,anchor,exists,target_path}。
+/// 工作区链接索引 JSON：页面数组 [{"path","title","links":[…]},…]。
+/// ⚠ 顶层形状 = 裸数组（无 {"pages":…} 包壳）：front json.to_value 消费
+/// 面只对顶层 array 产物健康（App ft_nodes 同款已证；顶层 map 产物入态
+/// = 裸 vmref 损坏，C-1 家族——T-04 实勘立案）。path = 工作区根相对路径
+///（/ 分隔——fs.tree id 同 convention，store.Open 直吃）；title = 文件
+/// stem（旧园 links.rs rebuild 同语义：title = file_stem，非 frontmatter
+/// title——[[首页]] 对 index.ad = 悬空）；links = 出链对象
+/// {target,anchor,exists,target_path}。
 /// 三步：①walk = fs.tree 同源遍历（本切片实测：fs.walk_files 原语在册
 /// 未接 .at 调用面——Undefined symbol，2026-09-22 探针实证——故走已证
 /// fs.tree：depth 语义直通（1..8 钳制同 tree），遍历序 = dirs-first +
@@ -311,5 +314,5 @@ pub fn links_json(path str, depth int) str {
         pages = pages + "\",\"links\":[" + links + "]}"
         j = j + 1
     }
-    return "{\"pages\":[" + pages + "]}"
+    return "[" + pages + "]"
 }
