@@ -58,6 +58,11 @@ store EditorStore {
         // 反链面板开关（PLAN-003；面板壳/菜单 checked_if 消费。链接数据
         // 态在 App 模型——vm 轨 store 上下文 json.to_value 产物损坏，T-03）。
         var backlinks_open bool = false
+        // 查找面板开态 + 模式（PLAN-004；Ctrl+P/Ctrl+Shift+F 双快捷键
+        // 分流的结果态，基线 v4 面。数据态在 App 模型——D-20④ 同款裁定：
+        // store 上下文解析产物损坏，链接态先例）。
+        var find_open bool = false
+        var find_mode str = "files"
     }
 
     // msg 载荷单类型（编译器约束）：Open 单 map、Edit 单 str。
@@ -69,6 +74,7 @@ store EditorStore {
         ActQuit, ConsoleClear, CloseRequest, QuitDiscard, QuitSaveClose,
         QuitConfirmCancel,
         BacklinksToggle,
+        FindOpen(str), FindToggle, FindClose,
     }
 
     on {
@@ -371,6 +377,23 @@ store EditorStore {
         // 反链面板开关（PLAN-003；数据刷新/行派生在 App 侧 ActBacklinks）。
         .BacklinksToggle -> {
             .backlinks_open = !.backlinks_open
+            .console = console_lines()
+        }
+
+        // ---- 查找面板（PLAN-004）：开态+模式双字段一口维护。FindOpen =
+        // 幂等重开（已开则切模式——v1 聚焦语义从简）；FindClose = 快开
+        // 拾取即关的 store 关口（开态权威单点——T-03 落定）。 ----
+        .FindOpen(mode) -> {
+            .find_open = true
+            .find_mode = mode
+            .console = console_lines()
+        }
+        .FindToggle -> {
+            .find_open = !.find_open
+            .console = console_lines()
+        }
+        .FindClose -> {
+            .find_open = false
             .console = console_lines()
         }
     }

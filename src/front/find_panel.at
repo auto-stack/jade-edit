@@ -1,0 +1,42 @@
+// find_panel.at — 查找面板壳（PLAN-004 T-02；BacklinksPanel 同构第二
+// 实例——ConsolePanel/BacklinksPanel 013 组件纪律）。
+//
+// vm 组件边界（console_panel 同判：组件子树对 MCP 快照不可见——测试断言
+// 走 autoui_state、点击锚留根视图）：本组件 = 面板壳（标题/收起/模式
+// 标签）；input/检索钮/行集/空态在 App 根视图右栏渲染（013 树行/tab 条
+// 同款留根纪律——快开行点击锚/检索钮/input 全在根视图）。
+//
+// 无刷新触发集（SD-401）：检索按需 fetch、快开过滤纯内存——与链接面板
+//（Init/Save 成功/面板开启触发集）的结构性差异，不设刷新钮。
+
+use editor_store: EditorStore
+
+style find_meta = "text-[11px] text-muted-foreground ml-auto"
+
+widget FindPanel {
+    msg { Toggle }
+
+    view {
+        row (style: "h-7 items-center bg-muted/30 shrink-0 gap-3 px-2 w-full") {
+            text "FIND" {
+                style: "text-[11px] font-bold text-muted-foreground"
+            }
+            button (text: "收起", variant: "text") {
+                onclick: .Toggle
+                style: "text-[11px] h-5 px-1 text-muted-foreground"
+            }
+            // 模式标签（files=文件 / text=全文）——Ctrl+P/Ctrl+Shift+F
+            // 双快捷键分流的结果态显示。
+            if .store.find_mode == "files" {
+                text "文件" { style: find_meta }
+            }
+            if .store.find_mode == "text" {
+                text "全文" { style: find_meta }
+            }
+        }
+    }
+
+    on {
+        .Toggle -> { store.FindToggle() }
+    }
+}

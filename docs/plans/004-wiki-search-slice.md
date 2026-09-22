@@ -6,7 +6,7 @@ author: [zhaopuming]
 created_at: 2026-09-22T21:40:26+08:00
 updated_at: 2026-09-22T21:49:28+08:00
 plan_revision: 2
-current_step: 1
+current_step: 3
 total_steps: 5
 supersedes_spec_components: []
 new_spec_components:
@@ -402,7 +402,7 @@ pub fn search_json(query str, limit int) str {
     ④回归 = `node tests/vm_matrix.mjs` 双臂全绿：merged 12/12 + split
     11/11，**基线 v3 零漂移**（state dump 含 links_json 全文逐字节
     等价 = 重构零行为变化的强证）。
-- **T-02 front 查找面板 + 输入通道**（AC-02 前半）
+- **T-02 front 查找面板 + 输入通道**（AC-02 前半）[✅ 已完成]
   - find_panel.at 壳组件 + editor_store find_open/find_mode/
     FindOpen/FindToggle + app.at 模型/msg/右栏查找区（input + 模式
     标签 + 行集 + 空态）+ `collect_ad_paths`/`file_rows_of` 纯函数 +
@@ -411,11 +411,45 @@ pub fn search_json(query str, limit int) str {
     gen 源检 → **裁定触发面**（onenter 入契约或仅按钮）；`pnpm build`
     PASS + merged 臂冒烟（面板开关/files 过滤行快照）。
   - 验证：`auto run -r vm` 手动冒烟实录 + `pnpm build`。
-- **T-03 接线收口 + 导航**（AC-02 后半）
+  - **证据（2026-09-22）**：①find_panel.at = 壳（FIND 标题 + 收起 +
+    模式标签「文件/全文」）；input/检索钮/行集/空态留根视图（MCP 快照
+    锚纪律）。②store 增 find_open/find_mode + FindOpen(幂等重开)/
+    FindToggle/FindClose 三口；App 模型增 find_q/find_rows/find_ran
+    （D-20④ 同款裁定不入 store）。③纯函数 collect_ad_paths（栈式
+    while 展开，兄弟倒序压栈保 walk 序）+ file_rows_of（双侧 to_lower
+    contains，空 q 全量）；FindEdit 分流（files 即时过滤纯内存/text
+    只更 find_q）。④**探针 C 定谳：通（双触发面）**——vm 面 convert_input
+    onenter→on_submit 在册（aura_view_builder.rs:9758-9760）+ vue 面
+    auto_event_to_vue/shadcn_event_to_vue `onenter→@keyup.enter` 在册
+    （vue.rs:15909/16428）+ 构建期 gen 源检实证 App.vue:795
+    `@keyup.enter="FindRun"`（Input.vue 根原生 input attrs 透传可达）→
+    触发面 = 检索钮 + Enter 双通道，SD-401 按通态定文。⑤`pnpm build`
+    PASS（vue-tsc 0 错 + vite build 绿）。⑥merged 臂冒烟全绿（一次性
+    脚本 .find-smoke.mjs，已删）：菜单入口开面板（find_open/find_mode
+    态）→ input 在快照 + 空 q 全量 5 行 → type_text 过滤（仅 Projects）
+    → casefold（小写 pro 命中——探针 A vm 面实证）→ CJK 文件名（定理 →
+    CAP 定理.ad 独行）→ 行点击开档 + 拾取即关。
+- **T-03 接线收口 + 导航**（AC-02 后半）[✅ 已完成]
   - actions view.find-files/view.find-text（Ctrl+P / Ctrl+Shift+F）+
     menubar 视图项 + FindRun 双取形 fetch + OpenLink 行导航 + files
     拾取即关（FindClose 关口落定）+ text 未运行/无结果空态两形。
   - 验证：merged 臂检查单雏形（T-04 固化前手工跑通）+ e2e 单段冒烟。
+  - **证据（2026-09-22）**：①actions 两件（find-text checked_if 复合式
+    `.store.find_open && .store.find_mode == \"text\"`——eval_condition_with
+    表达式引擎 + bps 字符串 == 先例，双轨构建/冒烟仲裁通过）+ menubar
+    视图项（快速打开 item / 全文检索 checkbox-item 同式 checked）。**任务
+    边界注**：actions/menubar 随 T-02 落位——MCP 无直接 msg 派发通道
+    （mcp_server.rs 五件：snapshot/inspect/action/state/type），冒烟需
+    UI 锚；T-03 收 FindRun/导航/拾取即关/空态两形，范围与验收无变化。
+    ②FindRun 双取形 fetch 构建期源检：gen App.vue
+    `JSON.parse(await search_wiki(find_q.value, 20))`（call-arg 形发射
+    合规——D-20⑤）+ lib/api.ts:67 POST client（body JSON.stringify）。
+    ③FindPick 行点击口 = OpenLink 共用导航口 + files 模式 FindClose
+    关口（拾取即关）；text 模式保持开（检索浏览语义）；空态两形以
+    find_ran 门控（未运行「（输入查询词后检索）」/运行后「（无结果）」）。
+    ④merged 冒烟全链路绿（text 切模式/未运行提示/CJK「张三」检索命中
+    Projects.ad/行点击开档面板保持开/无结果空态）；e2e 旧检查单回归
+    passed（7.0s，vue 轨新右栏布局零回归）。
 - **T-04 测试扩单 + 基线 v4 + 判绿首锁**（AC-02/03/04）
   - vm_matrix.mjs 增 find 组（快开三步+检索五步；探针 D：type_text→
     input MCP 通道，fallback 见 §10）；e2e matrix.spec.ts 增 find 段；
@@ -450,16 +484,23 @@ pub fn search_json(query str, limit int) str {
 
 ## 10. 待澄清事项
 
-1. **to_lower vue 发射**（探针 A，T-01 裁定）：不通 → v1 大小写敏感
-   （检索匹配 + 快开过滤两侧；契约文本不变，SD-401 记 fallback 态 +
-   ledger 记账）；通 → 双侧 to_lower。两态测试期望均已预案（语料首锁
-   按裁定态取值）。
-2. **onenter vue 发射**（探针 C，T-02 裁定）：不通 → 触发面仅按钮
-   （契约底线，vm 面在册不构成双轨承诺）；通 → 按钮+Enter 双触发。
-3. **input 控件 MCP 打字通道**（探针 D，T-04 裁定）：type_text 若不
-   达 input 控件 → fallback 链：MCP 事件直派 oninput → 仍不通则
-   find 组输入步经按钮触发 + find_q 态断言降级（导航/空态/命中/拾取
-   面不降级）；e2e 段无此风险（真 DOM）。
+1. **to_lower vue 发射**（探针 A）——**已裁定（2026-09-22，T-01/T-02）：通**
+   → v1 大小写 = 双侧 to_lower（检索匹配 + 快开过滤两侧同裁）。证据三级：
+   源级 ts_adapter.rs:1610 `"to_lower"|"lower" => "toLowerCase"`（Plan 053
+   M1 映射表；contains→includes 同表）→ 构建期 gen 树源检 App.vue:408/413
+   `q.toLowerCase()`/`p.toLowerCase()`（vue-tsc 0 错）→ vm 冒烟 casefold
+   实证（小写 pro 命中 Projects.ad）。SD-401 按通态定文；§6 六案期望值
+   取通态值（查询词与语料同大小写，两态期望同值——不依赖裁定态）。
+2. **onenter vue 发射**（探针 C）——**已裁定（2026-09-22，T-02）：通**
+   → 触发面 = 检索钮 + Enter 双通道。证据：vm convert_input onenter→
+   on_submit 在册（aura_view_builder.rs:9758-9760）+ vue
+   auto_event_to_vue/shadcn_event_to_vue `onenter→@keyup.enter` 在册
+   （vue.rs:15909/16428）+ 构建期 gen 源检 App.vue:795
+   `@keyup.enter="FindRun"` 实证。
+3. **input 控件 MCP 打字通道**（探针 D）——**已裁定（2026-09-22，T-02
+   冒烟）：通**。type_text 直达 input 控件（ActionResult ok + find_q 态
+   断言 + 行过滤全链可用）；fallback 链（MCP 事件直派→按钮触发降级）
+   未动用。T-04 vm 矩阵 find 组按 type_text 主通道固化。
 4. ~~方向确认~~ **已裁定（2026-09-22 用户答复）**：扩容双件（快开 +
    检索 + 北标落账）。PLAN-005 候选池更新：悬空建页闭环、大纲面板
    （Typora 线第二件，D-12 定位探针前置）、图谱（vm 组件面依赖上游）。

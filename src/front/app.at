@@ -25,9 +25,10 @@ use editor_store: EditorStore
 use status_bar: StatusBar
 use console_panel: ConsolePanel
 use backlinks_panel: BacklinksPanel
+use find_panel: FindPanel
 use bps.navigation.filetree.tree_util: flatten_tree, toggle_id
 use bps.navigation.filetree.tree_icon: TreeIcon
-use back.api: tree, ws_root, link_index
+use back.api: tree, ws_root, link_index, search_wiki
 
 style warn_label = "text-[12px] text-amber-400 mr-1"
 
@@ -98,6 +99,72 @@ fn outlink_rows_of(pages List, active str) List {
     }
     return out
 }
+
+// —— 查找面板派生（PLAN-004 T-02）。纯内存面（快开零 back 增量）；数据
+// 态在 App 模型（D-20④ 同款裁定——链接态先例）。
+
+/// 快开数据源：ft_nodes 全量 .ad 路径。栈式 while 展开（禁递归——C-4/
+/// P614 家族纪律；flatten_tree 同族消费先例 bps tree_util）；兄弟倒序
+/// 压栈保 fs.tree 遍历序（dirs-first + 名称 casefold——与 back
+/// collect_ad_pages walk 序同源，快开/检索/链接三面覆盖一致）。
+fn collect_ad_paths(nodes List) List {
+    var out List = []
+    var stack List = []
+    var i int = nodes.len()
+    while i > 0 {
+        i = i - 1
+        var n = nodes[i]
+        stack.push(n)
+    }
+    var si int = 0
+    while si < stack.len() {
+        // ⚠ D-20②：列表元素先拷局部变量再取字段/调方法。
+        var n = stack[si]
+        si = si + 1
+        var kind str = n.kind
+        if kind == "file" {
+            var nid str = n.id
+            if nid.ends_with(".ad") {
+                out.push(nid)
+            }
+        } else {
+            var kids List = n.children
+            var k int = kids.len()
+            while k > 0 {
+                k = k - 1
+                var c = kids[k]
+                stack.push(c)
+            }
+        }
+    }
+    return out
+}
+
+/// 快开过滤：双侧 to_lower contains（探针 A 定谳同裁——检索匹配同语义
+/// SD-401）；空 q = 全量（Ctrl+P 首开即全档清单——VS Code 同形态）。
+/// 行对象 = {path}（与检索行 path 键对齐——视图单渲染面）。
+fn file_rows_of(paths List, q str) List {
+    var out List = []
+    var ql str = q.to_lower()
+    var i int = 0
+    while i < paths.len() {
+        var p str = paths[i]
+        var hit bool = false
+        if ql == "" {
+            hit = true
+        } else {
+            var pl str = p.to_lower()
+            if pl.contains(ql) {
+                hit = true
+            }
+        }
+        if hit {
+            out.push({ path: p })
+        }
+        i = i + 1
+    }
+    return out
+}
 widget App {
     msg {
         Init, FtToggle(str), OpenFile(str), Reload,
@@ -108,6 +175,7 @@ widget App {
         ActConsole, ActSwitchTab, ActAbout,
         CloseRequest, QuitDiscard, QuitSaveClose, QuitConfirmCancel,
         ActBacklinks, LinksRefresh, OpenLink(str),
+        FindEdit(str), FindRun, ActFindFiles, ActFindText, FindPick(str),
     }
 
     model {
@@ -127,6 +195,12 @@ widget App {
         var link_pages List = []
         var bl_rows List = []
         var ol_rows List = []
+        // —— 查找面板数据态（PLAN-004）：查询词/行集/已运行旗标——检索
+        // 空态两形（未运行提示/运行后无结果）以 find_ran 区分；数据不入
+        // store（D-20④ 同款裁定，链接态先例）。----
+        var find_q str = ""
+        var find_rows List = []
+        var find_ran bool = false
     }
 
     computed {
@@ -151,6 +225,9 @@ widget App {
                 checked_if: ".store.console_open")
         action (id: "view.backlinks",  handler: .ActBacklinks,  title: "切换反链", icon: "link-2", shortcut: "Ctrl+L",
                 checked_if: ".store.backlinks_open")
+        action (id: "view.find-files", handler: .ActFindFiles, title: "快速打开", icon: "file-search", shortcut: "Ctrl+P")
+        action (id: "view.find-text",  handler: .ActFindText,  title: "全文检索", icon: "search", shortcut: "Ctrl+Shift+F",
+                checked_if: ".store.find_open && .store.find_mode == \"text\"")
         action (id: "view.switch-tab", handler: .ActSwitchTab,  title: "切换 Tab", shortcut: "Ctrl+D")
         action (id: "view.reload",    handler: .Reload,    title: "重载",  icon: "refresh-cw",   shortcut: "F5",
                 enabled_if: ".store.tab_count > 0")
@@ -200,6 +277,8 @@ widget App {
                         menubar-content {
                             menubar-checkbox-item (title: "切换 Console", icon: "terminal", checked: .store.console_open, shortcut: "Ctrl+J") { onclick: .ActConsole }
                             menubar-checkbox-item (title: "切换反链", icon: "link-2", checked: .store.backlinks_open, shortcut: "Ctrl+L") { onclick: .ActBacklinks }
+                            menubar-item (title: "快速打开", icon: "file-search", shortcut: "Ctrl+P") { onclick: .ActFindFiles }
+                            menubar-checkbox-item (title: "全文检索", icon: "search", checked: .store.find_open && .store.find_mode == "text", shortcut: "Ctrl+Shift+F") { onclick: .ActFindText }
                             menubar-item (title: "切换 Tab", shortcut: "Ctrl+D") { onclick: .ActSwitchTab }
                             menubar-item (title: "重载", icon: "refresh-cw", shortcut: "F5", enabled: .store.tab_count > 0) { onclick: .Reload }
                         }
@@ -317,41 +396,111 @@ widget App {
                     }
                 }
 
-                // —— 右栏：反链/出链面板（PLAN-003；旧园右栏三面板先例）——
-                // 壳 = BacklinksPanel 组件；行集/空态留根（MCP 快照锚不进
-                // 组件子树，console_panel 同判——T-03 执行期裁定点落定）。
-                // 行数据 = App 模型（vm 轨 store 上下文解析损坏，见模型注）。
-                if .store.backlinks_open {
+                // —— 右栏：查找面板（PLAN-004，上方）+ 反链/出链面板
+                //（PLAN-003）——两面板独立开关可叠放（§2.3 布局）。壳组件
+                // = FindPanel/BacklinksPanel；input/行集/空态留根（MCP
+                // 快照锚不进组件子树，console_panel 同判）。行数据 = App
+                // 模型（vm 轨 store 上下文解析损坏，见模型注）。
+                if .store.find_open || .store.backlinks_open {
                     col (style: "w-72 shrink-0 border-l border-border bg-card hidden md:flex flex-col overflow-y-auto") {
-                        BacklinksPanel()
-                        row (style: "h-6 items-center shrink-0 px-3") {
-                            text "反链" { style: "text-[11px] font-bold text-muted-foreground" }
-                        }
-                        if .bl_rows.len() == 0 {
-                            text "（无反链）" { style: "text-[11px] text-muted-foreground px-3" }
-                        }
-                        for r in .bl_rows {
-                            button (text: r.source_path, variant: "ghost") {
-                                onclick: .OpenLink(r.source_path)
-                                style: "w-full justify-start px-3 h-6 text-left text-[12px]"
+                        if .store.find_open {
+                            FindPanel()
+                            // 输入行：input + 检索钮（仅 text 模式）。双
+                            // 分支静态 placeholder（动态表达式无先例；模式
+                            // 恒定期恰一分支渲染）。value: .find_q /
+                            // oninput: .FindEdit（bps form/login 先例形）；
+                            // text 模式 onenter = Enter 触发（探针 C：vm
+                            // convert_input onenter→on_submit 在册 + vue
+                            // auto_event_to_vue onenter→@keyup.enter 在册，
+                            // Input.vue 根原生 input attrs 透传可达——
+                            // 双轨发射均有源级证据，T-02 定谳）。
+                            row (style: "items-center gap-1 px-2 py-1 shrink-0") {
+                                if .store.find_mode == "files" {
+                                    input {
+                                        value: .find_q
+                                        oninput: .FindEdit
+                                        placeholder: "过滤文件名…"
+                                        style: "flex-1 h-7 px-2 text-[12px] border rounded bg-background"
+                                    }
+                                }
+                                if .store.find_mode == "text" {
+                                    input {
+                                        value: .find_q
+                                        oninput: .FindEdit
+                                        onenter: .FindRun
+                                        placeholder: "输入查询词…"
+                                        style: "flex-1 h-7 px-2 text-[12px] border rounded bg-background"
+                                    }
+                                    button (text: "检索", variant: "ghost") {
+                                        onclick: .FindRun
+                                        style: "h-7 px-2 text-[12px] shrink-0"
+                                    }
+                                }
+                            }
+                            // files 模式：即时过滤行集 + 空态（拾取即关——
+                            // FindPick 口）。
+                            if .store.find_mode == "files" {
+                                if .find_rows.len() == 0 {
+                                    text "（无匹配文件）" { style: "text-[11px] text-muted-foreground px-3" }
+                                }
+                                for r in .find_rows {
+                                    button (text: r.path, variant: "ghost") {
+                                        onclick: .FindPick(r.path)
+                                        style: "w-full justify-start px-3 h-6 text-left text-[12px]"
+                                    }
+                                }
+                            }
+                            // text 模式：空态两形（find_ran 区分——未运行
+                            // 提示/运行后无结果）+ 行集（检索浏览语义——行
+                            // 点击开档面板保持开）。
+                            if .store.find_mode == "text" {
+                                if !.find_ran {
+                                    text "（输入查询词后检索）" { style: "text-[11px] text-muted-foreground px-3" }
+                                }
+                                if .find_ran {
+                                    if .find_rows.len() == 0 {
+                                        text "（无结果）" { style: "text-[11px] text-muted-foreground px-3" }
+                                    }
+                                    for r in .find_rows {
+                                        button (text: r.path, variant: "ghost") {
+                                            onclick: .FindPick(r.path)
+                                            style: "w-full justify-start px-3 h-6 text-left text-[12px]"
+                                        }
+                                    }
+                                }
                             }
                         }
-                        row (style: "h-6 items-center shrink-0 px-3") {
-                            text "出链" { style: "text-[11px] font-bold text-muted-foreground" }
-                        }
-                        if .ol_rows.len() == 0 {
-                            text "（无出链）" { style: "text-[11px] text-muted-foreground px-3" }
-                        }
-                        for r in .ol_rows {
-                            if r.exists {
-                                button (text: r.target, variant: "ghost") {
-                                    onclick: .OpenLink(r.target_path)
+                        if .store.backlinks_open {
+                            BacklinksPanel()
+                            row (style: "h-6 items-center shrink-0 px-3") {
+                                text "反链" { style: "text-[11px] font-bold text-muted-foreground" }
+                            }
+                            if .bl_rows.len() == 0 {
+                                text "（无反链）" { style: "text-[11px] text-muted-foreground px-3" }
+                            }
+                            for r in .bl_rows {
+                                button (text: r.source_path, variant: "ghost") {
+                                    onclick: .OpenLink(r.source_path)
                                     style: "w-full justify-start px-3 h-6 text-left text-[12px]"
                                 }
                             }
-                            if !r.exists {
-                                text "${r.target}（悬空）" {
-                                    style: "text-[12px] text-muted-foreground px-3"
+                            row (style: "h-6 items-center shrink-0 px-3") {
+                                text "出链" { style: "text-[11px] font-bold text-muted-foreground" }
+                            }
+                            if .ol_rows.len() == 0 {
+                                text "（无出链）" { style: "text-[11px] text-muted-foreground px-3" }
+                            }
+                            for r in .ol_rows {
+                                if r.exists {
+                                    button (text: r.target, variant: "ghost") {
+                                        onclick: .OpenLink(r.target_path)
+                                        style: "w-full justify-start px-3 h-6 text-left text-[12px]"
+                                    }
+                                }
+                                if !r.exists {
+                                    text "${r.target}（悬空）" {
+                                        style: "text-[12px] text-muted-foreground px-3"
+                                    }
                                 }
                             }
                         }
@@ -552,6 +701,55 @@ widget App {
                 // Open 已开即激活语义 + 行派生）
                 .bl_rows = backlink_rows_of(.link_pages, path)
                 .ol_rows = outlink_rows_of(.link_pages, path)
+            }
+        }
+
+        // —— 查找面板（PLAN-004 T-02/T-03）——
+        // 输入分流：files 模式即时过滤（纯内存零 fetch——SD-401 刷新触发
+        // 集=无）；text 模式只更 find_q（触发面 = 检索钮/onenter——探针 C）。
+        .FindEdit(q) -> {
+            .find_q = q
+            if .store.find_mode == "files" {
+                .find_rows = file_rows_of(collect_ad_paths(.ft_nodes), q)
+            }
+        }
+        // 检索触发（text 模式）：fetch search_wiki（POST 通道——D-19 适配）
+        // + **双取形**（⚠ ts_adapter 只对 call-arg 形发射 JSON.parse，
+        // identifier 实参静默降恒等——D-20⑤，Init link_index 同款；此处
+        // rows 直接收解析产物，单次调用即双取形合规）+ 行装配 + find_ran。
+        // try/catch 落 console_log（链接触点同款——backend-offline 不炸）。
+        .FindRun -> {
+            var rows List = []
+            var ok bool = true
+            try {
+                rows = json.to_value(search_wiki(.find_q, 20))
+            } catch (e) {
+                ok = false
+            }
+            if !ok {
+                console_log("find: search failed")
+            }
+            .find_rows = rows
+            .find_ran = true
+        }
+        // 快开入口（幂等重开——已开则保模式清过滤面）；行集就绪待过滤
+        //（空 q = 全量清单）。
+        .ActFindFiles -> {
+            store.FindOpen("files")
+            .find_rows = file_rows_of(collect_ad_paths(.ft_nodes), .find_q)
+        }
+        // 全文检索入口（幂等重开 + 切模式）；行集不动——text 面板由
+        // find_ran 门控渲染（未运行提示优先，files 期残留行不泄漏）。
+        .ActFindText -> {
+            store.FindOpen("text")
+        }
+        // 查找行点击口：OpenLink 共用导航口（开档 + 链接行派生）；files
+        // 模式拾取即关（store FindClose 关口——开态权威单点）；text 模式
+        // 保持开（检索结果浏览语义）。
+        .FindPick(path) -> {
+            .OpenLink(path)
+            if .store.find_mode == "files" {
+                store.FindClose()
             }
         }
         .ActSwitchTab -> { store.ActSwitchTab() }
