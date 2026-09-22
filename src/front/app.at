@@ -28,7 +28,7 @@ use backlinks_panel: BacklinksPanel
 use find_panel: FindPanel
 use bps.navigation.filetree.tree_util: flatten_tree, toggle_id
 use bps.navigation.filetree.tree_icon: TreeIcon
-use back.api: tree, ws_root, link_index, search_wiki, create_page
+use back.api: tree, ws_root, link_index, search_wiki, create_page, rename_page
 
 style warn_label = "text-[12px] text-amber-400 mr-1"
 
@@ -773,7 +773,8 @@ widget App {
         }
 
         // —— 树取共享口（PLAN-005 T-03 提取自 Init 内联段；G3 触点 =
-        // 建页成功 / Save 新档 + Init）。fetch+parse 必须 handler 体内
+        // 建页成功 / Save 新档 + Init + **重命名成功**（PLAN-006——
+        // EXPLORER 旧行消失新行在））。fetch+parse 必须 handler 体内
         //（json.to_value 模块函数体被 ts_adapter 静默恒等——T-04 实勘；
         // store 上下文 vmref 损坏 D-20④）——故共享以 msg handler 形态
         // 收口（五触点同款理由）。
@@ -791,9 +792,10 @@ widget App {
             }
         }
 
-        // —— 链接索引重取共享口（PLAN-005 T-03 提取；触发集 v2 = Init/
-        // Save 成功/面板开启/**建页成功**（.CreateGo）+ 手动口
-        // LinksRefresh）。⚠ to_value 双取形：ts_adapter 只对 call-arg
+        // —— 链接索引重取共享口（PLAN-005 T-03 提取；触发集 v3 = Init/
+        // Save 成功/面板开启/**建页成功**（.CreateGo）+ **重命名成功**
+        //（.RenameGo——PLAN-006 触发集 v3 扩）+ 手动口 LinksRefresh）。
+        // ⚠ to_value 双取形：ts_adapter 只对 call-arg
         // 发射 JSON.parse（identifier 实参静默降恒等——D-20⑤），原文态
         // links_json 与解析态分两次取（fetch 幂等，v0 规模双取无害）。
         // active 显式入参：开档流（CreateGo）传新档 path——handler 内
@@ -936,10 +938,49 @@ widget App {
         .RenameCancel -> {
             store.RenameClose()
         }
-        // T-03 换四步流（rename_page 直调 → TabsRenamed → Reload →
-        // refresh_links/refresh_tree + 行重算）。
+        // 改名流四步（§2.3；PLAN-006 T-03）：
+        // ①back 契约直调（try/catch 落 console——backend-offline 不炸；
+        //   rename_page 为 api-client 调用，try-体 await 在册——D-23② 面
+        //   无，CreateGo 同款形态）
+        // ②成功 = 关弹层 + store.TabsRenamed（tab 路径/标题/key 全量更新
+        //   ——key 变即重挂载播种）+ store.Reload（自链改写 Reload 显现
+        //   ——store body 是改名前镜像，重读磁盘即改写后文；handler 内
+        //   顺序 TabsRenamed → Reload，渲染滞后于 handler 完成故重挂载
+        //   播种即新文）
+        // ③链接索引重取（触发集 v3：**重命名成功**——反链/出链面板立即
+        //   反映新 stem）+ 树重取（EXPLORER 旧行消失新行在）+ ft_sel 同步
+        //   （选中行=旧路径则指向新路径）。行 active 显式传 r——handler
+        //   内 .store 读为陈旧投影（T-03 实勘同款规避）。
+        // ④拒（""）= console 注记 + 弹层留置（拒因前端不可见——v1 口径
+        //   §10.5；用户可取消/改名重试）。
         .RenameGo -> {
-            store.RenameClose()
+            var r str = ""
+            var ok bool = true
+            try {
+                r = rename_page(.store.active_path, .rename_q)
+            } catch (e) {
+                ok = false
+            }
+            if !ok {
+                console_log("rename: failed")
+                .console = console_lines()
+            }
+            if r != "" {
+                var old_path str = .store.active_path
+                store.RenameClose()
+                store.TabsRenamed(old_path, r)
+                store.Reload()
+                .LinksRefreshOf(r)
+                .TreeRefresh()
+                if .ft_sel == old_path {
+                    .ft_sel = r
+                }
+            } else {
+                if ok {
+                    console_log("rename: rejected (conflict/case-only/missing/empty)")
+                    .console = console_lines()
+                }
+            }
         }
     }
 }

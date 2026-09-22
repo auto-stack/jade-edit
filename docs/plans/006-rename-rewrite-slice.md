@@ -417,12 +417,30 @@ fn rewrite_links(body str, old str, new str) str {
     预览「将改写 3 页 3 处链接」③input 键入同步+取消零落盘[多弹层恒
     渲染同名钮——「重命名」父行兄弟域定位，10c 同款纪律]④确认钮在）
     + `pnpm build` PASS（vue-tsc 0 错 + vite build 绿）。
-- **T-03 改名流收口**（AC-02 后半）
+- **T-03 改名流收口**（AC-02 后半）✅ 已完成
   - `.RenameGo` 四步流 + `store.TabsRenamed`（while 扫描全量更新）
     + Reload 显现 + refresh_links/refresh_tree 接线（触发集 v3）+
-    ft_sel/bl/ol 行重算。
+    ft_sel/bl/ol 行重算。**[✅ 已完成]** 实勘两项：①msg 双 str 参数在
+    册（TabsRenamed(old_path, new_path)——载荷单类型约束[同 str 型]
+    不违 C-6）；②**参数名禁 `new`**——ts_adapter 原样发射 TS 形参
+    （`new` 为 JS 保留字 → vue-tsc TS1109 语法错，首建实录）→ 改名
+    old_path/new_path（**生成器保留字缺口入 ledger v9**；wsys 侧
+    rewrite_links 的 `new` 参数不受影响——back 模块 VM 解释不产 TS）。
+    定序面：RenameGo 内 rename_page 在 try（api-client try-体 await
+    在册——CreateGo 同款）+ store 调用裸调（await 发射——ActSave 先
+    例），渲染滞后于 handler 完成 → TabsRenamed 换 key 后的重挂载播
+    种即 Reload 后新文（自链改写显现链）。
   - 验证：merged 冒烟全弧线（改名→开 index.ad 改写可见→树刷新→
     面板新 stem）+ link/find/create 组回归 + e2e rename 段冒烟。
+    **[✅ 已完成]** e2e/.runtime/smoke-t03.cjs **10/10 PASS**（开档→
+    弹层→键入→①tab/激活投影更新 ②磁盘改名+三页源文改写逐字锚 ③
+    Reload 显现[active_body==磁盘+字节整迁] ④出链/反链面板新 stem ⑤
+    树刷新旧行消失新行在 ⑥取消零落盘回归）+ `node tests/vm_matrix.mjs`
+    merged 12/13 + split 12/12（**唯一 FAIL = B 基线漂移——store
+    rename_open + App rename_q 入 dump 的计划内 v5→v6 变更，T-04
+    重锁**；link/find/create 组功能检查全过零回归）+ `pnpm build`
+    PASS（保留字修正后）。e2e rename 段随 T-04 官方落位（同断言域
+    一次成文）。
 - **T-04 测试扩单 + 基线 v6 + 判绿首锁**（AC-02/03/04）
   - vm rename 组七子步 + e2e rename 段 + 基线 v6 重锁。
   - 验证：`node tests/vm_matrix.mjs` 双臂全绿 + `pnpm test:e2e`

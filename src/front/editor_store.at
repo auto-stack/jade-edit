@@ -84,7 +84,7 @@ store EditorStore {
         BacklinksToggle,
         FindOpen(str), FindToggle, FindClose,
         CreateConfirmOpen(str), CreateConfirmCancel,
-        RenameOpen, RenameClose,
+        RenameOpen, RenameClose, TabsRenamed(str, str),
     }
 
     on {
@@ -429,6 +429,33 @@ store EditorStore {
         }
         .RenameClose -> {
             .rename_open = false
+            .console = console_lines()
+        }
+
+        // ---- tab 路径全量更新（PLAN-006 T-03；G1「激活/后台同名档全
+        // 量」）：while 扫描（D-11：禁 .find 闭包——split 形态硬崩）path
+        // == old 的档更新 path/title（=stem）/key（编辑器 key 变即重挂
+        // 载播种——D-03 归一形态；激活索引不变=同 tab 保持激活）。激活
+        // 投影同步（active_path/title/key）：Reload 显现链前置——back 改
+        // 写后磁盘为新文，key 新 → 下一次渲染重挂载读 content: = Reload
+        // 后的 active_body（改名流顺序：TabsRenamed → Reload，渲染滞后
+        // 于 handler 完成故播种即新文——自链改写显现）。----
+        .TabsRenamed(old_path, new_path) -> {
+            var i int = 0
+            while i < .tabs.len() {
+                if .tabs[i].path == old_path {
+                    .tabs[i].path = new_path
+                    .tabs[i].key = new_path
+                    .tabs[i].title = strip_ad(new_path)
+                }
+                i = i + 1
+            }
+            if .active_path == old_path {
+                .active_path = new_path
+                .active_key = new_path
+                .active_title = strip_ad(new_path)
+            }
+            console_log("renamed: " + old_path + " -> " + new_path)
             .console = console_lines()
         }
     }
