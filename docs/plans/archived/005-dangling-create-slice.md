@@ -1,6 +1,7 @@
 ---
 plan_id: PLAN-005
-status: reviewed
+status: archived
+completion_kind: delivered
 feature_name: dangling-create-slice
 author: [zhaopuming]
 created_at: 2026-09-22T23:36:52+08:00
@@ -567,6 +568,25 @@ pub fn create_page_impl(title str) str {
     97c62ee0c6e1875537387a611403a4d5；探针工件 tests/probe_create.mjs
     入库可复放；直证/门禁日志为会话内过程件（判绿行已摘录本节）。
   - `next: merge`。
+
+- **2026-09-23 merge 归档（auto-plan-merge）**：
+  - `stage: merge`，PLAN-005，revision 1，`outcome: pass`。
+  - `prepared=8b7e4d2 复审基线（canonical delta 已落位核验：SD-501..504
+    锚注 + ledger v8 23 项在 main）+ delivery_commit=4e869fe——
+    docs-only descendant of reviewed_commit 8b7e4d2（diff 8b7e4d2..
+    4e869fe 全窗口核验：仅 docs/plans/005-*.md +45/-1，实现/依赖零
+    变化），本提交即为 delivery_commit`
+  - `landed=main tip==4e869fe（直接 main 线性约定——本仓无 worktree/
+    dev 分支，无可生成 merge commit，PLAN-001..004 同判）+ 归档前
+    冒烟 merged 13/13 + 基线 v5 零漂移 + 10c 建页弧线绿`
+  - `ledger_refreshed=parity-ledger v8 23 项（D-23 增补 + D-21 扩记）
+    在 main 读回核验[无 live ledger 服务，PLAN-001 同判——tracked
+    派生面随 T-05 落位，本步读回验证]`
+  - `archived=git mv docs/plans/archived/005-dangling-create-slice.md
+    + status archived + completion_kind delivered`
+  - `cleaned=无 worktree/dev 分支[直接 main 约定；worktree 清单仅主
+    检出，分支清单仅 main+origin/main，工作树零 WIP]`
+  - `delivery_commit=4e869fe`；canonical 面冻结哈希见本节复审记录。
 
 ## 10. 待澄清事项
 
