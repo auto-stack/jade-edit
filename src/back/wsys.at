@@ -738,6 +738,306 @@ pub fn linkify_page_impl(path str, stem str) str {
     return "0"
 }
 
+// ===== 页面元数据读+受控写（PLAN-011 T-01；知识库第九切片 back 半）——
+// **D-14 受控裁决落地**（SD-1101）：仅 tags/aliases 两键改写、其余键
+// 逐字节保留（含缩进/注释/空行/未知键直通）、空值删键、无 frontmatter
+// 档增建界符段、值归一无缩进 block-list、CRLF 行尾风格继承、同值重写
+// 幂等。时间戳类键 Time 门控排除（§1 非目标）。界符族第四件
+//（is_delim/body_after_open/write_body 姊妹标记法）。
+
+/// 逗号分隔串 → 去重列表（trim 逐项；空项/纯空白丢弃；空串 → 空表）。
+/// 半角逗号唯一分隔（§10.3——值含逗号本体 v1 不支持，记账）。
+fn csv_split(s str) List {
+    var out List = []
+    if s == "" {
+        return out
+    }
+    var parts = s.split(",")
+    var i int = 0
+    while i < parts.len() {
+        // ⚠ D-20②：列表元素先拷局部变量再调方法。
+        var p str = parts[i]
+        var v str = p.trim()
+        if v != "" {
+            var seen bool = false
+            var di int = 0
+            while di < out.len() {
+                var have str = out[di]
+                if have == v {
+                    seen = true
+                }
+                di = di + 1
+            }
+            if !seen {
+                out.push(v)
+            }
+        }
+        i = i + 1
+    }
+    return out
+}
+
+/// 值列表 → "a,b" 逗号连接（page_meta 读面 value 形态——逐项重接）。
+fn csv_join(items List) str {
+    var out str = ""
+    var i int = 0
+    while i < items.len() {
+        if i > 0 {
+            out = out + ","
+        }
+        var t str = items[i]
+        out = out + t
+        i = i + 1
+    }
+    return out
+}
+
+/// 值列表 → 键 block 文本（增建路径用）："key:\n- x\n" 无缩进归一形态；
+/// cr = true → 行元素尾带 "\r"（CRLF 继承——split("\n") 空间内重接恒等）。
+fn fm_block_lines(key str, items List, cr bool) str {
+    var out str = ""
+    if items.len() == 0 {
+        return out
+    }
+    var crs str = ""
+    if cr {
+        crs = "\r"
+    }
+    out = out + key + ":" + crs + "\n"
+    var i int = 0
+    while i < items.len() {
+        var t str = items[i]
+        out = out + "- " + t + crs + "\n"
+        i = i + 1
+    }
+    return out
+}
+
+/// frontmatter 段受控改写（标记法逐行——界符族第四件本体）：删旧键行
+/// 块（键行 + 其后 block-list 项行——两缩进形态，首个非列表行即止同
+/// page_fm_list 收集语义）+ 原位插新块（键行 + "- x" 无缩进归一——cr
+/// 继承行尾）；未命中 → 尾追（fm 段无闭合界符，追尾即闭合界符前语义）；
+/// items 空 → 只删不插（删键）。非目标行逐字节直通（split/join 同分隔
+/// 符恒等——行元素含 CRLF 文件残留 "\r" 原样保留）。
+fn fm_set_block(fm str, key str, items List, cr bool) str {
+    var lines = fm.split("\n")
+    var khead str = key + ":"
+    var crs str = ""
+    if cr {
+        crs = "\r"
+    }
+    var out str = ""
+    var removed bool = false
+    var inserted bool = false
+    var skipping bool = false
+    var ln int = lines.len()
+    var i int = 0
+    while i < ln {
+        // ⚠ D-20②：列表元素先拷局部变量再调方法。
+        var raw str = lines[i]
+        var line str = raw.trim()
+        var emit bool = true
+        // 末元素 = ""（fm 恒以 "\n" 结尾——构造面每行 +"\n"）：不发射，
+        // 防逐次写累积空行（artifact）。
+        if i == ln - 1 {
+            if line == "" {
+                emit = false
+            }
+        }
+        // 旧块收集态（**不设 removed 门**——键行删除后 skipping 仍需
+        // 活着吃掉后续项行）："- " 项行丢弃；首个非列表行即止（空行/
+        // 次键——page_fm_list 收集语义同款）。
+        if skipping {
+            if line.starts_with("-") {
+                emit = false
+            } else {
+                skipping = false
+            }
+        }
+        if !removed {
+            var top_level bool = true
+            if raw.starts_with(" ") {
+                top_level = false
+            }
+            if raw.starts_with("\t") {
+                top_level = false
+            }
+            if emit {
+                if top_level && line.starts_with(khead) {
+                    // 目标键行：新块原位插（未命中尾部追语义分野）+ 删旧行。
+                    if items.len() > 0 {
+                        out = out + khead + crs + "\n"
+                        var k int = 0
+                        while k < items.len() {
+                            var it str = items[k]
+                            out = out + "- " + it + crs + "\n"
+                            k = k + 1
+                        }
+                        inserted = true
+                    }
+                    removed = true
+                    skipping = true
+                    emit = false
+                }
+            }
+        }
+        if emit {
+            out = out + raw + "\n"
+        }
+        i = i + 1
+    }
+    if !inserted {
+        if items.len() > 0 {
+            out = out + khead + crs + "\n"
+            var k2 int = 0
+            while k2 < items.len() {
+                var it2 str = items[k2]
+                out = out + "- " + it2 + crs + "\n"
+                k2 = k2 + 1
+            }
+        }
+    }
+    return out
+}
+
+/// 页面元数据读（api.page_meta 实现）：exists 卫 → frontmatter_of →
+/// page_fm_list 两键 → 裸数组装配（缺席键项不装配；value = 逗号连接）。
+pub fn page_meta_json(path str) str {
+    if !File.exists(resolve(path)) {
+        return "[]"
+    }
+    var fm str = frontmatter_of(File.read_text(resolve(path)))
+    var tags = page_fm_list(fm, "tags")
+    var aliases = page_fm_list(fm, "aliases")
+    var out str = "["
+    if tags.len() > 0 {
+        if out != "[" {
+            out = out + ","
+        }
+        out = out + "{\"key\":\"tags\",\"value\":\"" + json_esc(csv_join(tags)) + "\"}"
+    }
+    if aliases.len() > 0 {
+        if out != "[" {
+            out = out + ","
+        }
+        out = out + "{\"key\":\"aliases\",\"value\":\"" + json_esc(csv_join(aliases)) + "\"}"
+    }
+    out = out + "]"
+    return out
+}
+
+/// 页面元数据受控写（api.set_page_meta 实现；五步）：
+/// ①exists 卫 + 幂等防线（两键全空且档本无两键 → no-op "ok" 零写盘）；
+/// ②段取（首行界符 + 闭合界符定位——frontmatter_of 同判）；
+/// ③fm_set_block ×2（tags 先 aliases 后——同现时键序 tags,aliases 归一）；
+/// ④无 frontmatter 档增建界符段（fm_block_lines 组块）；CRLF 继承 =
+/// 原 text 含 "\r\n" → 新段行元素尾带 "\r"（split("\n") 空间恒等重接）；
+/// ⑤write_text 落盘 + exists 复核 → "ok"/""。
+pub fn set_page_meta_impl(path str, tags str, aliases str) str {
+    if !File.exists(resolve(path)) {
+        return ""
+    }
+    var full str = resolve(path)
+    var text str = File.read_text(full)
+    var tags_list = csv_split(tags)
+    var aliases_list = csv_split(aliases)
+    var cr bool = text.contains("\r\n")
+    var lines = text.split("\n")
+    // ②段取：首行界符 + 闭合界符行定位（has_fm/close_idx——write_body
+    // 同判形态；无闭合界符 = frontmatter_of "" 同判 → 无 frontmatter 档）。
+    var has_fm bool = false
+    var close_idx int = -1
+    if lines.len() > 0 {
+        if is_delim(lines[0]) {
+            var si int = 1
+            var sdone bool = false
+            while si < lines.len() {
+                if !sdone {
+                    // ⚠ D-20②：列表元素先拷局部变量再调方法。
+                    var sline str = lines[si]
+                    if is_delim(sline) {
+                        has_fm = true
+                        close_idx = si
+                        sdone = true
+                    }
+                }
+                si = si + 1
+            }
+        }
+    }
+    // ①幂等防线：两键全空（csv_split 后空表——全空白同判）且档本无两键
+    // → no-op "ok"（零写盘）。
+    if tags_list.len() == 0 {
+        if aliases_list.len() == 0 {
+            var fm0 str = ""
+            if has_fm {
+                var j0 int = 1
+                while j0 < close_idx {
+                    var l0 str = lines[j0]
+                    fm0 = fm0 + l0 + "\n"
+                    j0 = j0 + 1
+                }
+            }
+            if page_fm_list(fm0, "tags").len() == 0 {
+                if page_fm_list(fm0, "aliases").len() == 0 {
+                    return "ok"
+                }
+            }
+        }
+    }
+    var out str = ""
+    if has_fm {
+        // ③段内受控改写：fm 段逐行重建（fm_set_block ×2）+ 界符行/体逐
+        // 字节直通（行元素含 CRLF 残留 "\r" 原样保留——非目标行零变化）。
+        var fm str = ""
+        var j int = 1
+        while j < close_idx {
+            var l str = lines[j]
+            fm = fm + l + "\n"
+            j = j + 1
+        }
+        var new_fm str = fm_set_block(fm, "tags", tags_list, cr)
+        new_fm = fm_set_block(new_fm, "aliases", aliases_list, cr)
+        // ⚠ D-20②：界符行元素先拷局部再拼接。
+        var open_line str = lines[0]
+        var close_line str = lines[close_idx]
+        out = open_line + "\n" + new_fm + close_line + "\n"
+        // body 直通重接：末元素处理（原串以 \n 结尾时末元素 = ""——不再补
+        // 换行方为恒等；非空 = 原串无尾换行——原样直通。write_body 同款
+        // len-1 口径）。
+        var n int = lines.len()
+        var k int = close_idx + 1
+        while k < n {
+            var l2 str = lines[k]
+            if k == n - 1 {
+                if l2 != "" {
+                    out = out + l2
+                }
+            } else {
+                out = out + l2 + "\n"
+            }
+            k = k + 1
+        }
+    } else {
+        // ④增建：界符段（tags 先 aliases 后）+ 原文直通（body 前）。
+        var seg str = fm_block_lines("tags", tags_list, cr)
+        seg = seg + fm_block_lines("aliases", aliases_list, cr)
+        var d1 str = "---"
+        var d2 str = "---"
+        if cr {
+            d1 = "---\r"
+            d2 = "---\r"
+        }
+        out = d1 + "\n" + seg + d2 + "\n" + text
+    }
+    // ⑤落盘 + 复核。
+    File.write_text(full, out)
+    if File.exists(full) {
+        return "ok"
+    }
+    return ""
+}
+
 // ===== 工作区标签索引（PLAN-008 T-01；知识库第六切片 back 半）——
 // frontmatter 消费面**只读首开**（SD-801 边界定文）：本组全部 fn 零写盘
 // ——D-14 写面不动（补写/改写属功能池后续批）。frontmatter 在 back 侧
