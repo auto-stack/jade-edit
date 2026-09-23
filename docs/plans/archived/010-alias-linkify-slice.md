@@ -1,7 +1,7 @@
 ---
 plan_id: PLAN-010
-status: reviewed
-completion_kind: executing_done
+status: archived
+completion_kind: delivered
 feature_name: alias-linkify-slice
 author: [zhaopuming]
 created_at: 2026-09-23T15:21:23+08:00
@@ -453,6 +453,30 @@ pub fn linkify_page_impl(path, stem) str {
     §9 第一轮记录引）+ vm fix6 EXIT=0 双臂实录；提交面 f5f17e4 diff
     与 §9 work_summary/F-R10-1 修复记录逐项吻合（独立通读）。
   - `next: merge`（docs-only 后代资格预审=本笔；直接 main 线性约定）。
+
+- **2026-09-23 merge（auto-plan-merge）**——收据 `PLAN-010:r1`：
+  - `stage: merge` | plan_id: PLAN-010 | revision 1 |
+    outcome: **pass** | completion_kind: **delivered**。
+  - **prepared**——delivery commit **3aaa8a2** = f5f17e4 的
+    docs-only 后代（diff 全窗口仅本计划 §9 终审记录 +33/-1；
+    实现/依赖零变化——gate ALL GREEN@f5f17e4 等价承继，复审窗
+    绿跑实录在案）。
+  - **landed**——main tip == 3aaa8a2（直接 main 线性约定，无
+    合并提交；worktree list 单主检出实证）。
+  - **ledger_refreshed**——docs/parity-ledger.md **v13** 读回证
+    （H1 v13 + 27 行 D-01..D-27 + D-27 四件[④复审修复窗扩记] +
+    D-21 v13 扩记）；无 live ledger 服务（PLAN-001..009 同判
+    ——ledger = tracked file，经 git 提交即发布）。
+  - **archived**——git mv → docs/plans/archived/
+    010-alias-linkify-slice.md + status: archived +
+    completion_kind: delivered；canonical 面（ARCHITECTURE §5
+    SD-1001/§6 SD-1002 + README SD-1003/1004）@f5f17e4 在 main。
+  - **cleaned**——无 worktree/无 dev 分支（直接 main 线性约定，
+    PLAN-005..009 同款）；主检出 status clean（随本笔归档提交
+    验证）。
+  - `next: 无`（PLAN-011 候选池 §10.7——页面属性写面草稿已
+    在库[双层预立项，work 前提=本计划归档——随本笔兑现]；
+    后续候选=大纲[D-12]/每日笔记[Time]/移动+目录/casefold）。
 
 ## 10. 待澄清事项
 
