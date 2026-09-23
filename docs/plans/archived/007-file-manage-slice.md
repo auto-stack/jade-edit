@@ -1,10 +1,10 @@
 ---
 plan_id: PLAN-007
-status: reviewed
+status: archived
 feature_name: file-manage-slice
 author: [zhaopuming]
 created_at: 2026-09-23T02:34:22+08:00
-updated_at: 2026-09-23T14:05:00+08:00
+updated_at: 2026-09-23T14:45:00+08:00
 plan_revision: 1
 current_step: 5
 total_steps: 5
@@ -476,7 +476,30 @@ pub fn delete_page_impl(path str) str {
 
 ## 9. 复审记录
 
-- **2026-09-23 复审 pass（auto-plan-work 收口后，auto-plan-review；revision 1 保持）**：
+- **2026-09-23 merge pass（auto-plan-merge）**：
+  - `stage: merge` | outcome: **pass** | completion_kind: **delivered**。
+  - **prepared** = reviewed 基线（reviewed_commit=c6ff4cf；复审提交为
+    766ed53 的 docs-only 后代[diff 全窗口仅计划文件 +56/-2，实现/依赖
+    零变化——delivery_commit=c6ff4cf 资格成立]）；canonical delta =
+    SD-701..704 已于 T-05 落位 docs/ 根三件（本仓知识库约定——
+    PLAN-001..006 在案先例，无 docs/specs/ 面）。
+  - **landed** = main tip == c6ff4cf == delivery（直接 main 线性约定，
+    本仓无 worktree/dev 分支；ancestry 3b46b5b→c6ff4cf 六提交线性直
+    证）；归档前冒烟 merged **15/15 + 基线 v7 零漂移** ALL GREEN
+    （e2e/.runtime/merge-smoke.log）。
+  - **ledger_refreshed** = docs/parity-ledger.md v10 于 main 读回
+    （header v10 + D-25 file 切片实勘集在册 + 25 项三分类）——无
+    live ledger 服务，PLAN-001/005/006 同判（tracked 派生面即账本）。
+  - **archived** = git mv → docs/plans/archived/007-file-manage-
+    slice.md + status: archived + completion_kind: delivered。
+  - **cleaned** = 无 worktree/dev 分支待清（直接 main 约定；worktree
+    清单仅主检出 D:/autostack/jade-edit、分支清单仅 main+origin/main、
+    工作树 tracked 零 WIP——唯一未跟踪件 docs/plans/008-tags-wanted-
+    slice.md 为**并行会话外来产物**[006 归档窗同款]，非本计划范围，
+    保留不动）。
+  - `next: —`（闭环；候选池 §10.7 在案 + PLAN-008 草稿已现工作树）。
+
+- **2026-09-23 复审 pass（auto-plan-work 收口后，auto-plan-review；revision 1 保持）**：（auto-plan-work 收口后，auto-plan-review；revision 1 保持）**：
   - `stage: review`，PLAN-007，revision 1。
   - `outcome: pass`——execution_done → reviewed，next=merge。
   - `reviewed_commit: 766ed534261e1e6437938e8864510d868769fc3b`；
