@@ -19,6 +19,12 @@
 //             面，ASCII 造档 = 全弧线全臂可跑，零语料改动）——悬空行点击
 //             → 确认弹层三断言 → 取消零落盘 → 创建 → 开新档（模板播种）
 //             → 树新行 → 面板翻转 → 模板逐字节
+//   10m mentions 未链接提及段（PLAN-009；vm 矩阵 link 组 mentions 子步
+//             同单）：write_wiki 内造 ASCII 提及源档（纯文本提及/已链
+//             排重面）→ 重载 → 开 Hello World.ad → 面板三段标题 + 提及
+//             行 + snippet 断言；delete_page 收尾（防 13 删档后 wanted
+//             计数漂移）。search_wiki POST 面无 D-19——全臂可跑。执行序
+//             在 10c 后 11 前
 //   11 find   查找面板双模式（PLAN-004；vm 矩阵 check 11 同单）：快开
 //             （文件模式——空 q 全量/过滤 Pro→Projects/拾取即关）+ 全文
 //             检索（text 模式——未运行提示/CJK 查询「任务列表」[POST 通道
@@ -54,14 +60,16 @@
 //             GET query 同败，新页 CJK 案不设）。无键位面（Delete
 //             键 = 真键盘，e2e 不覆盖——11/12 同口径，入口 = 文件
 //             菜单→删除…）。
-//   14 meta   标签面板+wanted 模式（PLAN-008；vm 矩阵 check 14 同单
+//   14 meta   标签面板+wanted 模式+inline tag 子步（PLAN-008+PLAN-009；vm 矩阵 check 14 同单
 //             ——段内最后）：tags 4 行已知答案[13 后位态]+展开导航+
 //             write_wiki 外造 Save 刷新；wanted 无 input 三行清单
 //             [首页（1）/页面名（1）/CAP 定理（2）——语料实勘全集
 //             【执行期校正：页面名亦悬空】]/取消零落盘/创建开档模板
 //             逐字节/消缺/空态闭环（无悬空链接）/exists 翻转。建页
 //             全走 POST body CJK 已证面——无 vm 侧 D-19 分野。执行序
-//             在 13 后（段内最后——13 已定删除面，此位已知答案成立）。
+//             在 13 后（段内最后——13 已定删除面，此位已知答案成立；
+//             inline 子步：write_wiki 外造 body #inline-e2e 档 → 保存 →
+//             面板新行（PLAN-009 T-04，vm 矩阵 meta 组子步同单））。
 //
 // D-17 冲刷机制（vue 轨特有，7/8/9 共用）：切档重挂载后的编辑器实例，
 // 键入只进引擎模型、update:modelValue 门控至 blur——中性 blur（点
@@ -280,6 +288,47 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   const npDisk = fs.readFileSync(path.join(WORKSPACE, 'NewPage.ad'), 'utf8')
   expect(npDisk, '模板逐字节（# {target}\\n\\n 无 frontmatter）').toBe('# NewPage\n\n')
   console.log('[10c create] PASS — 建页弧线（取消零落盘/创建→开档 # NewPage/树新行/面板翻转/模板逐字节；ASCII 源档测试内造）')
+  // 10m mentions（PLAN-009 T-04；vm 矩阵 link 组 mentions 子步同单——真 DOM
+  // 面：三段标题/提及行/snippet；ASCII 弧线全臂可跑[search_wiki POST 双
+  // 臂无 D-19 面]；素材经 write_wiki POST 内造 + delete_page POST 收尾——
+  // 13 删 wiki/Hello World.ad 后 B 档 [[Hello World]] 会转悬空，wanted
+  // 已知答案 Hello World（3）会漂 4，故收尾删净后 goto 重载）。
+  const mRes1 = await request.post('/api/write_wiki', {
+    data: { path: 'Mention Source.ad', body: 'plain see Hello World here.\n' },
+  })
+  expect(mRes1.ok(), 'write_wiki 造提及源档 POST ok').toBe(true)
+  const mRes2 = await request.post('/api/write_wiki', {
+    data: { path: 'Mention Linked.ad', body: 'link [[Hello World]] here.\n' },
+  })
+  expect(mRes2.ok(), 'write_wiki 造已链源档 POST ok').toBe(true)
+  await page.goto('/')
+  await expect(page.getByText('ready', { exact: true }).first()).toBeVisible({ timeout: 15_000 })
+  await page.getByText('wiki', { exact: true }).first().click()
+  await page.getByText('Hello World.ad', { exact: true }).first().click()
+  await expect(visibleEditor(page)).toContainText('这是一段示例文本', { timeout: 15_000 })
+  await page.getByText('视图', { exact: true }).click()
+  await page.getByText('切换反链', { exact: true }).click()
+  // ① 第三段标题 + ② 提及行/snippet（行钮消歧：树行同文本居先——.last()
+  // 取面板行钮，面板渲染居后）
+  await expect(page.getByText('未链接提及', { exact: true })).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByRole('button', { name: 'Mention Source.ad', exact: true }).last()).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByText('plain see Hello World here.', { exact: true })).toBeVisible()
+  await expect(page.getByText('（无未链接提及）', { exact: true })).toHaveCount(0)
+  console.log('[10m mentions] PASS — 三段标题 + 提及行 + snippet（ASCII 弧线全臂）')
+  // 收尾：删素材 + 重载复原（防 13 后 wanted 计数漂移）
+  for (const p of ['Mention Source.ad', 'Mention Linked.ad']) {
+    const dRes = await request.post('/api/delete_page', { data: { path: p } })
+    expect(dRes.ok(), `delete_page ${p} ok`).toBe(true)
+  }
+  await page.goto('/')
+  await expect(page.getByText('ready', { exact: true }).first()).toBeVisible({ timeout: 15_000 })
+  // 重载后复原后续口径：wiki 树展开（check 12 起按树行点击开档——
+  // 快开面板走 ft_nodes 全量数据与展开态无关故 check 11 不受影响）+
+  // 反链面板开（check 11 首步按「开着→关」断言）
+  await page.getByText('wiki', { exact: true }).first().click()
+  await page.getByText('视图', { exact: true }).click()
+  await page.getByText('切换反链', { exact: true }).click()
+  await expect(page.getByText('LINKS', { exact: true })).toBeVisible({ timeout: 10_000 })
 
   // 11 find（vm 矩阵 check 11 同单）：查找面板双模式。input = 真 DOM
   // （fill() 即发 input 事件 → oninput——无 D-17 通道约束，该门控仅编辑
@@ -543,9 +592,19 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   expect(wRes2.ok(), 'write_wiki 造带 tag 档 POST ok').toBe(true)
   await page.locator('button[title="保存"]').click()
   await expect(page.getByRole('button', { name: 'meta-e2e · 1', exact: true })).toBeVisible({ timeout: 10_000 })
+  console.log('[14 meta] tags Save 刷新 — 外造 meta-e2e → 保存 → 面板新行')
+  // meta inline（PLAN-009 T-04；vm 矩阵 meta 组 inline 子步同单）：body
+  // 行内 #tag 聚合——write_wiki 外造 inline 档（fm 无 tags 键——纯 body
+  // 聚合源面）→ 保存（ActSave 触点刷新）→ 面板新行 inline-e2e · 1
+  const wRes3 = await request.post('/api/write_wiki', {
+    data: { path: 'Inline E2E.ad', body: '正文 #inline-e2e 尾\n' },
+  })
+  expect(wRes3.ok(), 'write_wiki 造 inline 档 POST ok').toBe(true)
+  await page.locator('button[title="保存"]').click()
+  await expect(page.getByRole('button', { name: 'inline-e2e · 1', exact: true })).toBeVisible({ timeout: 10_000 })
+  console.log('[14 meta] inline tag 聚合 — 外造 inline 档保存后面板新行')
   await page.getByText('视图', { exact: true }).click()
   await page.getByText('切换标签', { exact: true }).click()
-  console.log('[14 meta] tags Save 刷新 — 外造 meta-e2e → 保存 → 面板新行')
   // wanted ⑤：模式入口（无 input 行/无检索钮 + 两行清单已知答案）
   await page.getByText('视图', { exact: true }).click()
   await page.getByText('悬空清单', { exact: true }).click()

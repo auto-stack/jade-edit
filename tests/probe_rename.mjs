@@ -51,7 +51,9 @@ const RUNTIME = path.join(repoRoot, 'e2e', '.runtime')
 const PROBE_DIR = path.join(RUNTIME, 'probe-rename')
 const MERGED_WS = path.join(RUNTIME, 'probe-rename-workspace')
 const MERGED_PORT = 9399
-const SPLIT_PORT = 8254
+// 8251-8950 现为 Windows WinNAT 排除区段（netsh 实勘——PLAN-008 复审
+// findings 留档件；G4 收口：8254 → 8223 区段外，6400f3b 同款适配）。
+const SPLIT_PORT = 8223
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 

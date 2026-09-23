@@ -21,6 +21,21 @@
 //             行（index/CAP 定理/Tasks）→ 点击反链行开 index.ad → 出链
 //             行开 CAP 定理.ad → 关档空态（无反链/无出链）→ 重开恢复。
 //             执行序在 8 后 9 前（quit 杀进程恒为臂内最后一项）
+//   10m mentions 未链接提及段（PLAN-009；link 组子步——组数不变，fail
+//             即臂败，10c 同款）：六子步——①三段标题（反链/出链/未链
+//             接提及）②提及行已知答案 + 已链源排重（测试内造 Mention A
+//             纯文本提及 Hello World / Mention B 已链 [[Hello World]]/
+//             Mention C 纯文本提及 Tasks——A 入提及段[B 只在反链段]，
+//             段区域断言——文件树同列根档 .ad，全文 includes 误中树行）
+//             ③行点击 OpenLink（段内行钮定位——全文首个匹配是树行）
+//             ④激活变更刷新（切 Tasks → C 行）⑤空态（开 Mention A 本
+//             档——无提及者）⑥面板关零 fetch（行为等价断言——关面板
+//             → 激活变更 → mention_rows dump 行恒旧值 + 段不渲染；
+//             merged 臂网络不可观测[§10.1 落定口径]）。素材 ASCII 双臂
+//             ——search_wiki POST 面无（D-19 不涉）；造档后过一次面板
+//             关开触点（LinksRefreshOf——B 入 bl_rows 排重断言域成立）。
+//             执行序在 10b 后 10c 前（10c 首步按「面板开/active=Hello
+//             World」口径——子步收尾复原该态）
 //   10c create 悬空建页弧线（PLAN-005）：悬空行点击 → 确认弹层 → 取消
 //             零落盘 → 创建 → 落盘 + 链接翻转（触发集 v2）→ 树新行
 //             （G3）→ 行翻转；CJK 开档播种子步仅 merged 臂（D-19 同款
@@ -48,16 +63,22 @@
 //             +邻档补位，split 臂现场开→关同面；两臂删后激活均落
 //             Project X[右侧邻档同构]。收尾状态复原回 Hello World
 //             [quit 前置——typeWholeDoc 目标档]）。执行序在 12 后 9 前
-//   14 meta   标签面板+wanted 模式八子步（PLAN-008；双件同组——find
-//             组先例。tags 子步：面板开 7 tag 行[语料实勘全集——执行
-//             期校正：7 非计划记的 6，Hello World.ad 实有 demo]/展开
-//             导航 ASCII 双臂+CJK 仅 merged[D-19]/Save 刷新外造新行。
-//             wanted 子步：模式入口无 input 行无检索钮/语料已知答案
-//             页面名（1）[执行期校正：悬空全集=首页+页面名，首页已被
-//             10c 消缺故不在此位]+外造 Wanted Target（1）/取消零落盘/
-//             创建开档+消缺+exists 翻转+模板逐字节/空态闭环（无悬空
-//             链接）。执行序在 10c 后 11 前——此位 tags 全集/悬空余量
-//             已知答案成立；收尾复原反链面板开[check 11 首步口径]）
+//   14 meta   标签面板+wanted 模式八子步 + inline tag 子步（PLAN-008 +
+//             PLAN-009；双件同组——find 组先例。tags 子步：面板开 7 tag
+//             行[语料实勘全集——执行期校正：7 非计划记的 6，Hello
+//             World.ad 实有 demo]/展开导航 ASCII 双臂+CJK 仅 merged[D-19]/
+//             Save 刷新外造新行。wanted 子步：模式入口无 input 行无检索
+//             钮/语料已知答案页面名（1）【执行期校正：悬空全集=首页+页
+//             面名，首页已被 10c 消缺故不在此位】+外造 Wanted Target（1）/
+//             取消零落盘/创建开档+消缺+exists 翻转+模板逐字节/空态闭环
+//             （无悬空链接）。inline 子步（PLAN-009 T-04 meta 组）：⑦外造
+//             body #inline-meta 档[fm 无 tags 键——纯 body 聚合源]保存 →
+//             面板新行；⑧语料基线零漂移回归（7 语料 tag 行全在 + 忽略面
+//             负向——无 block-project-a 行：`{#block-project-a}` 块锚/
+//             `\[\[Tasks#block-project-b\]\]` 转义链接锚双形态不入集，
+//             TAGS 区段断言[编辑器文本在面板前——全文负向会误中]）。
+//             执行序在 10c 后 11 前——此位 tags 全集/悬空余量已知答案成
+//             立；收尾复原反链面板开[check 11 首步口径]）
 //   9 quit    退出存盘：dirty → 文件菜单退出 → CloseRequest 确认弹层 →
 //             QuitSaveClose → 磁盘三验（原文/标记/frontmatter）+ 进程退出
 //             （Process.exit 可能先于 HTTP 响应——连接断开即成功路径；
@@ -94,7 +115,7 @@ const argOf = (name) => {
   return i >= 0 ? args[i + 1] : undefined
 }
 const ARM = argOf('--arm') ?? 'all' // all | merged | split
-const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v8.txt')
+const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v9.txt')
 const SAVE_BASELINE = argOf('--save-baseline')
 
 const EDIT_MARKER = 'jade-edit 冒烟标记：编辑回写可见。'
@@ -389,16 +410,17 @@ async function runArm(arm, port) {
       const stateDump = (await callTool('autoui_state', {})).trim()
       const snapIds = JSON.stringify([...(await snapshotText()).matchAll(/#(vnode_\d+)/g)].map((m) => m[1]))
       const headerFor = (file) =>
-        `// jade-edit vm 结构基线 v8（PLAN-008 T-04 重锁；v7=PLAN-007 T-04、v6=PLAN-006 T-04、\n` +
-        `// v5=PLAN-005 T-04、v4=PLAN-004 T-04、v3=PLAN-003 T-04、v2=PLAN-002 T-01、\n` +
-        `// v1=PLAN-001 T-04 换基、v0=PLAN-081 T-05 均留档）。\n` +
-        `// 重锁因由：①store 新增 tags_open 字段 + App 新增 tags_rows/tag_expanded/wanted_rows\n` +
-        `// 字段（PLAN-008 标签面板/wanted 模式数据态）进 autoui_state 全量 dump；②menubar\n` +
-        `// 视图菜单两新项（「切换标签」Ctrl+T /「悬空清单」Ctrl+Shift+D）——snapshot vnode\n` +
-        `// id 序列计划内扩（非漂移事故）。find_mode 值域扩 "wanted"（基线态仍默认 files）。\n` +
-        `// 仪器同 v2..v7：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态\n` +
+        `// jade-edit vm 结构基线 v9（PLAN-009 T-04 重锁；v8=PLAN-008 T-04、v7=PLAN-007 T-04、\n` +
+        `// v6=PLAN-006 T-04、v5=PLAN-005 T-04、v4=PLAN-004 T-04、v3=PLAN-003 T-04、v2=PLAN-002\n` +
+        `// T-01、v1=PLAN-001 T-04 换基、v0=PLAN-081 T-05 均留档）。\n` +
+        `// 重锁因由：App 模型新增 mention_rows 字段（PLAN-009 未链接提及数据态——唯一新模型\n` +
+        `// 字段，store 零新增）进 autoui_state 全量 dump；反链面板第三段（未链接提及）在\n` +
+        `// backlinks_open 块内——基线采样点面板关故 snapshot vnode id 序列不扩（段节点仅在\n` +
+        `// 面板开时渲染）；零新增键位/菜单项。\n` +
+        `// 仪器同 v2..v8：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态\n` +
         `//（chrome 全套 + Hello World.ad 开；查找面板/建页弹层/新建弹层/重命名弹层/删除弹层/\n` +
-        `// 标签面板未开——find_*/create_*/new_*/rename_*/delete_*/tags_* 全为默认值入 dump）。\n` +
+        `// 标签面板/反链面板未开——find_*/create_*/new_*/rename_*/delete_*/tags_*/mention_rows 全为\n` +
+        `// 默认值入 dump）。\n` +
         `// 再生成：node tests/vm_matrix.mjs --save-baseline ${path.relative(repoRoot, file).replace(/\\\\/g, '/')}\n`
       const baselineBodyOf = () => `## state\n${stateDump}\n\n## snapshot-ids\n${snapIds}\n`
       if (SAVE_BASELINE) {
@@ -408,9 +430,9 @@ async function runArm(arm, port) {
       } else if (fs.existsSync(BASELINE)) {
         const raw = fs.readFileSync(BASELINE, 'utf8')
         const ok = raw === headerFor(BASELINE) + baselineBodyOf()
-        check('B', 'baseline', ok, ok ? '结构基线 v8 零漂移（state 逐字节 + id 序列）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
+        check('B', 'baseline', ok, ok ? '结构基线 v9 零漂移（state 逐字节 + id 序列）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
       } else {
-        console.log('  [baseline] structure-v8 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v8.txt')
+        console.log('  [baseline] structure-v9 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v9.txt')
       }
     }
 
@@ -523,6 +545,111 @@ async function runArm(arm, port) {
     await stateIs('active_title', tabTitleOf(TARGET_LABEL))
     await waitButton('wiki/CAP 定理.ad', { exact: true })
     check('10b', 'link-empty', emptyOk, `点击反链行开 index.ad + 出链行开 CAP 定理.ad + 空态（untitled 激活）双文本=${emptyOk} + 重开行恢复`)
+
+    // 10m mentions（PLAN-009 T-04；link 组 mentions 子步——组内子步不占
+    // 检查位，fail 即臂败，10c 同款）：未链接提及段六子步（文件头检查单
+    // 10m 注记）。此位态：面板开 + active=Hello World（10b 收尾）——
+    // ②提及断言前须过一次面板关开触点（LinksRefreshOf——外造档入
+    // link_pages，B 入 bl_rows 排重断言域成立）。
+    const mnAFile = path.join(FIXTURE, 'Mention A.ad')
+    const mnBFile = path.join(FIXTURE, 'Mention B.ad')
+    const mnCFile = path.join(FIXTURE, 'Mention C.ad')
+    fs.writeFileSync(mnAFile, '纯文本提到 Hello World 一词。\n', 'utf8')
+    fs.writeFileSync(mnBFile, '链接 [[Hello World]] 于此。\n', 'utf8')
+    fs.writeFileSync(mnCFile, '散文本提到 Tasks 一词。\n', 'utf8')
+    await pressButton('视图', { exact: true })
+    await pressButton('切换反链', { exact: true })
+    await stateIs('backlinks_open', 'false')
+    await pressButton('视图', { exact: true })
+    await pressButton('切换反链', { exact: true })
+    await stateIs('backlinks_open', 'true')
+    // ① 三段标题 + ② 提及行已知答案（段区域断言——文件树同列根档
+    // .ad，全文 includes 会误中树行；行集两行留根 = path 钮 + snippet
+    // 次行 text）
+    let mnRegion = ''
+    for (const dl = Date.now() + 8000; ; ) {
+      const t = await snapshotText()
+      const i = t.indexOf('未链接提及')
+      mnRegion = i >= 0 ? t.slice(i) : ''
+      if (mnRegion.includes('Mention A.ad') && mnRegion.includes('纯文本提到 Hello World 一词')) break
+      if (Date.now() > dl) throw new Error(`mentions ①② 失守（段标题/提及行/snippet 未现）:\n${mnRegion.slice(0, 400)}`)
+      await sleep(300)
+    }
+    // ② 排重：B 已链源不入提及段（B 在反链段/树行——段区域负向断言
+    // 不误中）
+    if (mnRegion.includes('Mention B.ad')) throw new Error('mentions 排重失守（B 已链源重复入提及段）:\n' + mnRegion.slice(0, 400))
+    // ③ 行点击 OpenLink（段内行钮——全文首个匹配是树行[ft_sel 副作用
+    // 面]，取快照序最后一个 'Mention A.ad' 钮——10c 首页钮同款消歧）
+    {
+      const t = await snapshot()
+      const btns = []
+      const collect = (n) => {
+        if (n.head.startsWith('button ') && elementIdOf(n) && ownText(n) === 'Mention A.ad') btns.push(n)
+        for (const c of n.children) collect(c)
+      }
+      collect(t)
+      const rowBtn = btns[btns.length - 1]
+      if (!rowBtn) throw new Error('mentions 行钮未找到')
+      const res = await callTool('autoui_action', { element_id: elementIdOf(rowBtn), action: 'press' })
+      if (!/status: ok/.test(res)) throw new Error(`press mention row not ok: ${res}`)
+    }
+    await stateIs('active_title', 'Mention A')
+    // ⑤ 空态（无提及档）：Mention A 自身无提及者 → 段空态文本（区段
+    // 断言——空态即足；负向行集断言不设：恒渲染删除弹层带 ft_sel 文本
+    // 会误中）
+    {
+      const dl = Date.now() + 8000
+      for (;;) {
+        const t = await snapshotText()
+        const region = t.slice(t.indexOf('未链接提及'))
+        if (region.includes('（无未链接提及）')) break
+        if (Date.now() > dl) throw new Error('mentions ⑤ 空态失守（（无未链接提及）未现）:\n' + region.slice(0, 300))
+        await sleep(300)
+      }
+    }
+    // ④ 激活变更刷新：树行开 Tasks（OpenFile 触点）→ 提及段随 stem 变
+    // （C 行在、A 行不在——段区域断言）
+    await pressButton('Tasks.ad')
+    await stateIs('active_title', 'wiki/Tasks')
+    {
+      const dl = Date.now() + 8000
+      for (;;) {
+        const t = await snapshotText()
+        const region = t.slice(t.indexOf('未链接提及'))
+        if (region.includes('Mention C.ad') && !region.includes('Mention A.ad')) break
+        if (Date.now() > dl) throw new Error('mentions ④ 激活刷新失守（C 行应现/A 行应消）:\n' + region.slice(0, 400))
+        await sleep(300)
+      }
+    }
+    // ⑥ 面板关零 fetch（行为等价断言——merged 臂网络不可观测，§10.1
+    // 落定口径）：关面板 → 激活变更（OpenLink 触点 fetch 被守卫拦）→
+    // mention_rows dump 行恒旧值 + 段不渲染
+    const mnStateBefore = (await stateText('mention_rows')).trim()
+    await pressButton('视图', { exact: true })
+    await pressButton('切换反链', { exact: true })
+    await stateIs('backlinks_open', 'false')
+    await pressButton('wiki/Hello World', { exact: true })
+    await stateIs('active_title', tabTitleOf(TARGET_LABEL))
+    const mnStateAfter = (await stateText('mention_rows')).trim()
+    if (mnStateBefore !== mnStateAfter) throw new Error(`mentions ⑥ 守卫失守（面板关激活变更后 mention_rows 变：${mnStateBefore} -> ${mnStateAfter}）`)
+    if ((await snapshotText()).includes('未链接提及')) throw new Error('mentions ⑥ 守卫失守（面板关时段仍渲染）')
+    // 收尾复原 10c 口径：面板开（ActBacklinks 触发集——链接/提及重取）
+    // + 10m 开启的 Mention A/Tasks tab 关闭（洁净未脏直接关——check 13
+    // 删除后激活落点的已知答案按 [HW,index,CAP,…] tab 序口径，子步
+    // 残留 tab 会漂位）
+    await pressButton('视图', { exact: true })
+    await pressButton('切换反链', { exact: true })
+    await stateIs('backlinks_open', 'true')
+    // tab 关闭 hygiene：先激活（tab 题钮 press = OpenLink 激活）再 x 关
+    //（非激活 tab 行无 x 钮——view 结构在册）
+    await pressButton('Mention A', { exact: true })
+    await pressActiveTabClose('Mention A')
+    await pressButton(tabTitleOf(TAB_LABEL), { exact: true })
+    await pressActiveTabClose(tabTitleOf(TAB_LABEL))
+    await stateIs('tab_count', arm === 'merged' ? '3' : '2')
+    await pressButton('wiki/Hello World', { exact: true })
+    await stateIs('active_title', tabTitleOf(TARGET_LABEL))
+    console.log(`  [10m mentions] PASS — 六子步（三段标题/提及行已知答案+snippet+已链源排重/行点击 OpenLink/空态[无提及档]/激活变更刷新/面板关零 fetch[行为等价]；素材 ASCII 双臂[search_wiki POST 面无]；收尾 tab 复原）`)
 
     // 10c 建页弧线（PLAN-005 T-04；子步不占检查位——组数不变 12）：悬空行
     // 点击 → 确认弹层（create_confirm_open/create_target 态）→ 取消零落盘
@@ -677,6 +804,31 @@ async function runArm(arm, port) {
       await sleep(300)
     }
     if (!metaSaveOk) throw new Error('tags Save 刷新失守（meta-save 行未现）')
+    // inline ⑦（PLAN-009 T-04；meta 组 inline 子步）：body 行内 #tag 聚
+    // 合——外造 inline 档（fm 无 tags 键——纯 body 聚合源面）→ 保存
+    // （ActSave 触点 TagsRefresh）→ 面板新行 inline-meta · 1
+    fs.writeFileSync(path.join(FIXTURE, 'Inline Tagged.ad'), '正文 #inline-meta 尾\n', 'utf8')
+    await pressButton('保存')
+    let metaInlineOk = false
+    for (const dl = Date.now() + 8000; ; ) {
+      metaInlineOk = (await snapshotText()).includes('"inline-meta · 1"')
+      if (metaInlineOk || Date.now() > dl) break
+      await sleep(300)
+    }
+    if (!metaInlineOk) throw new Error('inline tag 档保存后 tags 面板新行失守（inline-meta · 1 未现）')
+    // inline ⑧ 语料基线零漂移回归：7 语料 tag 行全在 + 忽略面负向——
+    // 无 block-project-a 行（`{#block-project-a}` 块锚/`[[Tasks#block-
+    // project-b]]` 转义链接锚双形态不入集证；TAGS 区段断言——编辑器
+    // 文本在面板前，全文负向会误中）
+    let metaInlineBaselineOk = false
+    for (const dl = Date.now() + 8000; ; ) {
+      const t = await snapshotText()
+      const region = t.slice(t.indexOf('TAGS'))
+      metaInlineBaselineOk = metaTagLabels.every((l) => region.includes(`"${l}"`)) && !region.includes('block-project-a')
+      if (metaInlineBaselineOk || Date.now() > dl) break
+      await sleep(300)
+    }
+    if (!metaInlineBaselineOk) throw new Error('inline ⑧ 语料基线漂移（7 tag 行不全或 block-project-a 入集）')
     await pressButton('视图', { exact: true })
     await pressButton('切换标签', { exact: true })
     await stateIs('tags_open', 'false')
@@ -752,8 +904,8 @@ async function runArm(arm, port) {
     await pressButton('视图', { exact: true })
     await pressButton('切换反链', { exact: true })
     await stateIs('backlinks_open', 'true')
-    check('14', 'meta', metaTagsOk && metaSaveOk && wantedNoInput && wantedKnown && wantedRowOk && wantedCancelOk && wantedFlipOk && wantedGoneOk && wantedDiskOk && wantedEmptyOk,
-      `meta 组八子步（tags：面板开 7 tag 行[语料实勘全集]/展开导航 ASCII 双臂+CJK 仅 merged[D-19]/Save 刷新外造新行；wanted：模式入口无 input 行无检索钮/语料已知答案 页面名（1）+外造 Wanted Target（1）/取消零落盘/创建开档+消缺+exists 翻转+模板逐字节/空态闭环（无悬空链接））`)
+    check('14', 'meta', metaTagsOk && metaSaveOk && metaInlineOk && metaInlineBaselineOk && wantedNoInput && wantedKnown && wantedRowOk && wantedCancelOk && wantedFlipOk && wantedGoneOk && wantedDiskOk && wantedEmptyOk,
+      `meta 组八子步 + inline 子步（tags：面板开 7 tag 行[语料实勘全集]/展开导航 ASCII 双臂+CJK 仅 merged[D-19]/Save 刷新外造新行；inline：body #inline-meta 档保存后面板新行+语料基线零漂移回归[忽略面负向无 block-project-a]；wanted：模式入口无 input 行无检索钮/语料已知答案 页面名（1）+外造 Wanted Target（1）/取消零落盘/创建开档+消缺+exists 翻转+模板逐字节/空态闭环（无悬空链接））`)
 
     // 11 find（PLAN-004 T-04）：查找面板双模式。执行序在 quit 前（quit
     // 恒为臂内最后一项）；先关反链面板（check 10 开着）——find 行断言免
