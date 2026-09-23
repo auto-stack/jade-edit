@@ -25,13 +25,16 @@ widget FindPanel {
                 onclick: .Toggle
                 style: "text-[11px] h-5 px-1 text-muted-foreground"
             }
-            // 模式标签（files=文件 / text=全文）——Ctrl+P/Ctrl+Shift+F
-            // 双快捷键分流的结果态显示。
+            // 模式标签（files=文件 / text=全文 / wanted=悬空）——快捷键
+            // 三分流的结果态显示（PLAN-008 增 wanted 第三模式）。
             if .store.find_mode == "files" {
                 text "文件" { style: find_meta }
             }
             if .store.find_mode == "text" {
                 text "全文" { style: find_meta }
+            }
+            if .store.find_mode == "wanted" {
+                text "悬空" { style: find_meta }
             }
         }
     }

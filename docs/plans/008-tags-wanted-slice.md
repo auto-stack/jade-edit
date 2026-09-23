@@ -395,13 +395,29 @@ pub fn tags_json(path str, depth int) str {
       ActTags(面板开启) / CreateGo / NewGo / DeleteGo / RenameGo 七
       触点全接 `.TagsRefresh()`；D-25① 纪律落地（App 上下文零
       `.console` 写面——console 面由 store handler 自维护）。
-- **T-03 wanted 模式 + 建页接回**（AC-02 后半）
+- **T-03 wanted 模式 + 建页接回**（AC-02 后半）✅ 已完成
   - find_mode 三分支（wanted 无 input）+ `view.find-wanted`
     （Ctrl+Shift+F 同族）+ `wanted_rows_of` 纯函数 + wanted_rows
     重算触点 + 行点击 `.CreateClick` 直连（PLAN-005 弹层复用——
     预填/确认/消缺）。
   - 验证：merged 冒烟全弧线（wanted 清单→建页→消缺→exists 翻转）+
     find/create 组回归 + e2e meta 段冒烟。
+  - **证据（2026-09-23）**：
+    - 冒烟（e2e/.runtime/smoke-t03-p08.mjs 临时件，merged 臂）**4/4
+      ALL GREEN 一次过**——模式入口（find_mode=wanted + 面板无 input
+      行/无检索钮）/清单三行（首页（1）+ 页面名（1）[语料实勘全集]
+      + Wanted Target（1）[外造 ASCII 源档]）/行点击 → 弹层预填
+      create_target → 取消零落盘/再点 → 创建开档（模板播种）+ wanted
+      行消缺 + links_json exists 翻转 + 磁盘模板逐字节。
+    - `node tests/vm_matrix.mjs --arm merged`——**14/15**（唯一 FAIL =
+      基线 B 计划内漂移[App wanted_rows/tags_rows/tag_expanded 字段 +
+      menubar 两新项——T-04 v8 重锁]；link/create/find/rename/file 全
+      组零变化）。
+    - `pnpm build` PASS + `pnpm test:e2e` 首跑 check-5 保存点 1 败
+      （D-21 在册签名——write_wiki POST 保存点形态）**重跑全绿 14 段**。
+    - menubar 视图增「悬空清单」checkbox 项（find-text 同构复合
+      checked_if）+ FindPanel 壳模式标签第三分支「悬空」——action
+      view.find-wanted（Ctrl+Shift+D）双入口。
 - **T-04 测试扩单 + 基线 v8 + 判绿首锁**（AC-02/03/04）
   - vm meta 组八子步 + e2e meta 段 + 基线 v8 重锁。
   - 验证：`node tests/vm_matrix.mjs` 双臂全绿 + `pnpm test:e2e`

@@ -298,6 +298,72 @@ fn tabs_impact_text(tabs List, path str) str {
     return m.str() + " 个标签页将关闭，未保存修改将丢弃"
 }
 
+/// 悬空目标聚合行纯函数（PLAN-008 T-03；wanted 模式数据面——rename_
+/// impact/dangling_impact 纯函数族同构第三实例）：link_pages 全页面
+/// 出链扫 exists=false → 按 target 聚合计数（行 = {target,count,label}
+/// ——label 派生期拼接 `{target}（{n}）`，双段插值 avoidance）。两遍
+/// 聚合（D-20② 元素先拷局部；首遍 first-seen 去重、次遍计数——列表
+/// 元素定址替换未证形态，双遍规避）：行序 = first-seen（确定性，
+/// tags_json/link_index 哲学同判）。**纯派生零 back 增量**（wanted
+/// 面语义：link_pages 已知答案上聚合——SD-801）。
+fn wanted_rows_of(pages List) List {
+    var targets List = []
+    var i int = 0
+    while i < pages.len() {
+        var page = pages[i]
+        var links List = page.links
+        var k int = 0
+        while k < links.len() {
+            var lnk = links[k]
+            var ex bool = lnk.exists
+            if !ex {
+                var t str = lnk.target
+                var seen bool = false
+                var j int = 0
+                while j < targets.len() {
+                    var tj str = targets[j]
+                    if tj == t {
+                        seen = true
+                    }
+                    j = j + 1
+                }
+                if !seen {
+                    targets.push(t)
+                }
+            }
+            k = k + 1
+        }
+        i = i + 1
+    }
+    var out List = []
+    var t2 int = 0
+    while t2 < targets.len() {
+        var target str = targets[t2]
+        var n int = 0
+        var i2 int = 0
+        while i2 < pages.len() {
+            var page2 = pages[i2]
+            var links2 List = page2.links
+            var k2 int = 0
+            while k2 < links2.len() {
+                var lnk2 = links2[k2]
+                var ex2 bool = lnk2.exists
+                if !ex2 {
+                    var t3 str = lnk2.target
+                    if t3 == target {
+                        n = n + 1
+                    }
+                }
+                k2 = k2 + 1
+            }
+            i2 = i2 + 1
+        }
+        out.push({ target: target, count: n, label: target + "（" + n.str() + "）" })
+        t2 = t2 + 1
+    }
+    return out
+}
+
 widget App {
     msg {
         Init, FtToggle(str), OpenFile(str), Reload,
@@ -315,6 +381,7 @@ widget App {
         ActNewFile, NewEdit(str), NewGo, NewCancel, ActDelete,
         DeleteGo, DeleteCancel,
         ActTags, TagToggle(str), TagsRefresh,
+        ActFindWanted,
     }
 
     model {
@@ -353,6 +420,11 @@ widget App {
         //（D-20④ 同款裁定：find/链接态先例）。----
         var tags_rows List = []
         var tag_expanded str = ""
+        // —— wanted 模式数据态（PLAN-008）：悬空目标聚合行
+        // {target,count,label}——link_pages 派生（重算挂 LinksRefreshOf
+        // 同触点 + ActFindWanted 入口；tags_rows 同判不入 store——
+        // D-20④）。----
+        var wanted_rows List = []
     }
 
     computed {
@@ -397,6 +469,8 @@ widget App {
         action (id: "view.find-files", handler: .ActFindFiles, title: "快速打开", icon: "file-search", shortcut: "Ctrl+P")
         action (id: "view.find-text",  handler: .ActFindText,  title: "全文检索", icon: "search", shortcut: "Ctrl+Shift+F",
                 checked_if: ".store.find_open && .store.find_mode == \"text\"")
+        action (id: "view.find-wanted", handler: .ActFindWanted, title: "悬空清单", shortcut: "Ctrl+Shift+D",
+                checked_if: ".store.find_open && .store.find_mode == \"wanted\"")
         action (id: "view.switch-tab", handler: .ActSwitchTab,  title: "切换 Tab", shortcut: "Ctrl+D")
         action (id: "view.reload",    handler: .Reload,    title: "重载",  icon: "refresh-cw",   shortcut: "F5",
                 enabled_if: ".store.tab_count > 0")
@@ -457,6 +531,7 @@ widget App {
                             menubar-checkbox-item (title: "切换标签", icon: "tag", checked: .store.tags_open, shortcut: "Ctrl+T") { onclick: .ActTags }
                             menubar-item (title: "快速打开", icon: "file-search", shortcut: "Ctrl+P") { onclick: .ActFindFiles }
                             menubar-checkbox-item (title: "全文检索", icon: "search", checked: .store.find_open && .store.find_mode == "text", shortcut: "Ctrl+Shift+F") { onclick: .ActFindText }
+                            menubar-checkbox-item (title: "悬空清单", checked: .store.find_open && .store.find_mode == "wanted", shortcut: "Ctrl+Shift+D") { onclick: .ActFindWanted }
                             menubar-item (title: "切换 Tab", shortcut: "Ctrl+D") { onclick: .ActSwitchTab }
                             menubar-item (title: "重载", icon: "refresh-cw", shortcut: "F5", enabled: .store.tab_count > 0) { onclick: .Reload }
                         }
@@ -595,15 +670,10 @@ widget App {
                     col (style: "w-72 shrink-0 border-l border-border bg-card hidden md:flex flex-col overflow-y-auto") {
                         if .store.find_open {
                             FindPanel()
-                            // 输入行：input + 检索钮（仅 text 模式）。双
-                            // 分支静态 placeholder（动态表达式无先例；模式
-                            // 恒定期恰一分支渲染）。value: .find_q /
-                            // oninput: .FindEdit（bps form/login 先例形）；
-                            // text 模式 onenter = Enter 触发（探针 C：vm
-                            // convert_input onenter→on_submit 在册 + vue
-                            // auto_event_to_vue onenter→@keyup.enter 在册，
-                            // Input.vue 根原生 input attrs 透传可达——
-                            // 双轨发射均有源级证据，T-02 定谳）。
+                            // 输入行：input + 检索钮（files/text 两模式
+                            // ——wanted 纯清单无 input 行/无触发钮，
+                            // PLAN-008 三分支）。
+                            if .store.find_mode != "wanted" {
                             row (style: "items-center gap-1 px-2 py-1 shrink-0") {
                                 if .store.find_mode == "files" {
                                     input {
@@ -626,6 +696,7 @@ widget App {
                                         style: "h-7 px-2 text-[12px] shrink-0"
                                     }
                                 }
+                            }
                             }
                             // files 模式：即时过滤行集 + 空态（拾取即关——
                             // FindPick 口）。
@@ -656,6 +727,22 @@ widget App {
                                             onclick: .FindPick(r.path)
                                             style: "w-full justify-start px-3 h-6 text-left text-[12px]"
                                         }
+                                    }
+                                }
+                            }
+                            // wanted 模式（PLAN-008）：纯清单零 input——
+                            // 悬空目标聚合行（label = `{target}（{n}）`）→
+                            // 行点击 `.CreateClick` 直连 PLAN-005 建页弹层
+                            //（预填 target——「发现→建页→消缺」闭环）；
+                            // 空态留根（消缺后达成）。
+                            if .store.find_mode == "wanted" {
+                                if .wanted_rows.len() == 0 {
+                                    text "（无悬空链接）" { style: "text-[11px] text-muted-foreground px-3" }
+                                }
+                                for r in .wanted_rows {
+                                    button (text: r.label, variant: "ghost") {
+                                        onclick: .CreateClick(r.target)
+                                        style: "w-full justify-start px-3 h-6 text-left text-[12px] text-muted-foreground"
                                     }
                                 }
                             }
@@ -986,6 +1073,9 @@ widget App {
             .link_pages = lp
             .bl_rows = backlink_rows_of(.link_pages, active)
             .ol_rows = outlink_rows_of(.link_pages, active)
+            // wanted 行重算挂同触点（PLAN-008——link_pages 变化即消缺：
+            // 建页成功后 wanted 行自动消失，G2 闭环）
+            .wanted_rows = wanted_rows_of(.link_pages)
         }
         .OpenLink(path) -> {
             if path != "" {
@@ -1083,6 +1173,15 @@ widget App {
         // find_ran 门控渲染（未运行提示优先，files 期残留行不泄漏）。
         .ActFindText -> {
             store.FindOpen("text")
+        }
+        // wanted 模式入口（PLAN-008；Ctrl+Shift+D/菜单共口——find-text
+        // 同构第三模式）：幂等重开 + 切模式 + 链接索引重取（入口即刷新
+        // ——wanted 行集 = link_pages 派生，重取后悬空面新鲜；行重算在
+        // .LinksRefreshOf 内联，bl/ol 行随 active 同步）。D-25① 纪律：
+        // App 上下文零 `.console` 写面。
+        .ActFindWanted -> {
+            store.FindOpen("wanted")
+            .LinksRefreshOf(.store.active_path)
         }
         // 查找行点击口：OpenLink 共用导航口（开档 + 链接行派生）；files
         // 模式拾取即关（store FindClose 关口——开态权威单点）；text 模式
