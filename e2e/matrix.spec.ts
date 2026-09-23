@@ -29,7 +29,9 @@
 //             （文件模式——空 q 全量/过滤 Pro→Projects/拾取即关）+ 全文
 //             检索（text 模式——未运行提示/CJK 查询「任务列表」[POST 通道
 //             ——D-19 面无，vue 臂无 GET query 环节]/行导航面板保持开/
-//             运行后空态）。入口 = 视图菜单项（键位面 = 真键盘，e2e 不
+//             运行后空态）+ **alias 检索（PLAN-012——write_wiki 内造
+//             alias 档 → 搜「检别名」→ AliasTgt.ad 命中行 → 拾取开档
+//             双臂）**。入口 = 视图菜单项（键位面 = 真键盘，e2e 不
 //             覆盖）；检索触发 = 检索钮（契约底线；Enter @keyup.enter
 //             随 fill() 不发 keyup 不覆盖——按钮面已证触发链）。
 //             执行序在 10 后 9 前（先关反链面板——find 行断言免反链行
@@ -59,7 +61,15 @@
 //             ASCII 安全；CJK 导航面 vm merged 专属（D-19——vue 轨
 //             GET query 同败，新页 CJK 案不设）。无键位面（Delete
 //             键 = 真键盘，e2e 不覆盖——11/12 同口径，入口 = 文件
-//             菜单→删除…）。
+//             菜单→删除…）。**+ 目录面四子步（PLAN-012 T-04；vm 矩阵
+//             check 13 目录面子步同单——真 DOM 面；CJK 目录名造/移动
+//             POST 双臂可跑——目录行断言不涉开档面）：⑩ ⊕ 新建目录
+//             [CJK 目录名 收件箱——树新行+磁盘在]/⑪ 移动 E2E Note →
+//             收件箱 [placeholder=dirs_first 派生值绑定面首证 + 根档
+//             预填空 + tab 题全量 收件箱/E2E Note + 磁盘整迁]/⑫ 取消
+//             零落盘/⑬ 冲突拒弹层留置 + 磁盘零变化]。执行序在 13 file
+//             段内（悬空翻转后——素材 E2E Note 在册；14 meta 已知答案
+//             免疫：收件箱/E2E Note.ad 无 tags 无链接）**
 //   14 meta   标签面板+wanted 模式+inline tag 子步（PLAN-008+PLAN-009；vm 矩阵 check 14 同单
 //             ——段内最后）：tags 4 行已知答案[13 后位态]+展开导航+
 //             write_wiki 外造 Save 刷新；wanted 无 input 三行清单
@@ -414,6 +424,25 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await page.getByRole('button', { name: '检索', exact: true }).click()
   await expect(page.getByText('（无结果）', { exact: true })).toBeVisible({ timeout: 10_000 })
   console.log('[11 find] PASS — 检索：未运行提示 + CJK「任务列表」命中/行导航面板保持开 + 运行后空态')
+  // ⑤ alias 检索（PLAN-012 T-04；vm 矩阵 check 11 同单）：write_wiki
+  // 内造 alias 档（fm 内嵌 body 直写——10m 同款）→ 搜 alias「检别名」
+  // → 命中行 AliasTgt.ad → 拾取开档（ASCII 双臂）→ 删素材 + 复原
+  // Hello World 激活（12 前置口径）。
+  const aliasRes = await request.post('/api/write_wiki', {
+    data: { path: 'AliasTgt.ad', body: '---\ntags:\naliases:\n  - 检别名\n---\n# AliasTgt\n\n正文无别名一词。\n' },
+  })
+  expect(aliasRes.ok(), 'write_wiki 造 alias 档 POST ok').toBe(true)
+  await searchText.fill('检别名')
+  await page.getByRole('button', { name: '检索', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'AliasTgt.ad', exact: true })).toBeVisible({ timeout: 10_000 })
+  await page.getByRole('button', { name: 'AliasTgt.ad', exact: true }).click()
+  await expect(visibleEditor(page)).toContainText('AliasTgt', { timeout: 15_000 })
+  await expect(searchText).toBeVisible()
+  const aliasClean = await request.post('/api/delete_page', { data: { path: 'AliasTgt.ad' } })
+  expect(aliasClean.ok(), 'delete_page AliasTgt 收尾 ok').toBe(true)
+  await page.getByRole('button', { name: 'wiki/Hello World', exact: true }).click()
+  await expect(visibleEditor(page)).toContainText('这是一段示例文本', { timeout: 15_000 })
+  console.log('[11 find] PASS — alias 检索（PLAN-012）：内造 alias 档 → 搜「检别名」→ AliasTgt.ad 命中行 → 拾取开档（双臂）')
 
   // 12 rename（PLAN-006 T-04；vm 矩阵 check 12 同单）：重命名+反链改写
   // 全弧线。素材 Projects.ad（ASCII——D-19 面无；入链 index/CAP 定理 两
@@ -604,6 +633,76 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await page.getByText('切换反链', { exact: true }).click()
   await expect(page.getByText('Hello World（悬空）', { exact: true })).toBeVisible({ timeout: 10_000 })
   console.log('[13 file] PASS — file 组弧线（新建/幂等/取消/删除弧线/悬空翻转；no-op+CJK 案 vm 专属口径）')
+  // ⑩-⑬ 目录面四子步（PLAN-012 T-04；vm 矩阵 check 13 目录面子步同单）：
+  // CJK 目录名造/移动 POST 双臂可跑——目录行断言不涉开档面。⊕ 钮 =
+  // lucide-folder-plus icon 钮（EXPLORER 列先于 tab 条渲染，.first()
+  // 消歧）；vue Dialog 闭态 = 卸载（radix——hidden 断言同 12 口径）。
+  const explorerFolderPlus = page.locator('button:has(svg[class*="lucide-folder-plus"])').first()
+  // ⑩ 新建目录（CJK 目录名——create_dir POST 双臂面）
+  await explorerFolderPlus.click()
+  await expect(page.getByPlaceholder('目录名…')).toBeVisible({ timeout: 10_000 })
+  await page.getByPlaceholder('目录名…').fill('收件箱')
+  await page.getByRole('button', { name: '创建', exact: true }).click()
+  await expect(page.getByText('新建目录')).toBeHidden({ timeout: 10_000 })
+  await expect(page.getByText('收件箱', { exact: true }).first()).toBeVisible({ timeout: 10_000 })
+  await expect
+    .poll(() => fs.existsSync(path.join(WORKSPACE, '收件箱')) && fs.statSync(path.join(WORKSPACE, '收件箱')).isDirectory(), { timeout: 10_000 })
+    .toBe(true)
+  console.log('[13 dir] 新建目录 — CJK 目录名弹层创建 + 树新行 + 磁盘在')
+  // ⑪ 移动弧线：E2E Note.ad（13 ① 建且开档——tab 题 'E2E Note'）→
+  // 收件箱。placeholder = ft_nodes 派生目录清单首项（vue 轨动态绑定面
+  // 首证——序随 fs.tree casefold 排序实位，值 ∈ {wiki, 收件箱} 两可）；
+  // 根档预填 = ""；tab 题全量更新（path 去 .ad 口径——vm 同判）。
+  const moveDialog = page.getByRole('dialog')
+  const moveText = () => moveDialog.getByRole('textbox')
+  await page.getByText('E2E Note.ad', { exact: true }).first().click()
+  await page.getByText('文件', { exact: true }).click()
+  await page.getByText('移动到目录…', { exact: true }).click()
+  await expect(moveText()).toBeVisible({ timeout: 10_000 })
+  const movePh = await moveText().getAttribute('placeholder')
+  expect(movePh === 'wiki' || movePh === '收件箱', `placeholder = dirs_first 派生值（实际 "${movePh}"）`).toBe(true)
+  await expect(moveText()).toHaveValue('')
+  await moveText().fill('收件箱')
+  await moveDialog.getByRole('button', { name: '移动', exact: true }).click()
+  await expect(page.getByText('移动到目录')).toBeHidden({ timeout: 10_000 })
+  await expect(page.getByRole('button', { name: '收件箱/E2E Note', exact: true })).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByRole('button', { name: 'E2E Note', exact: true })).toHaveCount(0, { timeout: 10_000 })
+  const movedE2eFile = path.join(WORKSPACE, '收件箱', 'E2E Note.ad')
+  await expect
+    .poll(() => fs.existsSync(movedE2eFile) && fs.readFileSync(movedE2eFile, 'utf8') === '# E2E Note\n\n', { timeout: 10_000 })
+    .toBe(true)
+  console.log('[13 dir] 移动弧线 — placeholder 绑定面 + 根档预填空 + tab 题全量 + 磁盘整迁')
+  // ⑫ 取消零落盘
+  await page.getByText('文件', { exact: true }).click()
+  await page.getByText('移动到目录…', { exact: true }).click()
+  await expect(moveText()).toBeVisible({ timeout: 10_000 })
+  await moveText().fill('NoDir')
+  await page.getByRole('button', { name: '取消', exact: true }).last().click()
+  await expect(page.getByText('移动到目录')).toBeHidden({ timeout: 10_000 })
+  expect(fs.existsSync(path.join(WORKSPACE, 'NoDir')), '取消零落盘').toBe(false)
+  console.log('[13 dir] 取消零落盘')
+  // ⑬ 冲突拒：根再建 E2E Note（根无此档——真新建）→ 移入 收件箱
+  // （同名拒）→ 弹层留置 + 磁盘零变化 → 取消 → API 清素材。
+  await explorerPlus.click()
+  await expect(newNameInput).toBeVisible({ timeout: 10_000 })
+  await newNameInput.fill('E2E Note')
+  await page.getByRole('button', { name: '创建', exact: true }).click()
+  await expect(page.getByText('新建页面')).toBeHidden({ timeout: 10_000 })
+  await page.getByText('E2E Note.ad', { exact: true }).first().click()
+  await page.getByText('文件', { exact: true }).click()
+  await page.getByText('移动到目录…', { exact: true }).click()
+  await expect(moveText()).toBeVisible({ timeout: 10_000 })
+  await moveText().fill('收件箱')
+  await moveDialog.getByRole('button', { name: '移动', exact: true }).click()
+  await expect(page.getByText('移动到目录')).toBeVisible({ timeout: 10_000 })
+  await expect
+    .poll(() => fs.existsSync(path.join(WORKSPACE, 'E2E Note.ad')), { timeout: 10_000 })
+    .toBe(true)
+  await page.getByRole('button', { name: '取消', exact: true }).last().click()
+  await expect(page.getByText('移动到目录')).toBeHidden({ timeout: 10_000 })
+  const clashClean = await request.post('/api/delete_page', { data: { path: 'E2E Note.ad' } })
+  expect(clashClean.ok(), 'delete_page 冲突素材收尾 ok').toBe(true)
+  console.log('[13 dir] PASS — 目录面四子步（PLAN-012：新建/移动/取消/冲突拒）')
 
   // 14 meta（PLAN-008 T-04；vm 矩阵 check 14 同单——段内最后）：tags
   // 面板 + wanted 模式。执行序在 13 后（此位已知答案——e2e 13 删的是

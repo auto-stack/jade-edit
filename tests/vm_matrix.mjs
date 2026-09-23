@@ -9,9 +9,10 @@
 //   4 edit    编辑回写（type_text → INPUT_TEXT → 脏标）
 //   5 save    保存落盘（toolbar 保存 → 脏标清 + 磁盘字节含标记 + frontmatter 保留）
 //   6 reload  重载可见（磁盘外改 → toolbar 重载 → 编辑器见新内容）
-//   B base    结构基线 v3 零漂移（仅 merged 臂；必须在 1-6 后、扩单前采集
-//             ——v3 锁的是六检查终态，扩单不漂移基线；v3=PLAN-003 store
-//             增 links_json/backlinks_open 字段重锁，v2/v1/v0 留档）
+//   B base    结构基线 v11 零漂移（仅 merged 臂；必须在 1-6 后、扩单前采集
+//             ——v11 锁的是六检查终态，扩单不漂移基线；v11=PLAN-012 store
+//             增 dir_open/move_open + App 增 dir_q/move_q + 弹层第七/八
+//             实例，v10=PLAN-011、v3=PLAN-003 等留档）
 //   7 tab     tab 面：开两档 → 切换（active 断言 + 内容互换）→ dirty 档
 //             关闭走确认弹层两路（取消=档留；直接关闭=弃改落盘零写入）
 //   8 editops 编辑操作族：段中回车/退格（C-5 整文构造——回车分段可见 +
@@ -46,7 +47,10 @@
 //             独行；CJK 拾取导航子步仅 merged 臂——D-19 同款口径]）+
 //             全文检索（Ctrl+Shift+F·text——切模式/未运行提示/CJK 查询
 //             「任务列表」[POST 通道——D-19 面无，双臂同跑]/行导航面板
-//             保持开/运行后空态）。执行序在 10b 后 9 前
+//             保持开/运行后空态）+ **alias 检索子步（PLAN-012——fs 造
+//             alias 档[10m 同款——检索走 back walk 零树依赖] → 搜 alias
+//             → 命中行 title=stem 口径[T-01 直证面] → 拾取开档双臂
+//             [ASCII]）**。执行序在 10b 后 9 前
 //   12 rename 重命名+反链改写全弧线（PLAN-006；七子步——禁用态 untitled
 //             +脏档/弹层锚[预填+影响面预览]/取消零落盘/改名弧线[active
 //             投影+磁盘改写 index·CAP 定理]/面板+树新 stem/case-only 拒
@@ -62,7 +66,14 @@
 //             素材 CAP 定理——merged 臂该档 tab 在[check 10 开]关闭面
 //             +邻档补位，split 臂现场开→关同面；两臂删后激活均落
 //             Project X[右侧邻档同构]。收尾状态复原回 Hello World
-//             [quit 前置——typeWholeDoc 目标档]）+ F-R9-4 案（PLAN-010
+//             [quit 前置——typeWholeDoc 目标档]）+ **目录面四子步
+//             （PLAN-012——⑩ ⊕ 新建目录[树新行+磁盘在]/⑪ 移动弧线
+//             [Project X→DirBox：tab 全量+字节整迁+面板快照前后逐字节
+//             一致+links_json 定向 diff 归一相等——移动零扰动三联语义
+//             固化]/⑫ 取消零落盘/⑬ 冲突拒[根 index.ad→wiki 同名拒——
+//             弹层留置+磁盘零变化]；素材 ASCII 双臂[D-19 面无；CJK
+//             目录/移动案 probe_dir_move 八案双臂直证覆盖]）** +
+//             F-R9-4 案（PLAN-010
 //             ⑨——删激活靶档→提及行随新激活刷新消[Fr94Src/Fr94Del 弹
 //             层造档，收尾双删复原]）。执行序在 12 后 9 前
 //   14 meta   标签面板+wanted 模式八子步 + inline tag 子步 + 属性子步
@@ -123,7 +134,7 @@ const argOf = (name) => {
   return i >= 0 ? args[i + 1] : undefined
 }
 const ARM = argOf('--arm') ?? 'all' // all | merged | split
-const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v10.txt')
+const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v11.txt')
 const SAVE_BASELINE = argOf('--save-baseline')
 
 const EDIT_MARKER = 'jade-edit 冒烟标记：编辑回写可见。'
@@ -153,6 +164,9 @@ const FILE_CJK_REL = '新页.ad'
 const FILE_GHOST_NAME = 'Ghost Note'
 const FILE_DEL_LABEL = 'CAP 定理.ad'
 const FILE_DEL_REL = 'wiki/CAP 定理.ad'
+// 目录面（PLAN-012 T-04）——素材 ASCII 双臂（D-19 面无；CJK 案
+// probe_dir_move 八案双臂直证覆盖）
+const DIR_BOX = 'DirBox'
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
@@ -418,27 +432,27 @@ async function runArm(arm, port) {
       const stateDump = (await callTool('autoui_state', {})).trim()
       const snapIds = JSON.stringify([...(await snapshotText()).matchAll(/#(vnode_\d+)/g)].map((m) => m[1]))
       const headerFor = (file) =>
-        `// jade-edit vm 结构基线 v10（PLAN-011 T-04 重锁；v9=PLAN-009 T-04、v8=PLAN-008 T-04、
+        `// jade-edit vm 结构基线 v11（PLAN-012 T-04 重锁；v10=PLAN-011 T-04、v9=PLAN-009 T-04、
 ` +
-        `// v7=PLAN-007 T-04、v6=PLAN-006 T-04、v5=PLAN-005 T-04、v4=PLAN-004 T-04、v3=PLAN-003
+        `// v8=PLAN-008 T-04、v7=PLAN-007 T-04、v6=PLAN-006 T-04、v5=PLAN-005 T-04、v4=PLAN-004
 ` +
-        `// T-04、v2=PLAN-002 T-01、v1=PLAN-001 T-04 换基、v0=PLAN-081 T-05 均留档）。
+        `// T-04、v3=PLAN-003 T-04、v2=PLAN-002 T-01、v1=PLAN-001 T-04 换基、v0=PLAN-081 T-05 均留档）。
 ` +
-        `// 重锁因由：store 新增 meta_open 弹层开态 + App 模型新增 meta_q_tags/meta_q_aliases
+        `// 重锁因由：store 新增 dir_open/move_open 弹层开态 + App 模型新增 dir_q/move_q 双 input
 ` +
-        `// 双 input 数据态（PLAN-011 页面属性写面）进 autoui_state 全量 dump；页面属性弹层
+        `// 数据态（PLAN-012 目录面）进 autoui_state 全量 dump；新建目录/移动到目录弹层
 ` +
-        `//（dialog 第六实例，闭态恒渲染 D-23③）节点进 snapshot vnode id 序列；新增键位
+        `//（dialog 第七/八实例，闭态恒渲染 D-23③）节点 + EXPLORER ⊕ 钮 + menubar「移动到目录…」
 ` +
-        `// Ctrl+I + menubar「页面属性…」项。
+        `// 项 + 键位 Ctrl+Shift+M 进 snapshot vnode id 序列。
 ` +
-        `// 仪器同 v2..v9：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态
+        `// 仪器同 v2..v10：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态
 ` +
-        `//（chrome 全套 + Hello World.ad 开；查找面板/建页弹层/新建弹层/属性弹层/重命名弹层/
+        `//（chrome 全套 + Hello World.ad 开；查找面板/建页弹层/新建弹层/属性弹层/新建目录
 ` +
-        `// 删除弹层/标签面板/反链面板未开——find_*/create_*/new_*/meta_*/rename_*/delete_*/
+        `// 弹层/移动弹层/重命名弹层/删除弹层/标签面板/反链面板未开——find_*/create_*/new_*/
 ` +
-        `// tags_*/mention_rows 全为默认值入 dump）。
+        `// meta_*/dir_*/move_*/rename_*/delete_*/tags_*/mention_rows 全为默认值入 dump）。
 ` +
         `// 再生成：node tests/vm_matrix.mjs --save-baseline ${path.relative(repoRoot, file).replace(/\\\\/g, '/')}\n`
       const baselineBodyOf = () => `## state\n${stateDump}\n\n## snapshot-ids\n${snapIds}\n`
@@ -449,9 +463,9 @@ async function runArm(arm, port) {
       } else if (fs.existsSync(BASELINE)) {
         const raw = fs.readFileSync(BASELINE, 'utf8')
         const ok = raw === headerFor(BASELINE) + baselineBodyOf()
-        check('B', 'baseline', ok, ok ? '结构基线 v10 零漂移（state 逐字节 + id 序列）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
+        check('B', 'baseline', ok, ok ? '结构基线 v11 零漂移（state 逐字节 + id 序列）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
       } else {
-        console.log('  [baseline] structure-v10 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v10.txt')
+        console.log('  [baseline] structure-v11 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v11.txt')
       }
     }
 
@@ -1234,8 +1248,26 @@ async function runArm(arm, port) {
     await stateHas('find_q', 'zzz-无此词-xyz')
     await pressButton('检索', { exact: true })
     const emptyFindOk = (await snapshotText()).includes('（无结果）')
-    check('11', 'find', allFive && proOk && cjkFilterOk && notRanOk && hitOk && emptyFindOk,
-      `快开（input 锚/空q全量5行/Pro→Projects 独行拾取即关/定理→CAP 独行${arm === 'merged' ? '+CJK 拾取开档' : '（CJK 拾取仅 merged 臂 D-19）'}）+ 检索（text 切换/未运行提示/CJK「任务列表」POST 双臂命中/行导航面板保持开/运行后空态）`)
+    // ⑤ alias 检索子步（PLAN-012 T-04）：fs 造 alias 档（10m 同款——
+    // 检索走 back walk 零树依赖；POST 通道双臂无 D-19 面）→ 搜 alias
+    // 「检别名」→ 命中行 AliasTgt.ad（title=stem 口径由 T-01 probe
+    // ⑨ 直证——面板行渲染 path 面）→ 拾取开档（ASCII 双臂）→ 复原
+    // Hello World 激活（check 12 前置口径）。
+    fs.writeFileSync(path.join(FIXTURE, 'AliasTgt.ad'), '---\ntags:\naliases:\n  - 检别名\n---\n# AliasTgt\n\n正文无别名一词。\n')
+    const findTree4 = await snapshot()
+    const findInput4 = findFirst(findTree4, (n) => n.head.startsWith('input ') && elementIdOf(n))
+    await callTool('autoui_action', { element_id: elementIdOf(findInput4), action: 'type_text', value: '检别名' })
+    await stateHas('find_q', '检别名')
+    await pressButton('检索', { exact: true })
+    const aliasHitOk = (await snapshotText()).includes('"AliasTgt.ad"')
+    if (!aliasHitOk) throw new Error('alias 检索「检别名」未出 AliasTgt.ad 行（PLAN-012 alias 命中面）')
+    await callTool('autoui_action', { element_id: elementIdOf(await waitButton('AliasTgt.ad', { exact: true })), action: 'press' })
+    await stateIs('active_title', 'AliasTgt')
+    await stateIs('find_open', 'true')
+    await pressButton(tabTitleOf(TARGET_LABEL))
+    await stateIs('active_title', tabTitleOf(TARGET_LABEL))
+    check('11', 'find', allFive && proOk && cjkFilterOk && notRanOk && hitOk && emptyFindOk && aliasHitOk,
+      `快开（input 锚/空q全量5行/Pro→Projects 独行拾取即关/定理→CAP 独行${arm === 'merged' ? '+CJK 拾取开档' : '（CJK 拾取仅 merged 臂 D-19）'}）+ 检索（text 切换/未运行提示/CJK「任务列表」POST 双臂命中/行导航面板保持开/运行后空态）+ alias 检索（PLAN-012——fs 造档→搜「检别名」→AliasTgt.ad 行→拾取开档双臂）`)
 
     // 12 rename（PLAN-006 T-04）：重命名+反链改写全弧线（七子步——组内
     // 子步不占检查位，fail 即臂败，10c 同款）。素材 Projects.ad（ASCII
@@ -1421,31 +1453,24 @@ async function runArm(arm, port) {
       if (!/status: ok/.test(res)) throw new Error(`new-input type_text not ok: ${res}`)
     }
     const pressInNewDialog = async (buttonText) => {
+      // 锚定「新建页面」标题上溯 dialog-content 子树（PLAN-012 纪律修订：
+      // 新建目录弹层「创建」钮后声明——全树末位钮序锚破，结构锚为唯一
+      // 消歧面；取消 = 目标钮父行兄弟）。
       const dl = Date.now() + 8000
       for (;;) {
         const t = await snapshot()
-        const creates = []
-        const collectCreates = (n) => {
-          if (n.head.startsWith('button ') && elementIdOf(n) && ownText(n) === '创建') creates.push(n)
-          for (const c of n.children) collectCreates(c)
-        }
-        collectCreates(t)
-        const target = creates[creates.length - 1]
-        if (target) {
-          if (buttonText === '创建') {
-            const res = await callTool('autoui_action', { element_id: elementIdOf(target), action: 'press' })
-            if (!/status: ok/.test(res)) throw new Error(`press 创建(new) not ok: ${res}`)
-            return
-          }
-          const row = findParent(t, target)
-          const btn = row.children.find((c) => c !== target && c.head.startsWith('button ') && elementIdOf(c) && ownText(c) === buttonText)
+        const title = findFirst(t, (n) => ownText(n) === '新建页面')
+        if (title) {
+          const header = findParent(t, title)
+          const content = findParent(t, header)
+          const btn = content ? findFirst(content, (n) => n.head.startsWith('button ') && elementIdOf(n) && ownText(n) === buttonText) : null
           if (btn) {
             const res = await callTool('autoui_action', { element_id: elementIdOf(btn), action: 'press' })
             if (!/status: ok/.test(res)) throw new Error(`press ${buttonText}(new) not ok: ${res}`)
             return
           }
         }
-        if (Date.now() > dl) throw new Error(`button "${buttonText}" in new-dialog row not found`)
+        if (Date.now() > dl) throw new Error(`button "${buttonText}" in new-dialog not found`)
         await sleep(300)
       }
     }
@@ -1471,6 +1496,54 @@ async function runArm(arm, port) {
         if (Date.now() > dl) throw new Error(`button "${buttonText}" in delete-dialog row not found`)
         await sleep(300)
       }
+    }
+    // PLAN-012 弹层族通用锚（新建目录/移动到目录——标题上溯 content 子树
+    // 取 input/按钮：「创建」双弹层同名，末位序锚随第七实例声明破——
+    // 结构锚为唯一消歧面，pressInNewDialog 同款纪律修订）。
+    const typeIntoDialogInput = async (titleText, text) => {
+      const t = await snapshot()
+      const title = findFirst(t, (n) => ownText(n) === titleText)
+      if (!title) throw new Error(`dialog title "${titleText}" not found`)
+      const header = findParent(t, title)
+      const content = findParent(t, header)
+      const inp = content ? findFirst(content, (n) => n.head.startsWith('input ') && elementIdOf(n)) : null
+      if (!inp) throw new Error(`input in "${titleText}" dialog not found`)
+      const res = await callTool('autoui_action', { element_id: elementIdOf(inp), action: 'type_text', value: text })
+      if (!/status: ok/.test(res)) throw new Error(`type_text(${titleText}) not ok: ${res}`)
+    }
+    const pressInDialogByTitle = async (titleText, buttonText) => {
+      const dl = Date.now() + 8000
+      for (;;) {
+        const t = await snapshot()
+        const title = findFirst(t, (n) => ownText(n) === titleText)
+        if (title) {
+          const header = findParent(t, title)
+          const content = findParent(t, header)
+          const btn = content ? findFirst(content, (n) => n.head.startsWith('button ') && elementIdOf(n) && ownText(n) === buttonText) : null
+          if (btn) {
+            const res = await callTool('autoui_action', { element_id: elementIdOf(btn), action: 'press' })
+            if (!/status: ok/.test(res)) throw new Error(`press ${buttonText}(${titleText}) not ok: ${res}`)
+            return
+          }
+        }
+        if (Date.now() > dl) throw new Error(`button "${buttonText}" in "${titleText}" not found`)
+        await sleep(300)
+      }
+    }
+    const pressExplorerFolderPlus = async () => {
+      // 「⊕」= EXPLORER 行第二 button（「＋」居首——序纪律在案，
+      // pressExplorerPlus 首 button 锚不扰）。
+      const t = await snapshot()
+      const label = findFirst(t, (n) => ownText(n) === 'EXPLORER')
+      const row = findParent(t, label)
+      const btns = row.children.filter((c) => c.head.startsWith('button ') && elementIdOf(c))
+      if (btns.length < 2) throw new Error('EXPLORER ⊕ button not found')
+      const res = await callTool('autoui_action', { element_id: elementIdOf(btns[1]), action: 'press' })
+      if (!/status: ok/.test(res)) throw new Error(`press EXPLORER ⊕ not ok: ${res}`)
+    }
+    const panelSliceOf = (txt) => {
+      const i = txt.indexOf('反链')
+      return i < 0 ? '' : txt.slice(i, i + 1200)
     }
     // ⑴ 新建 ASCII（index——根落位，wiki/index.ad 同名异位不冲突）
     const fileNewPageFile = path.join(FIXTURE, FILE_NEW_REL)
@@ -1681,16 +1754,130 @@ async function runArm(arm, port) {
     await stateIs('delete_open', 'false')
     await pressButton('wiki/Hello World', { exact: true })
     await stateIs('active_title', tabTitleOf(TARGET_LABEL))
+    // ⑩ 新建目录（PLAN-012）：⊕ → 弹层 → 创建 → 磁盘在 + 树新行
+    await pressExplorerFolderPlus()
+    await stateIs('dir_open', 'true')
+    await stateIs('dir_q', '')
+    await typeIntoDialogInput('新建目录', DIR_BOX)
+    await stateIs('dir_q', DIR_BOX)
+    await pressInDialogByTitle('新建目录', '创建')
+    await stateIs('dir_open', 'false')
+    const dirBoxOk = fs.existsSync(path.join(FIXTURE, DIR_BOX)) && fs.statSync(path.join(FIXTURE, DIR_BOX)).isDirectory()
+    let dirTreeOk = false
+    for (const dl = Date.now() + 8000; ; ) {
+      dirTreeOk = (await snapshotText()).includes(`"${DIR_BOX}"`)
+      if (dirTreeOk || Date.now() > dl) break
+      await sleep(300)
+    }
+    // ⑪ 移动弧线：Project X（check 12 改名产物——index/CAP 定理入链面）
+    // → DirBox。开反链面板 + 树行选中 Project X（激活切该档——面板行
+    // 语义挂 active）→ 面板快照 + links_json 双采（移动前）→ 菜单移动
+    // → 预填 wiki（本地派生断言）→ DirBox → 移动 → tab 全量/字节整迁/
+    // 面板逐字节零变化/links_json 定向 diff 归一相等（**移动零扰动固化
+    // ——三联语义断言**：入链行 [[Project X]] 由 stem 解析自动指向新位，
+    // 面板行文本与链接网结构零变化，仅 path 字段迁移）。
+    // ⚠ 面板态自适应：⑨ F-R9-4 收尾面板开着——先读态，关才开（避免
+    // toggle 误关）；⑬ 收尾统一关。
+    if (!/backlinks_open:\s*true/.test(await stateText('backlinks_open'))) {
+      await pressButton('视图', { exact: true })
+      await pressButton('切换反链', { exact: true })
+    }
+    await stateIs('backlinks_open', 'true')
+    await pressButton('Project X.ad', { exact: true })
+    await stateIs('ft_sel', RENAME_NEW_REL)
+    await waitButton('wiki/index.ad', { exact: true })
+    const panelBefore = panelSliceOf(await snapshotText())
+    const ljBefore = (await callTool('autoui_state', {})).match(/links_json:\s*"((?:[^"\\]|\\.)*)"/)?.[1] ?? ''
+    const pxBytes = fs.readFileSync(path.join(FIXTURE, RENAME_NEW_REL), 'utf8')
+    await pressButton('文件', { exact: true })
+    await pressButton('移动到目录…', { exact: true })
+    await stateIs('move_open', 'true')
+    await stateIs('move_q', 'wiki')
+    await typeIntoDialogInput('移动到目录', DIR_BOX)
+    await stateIs('move_q', DIR_BOX)
+    await pressInDialogByTitle('移动到目录', '移动')
+    await stateIs('move_open', 'false')
+    await stateIs('ft_sel', `${DIR_BOX}/Project X.ad`)
+    const movedPxFile = path.join(FIXTURE, DIR_BOX, 'Project X.ad')
+    const moveDiskOk = fs.existsSync(movedPxFile) && !fs.existsSync(path.join(FIXTURE, RENAME_NEW_REL))
+      && fs.readFileSync(movedPxFile, 'utf8') === pxBytes
+    const mvDump = await callTool('autoui_state', {})
+    const moveTabOk = mvDump.includes(`active_path: "${DIR_BOX}/Project X.ad"`) && mvDump.includes(`active_title: "${DIR_BOX}/Project X"`)
+    const panelAfter = panelSliceOf(await snapshotText())
+    const panelZeroOk = panelBefore !== '' && panelBefore === panelAfter
+    const ljAfter = mvDump.match(/links_json:\s*"((?:[^"\\]|\\.)*)"/)?.[1] ?? ''
+    // 定向 diff 归一（集合语义——移动后 walk 序Dirs-first casefold 位次
+    // 迁移[DirBox < wiki]属预期面，归一 = 逐页逐链 path 字段替换 + 序
+    // 无关排序比对；其余字段逐字节相等 = 链接网零扰动）。
+    const ljUnesc = (s) => { try { return JSON.parse(`"${s}"`) } catch { return s } }
+    const ljNorm = (raw) => {
+      try {
+        const pages = JSON.parse(ljUnesc(raw))
+        const normPath = (p) => (p === `wiki/Project X.ad` || p === `${DIR_BOX}/Project X.ad` ? '<MOVED>' : p)
+        return JSON.stringify(pages.map((p) => ({
+          path: normPath(p.path), title: p.title,
+          links: p.links.map((l) => ({ ...l, target_path: normPath(l.target_path) })),
+        })).sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b))))
+      } catch {
+        return '<unparsable>'
+      }
+    }
+    const linkNetOk = ljBefore !== '' && ljNorm(ljBefore) === ljNorm(ljAfter)
+    // ⑫ 取消零落盘：ft_sel 仍在 DirBox/Project X.ad → 菜单移动 → 输
+    // NoDir → 取消 → 零落盘。
+    await pressButton('文件', { exact: true })
+    await pressButton('移动到目录…', { exact: true })
+    await stateIs('move_open', 'true')
+    await typeIntoDialogInput('移动到目录', 'NoDir')
+    await pressInDialogByTitle('移动到目录', '取消')
+    await stateIs('move_open', 'false')
+    const moveCancelOk = !fs.existsSync(path.join(FIXTURE, 'NoDir'))
+    // ⑬ 冲突拒：选中根 index.ad（同名 label 消歧——若 wiki 展开态首个
+    // 命中为 wiki/index.ad，折叠重试；目标 wiki 处语料 index.ad 在 →
+    // 冲突拒 + 弹层留置 + 磁盘零变化）→ 取消 → 收尾关面板 + 复原
+    // Hello World 激活（quit 前置——typeWholeDoc 目标档）。
+    let idxSel = ''
+    for (let tries = 0; tries < 2; tries++) {
+      await pressButton('index.ad', { exact: true })
+      idxSel = (await stateText('ft_sel')).match(/ft_sel:\s*"([^"]*)"/)?.[1] ?? ''
+      if (idxSel === 'index.ad') break
+      await pressButton('wiki', { exact: true })
+      await sleep(400)
+    }
+    await stateIs('ft_sel', 'index.ad')
+    await pressButton('文件', { exact: true })
+    await pressButton('移动到目录…', { exact: true })
+    await stateIs('move_open', 'true')
+    await stateIs('move_q', '')
+    await typeIntoDialogInput('移动到目录', 'wiki')
+    await pressInDialogByTitle('移动到目录', '移动')
+    let conflictHoldOk = false
+    for (const dl = Date.now() + 8000; ; ) {
+      conflictHoldOk = /move_open:\s*true/.test(await stateText('move_open'))
+      if (conflictHoldOk || Date.now() > dl) break
+      await sleep(300)
+    }
+    const conflictDiskOk = fs.existsSync(path.join(FIXTURE, 'index.ad'))
+      && fs.readFileSync(path.join(FIXTURE, 'wiki', 'index.ad'), 'utf8').includes('快速开始')
+    await pressInDialogByTitle('移动到目录', '取消')
+    await stateIs('move_open', 'false')
+    await pressButton('视图', { exact: true })
+    await pressButton('切换反链', { exact: true })
+    await stateIs('backlinks_open', 'false')
+    await pressButton(tabTitleOf(TARGET_LABEL))
+    await stateIs('active_title', tabTitleOf(TARGET_LABEL))
     const fileParts = {
       newDiskOk, newTreeOk, idemDiskOk, tabStable: tabCountPre === tabCountPost,
       ghostOk, cjkNavOk, delDlgOk, delCancelOk, capGone, flipOk, noopOk,
       fr94Ok: fr94Up && fr94Down,
+      dirBoxOk, dirTreeOk, moveDiskOk, moveTabOk, panelZeroOk, linkNetOk,
+      moveCancelOk, conflictHoldOk, conflictDiskOk,
     }
     if (Object.values(fileParts).some((v) => !v)) {
       console.log(`  [13 dbg] ${JSON.stringify(fileParts)} tabPre=${JSON.stringify(tabCountPre)} tabPost=${JSON.stringify(tabCountPost)}`)
     }
     check('13', 'file', Object.values(fileParts).every((v) => v) && tabCountFinal >= 0,
-      `file 组八子步+F-R9-4 案（新建 index 模板逐字节+树新行/同名幂等 tab+磁盘不变/取消零落盘/CJK 新页${arm === 'merged' ? '导航断言' : '磁盘断言[D-19]'}＋删除预览 3 处入链已知答案+tab 面「${delTabsLine}」+取消零落盘/删除弧线 磁盘消失+ft_sel 清空+激活${arm === 'merged' ? '落邻档首页[同位保持]' : '保持 index[CloseTabsOf 零关闭面，D-19]'}/悬空翻转 出链行 CAP 定理（悬空）/未选中 no-op/F-R9-4 删后提及刷新[提及行现→UI 删激活→行消]）`)
+      `file 组八子步+F-R9-4 案+目录面四子步（新建 index 模板逐字节+树新行/同名幂等 tab+磁盘不变/取消零落盘/CJK 新页${arm === 'merged' ? '导航断言' : '磁盘断言[D-19]'}＋删除预览 3 处入链已知答案+tab 面「${delTabsLine}」+取消零落盘/删除弧线 磁盘消失+ft_sel 清空+激活${arm === 'merged' ? '落邻档首页[同位保持]' : '保持 index[CloseTabsOf 零关闭面，D-19]'}/悬空翻转 出链行 CAP 定理（悬空）/未选中 no-op/F-R9-4 删后提及刷新/PLAN-012：⊕新建目录[树新行+磁盘在]→Project X 移动[预填 wiki/tab 全量${DIR_BOX}/Project X/字节整迁/面板快照零变化/links_json 定向 diff 归一]→取消零落盘→冲突拒[弹层留置+磁盘零变化]）`)
 
     // 9 退出存盘：dirty → 文件菜单退出 → 确认弹层 → QuitSaveClose →
     // 磁盘三验 + 进程退出。恒为臂内最后一项（Process.exit 杀进程）。
