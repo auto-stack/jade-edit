@@ -31,8 +31,13 @@
   `[[wikilink]]` 源文自动改写（知识完整性件——旧园 rename 只补内存
   索引不改源文，jade 纯派生链接面下源文改写为本仓首创设计；casefold
   裁决随批落定：stem 匹配维持精确比较、case-only 拒；casefold 匹配本
-  体属另立计划）；图谱 tab 顺位后移——vm 轨组件面依赖上游），本仓零
-  依赖其代码。
+  体属另立计划）；**第五切片 = 树文件管理**（SD-701，2026-09-23）：
+  EXPLORER 头部「＋」新建（复用 create_page——幂等/清洗/模板/根落位
+  全套直承）+ Delete 键/菜单删除（影响面预览弹层「N 处入链将变为悬空
+  + M 个标签页将关闭」→ delete_page POST → 该档全部 tab 关闭 → **入
+  链悬空化不改写源文**——与重命名改写成语义对照并表：改名保完整性，
+  删除如实悬空，悬空行可再建页接回）；图谱 tab 顺位后移——vm 轨组
+  件面依赖上游），本仓零依赖其代码。
 - 编辑器内核 = `@autodown/engine`（auto-down，AutoUI 外部官方组件）：
   vue 轨 npm link 消费；vm 轨经 auto-lang `autodown_editor` 官方件位。
 
@@ -76,14 +81,15 @@ node tools/bench/bench.mjs proxy [--runs N]    # 测量 → results/<ts>.jsonl
 node tools/bench/bench.mjs assert              # 存量 measurements × budgets 重评
 
 # —— 单门 ——
-node tests/vm_matrix.mjs            # 双臂（merged+split）检查单 + 基线 v6 零漂移
+node tests/vm_matrix.mjs            # 双臂（merged+split）检查单 + 基线 v7 零漂移
 pnpm test:e2e                       # vue 检查单（同一检查单；serve-back 后端）
 ```
 
-## Tests（判绿口径，SD-204；SD-304/403 扩定；SD-503 再扩定；SD-603 再扩定）
+## Tests（判绿口径，SD-204；SD-304/403 扩定；SD-503 再扩定；SD-603 再扩定；SD-703 再扩定）
 
 检查单（PLAN-002 T-01 扩定 + PLAN-003 T-04 link 扩单 + PLAN-004 T-04
-find 扩单 + PLAN-005 T-04 create 扩单 + PLAN-006 T-04 rename 扩单）：
+find 扩单 + PLAN-005 T-04 create 扩单 + PLAN-006 T-04 rename 扩单 +
+PLAN-007 T-04 file 扩单）：
 `boot / tree / open / edit / save / reload` 六检查 + **tab / editops /
 quit** 扩单三组 + **link / link-empty**（链接索引已知答案 + 反链面板双轨
 可用 + 空态——CJK 路径导航子步仅 vm merged 臂，D-19）+ **create**（建页
@@ -99,11 +105,24 @@ stem + 影响面预览 N 页 M 处]/取消零落盘/改名弧线[active 投影 +
 + 磁盘改名 + 双页源文改写]/跨页改写可见[出链行新 stem + 点击导航新档 +
 树新行]/case-only 拒[弹层留置 + casefold 计数断言]/状态复原——素材
 Projects.ad ASCII 双臂[D-19 面无]；CJK 改名/自链/锚透传/清洗/冲突/
-缺失案 = `tests/probe_rename.mjs` 八案双臂直证覆盖）——vm 矩阵与 vue
+缺失案 = `tests/probe_rename.mjs` 八案双臂直证覆盖）+ **file**（树
+文件管理八子步[PLAN-007]：新建 index[根落位——ASCII 双臂，模板逐字
+节]/同名幂等[tab 不变 + 磁盘不变]/取消零落盘/CJK 新页[merged 导航 +
+split 磁盘断言——D-19 口径]/删除预览 + 取消[「3 处入链将变为悬空」
+已知答案——index/Tasks/Hello World 出链计数；tab 警示行两臂分叉
+merged「1 个将关闭」/split「无打开标签页」]/删除弧线[磁盘消失 +
+ft_sel 清空 + 激活邻档两臂异位——merged=同位保持→首页/split=active
+不变[D-19 开档面]，RemoveAt 修正两形态互补]/悬空翻转[开 index 出链
+行 CAP 定理（悬空）——PLAN-003 已知答案反向]/未选中 no-op——删除
+素材 CAP 定理；e2e file 段 = 9 quit 后段内最后[vue 垫片 no-op 无进
+程约束 + 删除素材 Hello World.ad 保 quit 三验面]，删除弧线走
+Hello World.ad[ASCII 入链/出链面安全]；CJK 案 + no-op 案 vm 专属口
+径；删除 back 面 CJK/幂等/三拒案 = `tests/probe_delete.mjs` 九案双
+臂直证覆盖）——vm 矩阵与 vue
 e2e 同单（断言域 = 结构/文本/磁盘字节，非像素）。
 
-- **完成态 = RESULT 行出现且两臂全数通过**：vm 矩阵 `merged 14/14 +
-  split 13/13`（merged 多一项基线检查）+ ALL GREEN 行；vue e2e 十三段
+- **完成态 = RESULT 行出现且两臂全数通过**：vm 矩阵 `merged 15/15 +
+  split 14/14`（merged 多一项基线检查）+ ALL GREEN 行；vue e2e 十四段
   日志齐 + passed。无 RESULT 行 = 工具链竞态早崩 → **重跑一次而非排查**
   （auto-edit F-RV6 同款口径）。
 - N 定谳（2026-09-22 link 扩单首锁 ≥5 连跑分布）：vm 双臂 **6/7 连跑
@@ -130,11 +149,17 @@ e2e 同单（断言域 = 结构/文本/磁盘字节，非像素）。
   serve-back 连发 write_wiki **50/50** 实证 = 400 仅 vite 代理 e2e
   语境突发簇——D-21 v9 扩记）；gate **第 3 跑 ALL GREEN**（前 2 跑
   e2e 段 D-21 失败如实记）。rename 组零失败漂移。
-- 结构基线 = `tests/baseline/structure-v6.txt`：state 段逐字节 +
-  snapshot vnode id 出现序列（v2 仪器延续；v6 = PLAN-006 store
-  rename_open + App rename_q 入 dump + dialog 第三弹层（重命名，内嵌
-  input + 影响面预览 + 双钮）id 序列的计划内重锁，v5/v4/v3/v2/v1/v0
-  留档）。
+- N 定谳（2026-09-23 file 扩单首锁，SD-703）：vm 双臂 **4 连跑全绿**
+  （merged 15/15 + split 14/14 + 基线 v7 零漂移逐跑——v7 锁后连跑
+  ×3 + gate 内 ×1）；vue e2e 绿（gate 内 + 复跑；T-03 窗 check-10
+  面板行断言 1 败 + T-04 窗 save 磁盘标记失败点漂移 1 轮 + HTTP 400
+  瞬时 pageerror 1 例全数 D-21 签名重跑即绿，ledger v10 扩记）；
+  **gate ALL GREEN 一次通过**。file 组零失败漂移。
+- 结构基线 = `tests/baseline/structure-v7.txt`：state 段逐字节 +
+  snapshot vnode id 出现序列（v2 仪器延续；v7 = PLAN-007 store
+  new_open/delete_open + App new_q 入 dump + dialog 第四弹层（新建，
+  内嵌 input）+ 第五弹层（删除，预览两行零 input）id 序列 + EXPLORER
+  头部「＋」钮行的计划内重锁，v6/v5/v4/v3/v2/v1/v0 留档）。
 
 ## 文档
 
@@ -143,7 +168,7 @@ e2e 同单（断言域 = 结构/文本/磁盘字节，非像素）。
 - [plans/attachments/081-t00-rulings.md](plans/attachments/081-t00-rulings.md) —
   T-00 三勘定决策档（auto-down PLAN-081 附件；双轨机制 / actions-vue
   现状 / 后端选型）
-- [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v9（SD-604 指针；二十四项三分类；PLAN-006 增补 D-24 + D-21 vite 代理语境精化/split 树行早崩新形态）
+- [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v10（SD-704 指针；二十五项三分类；PLAN-007 增补 D-25[App 上下文 .console 裸发射全局覆写] + D-21 PLAN-007 执行窗扩记）
 - [upstream/2026-09-jade-supply.md](upstream/2026-09-jade-supply.md) —
   上游供料包（D-16 预热 / D-15 残余 / D-17 键入发射 / D-18 投影双态，
   期望形态+复验条件+回执方式）

@@ -1,12 +1,12 @@
 ---
 plan_id: PLAN-007
-status: executing
+status: execution_done
 feature_name: file-manage-slice
 author: [zhaopuming]
 created_at: 2026-09-23T02:34:22+08:00
-updated_at: 2026-09-23T12:40:00+08:00
+updated_at: 2026-09-23T13:20:00+08:00
 plan_revision: 1
-current_step: 4
+current_step: 5
 total_steps: 5
 supersedes_spec_components: []
 new_spec_components:
@@ -438,17 +438,62 @@ pub fn delete_page_impl(path str) str {
     不动；另 e2e 新建断言锚实勘校正 `# E2E Note`→`E2E Note`
     （markdown 渲染 `# ` 不落 DOM——10c 先例同判）。ledger v10 记
     D-25。
-- **T-05 文档 + ledger v10 + 收口**（AC-05/06）
+- **T-05 文档 + ledger v10 + 收口**（AC-05/06）✅ 已完成
   - SD-701..704 canonical 落位（锚注齐 + 语义对照并表）；ledger
-    v9→v10（执行期实勘）。
+    v9→v10（执行期实勘）。**[✅ 已完成]**（2026-09-23）ARCHITECTURE
+    §5 增「文件管理域语义」段（SD-701：两域语义对照并表[改名改写/
+    删除悬空]/delete_page 三步定文/新建删除 front 全弧/触发集 v4/
+    TabsCountOf 落形注记/Delete 键位定谳）+ §6 十四组表 + probe_delete
+    注（SD-702）；README Tests 15/15+14/14+十四段口径 + file 扩单
+    描述 + N 定谳 file 首锁续记 + 基线 v7 指针（SD-703）+ 第五切片
+    条目 + ledger v10 指针（SD-704）；parity-ledger v10（D-25 = file
+    切片实勘集：**ts_adapter App 上下文 `.console` 裸发射全局覆写**
+    [window.console 覆写→console_log 垫片抛错中断 handler——store.
+    Open push→log→TabActivate 断链实录；PLAN-006 起潜伏 12⑥ 每轮触
+    发，file 组 e2e 首次行为级暴露；纪律 = App 上下文禁写 + 供料候
+    选未知字段诊断]/vm menubar-item Popover lowering=button 头/lucide
+    icon class 约定 + D-21 v10 扩记[PLAN-007 执行窗三形态实录]）。
   - 负向证采集（含 Ctrl+N 回归证）；§9 work 记录（outcome/
-    next=review）。
-  - 验证：文档 diff 全窗口检视 + gate 复跑绿。
+    next=review）。**[✅ 已完成]** 四件：①家族仓零接触（auto-lang/
+    auto-down 本会话零写入；auto-lang blueprints 删除面 = **先在外
+    来 WIP**[PLAN-006 T-05 同面在案，不触碰]——亦为本仓构建良性
+    package load 告警来源，D-15 在册）②gen 树双跑 hash 等价
+    （bbf44dad0af4ae67 = bbf44dad0af4ae67——无手改 + regen 确定性）
+    ③旧园零代码引用（src/ 全 grep 唯一命中 = wsys.at:333 出处注释
+    「移植自冻结池」——文档性非代码引用）④补件面零增量（regen-vue
+    .mjs/serve-back.mjs 本计划零 diff；残余垫片族 + splice 两件不变
+    ——build 收口行实录）。**Ctrl+N untitled 流回归零变化**：vm
+    check 10b（untitled 空态）/12①（untitled 禁用）/7（tab 面）/
+    9（quit）+ e2e 同段 gate 全绿实录。
+  - 验证：文档 diff 全窗口检视 + gate 复跑绿。**[✅ 已完成]** 文档
+    diff 全窗口自检（SD-701..704 锚注齐/指针一致/ledger 25 项三分类
+    完整）；gate 复跑 **第 3 跑 ALL GREEN**（前 2 跑 split 臂 check-10
+    反链面板行 6s 超时[state=ready 而行空]——D-21 v9 在册新形态原样
+    [HTTP 树取空响应疑同窗，独占重跑即绿]；矩阵单跑同期 15/15+14/14
+    双绿交叉印证——PLAN-006 同款 gate 窗节拍，如实记）。
 
 依赖序：T-01 → T-02 → T-03 → T-04 → T-05（线性）。
 
 ## 9. 复审记录
 
+- **2026-09-23 work 收口（auto-plan-work）**：
+  - `stage: work`，PLAN-007，revision 1。
+  - `outcome: pass`——T-01..T-05 全收口，execution_done。
+  - `code_commit`：T-05 收口提交（本记录随附）；base = 3b46b5b
+    （PLAN-006 归档态——单写者主线前提满足）；线性五提交
+    T-01 b50b146 → T-02 f07d259 → T-03 fc30a57 → T-04 b7d8fa0 →
+    T-05（本提交）。
+  - `task_ids: T-01..T-05` 全收口（current_step 5/5）。
+  - `evidence`: **gate ALL GREEN**（T-04 判绿窗一次通过；T-05 收口
+    复跑第 3 跑绿——前 2 跑 split check-10 面板行 D-21 v9 形态如实
+    记；vm merged 15/15 + split 14/14 + vue build + e2e 十四段）；
+    基线 v7 连跑 3 次零漂移
+    （15/15×3，v6 留档）；probe_delete 九案双臂一致全绿；smoke-t02
+    7/7 + smoke-t03 6/6；负向证四件 + Ctrl+N untitled 回归零变化
+    （T-05 证据块全录）；执行期修正三项授权内记录（§6 期望值 3 处
+    校正/弹层锚结构定位/App 上下文 console 排雷——D-25①）。
+  - `blockers: 无`。
+  - `next: review`。
 - **2026-09-23 预立项 handoff（auto-plan-new）**：
   - `stage: new`，PLAN-007，revision 1。
   - `outcome: pass`——可进 work，**前提 = PLAN-006 归档**（§4.1
@@ -459,23 +504,22 @@ pub fn delete_page_impl(path str) str {
 
 ## 10. 待澄清事项
 
-1. **Delete 键位 actions 面形态**（T-02 冒烟定谳，非探针）：shortcut
+1. **Delete 键位 actions 面形态**（**已裁定**——T-02：shortcut "Delete" 字面 boot 吸收零 fallback，F2 同构预期兑现；menubar-item vm 轨 Popover lowering=button 头实勘入 D-25②）：原观测：shortcut
    "Delete" 字符串面（F2 同构预期——keydown 回退层）；若 actions 面
    对裸修饰键名解析异常 → fallback 菜单项/`Ctrl+Shift+Backspace`
    备选（键位面小改，不涉契约）。
-2. **Ctrl+N vs EXPLORER「＋」双口径**（用户口，默认并存）：untitled
+2. **Ctrl+N vs EXPLORER「＋」双口径**（**已裁定**——默认并存生效：SD-701 语境区隔注记已落；合并口留 r2 非阻塞）：untitled
    草稿（不落盘）与落盘新档两语境并存 + SD-701 注记；若用户要合并
    （Ctrl+N 直落盘）→ r2 小范围（ActNew 流改接 create_page——
    untitled 流退役面大，需单独评估 dirty 档语义）。
-3. **删除即清理入链**（默认不做）：v1 悬空化 + 预览防线；若用户要
+3. **删除即清理入链**（**已裁定**——默认不做生效：SD-701 语义对照并表已落「清理属悬空清单/wanted pages 批」）：v1 悬空化 + 预览防线；若用户要
    「删除时改写入链为悬空标记/清除」→ r2（复用 SD-601 改写器——
    语义需另裁：清除 or 标记）。
-4. **D-21 POST 波及**（观测项）：每操作单 POST，密度不升；file 段
-   如撞 vite 代理语境簇按 README 重跑口径，ledger v10 如实记。
+4. **D-21 POST 波及**（**已裁定**——v10 扩记闭合：每操作单 POST 密度不升实证；执行窗三形态实录[check-10 面板行 1 败/save 磁盘标记漂移 1 轮/HTTP 400 瞬时]全数签名吻合重跑即绿，file 组零失败漂移——ledger D-21 v10）。
 5. **`File.create_dir` 可调性**（PLAN-008 前置探针预告，本批不涉）：
   别名在册（native_catalog 1004）未证——D-20①/D-24① 教训；目录面
   （新建目录/移动）批首闸。
-6. **同名大小写边界**（观测项）：`create_page("Index")` 幂等打开
+6. **同名大小写边界**（**已裁定**——v1 接受：exists 卫语句命中→幂等打开既有档；e2e/vm 幂等子步实测同判；casefold 联动裁决另立）：`create_page("Index")` 幂等打开
    `index.ad`？——精确 stem 下 `Index` ≠ `index`，但 Windows 实盘
    `Index.ad` 与 `index.ad` 同档（exists 卫语句命中 → 幂等返回现
    路径）——行为=打开既有档，v1 接受（casefold 批联动裁决已在
@@ -485,7 +529,7 @@ pub fn delete_page_impl(path str) str {
    （frontmatter 面首开——D-14 联动）、悬空链接清单（wanted pages
    ——link_index 派生收割件）、检索上量微批、`File.rename`/`copy`
    别名供料回执件。
-8. **PLAN-006 复审耦合**（预立项特有）：006 复审若出 needs_fix 返工
+8. **PLAN-006 复审耦合**（**已裁定**——006 archived/delivered[3b46b5b]，复审 pass/merge 不触发，docs-only 面先例兑现；共享面零漂移本计划全程门实证）：006 复审若出 needs_fix 返工
    且涉共享面（rename 弹层/refresh 双件/CloseTabsOf 所倚 RemoveAt
    形态）→ 本计划 r2 跟随修订（接地证据重核）；复审 pass/merge 不
    触发（docs-only 面先例）。

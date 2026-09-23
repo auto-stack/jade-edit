@@ -286,21 +286,68 @@ src/back/api.at           /api 契约（自有 Auto 源，与实现同 commit—
   出链面板立即反映新 stem、EXPLORER 旧行消失新行在）。⚠ 已开后台 tab
   的 store body 不随改写刷新（v0 口径——改写后从磁盘重开即新文；背景
   tab 脏保存回退改写的窗口 §10 留观）。
+- **文件管理域语义（SD-701，PLAN-007 第五切片）**：工作区运维收口——
+  EXPLORER 从只读树升级为可管理面（新建 + 删除 + tab 关闭面）。
+  **两域语义对照并表（本域定调）**：重命名（SD-601）= **入链源文改写**
+  保知识完整性；删除（本域）= **入链悬空化，不改写源文**——出链行
+  `exists=false` 翻转如实可见，悬空行可经 create_page（SD-501）再建页
+  接回（PLAN-005 弧线反向闭合）；「删除即清理引用」**非**本域语义
+  （清理属悬空链接清单 / wanted pages 后续批）。
+  **back 半**：`delete_page(path)` **POST**（D-19 同款：path CJK 常态
+  body 传参）→ wsys.delete_page_impl **三步**：①卫（`.ad` 后缀**先于**
+  exists——目录名/裸名/其他扩展一律拒，**既有路径同样拒**防目录误删；
+  exists 缺失拒）②`File.delete`（返回值忽略——D-24② 恒返 0 吞错）
+  ③**删后 exists 双复核**（成功唯一可信判据 = 存在性翻转；仍存在→
+  ""）。返回工作区根相对 path；"" = 非 .ad/缺失/删除未生效。九案双臂
+  直证（`tests/probe_delete.mjs`：删存在/重建再删幂等闭环/缺失拒/
+  非 .ad 两形拒[目录 + 既有非 .ad 文件]/CJK 删/create_page 重建根档
+  接回 + 再删；**悬空化不改写源文逐字节负证** = index/Hello World/
+  Projects/jade-garden-index.json 全原样）。
+  **front 半·新建**：EXPLORER 头部「＋」钮（tab 条 plus 同构 icon 钮）
+  → `.ActNewFile`（new_q 置空 + store.NewOpen）→ **dialog 第四弹层**
+  （内嵌 input[页面名] + footer 普通钮双钮——D-24④/⑤ dialog 纪律；
+  **声明位居 rename 弹层前**——vm 快照恒渲染 input 序「后声明者居末」
+  锚纪律，check 12 rename input 居末不漂移）→ `.NewGo`：create_page
+  直调（**零新 back 面**——SD-501 幂等守卫/清洗/模板/根落位全套直承）
+  → 非空 = 关弹层 + store.Open + LinksRefreshOf(r)（「建页成功」口
+  直承，行重算内联 active=r）+ TreeRefresh + ft_sel 置位；空 = console
+  注记 + 弹层留置。**Ctrl+N untitled 草稿流不动**（untitled 不落盘 vs
+  EXPLORER「＋」根落盘新档——语境区隔两口径并存注记）。
+  **front 半·删除**：action `file.delete`（**Delete** 键位——执行期定
+  谳：字面 boot 吸收零 fallback，F2 同构预期兑现；`enabled_if: ft_sel
+  非空` 权威面）+ menubar 项「删除…」（重命名…与分隔线之间；不挂
+  enabled——D-24③）→ `.ActDelete` 守卫（ft_sel 空 = console no-op
+  [G2 未选中零弹层]；非空 = store.DeleteOpen）→ **dialog 第五弹层**
+  （零 input：标题 + 目标[ft_sel] + **影响面预览两行**——
+  dangling_impact[link_pages 扫 target == stem 精确计数→「N 处入链将
+  变为悬空」/「无入链」] + tabs_impact_text[「M 个标签页将关闭，未
+  保存修改将丢弃」/「无打开标签页」]，App 侧纯函数经 widget computed
+  ——仅显示，权威在 back；「删除」钮全树唯一文本锚）→ `.DeleteGo`：
+  delete_page 直调 → 非空 = 关弹层 + store.**CloseTabsOf**（while 扫描
+  [D-11] 命中即 RemoveAt(i) **不增 i**——remove 后左移同位重查；激活
+  邻档补位/空态两案在册口免费收口；splice 补件②守 vue 面）+
+  LinksRefreshOf（.store.active_path 投影）+ TreeRefresh + ft_sel 清空
+  （删除后无选中——no-op 口径复位）；空 = console 注记 + 弹层留置。
+  **TabsCountOf 落形注记**：store msg 无返值面——tab 警示预览为 App
+  侧派生 computed（`.store.tabs` App 上下文消费，双轨实测通）。
+  **刷新触发集 v4**（SD-302 v3 扩）：v3 + **删除成功**（.DeleteGo 内
+  链接重取——入链/出链行 exists 翻转 + 树重取 EXPLORER 行消失；新建
+  直承「建页成功」口）。
 - fixture workspace 每次全新隔离拷贝（源 = auto-down `tmp/wiki-demo`，
   `JADE_FIXTURE` 可覆）——测试会打字保存，源零污染。Auto back 无 config
   文件 ⇒ 旧「exe 旁陈年 config 压 env」事故类别结构性消失（belt 保留为
   ws_root 实际根断言）。
 
-## 6. 测试体系（双轨一致性门；PLAN-001 T-04 换基迁移；SD-402 find 扩单；SD-502 create 扩单；SD-602 rename 扩单）
+## 6. 测试体系（双轨一致性门；PLAN-001 T-04 换基迁移；SD-402 find 扩单；SD-502 create 扩单；SD-602 rename 扩单；SD-702 file 扩单）
 
 | 门 | 命令 | 断言域 |
 | --- | --- | --- |
-| vm 矩阵（双臂） | `node tests/vm_matrix.mjs` | merged 臂（进程内直调）+ split 臂（`--no-merge` HTTP）各**十三组检查**（六检查 + 基线[merged] + tab/editops/link/find/rename 扩单 + quit——PLAN-002/003/004/005/006 扩单；**link 组含建页弧线子步 10c**[PLAN-005]、**rename 组含七子步**[PLAN-006：禁用态/弹层锚/取消零落盘/改名弧线/面板+树/case-only 拒/状态复原]——子步不占检查位，fail 即臂败）+ 结构基线 v6 零漂移（merged 臂锁，`tests/baseline/structure-v6.txt`；v5/v4/v3/v2/v1/v0 留档） |
+| vm 矩阵（双臂） | `node tests/vm_matrix.mjs` | merged 臂（进程内直调）+ split 臂（`--no-merge` HTTP）各**十四组检查**（六检查 + 基线[merged] + tab/editops/link/find/rename/file 扩单 + quit——PLAN-002/003/004/005/006/007 扩单；**link 组含建页弧线子步 10c**[PLAN-005]、**rename 组含七子步**[PLAN-006：禁用态/弹层锚/取消零落盘/改名弧线/面板+树/case-only 拒/状态复原]、**file 组含八子步**[PLAN-007：新建/幂等/取消零落盘/CJK 新页/删除预览+取消/删除弧线/悬空翻转/未选中 no-op——激活邻档两臂异位 merged=同位保持[首页]/split=active 不变[D-19 开档面]，tab 警示行两臂分叉「1 个将关闭」/「无打开」]——子步不占检查位，fail 即臂败）+ 结构基线 v7 零漂移（merged 臂锁，`tests/baseline/structure-v7.txt`；v6/v5/v4/v3/v2/v1/v0 留档） |
 | vue build | `pnpm build`（= regen-vue.mjs） | 裸 strict 生成 + 三残余补件 + vue-tsc 0 错 + vite build |
-| vue e2e | `pnpm test:e2e` | playwright **同一检查单**（含 10c 建页弧线 + 12 rename 七子步；serve-back AutoVM 后端 + vite 双 webServer） |
+| vue e2e | `pnpm test:e2e` | playwright **同一检查单**（含 10c 建页弧线 + 12 rename 七子步 + 13 file 段[9 quit 后段内最后——vue quit 垫片 no-op 无进程约束，删除素材 Hello World.ad 保 quit 三验面]；serve-back AutoVM 后端 + vite 双 webServer） |
 | 双臂总门 | `node scripts/gate.mjs` | ①vm 双臂 ②vue(build+e2e) 顺序全绿（契约漂移段已随自有源退役） |
 
-另：契约直证脚本 `tests/probe_create.mjs`（PLAN-005 create_page 六案）/ `tests/probe_rename.mjs`（PLAN-006 rename_page 八案——改写逐字节/锚透传/自链/CJK/清洗/三拒/副作用圈定，双臂返回值逐案对读）独立于矩阵按需跑（入库源，全案期望值 = SD-501/SD-601 定文）。
+另：契约直证脚本 `tests/probe_create.mjs`（PLAN-005 create_page 六案）/ `tests/probe_rename.mjs`（PLAN-006 rename_page 八案——改写逐字节/锚透传/自链/CJK/清洗/三拒/副作用圈定）/ `tests/probe_delete.mjs`（PLAN-007 delete_page 九案——删存在/幂等闭环/缺失拒/非 .ad 两形拒/CJK 删/重建接回 + **悬空化不改写源文逐字节负证**，双臂返回值逐案对读）独立于矩阵按需跑（入库源，全案期望值 = SD-501/SD-601/SD-701 定文）。
 
 断言域 = 两轨交集（结构/文本/磁盘字节，**非像素**）；差异登记面 =
 [parity-ledger.md](parity-ledger.md)（从第一天记账）。
