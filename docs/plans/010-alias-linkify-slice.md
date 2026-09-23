@@ -1,6 +1,6 @@
 ---
 plan_id: PLAN-010
-status: review
+status: reviewed
 completion_kind: executing_done
 feature_name: alias-linkify-slice
 author: [zhaopuming]
@@ -421,6 +421,38 @@ pub fn linkify_page_impl(path, stem) str {
     13 ⑨ 案双臂 PASS、9 quit 双臂 PASS）；gate ALL GREEN 见终审记
     录（复审窗重跑即绿口径，D-21 负载窗多形态如实记）。
   - `next: review`（终审绑定收口提交）。
+- **2026-09-23 终审 handoff（auto-plan-review，独立会话自工件重建）**：
+  - `stage: review`，PLAN-010，revision 1。
+  - `outcome: pass`——reviewed@f5f17e4（base=7b8a251；dependency=上游
+    auto-lang debug 构建在册；spec_inputs=ARCHITECTURE §5/§6 + README
+    Tests/文档节现版）。
+  - `acceptance_results`（AC-01..06 全 pass）：
+    - AC-01 aliases 解析：probe_alias_linkify 十案双臂独立复跑绿
+      （①别名解析→CAP.ad ②stem 优先 ③walk 序首现 ④语料零漂移 ⑤CJK
+      target 保真——双臂逐字节一致 + link_index 结构深等）；vm 10m
+      alias 三步双臂 PASS（出链翻转/反链归并/wanted 排除）。
+    - AC-02 linkify+F-R9-4：probe ⑥..⑩ 双臂绿（frontmatter 保留/
+      已链不改/多处计数/CJK/卫语句）；vm linkify 两步 + **file 组 ⑨
+      F-R9-4 案双臂 PASS**（F-R10-1 修复后）；e2e 10m 段同弧线绿。
+    - AC-03 gate ALL GREEN：`node scripts/gate.mjs` 绿跑实录（merged
+      16/16 + split 15/15 + build + e2e 1 passed 23.6s）——**复审窗
+      4 跑 1 绿如实记**（e2e write_wiki 400 丢参×2 + vm ECONNRESET
+      ×1，全数 D-21 在册家族形态、重跑即绿口径；另有孤儿 auto 后端
+      清理两例[崩溃轮残留毒化后续轮——进程卫生]）。
+    - AC-04 基线：v9 上游重锁 146→149（State 段逐字节零模型漂移实
+      证）——F-R10-2 如实记（契约「零重锁」承诺被上游打破，执行期
+      已如实三处记账，按「v9 现行零模型漂移」口径 pass）。
+    - AC-05 负向证：.console 零赋值（diff grep 实证）/gen/ 零手改/
+      deps 冻结池零接触/补件面零增量/既有契约零变化（probe_tags 面
+      meta 组 inline 回归绿承继）。
+    - AC-06 文档面：SD-1001..1004 落位锚注齐；ledger v13（D-27 四件
+      +D-21 v13 扩记）读回证。
+  - `findings`：F-R10-1（已修复随 f5f17e4——vm 双臂独立复验 EXIT=0）；
+    F-R10-2（记档不纠，见第一轮记录）。
+  - `evidence`：/tmp/gate-green.log（绿跑全量）+ probe 双臂实录（本
+    §9 第一轮记录引）+ vm fix6 EXIT=0 双臂实录；提交面 f5f17e4 diff
+    与 §9 work_summary/F-R10-1 修复记录逐项吻合（独立通读）。
+  - `next: merge`（docs-only 后代资格预审=本笔；直接 main 线性约定）。
 
 ## 10. 待澄清事项
 
