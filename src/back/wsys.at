@@ -766,15 +766,168 @@ fn page_tags(fm str) List {
     return out
 }
 
-/// 工作区标签索引 JSON（api.tags_index 实现；SD-801 back 半）：页面数组
-/// [{tag, paths:[相对路径]}]——**顶层裸数组**（link_index 同裁定：front
-/// json.to_value 顶层 map 产物入态 = 裸 vmref 损坏，D-20④）；tag 序 =
-/// first-seen（walk 序确定性——link_index 哲学同判）；paths = walk 序。
-/// 解析 = frontmatter_of + page_tags 组合，**读原文 File.read_text 非
-/// read_body**（后者已剥 frontmatter）。两遍聚合（元素先拷局部——
+/// 纯数字串判定（PLAN-009 §5.1 忽略三则③——`#123` 非 tag）——十数字
+/// while-contains 收敛剥除后空串即纯数字（title_to_path_stem 同族惯用法；
+/// 语料纯数字面为 ASCII——.contains 语义安全）。空串恒 false（调用面
+/// tok != "" 先行守卫，本判为纵深防御）。
+fn is_digits(s str) bool {
+    if s == "" {
+        return false
+    }
+    var t str = s
+    var ds List = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
+    var i int = 0
+    while i < ds.len() {
+        // ⚠ D-20②：列表元素先拷局部变量再调方法。
+        var d str = ds[i]
+        while t.contains(d) {
+            t = t.replace(d, "")
+        }
+        i = i + 1
+    }
+    return t == ""
+}
+
+/// body 行内 #tag 扫描（PLAN-009 T-01；SD-901 inline 半）——split("#")
+/// 逐段标记法（extract_links_json 同族；首段 = 首个 "#" 前文本直通不涉）。
+/// i≥1 段 = "#" 后文本，seg 先拷局部变量（D-20②）；忽略四则——
+/// ①段首字符 ∈ {空格/换行/#/回车}（标题 `# x`/`## x`——# 后空白即非
+///   tag、二级标题段首为 `#`——slice(0,1) 判，ASCII 安全）；
+/// ②前一段（segs[i-1]）尾字符 == "{"（块锚 `{#block-id}`——ends_with
+///   判，语料 `{#block-project-a}` 实勘边界）；
+/// ③token（段首至首个空白/} 前缀）纯数字（split(" ")/("\n")/("\t")/
+///   ("}")/("\r") 首段链取——禁 .length 定长，D-20③）；
+/// ④前导空白语义（**T-01 执行期校正**——语料实勘 `\[\[Tasks#block-
+///   project-a\]\]` 转义链接锚面：Obsidian 行内 tag 须行首/空白前导，
+///   `X#y` 连续文本非 tag）——prev 非空且尾字符 ∉ {空格/换行/制表/回
+///   车} → 忽略（ends_with 链判，禁 .length 取尾）；prev 空 = body 首
+///   位直通。
+/// 合格 token 非空未入集 → push（while 查重——D-11 禁 .find 闭包）。
+/// ⚠ code fence 内 #tag 会计入（v1 原文扫——语料无此形态；fence 感知
+/// 扫描随 markdown 深解析批，PLAN-009 §10.6 观测项）。
+fn page_inline_tags(body str) List {
+    var out List = []
+    var segs = body.split("#")
+    var i int = 1
+    while i < segs.len() {
+        // ⚠ D-20②：列表元素先拷局部变量再调方法。
+        var seg str = segs[i]
+        var head str = seg.slice(0, 1)
+        var ignored bool = false
+        if head == " " {
+            ignored = true
+        }
+        if head == "\n" {
+            ignored = true
+        }
+        if head == "#" {
+            ignored = true
+        }
+        if head == "\r" {
+            ignored = true
+        }
+        if !ignored {
+            var prev str = segs[i - 1]
+            if prev.ends_with("{") {
+                ignored = true
+            }
+            if !ignored {
+                if prev != "" {
+                    // ④ 前导空白语义（行首/空白前导才成 tag——ends_with
+                    // 链判，禁 .length 取尾）。
+                    var preceded bool = false
+                    if prev.ends_with(" ") {
+                        preceded = true
+                    }
+                    if prev.ends_with("\n") {
+                        preceded = true
+                    }
+                    if prev.ends_with("\t") {
+                        preceded = true
+                    }
+                    if prev.ends_with("\r") {
+                        preceded = true
+                    }
+                    if !preceded {
+                        ignored = true
+                    }
+                }
+            }
+        }
+        if !ignored {
+            // token = 段首至首个空白/} 前缀（split 首段链——D-20③）。
+            var t1 = seg.split(" ")
+            var tok str = t1[0]
+            var t2 = tok.split("\n")
+            tok = t2[0]
+            var t3 = tok.split("\t")
+            tok = t3[0]
+            var t4 = tok.split("}")
+            tok = t4[0]
+            var t5 = tok.split("\r")
+            tok = t5[0]
+            if tok != "" {
+                if !is_digits(tok) {
+                    var seen bool = false
+                    var di int = 0
+                    while di < out.len() {
+                        var dv str = out[di]
+                        if dv == tok {
+                            seen = true
+                        }
+                        di = di + 1
+                    }
+                    if !seen {
+                        out.push(tok)
+                    }
+                }
+            }
+        }
+        i = i + 1
+    }
+    return out
+}
+
+/// 单页 tag 集（PLAN-009 T-01 聚合口径）：frontmatter tags ∪ body 行内
+/// #tag——fm 序在前（PLAN-008 基线 first-seen 序零漂移），inline 新 tag
+/// 去重追加。body 走 read_body（frontmatter 已剥——# 扫描面不涉 fm 值
+/// 内的 # 字符）；fm 面仍读原文 File.read_text（read_body 已剥 front-
+/// matter，与 PLAN-008 同通道）。
+fn page_tag_set(rel str) List {
+    var out List = page_tags(frontmatter_of(File.read_text(resolve(rel))))
+    var itags List = page_inline_tags(read_body(rel))
+    var i int = 0
+    while i < itags.len() {
+        // ⚠ D-20②：列表元素先拷局部变量再调方法。
+        var tag str = itags[i]
+        var seen bool = false
+        var j int = 0
+        while j < out.len() {
+            var oj str = out[j]
+            if oj == tag {
+                seen = true
+            }
+            j = j + 1
+        }
+        if !seen {
+            out.push(tag)
+        }
+        i = i + 1
+    }
+    return out
+}
+
+/// 工作区标签索引 JSON（api.tags_index 实现；SD-801 back 半 + SD-901
+/// inline 聚合源扩）：页面数组 [{tag, paths:[相对路径]}]——**顶层裸数组**
+/// （link_index 同裁定：front json.to_value 顶层 map 产物入态 = 裸 vmref
+/// 损坏，D-20④）；tag 序 = first-seen（walk 序确定性——link_index 哲学
+/// 同判；PLAN-009：fm 序在前、inline 追加——语料基线零漂移）；paths =
+/// walk 序。解析 = page_tag_set（frontmatter_of + page_tags + 行内
+/// page_inline_tags 并集，PLAN-009 T-01）。两遍聚合（元素先拷局部——
 /// D-20②）：pass1 全页 tag first-seen 去重收集；pass2 每 tag 收 paths。
 /// 装配 = json_esc + 逐项 `+` 重接（links_json 同款）；O(T×P) 重读——
 /// v0 规模可接受（search_json O(P²) 同判，上量随检索批换 StringBuilder）。
+/// 契约形状/触发面零变化（PLAN-008 定文不变——仅逐页聚合源 +1）。
 pub fn tags_json(path str, depth int) str {
     var pages List = collect_ad_pages(path, depth)
     var tags List = []
@@ -782,7 +935,7 @@ pub fn tags_json(path str, depth int) str {
     while i < pages.len() {
         var p = pages[i]
         var rel str = p.rel
-        var ptags List = page_tags(frontmatter_of(File.read_text(resolve(rel))))
+        var ptags List = page_tag_set(rel)
         var k int = 0
         while k < ptags.len() {
             var tag str = ptags[k]
@@ -811,7 +964,7 @@ pub fn tags_json(path str, depth int) str {
         while i2 < pages.len() {
             var p2 = pages[i2]
             var rel2 str = p2.rel
-            var ptags2 List = page_tags(frontmatter_of(File.read_text(resolve(rel2))))
+            var ptags2 List = page_tag_set(rel2)
             var has bool = false
             var k2 int = 0
             while k2 < ptags2.len() {
