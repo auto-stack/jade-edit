@@ -1,10 +1,10 @@
 ---
 plan_id: PLAN-007
-status: execution_done
+status: reviewed
 feature_name: file-manage-slice
 author: [zhaopuming]
 created_at: 2026-09-23T02:34:22+08:00
-updated_at: 2026-09-23T13:20:00+08:00
+updated_at: 2026-09-23T14:05:00+08:00
 plan_revision: 1
 current_step: 5
 total_steps: 5
@@ -475,6 +475,60 @@ pub fn delete_page_impl(path str) str {
 依赖序：T-01 → T-02 → T-03 → T-04 → T-05（线性）。
 
 ## 9. 复审记录
+
+- **2026-09-23 复审 pass（auto-plan-work 收口后，auto-plan-review；revision 1 保持）**：
+  - `stage: review`，PLAN-007，revision 1。
+  - `outcome: pass`——execution_done → reviewed，next=merge。
+  - `reviewed_commit: 766ed534261e1e6437938e8864510d868769fc3b`；
+    `base_commit: 3b46b5b33aa88002c0f216d47d26c63e42fb0c8d`（plan006
+    归档态；merge-base 线性确认，五提交无合并噪声）。
+  - `dependency_revisions`：无依赖工作树/分支（直接 main 线性约定；
+    deps/bps·stylekit 只读拷贝零触碰——auto-lang 仓外来 WIP 69 项为
+    先在面[PLAN-006 T-05 同判]，本计划全程零写入）。
+  - `spec_inputs`：ARCHITECTURE.md@766ed53（§5 SD-701 段/§6 SD-702
+    表）/README.md@766ed53（SD-703/704）/parity-ledger.md@766ed53
+    （v10 25 项）；frontmatter new_spec_components 四项终化、
+    supersedes 空（纯增量正确）。
+  - **独立性声明**：实现会话内复审（无独立会话），裁定自工件重建
+    ——AC 复现全部本地重放，不采信执行期摘要（PLAN-006 同款）。
+  - `acceptance_results`：
+    - **AC-01 pass**——`node tests/probe_delete.mjs` 复审基线重放：
+      九案全过 + 双臂一致=true；契约/实现源检（diff 自 base）与
+      SD-701 三步定文逐条对应（.ad 卫先于 exists/返值忽略/删后双
+      复核）。
+    - **AC-02 pass**——gate 重放含 vm file 组八子步双臂（13：两臂
+      分叉断言域实录与计划 §8 修订一致）+ e2e file 段五子步
+      （[13 file] PASS 行实录 gate-review.log）；取消零落盘/悬空翻
+      转/no-op 全断言。
+    - **AC-03 pass**——`node scripts/gate.mjs` 复审重放 **exit 0
+      一次通过**（merged 15/15 + split 14/14 + vue build + e2e 十四
+      段；本跑零 D-21 重试——收口窗前 2 败已如实记 §9/§8 T-05）。
+    - **AC-04 pass**——gate B 检查=基线 v7 零漂移（复审 HEAD）；
+      dump 含 new_open/delete_open/new_q 三字段（源检）；v7 头注重
+      锁因由三项齐；v6 留档在库；锁定时连跑 3 次零漂移在案。
+    - **AC-05 pass**——四件重验：家族仓零写入（本会话；外来 WIP 不
+      触碰）/旧园零代码引用（唯一命中=wsys.at:333 出处注释）/补件
+      面零增量（scripts/ 本计划零 diff）/gen hash bbf44dad0af4ae67
+      与 T-05 记录逐字节同（gate 内 build 再生后复测——确定性）；
+      Ctrl+N untitled 回归 = gate 全绿内含（vm 10b/12①/7/9 + e2e
+      同段）。
+    - **AC-06 pass**——锚注齐（SD-701@ARCHITECTURE:289/SD-702@§6
+      头+probe 行/SD-703@README Tests/SD-704@README 文档节）；ledger
+      v10 = 25 项 D 行 + README「二十五项」+ SD-704 指针一致；触发
+      集 v4 指针双面（ARCHITECTURE + app.at 注释）；语义对照并表
+      与实测行为对读一致（改名改写 SD-601 / 删除悬空 delete_page
+      零改写——probe 负证重放）。
+  - `findings`: 无阻塞。三项执行期修正（预览期望值 3 处/邻档两臂
+    异位/弹层锚结构定位）= 证据驱动测试面校正，语义契约（§5/§7）
+    零变化——revision 1 保持（PLAN-006 预览期望值校正同判）；
+    app.at console 排雷（8 处 App 上下文移除）= vue 轨潜伏缺陷排除
+    [D-25①]，行为面 gate 全绿零回归，已入 ledger 供料候选；D-21
+    收口窗 2 败 = 在册形态非回归。
+  - `evidence`: e2e/.runtime/gate-review.log（gate exit 0 全门）+
+    probe_delete 本地重放 RESULT 行 + 本文 §8 各任务证据块（持久工
+    件：tests/probe_delete.mjs、tests/baseline/structure-v7.txt 入
+    库可复跑）。
+  - `next: merge`。
 
 - **2026-09-23 work 收口（auto-plan-work）**：
   - `stage: work`，PLAN-007，revision 1。
