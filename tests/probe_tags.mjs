@@ -48,7 +48,10 @@ const RUNTIME = path.join(repoRoot, 'e2e', '.runtime')
 const PROBE_DIR = path.join(RUNTIME, 'probe-tags')
 const MERGED_WS = path.join(RUNTIME, 'probe-tags-workspace')
 const MERGED_PORT = 9399
-const SPLIT_PORT = 8254
+// 8251-8950 现为 Windows WinNAT 排除区段（netsh interface ipv4
+// show excludedportrange——复审窗实勘，T-01 执行期 8254 尚可用）；
+// split 臂端口移至区段外（serve-back 默认 8211 同在区段外）。
+const SPLIT_PORT = 8221
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
