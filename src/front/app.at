@@ -101,6 +101,50 @@ fn outlink_rows_of(pages List, active str) List {
     return out
 }
 
+/// 未链接提及行集（PLAN-009 T-02；SD-901 mentions 半）——search_wiki
+/// 结果三则过滤 + 行装配 {path, snippet}：①path != active（自身——
+/// 与 backlink_rows_of 同守卫语义）；②path ∉ linked 源集（已链源——
+/// 反链段已示不重复；入参 = 现算 bl_rows）；③snippet != ""（title-only
+/// 命中非提及语义——SD-401 snippet 空口径复用）。空 active → 恒空
+/// （卫语句——同 backlink_rows_of）。**纯派生零 back 增量**：fetch 在
+/// MentionsRefreshOf 共享口（守卫链 backlinks_open → 非 active 空——
+/// 面板关零 POST，D-21 面纪律）。
+fn mentions_of(results List, active str, linked List) List {
+    var out List = []
+    if active == "" {
+        return out
+    }
+    var i int = 0
+    while i < results.len() {
+        // ⚠ D-20②：列表元素先拷局部变量再取字段。
+        var r = results[i]
+        var p str = r.path
+        var snip str = r.snippet
+        var keep bool = false
+        if p != active {
+            if snip != "" {
+                keep = true
+            }
+        }
+        if keep {
+            var k int = 0
+            while k < linked.len() {
+                var l = linked[k]
+                var sp str = l.source_path
+                if sp == p {
+                    keep = false
+                }
+                k = k + 1
+            }
+        }
+        if keep {
+            out.push({ path: p, snippet: snip })
+        }
+        i = i + 1
+    }
+    return out
+}
+
 // —— 查找面板派生（PLAN-004 T-02）。纯内存面（快开零 back 增量）；数据
 // 态在 App 模型（D-20④ 同款裁定——链接态先例）。
 
@@ -374,6 +418,7 @@ widget App {
         ActConsole, ActSwitchTab, ActAbout,
         CloseRequest, QuitDiscard, QuitSaveClose, QuitConfirmCancel,
         ActBacklinks, LinksRefresh, OpenLink(str),
+        MentionsRefreshOf(str),
         FindEdit(str), FindRun, ActFindFiles, ActFindText, FindPick(str),
         CreateClick(str), CreateGo, CreateCancel,
         TreeRefresh, LinksRefreshOf(str),
@@ -425,6 +470,13 @@ widget App {
         // 同触点 + ActFindWanted 入口；tags_rows 同判不入 store——
         // D-20④）。----
         var wanted_rows List = []
+        // —— 未链接提及数据态（PLAN-009）：提及行 {path, snippet}——
+        // search_wiki(stem) 结果 −自身 −已链源（bl_rows）−title-only
+        // （SD-901 mentions 半）。**唯一新模型字段**（store 零新增——
+        // App 模型族 find/链接/tags 态先例；基线 v9 变更面）。fetch =
+        // MentionsRefreshOf 共享口（backlinks_open 守卫——面板关零
+        // POST，D-21 面纪律）。----
+        var mention_rows List = []
     }
 
     computed {
@@ -784,6 +836,26 @@ widget App {
                                     }
                                 }
                             }
+                            // —— 未链接提及段（PLAN-009；SD-901 mentions
+                            // 半——反链面板第三段，Obsidian 反链面板同款
+                            // 段落）：标题行 + 空态 + 行集两行留根（button
+                            // path + text snippet 次行——非单钮双段插值，
+                            // §5.2）；行点击 OpenLink 开档。数据 =
+                            // .mention_rows（MentionsRefreshOf 共享口守卫
+                            // fetch——面板关零 POST）。----
+                            row (style: "h-6 items-center shrink-0 px-3") {
+                                text "未链接提及" { style: "text-[11px] font-bold text-muted-foreground" }
+                            }
+                            if .mention_rows.len() == 0 {
+                                text "（无未链接提及）" { style: "text-[11px] text-muted-foreground px-3" }
+                            }
+                            for r in .mention_rows {
+                                button (text: r.path, variant: "ghost") {
+                                    onclick: .OpenLink(r.path)
+                                    style: "w-full justify-start px-3 h-6 text-left text-[12px]"
+                                }
+                                text r.snippet { style: "text-[11px] text-muted-foreground px-3" }
+                            }
                         }
                         // —— 标签面板区（PLAN-008）：tag 行（label 派生期
                         // 拼接 `{tag} · {n}`——双段插值 avoidance）→ 单选
@@ -949,6 +1021,7 @@ widget App {
             .TreeRefresh()
             .LinksRefreshOf("")
             .TagsRefresh()
+            .MentionsRefreshOf("")
         }
 
         // 目录展开/折叠（受控展开态，toggle_id 纯函数返回新 List）。
@@ -970,6 +1043,7 @@ widget App {
                 // T-03 实勘；Open 即激活入参 path，两轨一致）
                 .bl_rows = backlink_rows_of(.link_pages, path)
                 .ol_rows = outlink_rows_of(.link_pages, path)
+                .MentionsRefreshOf(path)
             }
         }
 
@@ -988,6 +1062,7 @@ widget App {
             // 链接行重算（显式空 active——untitled 激活；不读 .store，两轨一致）
             .bl_rows = backlink_rows_of(.link_pages, "")
             .ol_rows = outlink_rows_of(.link_pages, "")
+            .MentionsRefreshOf("")
         }
         .ActOpen -> { store.ActOpen() }
         .ActSave -> {
@@ -1001,6 +1076,7 @@ widget App {
             .TreeRefresh()
             .LinksRefreshOf(.store.active_path)
             .TagsRefresh()
+            .MentionsRefreshOf(.store.active_path)
         }
         .ActQuit -> { store.ActQuit() }
         .ActUndo -> { store.ActUndo() }
@@ -1014,7 +1090,10 @@ widget App {
             store.BacklinksToggle()
             if .store.backlinks_open {
                 // 面板开启 → 链接索引重取（触发集：面板开启）+ 行重算
+                // + 提及重取（PLAN-009——行重算先行，bl_rows 已链源排重
+                // 面现算；面板关零 POST 守卫在口内）
                 .LinksRefreshOf(.store.active_path)
+                .MentionsRefreshOf(.store.active_path)
             }
         }
         .LinksRefresh -> {
@@ -1077,6 +1156,45 @@ widget App {
             // 建页成功后 wanted 行自动消失，G2 闭环）
             .wanted_rows = wanted_rows_of(.link_pages)
         }
+
+        // —— 未链接提及重取共享口（PLAN-009 T-02；SD-901 mentions 半）。
+        // 守卫链（§5.2）：backlinks_open 为真才 fetch（面板关零 POST——
+        // D-21 面纪律；merged 臂网络不可观测，面板关时激活变更
+        // mention_rows 恒旧值的行为等价断言面见 vm_matrix link 组
+        // mentions 子步）→ active 非空（untitled 恒空）→ 单取形 fetch
+        // search_wiki(stem, 20)（PLAN-004 契约原样——POST 通道 CJK 双臂
+        // 已证 D-19 面无）→ mentions_of 三则过滤装配。
+        // ⚠ 已链源集**本口自派生**（backlink_rows_of(.link_pages,
+        // active)——不直读 .bl_rows）：vue 轨 handler 间调用不发射
+        // await（D-23②），ActBacklinks 等处 LinksRefreshOf 与本口并发——
+        // 直读 .bl_rows 会吃到 pre-refresh 陈旧投影（e2e check-10 实勘：
+        // 已链源漏排重三行误入提及段）；.link_pages 为最近一次完成的
+        // 索引刷新产物，与面板在显反链行同鲜度——提及排重与所见一致
+        // 口径。stem = path_stem(active)（D-20③ split 法）。try/catch
+        // 落 console_log（链接触点同款——backend-offline 不炸；D-25①：
+        // 零 .console 写面）。触点族 = Init/ActBacklinks 开面板/OpenFile/
+        // OpenLink/ActNew（激活变更——守卫内）/Save 成功/Rename 成功
+        //（与 bl/ol 行重算同触点族，v3/v4 集内不扩新触发类别）。
+        .MentionsRefreshOf(active str) -> {
+            if .store.backlinks_open {
+                if active != "" {
+                    var stem str = path_stem(active)
+                    var rows List = []
+                    var ok bool = true
+                    try {
+                        rows = json.to_value(search_wiki(stem, 20))
+                    } catch (e) {
+                        ok = false
+                    }
+                    if !ok {
+                        console_log("mentions: search failed")
+                    }
+                    .mention_rows = mentions_of(rows, active, backlink_rows_of(.link_pages, active))
+                } else {
+                    .mention_rows = []
+                }
+            }
+        }
         .OpenLink(path) -> {
             if path != "" {
                 store.Open({ path: path })
@@ -1084,6 +1202,7 @@ widget App {
                 // Open 已开即激活语义 + 行派生）
                 .bl_rows = backlink_rows_of(.link_pages, path)
                 .ol_rows = outlink_rows_of(.link_pages, path)
+                .MentionsRefreshOf(path)
             }
         }
 
@@ -1386,6 +1505,7 @@ widget App {
                 store.Reload()
                 .LinksRefreshOf(r)
                 .TagsRefresh()
+                .MentionsRefreshOf(r)
                 .TreeRefresh()
                 if .ft_sel == old_path {
                     .ft_sel = r
