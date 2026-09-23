@@ -40,6 +40,20 @@
 //             QuitSaveClose → 磁盘三验（原文/标记/frontmatter）。
 //             进程退出断言仅 vm 附注——vue 轨 Process.exit = 垫片 no-op
 //             （D-13），弹层闭态不复位属该形态的已知后果，不断言。
+//   13 file   树文件管理全弧线（PLAN-007；vm 矩阵 check 13 同单收敛
+//             为 vue DOM 断言域：新建[＋钮→dialog fill→创建→模板逐
+//             字节+树行+编辑器播种]/同名幂等[tab 不重复+磁盘不变]/
+//             取消零落盘/删除弧线[弹层锚 3 处入链已知答案+1 tab 警示
+//             →取消零落盘→确认→磁盘消失+tab 关闭+树行消失]/悬空翻转
+//             [开 index→出链行 Hello World（悬空）——PLAN-003 已知
+//             答案反向]。执行序在 9 quit 后（段内最后——删除素材
+//             Hello World.ad = quit 检查目标档，先 quit 后删保三验
+//             面；vue quit = 垫片 no-op 无进程终止，段序无 vm 侧约束
+//             ）。删除素材取 ASCII 档 Hello World——其入链/出链面
+//             ASCII 安全；CJK 导航面 vm merged 专属（D-19——vue 轨
+//             GET query 同败，新页 CJK 案不设）。无键位面（Delete
+//             键 = 真键盘，e2e 不覆盖——11/12 同口径，入口 = 文件
+//             菜单→删除…）。
 //
 // D-17 冲刷机制（vue 轨特有，7/8/9 共用）：切档重挂载后的编辑器实例，
 // 键入只进引擎模型、update:modelValue 门控至 blur——中性 blur（点
@@ -415,4 +429,76 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   expect(quitDisk, '原文未被整文替换丢失').toContain('这是一段示例文本')
   expect(quitDisk, 'frontmatter 保留').toContain('title: Hello World')
   console.log('[9 quit] PASS — QuitSaveClose 磁盘三验（原文/标记/frontmatter；进程退出仅 vm 附注）')
+
+  // 13 file（PLAN-007 T-04；vm 矩阵 check 13 同单收敛——执行序在 quit
+  // 后，见文件头注）。EXPLORER「＋」钮 = icon 钮（svg class 子串
+  // lucide-plus——EXPLORER 列先于 tab 条渲染，.first() 消歧）；vue
+  // Dialog 闭态 = 卸载（radix）——弹层内「创建」钮开态唯一，无 vm
+  // 侧同名钮消歧面。
+  const explorerPlus = page.locator('button:has(svg[class*="lucide-plus"])').first()
+  const newNameInput = page.getByPlaceholder('页面名…')
+  // ① 新建 ASCII：＋ → fill → 创建 → 编辑器播种 + 树行 + 磁盘模板逐字节
+  await explorerPlus.click()
+  await expect(newNameInput).toBeVisible({ timeout: 10_000 })
+  await newNameInput.fill('E2E Note')
+  await page.getByRole('button', { name: '创建', exact: true }).click()
+  await expect(page.getByText('新建页面')).toBeHidden({ timeout: 10_000 })
+  await expect(visibleEditor(page)).toContainText('E2E Note', { timeout: 15_000 })
+  await expect(page.getByText('E2E Note.ad', { exact: true }).first()).toBeVisible({ timeout: 10_000 })
+  const e2eNoteFile = path.join(WORKSPACE, 'E2E Note.ad')
+  await expect
+    .poll(() => fs.existsSync(e2eNoteFile) && fs.readFileSync(e2eNoteFile, 'utf8') === '# E2E Note\n\n', { timeout: 10_000 })
+    .toBe(true)
+  console.log('[13 file] 新建 — 编辑器播种 + 树新行 + 磁盘模板逐字节')
+  // ② 同名幂等：再建同名 → 开既有（tab 不重复 + 磁盘字节不变）
+  await explorerPlus.click()
+  await expect(newNameInput).toBeVisible({ timeout: 10_000 })
+  await newNameInput.fill('E2E Note')
+  await page.getByRole('button', { name: '创建', exact: true }).click()
+  await expect(page.getByText('新建页面')).toBeHidden({ timeout: 10_000 })
+  await expect(page.getByRole('button', { name: 'E2E Note', exact: true })).toHaveCount(1, { timeout: 10_000 })
+  expect(fs.readFileSync(e2eNoteFile, 'utf8'), '幂等磁盘字节不变').toBe('# E2E Note\n\n')
+  console.log('[13 file] 同名幂等 — tab 不重复 + 磁盘字节不变')
+  // ③ 取消零落盘
+  await explorerPlus.click()
+  await expect(newNameInput).toBeVisible({ timeout: 10_000 })
+  await newNameInput.fill('Ghost')
+  await page.getByRole('button', { name: '取消', exact: true }).last().click()
+  await expect(page.getByText('新建页面')).toBeHidden({ timeout: 10_000 })
+  expect(fs.existsSync(path.join(WORKSPACE, 'Ghost.ad')), '取消零落盘').toBe(false)
+  console.log('[13 file] 取消 — 零落盘')
+  // ④ 删除弧线（素材 Hello World.ad——入链 3 处 = index/Tasks/CAP 定
+  // 理已知答案；tab 开且激活 = 1 个标签页警示）：树行选中 → 菜单删除…
+  // → 弹层锚 → 取消零落盘 → 再开 → 确认 → 磁盘消失 + tab 关闭 + 树行
+  // 消失
+  await page.getByText('Hello World.ad', { exact: true }).first().click()
+  await expect(visibleEditor(page)).toContainText('这是一段示例文本', { timeout: 15_000 })
+  await page.getByText('文件', { exact: true }).click()
+  await page.getByText('删除…', { exact: true }).click()
+  await expect(page.getByText('删除页面')).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByText('将删除 wiki/Hello World.ad', { exact: true })).toBeVisible()
+  await expect(page.getByText('3 处入链将变为悬空', { exact: true })).toBeVisible()
+  await expect(page.getByText('1 个标签页将关闭，未保存修改将丢弃', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: '取消', exact: true }).last().click()
+  await expect(page.getByText('删除页面')).toBeHidden({ timeout: 10_000 })
+  expect(fs.existsSync(TARGET_FILE), '取消零落盘（Hello World.ad 在）').toBe(true)
+  await page.getByText('文件', { exact: true }).click()
+  await page.getByText('删除…', { exact: true }).click()
+  await expect(page.getByText('删除页面')).toBeVisible({ timeout: 10_000 })
+  await page.getByRole('button', { name: '删除', exact: true }).click()
+  await expect(page.getByText('删除页面')).toBeHidden({ timeout: 10_000 })
+  await expect
+    .poll(() => fs.existsSync(TARGET_FILE), { timeout: 10_000 })
+    .toBe(false)
+  await expect(page.getByRole('button', { name: 'wiki/Hello World', exact: true })).toHaveCount(0, { timeout: 10_000 })
+  await expect(page.getByText('Hello World.ad', { exact: true })).toHaveCount(0, { timeout: 10_000 })
+  console.log('[13 file] 删除弧线 — 弹层锚（3 处入链+1 tab 警示）/取消零落盘/确认→磁盘消失+tab 关闭+树行消失')
+  // ⑤ 悬空翻转：开 index tab（12 段已开）→ 反链面板出链行 Hello
+  // World（悬空）（PLAN-003 已知答案反向）
+  await page.getByRole('button', { name: 'wiki/index', exact: true }).click()
+  await expect(visibleEditor(page)).toContainText('Jade Garden 测试知识库', { timeout: 15_000 })
+  await page.getByText('视图', { exact: true }).click()
+  await page.getByText('切换反链', { exact: true }).click()
+  await expect(page.getByText('Hello World（悬空）', { exact: true })).toBeVisible({ timeout: 10_000 })
+  console.log('[13 file] PASS — file 组弧线（新建/幂等/取消/删除弧线/悬空翻转；no-op+CJK 案 vm 专属口径）')
 })

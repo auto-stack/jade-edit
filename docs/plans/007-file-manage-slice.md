@@ -4,9 +4,9 @@ status: executing
 feature_name: file-manage-slice
 author: [zhaopuming]
 created_at: 2026-09-23T02:34:22+08:00
-updated_at: 2026-09-23T11:02:00+08:00
+updated_at: 2026-09-23T12:40:00+08:00
 plan_revision: 1
-current_step: 3
+current_step: 4
 total_steps: 5
 supersedes_spec_components: []
 new_spec_components:
@@ -398,11 +398,46 @@ pub fn delete_page_impl(path str) str {
     `[pageerror] console.log is not a function` 非致命观测——三态
     归因实测[PLAN-006 归档态 3b46b5b/T-02/T-03]**既有面非本计划引
     入**，ledger v10 记观测）。
-- **T-04 测试扩单 + 基线 v7 + 判绿首锁**（AC-02/03/04）
-  - vm file 组八子步 + e2e file 段 + 基线 v7 重锁。
+- **T-04 测试扩单 + 基线 v7 + 判绿首锁**（AC-02/03/04）✅ 已完成
+  - vm file 组八子步 + e2e file 段 + 基线 v7 重锁。**[✅ 已完成]**
+    （2026-09-23）vm 矩阵 check 13（12 后 9 前——quit 恒末项）八子
+    步双臂；实勘四项（授权内）：①**删除预览期望值 2→3 处**（T-03
+    校正续）；②**激活邻档两臂异位**——merged CAP tab 已开[check 10]
+    删后同位保持→首页、split D-19 CJK 开档全败 active 不变=index
+    （RemoveAt 修正两形态各证其一，预览 tab 行两臂分叉「1 个标签页
+    将关闭」/「无打开标签页」）；③弹层锚结构定位（find 面板遗留开
+    态使 input 序[find?,新建,重命名]非首即新建——「新建页面」标题
+    上溯 dialog-content 锚；「创建」钮末者消歧、「删除」全树唯一）
+    ；④幂等基线采样点 = ⑴ 落定后（⑴ 自身 +1 tab）。e2e file 段
+    （9 quit 后段内最后——vue quit 垫片 no-op 无进程约束 + 删除素材
+    Hello World.ad 保 quit 三验面；＋试内造零语料改动）五子步
+    （新建/幂等/取消/删除弧线/悬空翻转；no-op+CJK 案 vm 专属口径
+    注记）；EXPLORER「＋」vue 定位 = `svg[class*="lucide-plus"]`
+    子串匹配（lucide 0.312 class=`lucide-<name>`，.first() DOM 序
+    消歧——EXPLORER 列先于 tab 条）。
   - 验证：`node tests/vm_matrix.mjs` 双臂全绿 + `pnpm test:e2e`
     连跑 ≥5 + `node scripts/gate.mjs` ALL GREEN（判绿实录 + N 定谳
-    续记——D-21 v9 口径）。
+    续记——D-21 v9 口径）。**[✅ 已完成]** 基线 v7 首锁（--save-
+    baseline；v6 留档）+ **连跑 3 次零漂移**（15/15×3 B PASS）+
+    split 14/14；**gate ALL GREEN 一次通过**（vm merged 15/15 +
+    split 14/14 + vue build + e2e 十四段 1 passed）。e2e 判绿实录
+    （D-21 如实记）：T-03 窗首跑 check 10 面板行断言失败重跑即绿；
+    T-04 窗一轮 save 磁盘标记失败（失败点漂移[D-21 签名]）+ 一轮
+    HTTP 400 pageerror 瞬时——后续连绿。
+  - **执行期修正（授权内，AC-05 补件面零增量前提下）**：app.at 移除
+    全部 8 处 App 上下文 `.console = console_lines()`——实勘定谳
+    ts_adapter 对 App 上下文未知字段 `.console` **裸发射全局赋值
+    `console = …`（覆写 window.console 为字符串）**：vm 轨无此分野
+    （widget 本地无害）/ vue 轨 plan006 起潜伏（12⑥ case-only 拒
+    每轮 e2e 必触发——`[pageerror] console.log is not a function`
+    即此，三态归因见 T-03 证据），本切片 file 组 e2e **首次行为级
+    暴露**：nuke 后 `console_log` 垫片内 `console.log` 抛 TypeError
+    → store.Open 在 push→console_log→**TabActivate 之间中断**（tab
+    压入激活失败）。App 侧该赋值本就无目标字段（App 无 console）
+    ——移除 = vm 无害化 + vue 排雷；store 侧 30 处 `.console.value`
+    不动；另 e2e 新建断言锚实勘校正 `# E2E Note`→`E2E Note`
+    （markdown 渲染 `# ` 不落 DOM——10c 先例同判）。ledger v10 记
+    D-25。
 - **T-05 文档 + ledger v10 + 收口**（AC-05/06）
   - SD-701..704 canonical 落位（锚注齐 + 语义对照并表）；ledger
     v9→v10（执行期实勘）。

@@ -1034,7 +1034,6 @@ widget App {
             }
             if !ok {
                 console_log("create: failed")
-                .console = console_lines()
             }
             if r != "" {
                 store.CreateConfirmCancel()
@@ -1076,7 +1075,6 @@ widget App {
             }
             if !ok {
                 console_log("create: failed")
-                .console = console_lines()
             }
             if r != "" {
                 store.NewClose()
@@ -1087,7 +1085,6 @@ widget App {
             } else {
                 if ok {
                     console_log("create: rejected (empty name)")
-                    .console = console_lines()
                 }
             }
         }
@@ -1099,7 +1096,6 @@ widget App {
         .ActDelete -> {
             if .ft_sel == "" {
                 console_log("delete: no selection")
-                .console = console_lines()
             } else {
                 store.DeleteOpen()
             }
@@ -1130,7 +1126,6 @@ widget App {
             }
             if !ok {
                 console_log("delete: failed")
-                .console = console_lines()
             }
             if r != "" {
                 store.DeleteClose()
@@ -1141,7 +1136,6 @@ widget App {
             } else {
                 if ok {
                     console_log("delete: rejected (not-.ad/missing/gone)")
-                    .console = console_lines()
                 }
             }
         }
@@ -1197,7 +1191,6 @@ widget App {
             }
             if !ok {
                 console_log("rename: failed")
-                .console = console_lines()
             }
             if r != "" {
                 var old_path str = .store.active_path
@@ -1212,7 +1205,6 @@ widget App {
             } else {
                 if ok {
                     console_log("rename: rejected (conflict/case-only/missing/empty)")
-                    .console = console_lines()
                 }
             }
         }

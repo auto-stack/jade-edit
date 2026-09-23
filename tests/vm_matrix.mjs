@@ -38,6 +38,16 @@
 //             [弹层留置]/状态复原。素材 Projects.ad ASCII 双臂——D-19
 //             面无；CJK 改名/自链/清洗/冲突/缺失案由 tests/probe_rename
 //             .mjs 八案双臂直证覆盖）。执行序在 11 后 9 前
+//   13 file   树文件管理全弧线（PLAN-007；八子步——新建 index[ASCII 根
+//             落位]/同名幂等/取消零落盘/CJK 新页[merged 导航 + split 磁
+//             盘，D-19 口径]/删除预览+取消[3 处入链已知答案——index/
+//             Tasks/Hello World，T-03 实勘校正]/删除弧线[磁盘消失+
+//             tab 关闭邻档+树行消失]/悬空翻转[开 index 出链行 CAP 定
+//             理（悬空）——PLAN-003 已知答案反向]/未选中 no-op。删除
+//             素材 CAP 定理——merged 臂该档 tab 在[check 10 开]关闭面
+//             +邻档补位，split 臂现场开→关同面；两臂删后激活均落
+//             Project X[右侧邻档同构]。收尾状态复原回 Hello World
+//             [quit 前置——typeWholeDoc 目标档]）。执行序在 12 后 9 前
 //   9 quit    退出存盘：dirty → 文件菜单退出 → CloseRequest 确认弹层 →
 //             QuitSaveClose → 磁盘三验（原文/标记/frontmatter）+ 进程退出
 //             （Process.exit 可能先于 HTTP 响应——连接断开即成功路径；
@@ -74,7 +84,7 @@ const argOf = (name) => {
   return i >= 0 ? args[i + 1] : undefined
 }
 const ARM = argOf('--arm') ?? 'all' // all | merged | split
-const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v6.txt')
+const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v7.txt')
 const SAVE_BASELINE = argOf('--save-baseline')
 
 const EDIT_MARKER = 'jade-edit 冒烟标记：编辑回写可见。'
@@ -94,6 +104,16 @@ const RENAME_NEW_NAME = 'Project X'
 const RENAME_NEW_TITLE = 'wiki/Project X'
 const RENAME_NEW_REL = 'wiki/Project X.ad'
 const RENAME_DIRTY_MARKER = 'rename 组脏档标记。'
+// file 组（PLAN-007 T-04）——新建素材 index（ASCII 根落位；wiki/index.ad
+// 同名异位不冲突）+ 新页（CJK）；删除素材 CAP 定理（3 入链 = index/
+// Tasks/Hello World——T-03 实勘校正已知答案）。
+const FILE_NEW_NAME = 'index'
+const FILE_NEW_REL = 'index.ad'
+const FILE_CJK_NAME = '新页'
+const FILE_CJK_REL = '新页.ad'
+const FILE_GHOST_NAME = 'Ghost Note'
+const FILE_DEL_LABEL = 'CAP 定理.ad'
+const FILE_DEL_REL = 'wiki/CAP 定理.ad'
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
@@ -359,13 +379,17 @@ async function runArm(arm, port) {
       const stateDump = (await callTool('autoui_state', {})).trim()
       const snapIds = JSON.stringify([...(await snapshotText()).matchAll(/#(vnode_\d+)/g)].map((m) => m[1]))
       const headerFor = (file) =>
-        `// jade-edit vm 结构基线 v6（PLAN-006 T-04 重锁；v5=PLAN-005 T-04、v4=PLAN-004 T-04、\n` +
-        `// v3=PLAN-003 T-04、v2=PLAN-002 T-01、v1=PLAN-001 T-04 换基、v0=PLAN-081 T-05 均留档）。\n` +
-        `// 重锁因由：①store 新增 rename_open 字段 + App 新增 rename_q 字段（PLAN-006 重命名弹层）\n` +
-        `// 进 autoui_state 全量 dump；②dialog 第三弹层（重命名，内嵌 input + 影响面预览 + 双钮）——\n` +
-        `// vm 快照弹层内容恒渲染（D-23③ dialog 族同判），snapshot vnode id 序列计划内扩（非漂移事故）。\n` +
-        `// 仪器同 v2/v3/v4/v5：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态\n` +
-        `//（chrome 全套 + Hello World.ad 开；查找面板/建页弹层/重命名弹层未开——find_*/create_*/rename_* 全为默认值入 dump）。\n` +
+        `// jade-edit vm 结构基线 v7（PLAN-007 T-04 重锁；v6=PLAN-006 T-04、v5=PLAN-005 T-04、\n` +
+        `// v4=PLAN-004 T-04、v3=PLAN-003 T-04、v2=PLAN-002 T-01、v1=PLAN-001 T-04 换基、\n` +
+        `// v0=PLAN-081 T-05 均留档）。\n` +
+        `// 重锁因由：①store 新增 new_open/delete_open 字段 + App 新增 new_q 字段（PLAN-007\n` +
+        `// 新建/删除弹层）进 autoui_state 全量 dump；②dialog 第四弹层（新建，内嵌 input）+\n` +
+        `// 第五弹层（删除，预览两行零 input）——vm 快照弹层内容恒渲染（D-23③ dialog 族同判），\n` +
+        `// snapshot vnode id 序列计划内扩（非漂移事故）；③EXPLORER 头部行改 row（text +\n` +
+        `// 「＋」icon 钮——PLAN-007 新建入口）。\n` +
+        `// 仪器同 v2..v6：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态\n` +
+        `//（chrome 全套 + Hello World.ad 开；查找面板/建页弹层/新建弹层/重命名弹层/删除弹层\n` +
+        `// 未开——find_*/create_*/new_*/rename_*/delete_* 全为默认值入 dump）。\n` +
         `// 再生成：node tests/vm_matrix.mjs --save-baseline ${path.relative(repoRoot, file).replace(/\\\\/g, '/')}\n`
       const baselineBodyOf = () => `## state\n${stateDump}\n\n## snapshot-ids\n${snapIds}\n`
       if (SAVE_BASELINE) {
@@ -375,9 +399,9 @@ async function runArm(arm, port) {
       } else if (fs.existsSync(BASELINE)) {
         const raw = fs.readFileSync(BASELINE, 'utf8')
         const ok = raw === headerFor(BASELINE) + baselineBodyOf()
-        check('B', 'baseline', ok, ok ? '结构基线 v6 零漂移（state 逐字节 + id 序列）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
+        check('B', 'baseline', ok, ok ? '结构基线 v7 零漂移（state 逐字节 + id 序列）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
       } else {
-        console.log('  [baseline] structure-v6 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v6.txt')
+        console.log('  [baseline] structure-v7 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v7.txt')
       }
     }
 
@@ -825,6 +849,237 @@ async function runArm(arm, port) {
     check('12', 'rename', dlgOk && renameCancelOk && renamedExists && oldGone && rewriteOk && renamePanelOk && renameTreeOk && rejOk,
       `rename 组七子步（禁用态 untitled+脏档/弹层锚 预填+预览 2页2处/取消零落盘/改名弧线 active+磁盘+双页改写/面板+树新 stem/case-only 拒弹层留置/状态复原）`)
 
+    // 13 file（PLAN-007 T-04）：树文件管理全弧线八子步（组内子步不占
+    // 检查位，fail 即臂败，10c/12 同款）。执行序在 quit 前（quit 恒为
+    // 臂内最后一项；本组删除素材 CAP 定理不涉 quit 面——收尾复原回
+    // Hello World tab）。弹层钮定位纪律（check 11 遗留 find 面板开着
+    // ——input 序[find?,新建,重命名]非首即新建，结构锚定位）：
+    //   EXPLORER「＋」= text "EXPLORER" 父行内 icon 钮（ownText 空
+    //   ——结构锚，pressActiveTabClose 同族）；
+    //   新建 input = 「新建页面」标题上溯 dialog-content 内 input；
+    //   新建弹层「创建」= 快照序末创建钮（create_confirm 先声明居前
+    //   ——同名钮末者消歧）+ 取消 = 父行兄弟；
+    //   删除弹层「删除」= 全树唯一文本锚 + 取消 = 父行兄弟。
+    const pressExplorerPlus = async () => {
+      const t = await snapshot()
+      const label = findFirst(t, (n) => ownText(n) === 'EXPLORER')
+      if (!label) throw new Error('EXPLORER text not found')
+      const row = findParent(t, label)
+      const btn = row.children.find((c) => c !== label && c.head.startsWith('button ') && elementIdOf(c))
+      if (!btn) throw new Error('EXPLORER + button not found in header row')
+      const res = await callTool('autoui_action', { element_id: elementIdOf(btn), action: 'press' })
+      if (!/status: ok/.test(res)) throw new Error(`press EXPLORER + not ok: ${res}`)
+    }
+    const typeIntoNewInput = async (text) => {
+      const t = await snapshot()
+      const title = findFirst(t, (n) => ownText(n) === '新建页面')
+      if (!title) throw new Error('new-dialog title not found')
+      const header = findParent(t, title)
+      const content = findParent(t, header)
+      const inp = content ? findFirst(content, (n) => n.head.startsWith('input ') && elementIdOf(n)) : null
+      if (!inp) throw new Error('new-dialog input not found in snapshot')
+      const res = await callTool('autoui_action', { element_id: elementIdOf(inp), action: 'type_text', value: text })
+      if (!/status: ok/.test(res)) throw new Error(`new-input type_text not ok: ${res}`)
+    }
+    const pressInNewDialog = async (buttonText) => {
+      const dl = Date.now() + 8000
+      for (;;) {
+        const t = await snapshot()
+        const creates = []
+        const collectCreates = (n) => {
+          if (n.head.startsWith('button ') && elementIdOf(n) && ownText(n) === '创建') creates.push(n)
+          for (const c of n.children) collectCreates(c)
+        }
+        collectCreates(t)
+        const target = creates[creates.length - 1]
+        if (target) {
+          if (buttonText === '创建') {
+            const res = await callTool('autoui_action', { element_id: elementIdOf(target), action: 'press' })
+            if (!/status: ok/.test(res)) throw new Error(`press 创建(new) not ok: ${res}`)
+            return
+          }
+          const row = findParent(t, target)
+          const btn = row.children.find((c) => c !== target && c.head.startsWith('button ') && elementIdOf(c) && ownText(c) === buttonText)
+          if (btn) {
+            const res = await callTool('autoui_action', { element_id: elementIdOf(btn), action: 'press' })
+            if (!/status: ok/.test(res)) throw new Error(`press ${buttonText}(new) not ok: ${res}`)
+            return
+          }
+        }
+        if (Date.now() > dl) throw new Error(`button "${buttonText}" in new-dialog row not found`)
+        await sleep(300)
+      }
+    }
+    const pressInDeleteDialog = async (buttonText) => {
+      const dl = Date.now() + 8000
+      for (;;) {
+        const t = await snapshot()
+        const delBtn = findFirst(t, (n) => n.head.startsWith('button ') && elementIdOf(n) && ownText(n) === '删除')
+        if (delBtn) {
+          if (buttonText === '删除') {
+            const res = await callTool('autoui_action', { element_id: elementIdOf(delBtn), action: 'press' })
+            if (!/status: ok/.test(res)) throw new Error(`press 删除 not ok: ${res}`)
+            return
+          }
+          const row = findParent(t, delBtn)
+          const btn = row.children.find((c) => c !== delBtn && c.head.startsWith('button ') && elementIdOf(c) && ownText(c) === buttonText)
+          if (btn) {
+            const res = await callTool('autoui_action', { element_id: elementIdOf(btn), action: 'press' })
+            if (!/status: ok/.test(res)) throw new Error(`press ${buttonText}(delete) not ok: ${res}`)
+            return
+          }
+        }
+        if (Date.now() > dl) throw new Error(`button "${buttonText}" in delete-dialog row not found`)
+        await sleep(300)
+      }
+    }
+    // ⑴ 新建 ASCII（index——根落位，wiki/index.ad 同名异位不冲突）
+    const fileNewPageFile = path.join(FIXTURE, FILE_NEW_REL)
+    const fileCjkPageFile = path.join(FIXTURE, FILE_CJK_REL)
+    await pressExplorerPlus()
+    await stateIs('new_open', 'true')
+    await stateIs('new_q', '')
+    await typeIntoNewInput(FILE_NEW_NAME)
+    await stateIs('new_q', FILE_NEW_NAME)
+    await pressInNewDialog('创建')
+    await stateIs('new_open', 'false')
+    await stateIs('active_title', FILE_NEW_NAME)
+    await stateIs('ft_sel', FILE_NEW_REL)
+    let newDiskOk = false
+    for (const dl = Date.now() + 8000; ; ) {
+      newDiskOk = fs.existsSync(fileNewPageFile) && fs.readFileSync(fileNewPageFile, 'utf8') === `# ${FILE_NEW_NAME}\n\n`
+      if (newDiskOk || Date.now() > dl) break
+      await sleep(200)
+    }
+    let newTreeOk = (await snapshotText()).includes(`"${FILE_NEW_REL}"`)
+    // ⑵ 同名幂等：打开既有（tab 数不变 + 磁盘字节不变；基线采样 =
+    // ⑴ 落定后——⑴ 自身新增 index tab 计入基线）
+    const tabCountPre = await stateText('tab_count')
+    await pressExplorerPlus()
+    await stateIs('new_open', 'true')
+    await typeIntoNewInput(FILE_NEW_NAME)
+    await pressInNewDialog('创建')
+    await stateIs('new_open', 'false')
+    await stateIs('active_title', FILE_NEW_NAME)
+    const tabCountPost = await stateText('tab_count')
+    const idemDiskOk = fs.existsSync(fileNewPageFile) && fs.readFileSync(fileNewPageFile, 'utf8') === `# ${FILE_NEW_NAME}\n\n`
+    // ⑶ 取消零落盘
+    await pressExplorerPlus()
+    await stateIs('new_open', 'true')
+    await typeIntoNewInput(FILE_GHOST_NAME)
+    await pressInNewDialog('取消')
+    await stateIs('new_open', 'false')
+    const ghostOk = !fs.existsSync(path.join(FIXTURE, `${FILE_GHOST_NAME}.ad`))
+    // ⑷ CJK 新建：merged 导航断言 / split 磁盘断言（D-19 口径——CJK
+    // 开档 exists GET query 不解码，Open 落 not-found 不入 tab）
+    await pressExplorerPlus()
+    await stateIs('new_open', 'true')
+    await typeIntoNewInput(FILE_CJK_NAME)
+    await pressInNewDialog('创建')
+    await stateIs('new_open', 'false')
+    let cjkNavOk = false
+    for (const dl = Date.now() + 8000; ; ) {
+      if (fs.existsSync(fileCjkPageFile)) {
+        if (arm === 'merged') {
+          let bodyOk = false
+          try { bodyOk = fs.readFileSync(fileCjkPageFile, 'utf8') === `# ${FILE_CJK_NAME}\n\n` } catch {}
+          cjkNavOk = bodyOk
+        } else {
+          cjkNavOk = true
+        }
+      }
+      if (cjkNavOk || Date.now() > dl) break
+      await sleep(300)
+    }
+    if (arm === 'merged') {
+      await stateIs('active_title', FILE_CJK_NAME)
+    } else {
+      await stateIs('active_title', FILE_NEW_NAME)
+    }
+    // ⑸ 删除预览 + 取消：树行点击 = 打开+选中。D-19 口径分野（10c/11
+    // 同款）：merged 树行开 CJK 档成功（激活既有 CAP tab——check 10
+    // 开过）→ 预览「1 个标签页将关闭」；split CJK 开档全败（exists
+    // GET query 不解码——Open 落 not-found 不入 tab）→ active 保持
+    // index、预览「无打开标签页」。ft_sel 两臂同置（OpenFile 前置）。
+    await pressButton(FILE_DEL_LABEL)
+    await stateIs('ft_sel', FILE_DEL_REL)
+    if (arm === 'merged') {
+      await stateIs('active_title', 'wiki/CAP 定理')
+    } else {
+      await stateIs('active_title', FILE_NEW_NAME)
+    }
+    await pressButton('文件', { exact: true })
+    await pressButton('删除…', { exact: true })
+    await stateIs('delete_open', 'true')
+    const delTabsLine = arm === 'merged' ? '1 个标签页将关闭，未保存修改将丢弃' : '无打开标签页'
+    let delDlgOk = false
+    let delDlgSnap = ''
+    for (const dl = Date.now() + 8000; ; ) {
+      delDlgSnap = await snapshotText()
+      delDlgOk = delDlgSnap.includes('删除页面') && delDlgSnap.includes(`将删除 ${FILE_DEL_REL}`)
+        && delDlgSnap.includes('3 处入链将变为悬空') && delDlgSnap.includes(delTabsLine)
+      if (delDlgOk || Date.now() > dl) break
+      await sleep(300)
+    }
+    if (!delDlgOk) fs.writeFileSync(`e2e/.runtime/fail-deldlg-${Date.now()}.txt`, delDlgSnap)
+    await pressInDeleteDialog('取消')
+    await stateIs('delete_open', 'false')
+    const delCancelOk = fs.existsSync(path.join(FIXTURE, FILE_DEL_REL))
+    // ⑥ 删除弧线：确认 → 磁盘消失 + tab 关闭面 + ft_sel 清空 + 树行
+    // 消失。激活落点两臂异位（实勘）：merged CAP 已开（tab 序
+    // [HW,index,CAP,首页,PX]）删 CAP(2) 同位保持→首页；split CAP 未
+    // 开（D-19）active 不变=index，CloseTabsOf 零关闭=零 tab 面分支
+    // （RemoveAt 修正两形态各证其一，互补）。
+    await pressButton('文件', { exact: true })
+    await pressButton('删除…', { exact: true })
+    await stateIs('delete_open', 'true')
+    await pressInDeleteDialog('删除')
+    await stateIs('delete_open', 'false')
+    await stateIs('ft_sel', '')
+    if (arm === 'merged') {
+      await stateIs('active_title', '首页')
+    } else {
+      await stateIs('active_title', FILE_NEW_NAME)
+    }
+    const capGone = !fs.existsSync(path.join(FIXTURE, FILE_DEL_REL))
+    const tabCountFinal = parseInt((await stateText('tab_count')).match(/tab_count:\s*(\d+)/)?.[1] ?? '-1', 10)
+    // ⑦ 悬空翻转：tab 题钮开 index（树行 index.ad 双行同名歧义——根
+    // index.ad ⑴ 新建后与 wiki/index.ad label 同名，tab 题钮唯一）→
+    // 反链面板出链行 CAP 定理（悬空）（PLAN-003 已知答案反向）+ 树
+    // 零残留；面板复原关闭
+    await pressButton('wiki/index', { exact: true })
+    await stateIs('active_title', 'wiki/index')
+    await pressButton('视图', { exact: true })
+    await pressButton('切换反链', { exact: true })
+    await stateIs('backlinks_open', 'true')
+    let flipOk = false
+    for (const dl = Date.now() + 8000; ; ) {
+      const t = await snapshotText()
+      flipOk = t.includes('CAP 定理（悬空）') && !t.includes(`"${FILE_DEL_REL}"`)
+      if (flipOk || Date.now() > dl) break
+      await sleep(300)
+    }
+    await pressButton('视图', { exact: true })
+    await pressButton('切换反链', { exact: true })
+    await stateIs('backlinks_open', 'false')
+    // ⑧ 未选中 no-op（⑥ 后 ft_sel=""）+ 状态复原回 Hello World（quit
+    // 前置——typeWholeDoc 目标档）
+    await pressButton('文件', { exact: true })
+    await pressButton('删除…', { exact: true })
+    const noopState = await callTool('autoui_state', { fields: ['delete_open'] })
+    const noopOk = /delete_open:\s*false/.test(noopState)
+    await pressButton('wiki/Hello World', { exact: true })
+    await stateIs('active_title', tabTitleOf(TARGET_LABEL))
+    const fileParts = {
+      newDiskOk, newTreeOk, idemDiskOk, tabStable: tabCountPre === tabCountPost,
+      ghostOk, cjkNavOk, delDlgOk, delCancelOk, capGone, flipOk, noopOk,
+    }
+    if (Object.values(fileParts).some((v) => !v)) {
+      console.log(`  [13 dbg] ${JSON.stringify(fileParts)} tabPre=${JSON.stringify(tabCountPre)} tabPost=${JSON.stringify(tabCountPost)}`)
+    }
+    check('13', 'file', Object.values(fileParts).every((v) => v) && tabCountFinal >= 0,
+      `file 组八子步（新建 index 模板逐字节+树新行/同名幂等 tab+磁盘不变/取消零落盘/CJK 新页${arm === 'merged' ? '导航断言' : '磁盘断言[D-19]'}＋删除预览 3 处入链已知答案+tab 面「${delTabsLine}」+取消零落盘/删除弧线 磁盘消失+ft_sel 清空+激活${arm === 'merged' ? '落邻档首页[同位保持]' : '保持 index[CloseTabsOf 零关闭面，D-19]'}/悬空翻转 出链行 CAP 定理（悬空）/未选中 no-op）`)
+
     // 9 退出存盘：dirty → 文件菜单退出 → 确认弹层 → QuitSaveClose →
     // 磁盘三验 + 进程退出。恒为臂内最后一项（Process.exit 杀进程）。
     await typeWholeDoc(`${bodyOf(fs.readFileSync(targetFile, 'utf8'))}\n\n${QUIT_MARKER}`)
@@ -879,5 +1134,5 @@ for (const { arm, results } of all) {
 }
 if (failed > 0) process.exitCode = 1
 if (all.every(({ results }) => results.every((r) => r.ok))) {
-  console.log(`[matrix] ALL GREEN：${arms.join(' + ')} 臂检查单全过（六检查 + 基线[merged] + tab/editops/link/create/find/rename 扩单 + quit）`)
+  console.log(`[matrix] ALL GREEN：${arms.join(' + ')} 臂检查单全过（六检查 + 基线[merged] + tab/editops/link/create/find/rename/file 扩单 + quit）`)
 }
