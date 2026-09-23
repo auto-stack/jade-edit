@@ -1,12 +1,12 @@
 ---
 plan_id: PLAN-008
-status: executing
+status: execution_done
 feature_name: tags-wanted-slice
 author: [zhaopuming]
 created_at: 2026-09-23T10:24:24+08:00
-updated_at: 2026-09-23T11:30:00+08:00
+updated_at: 2026-09-23T15:40:00+08:00
 plan_revision: 1
-current_step: 4
+current_step: 5
 total_steps: 5
 supersedes_spec_components: []
 new_spec_components:
@@ -459,14 +459,69 @@ pub fn tags_json(path str, depth int) str {
     - 测试面定位锚两处消歧：vm wanted 收尾「收起」钮（tags/backlinks
       已闭故唯一）；e2e 出链行 .last()（根 Hello World.ad tab 题钮
       同名）。
-- **T-05 文档 + ledger v11 + 收口**（AC-05/06）
+- **T-05 文档 + ledger v11 + 收口**（AC-05/06）✅ 已完成
   - SD-801..804 canonical 落位（锚注齐 + 只读边界/闭环语义定文）；
     ledger v10→v11（执行期实勘）。
   - 负向证采集（含 `.console` 负向 grep + frontmatter 磁盘逐字节）；
     §9 work 记录（outcome/next=review）。
   - 验证：文档 diff 全窗口检视 + gate 复跑绿。
+  - **证据（2026-09-23）**：
+    - SD-801 落位 ARCHITECTURE §5「标签与悬空清单域语义」段（SD-701
+      后新增：tags_index GET 契约定文 + **frontmatter 只读/写面边界
+      首定文**[消费面 +1 写面零] + 解析面三步定文[顶层级键定位/inline
+      贡献零/缩进两形态/去重] + 触发集 v4 同口多 fetch + wanted 纯
+      派生语义 + 「发现→建页→消缺」闭环 + D-25① 纪律引）。
+    - SD-802 落位 ARCHITECTURE §6（十四组→**十五组** + meta 组八子步
+      断言域 + 基线 v8 指针 + probe_tags 入直证脚本清单）。
+    - SD-803 落位 README Tests 节（**16/16 + 15/15 + 十五段**口径 +
+      meta 扩单检查单条目 + N 定谳 meta 首锁条目 + 基线 v8 指针）。
+    - SD-804 落位 README「是什么」（**第六切片**条目：tags_index 只
+      读首开 + wanted 卫生闭环注记）+ 文档节 ledger v11 指针。
+    - ledger **v10→v11**（header 版本链 + D-21 v11 扩记四形态：merged
+      进程死亡首例/check-10 渲染窗/split menubar popover 内容窗/gate
+      语境 e2e 保存点连发簇——23 跑 8 绿 + gate 第 8 跑 ALL GREEN
+      如实记 + ActSave 并发流 3→4 留观注记）。
+    - **负向证六件**：①App 上下文 `.console` 赋值**零**（grep 6 处 =
+      4 处 `.store.console_open` 读 + 2 处纪律注记——D-25① 合规）；
+      ②旧园代码引用**零**（2 处仅出处注释——PLAN-007 同判）；③补件
+      面**零增量**（regen-vue/serve-back diff 2e16871..HEAD = 0）；
+      ④语料源**零写入**（auto-down tmp/wiki-demo mtime 全早于执行日
+      ——全流程 cpSync 隔离拷贝语义）+ 家族仓 auto-down 工作树零变
+      化（status 0 项，只读检视）；⑤frontmatter **写面零**（wsys
+      tags 组三 fn 零 write 调用——代码面 + 语料 mtime 佐证）；⑥变更
+      面全窗口 = 11 tracked 文件全数计划范围（src/back 契约实现/
+      src/front 面板/tests/docs），`gen/` 纯生成树不入库零手改。
 
 依赖序：T-01 → T-02 → T-03 → T-04 → T-05（线性）。
+
+### 8.1 收口（§10 观测项闭合）
+
+1. **inline `tags: [a, b]` 形态**——**已裁定**（r1 口径兑现）：
+   page_tags 键行后段非空 = inline → 贡献零不炸（done=true 收工）；
+   probe ⑥ 案族覆盖「值非空无列表行」语义面。
+2. **tag 编辑/写面**——**留口维持**（用户口默认不做）：D-14 哲学
+   不动，frontmatter 只读首开（SD-801 边界定文）；写面若立项 = r2 +
+   D-14 裁决联动。
+3. **wanted 行源页展开**——**留口维持**：v1 行文本 `{target}（n）`；
+   源页经反链面板/检索可达。
+4. **D-21 POST 波及**——**已裁定**（观测兑现）：本批新增 GET
+   tags_index（GET 面无 D-21 签名，双臂直证 + e2e boot 链 200 实
+   录）；wanted→建页走既有 create_page POST（先例面）；执行窗 D-21
+   连发簇如实记（T-04 证据 + ledger v11 ④——POST 先于刷新 GETs，
+   非新增 fetch 致因，ActSave 并发流 3→4 留观）。
+5. **tags 面板空态弧线**——**已裁定**（§6 ③ 口径兑现）：运行时以
+   「面板开 + 行集非空」为常态断言；空态「（无标签）」文本留根 +
+   wanted ⑦ 空态闭环同判达成（（无悬空链接）运行时正证）。
+6. **Ctrl+T/Ctrl+Shift+D 键位**——**已裁定**（r1 定谳维持）：T 空闲
+   实勘在案，两键位随 r1 落 action 面；真键盘面沿 11/12 同口径（e2e
+   不覆盖，入口 = 菜单锚）。
+7. **PLAN-009 候选池**（本批后）：大纲（D-12 解锁——首位顺延候）、
+   unlinked mentions（search_wiki 联动）、移动/新建目录（create_dir
+   探针前置）、inline #tag/aliases（body 扫描面）、tag 写面（D-14
+   裁决联动）、检索上量微批、File.rename/copy 供料回执件。
+8. **PLAN-007 复审耦合**——**已裁定（不触发兑现）**：007 复审 pass
+   → 归档 delivered（2e16871），无共享面返工——§10.8 预立案条件未
+   触发，本计划 r1 直落（docs-only 后代先例同判兑现）。
 
 ## 9. 复审记录
 
@@ -477,6 +532,25 @@ pub fn tags_json(path str, depth int) str {
   - `next: work`（007 归档后 T-01 起）。
   - 无待裁探针（GET 契约同族/面板第三实例/建页弹层复用/纯派生——
     全为已证面）；§10 观测项三项非阻塞。
+
+- **2026-09-23 work pass（auto-plan-work）**：
+  - `stage: work` | plan_id: PLAN-008 | plan_revision: 1 |
+    outcome: **pass**。
+  - `code_commit: 0b796d2`（T-04 判绿首锁）；提交链 84f47da（T-01）
+    → a853315（T-02）→ f1022bb（T-03）→ 0b796d2（T-04）→ 本收口
+    提交（T-05 docs-only）——直接 main 线性约定（本仓无 worktree/dev
+    分支，PLAN-001..007 先例），base = 2e16871（plan007 归档态）。
+  - `task_ids: T-01..T-05 全收口`（current_step 5/5）；§8.1 收口
+    八项（已裁定五 + 留口三——§10 观测项全数处置）。
+  - `evidence`：probe_tags 六案双臂全绿 + 双臂逐字节一致（T-01）；
+    tags 冒烟 6/6 + wanted 冒烟 4/4 一次过（T-02/T-03）；vm 双臂
+    **16/16 + 15/15 ALL GREEN** + 基线 v8 零漂移 ≥4 连跑 + e2e 窗口
+    23 跑 8 绿[败点全数 check-5 保存点 D-21 签名如实记] + **gate 第
+    8 跑 ALL GREEN**（T-04）；SD-801..804 落位 + ledger v11 + 负向
+    证六件全清（T-05）。
+  - `blockers: 无`。
+  - `next: review`（execution_done；复审窗注意：e2e D-21 突发簇为
+    本机家族会话并行日形态——AC 复现按 README 重跑口径）。
 
 ## 10. 待澄清事项
 

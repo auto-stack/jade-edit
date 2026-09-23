@@ -36,7 +36,16 @@
   全套直承）+ Delete 键/菜单删除（影响面预览弹层「N 处入链将变为悬空
   + M 个标签页将关闭」→ delete_page POST → 该档全部 tab 关闭 → **入
   链悬空化不改写源文**——与重命名改写成语义对照并表：改名保完整性，
-  删除如实悬空，悬空行可再建页接回）；图谱 tab 顺位后移——vm 轨组
+  删除如实悬空，悬空行可再建页接回）；**第六切片 = 标签面板 + 悬空
+  链接清单**（SD-801，2026-09-23）：Ctrl+T 标签面板（back 新契约
+  `tags_index` GET——frontmatter `tags:` block-list **只读解析首开**
+  [D-14 写面不动：back 侧 frontmatter 消费面 +1、写面维持零]，缩进
+  两形态归一聚合 `[{tag, paths}]` first-seen 序；tag 行计数 → 展开
+  页行 → 导航）+ Ctrl+Shift+D wanted 模式（**零 back 增量**——
+  link_pages 派生 exists=false 悬空目标聚合行，行点击直连建页弹层
+  预填 target，创建后清单自消缺 + 出链 exists 翻转——SD-701 删除悬
+  空化的「发现→建页→消缺」卫生闭环；inline `#tag`/aliases/tag 写面
+  属功能池后续批）；图谱 tab 顺位后移——vm 轨组
   件面依赖上游），本仓零依赖其代码。
 - 编辑器内核 = `@autodown/engine`（auto-down，AutoUI 外部官方组件）：
   vue 轨 npm link 消费；vm 轨经 auto-lang `autodown_editor` 官方件位。
@@ -81,15 +90,15 @@ node tools/bench/bench.mjs proxy [--runs N]    # 测量 → results/<ts>.jsonl
 node tools/bench/bench.mjs assert              # 存量 measurements × budgets 重评
 
 # —— 单门 ——
-node tests/vm_matrix.mjs            # 双臂（merged+split）检查单 + 基线 v7 零漂移
+node tests/vm_matrix.mjs            # 双臂（merged+split）检查单 + 基线 v8 零漂移
 pnpm test:e2e                       # vue 检查单（同一检查单；serve-back 后端）
 ```
 
-## Tests（判绿口径，SD-204；SD-304/403 扩定；SD-503 再扩定；SD-603 再扩定；SD-703 再扩定）
+## Tests（判绿口径，SD-204；SD-304/403 扩定；SD-503 再扩定；SD-603 再扩定；SD-703 再扩定；SD-803 再扩定）
 
 检查单（PLAN-002 T-01 扩定 + PLAN-003 T-04 link 扩单 + PLAN-004 T-04
 find 扩单 + PLAN-005 T-04 create 扩单 + PLAN-006 T-04 rename 扩单 +
-PLAN-007 T-04 file 扩单）：
+PLAN-007 T-04 file 扩单 + PLAN-008 T-04 meta 扩单）：
 `boot / tree / open / edit / save / reload` 六检查 + **tab / editops /
 quit** 扩单三组 + **link / link-empty**（链接索引已知答案 + 反链面板双轨
 可用 + 空态——CJK 路径导航子步仅 vm merged 臂，D-19）+ **create**（建页
@@ -118,11 +127,19 @@ ft_sel 清空 + 激活邻档两臂异位——merged=同位保持→首页/split
 程约束 + 删除素材 Hello World.ad 保 quit 三验面]，删除弧线走
 Hello World.ad[ASCII 入链/出链面安全]；CJK 案 + no-op 案 vm 专属口
 径；删除 back 面 CJK/幂等/三拒案 = `tests/probe_delete.mjs` 九案双
-臂直证覆盖）——vm 矩阵与 vue
+臂直证覆盖）+ **meta**（标签面板 + wanted 模式八子步[PLAN-008]：
+tags 面板开 7 tag 行[语料实勘全集——执行期校正：Hello World.ad 实
+有 demo]/展开导航 ASCII 双臂 + CJK 仅 merged 臂[D-19]/Save 刷新外
+造新行；wanted 模式入口无 input 行/无检索钮/取消零落盘/创建开档+
+消缺+exists 翻转/空态闭环「（无悬空链接）」——vm 位态 = 10c 后[悬
+空余量 页面名（1）+ 外造 Wanted Target（1）]、e2e 位态 = 13 后[两行
+已知答案 Hello World（3）+ 页面名（1）——两轨素材异位既有口径]；
+wanted back 面零增量纯派生，tags_index 契约六案 = `tests/probe_tags
+.mjs` 双臂直证覆盖[含 CRLF 形态 + depth 传递]）——vm 矩阵与 vue
 e2e 同单（断言域 = 结构/文本/磁盘字节，非像素）。
 
-- **完成态 = RESULT 行出现且两臂全数通过**：vm 矩阵 `merged 15/15 +
-  split 14/14`（merged 多一项基线检查）+ ALL GREEN 行；vue e2e 十四段
+- **完成态 = RESULT 行出现且两臂全数通过**：vm 矩阵 `merged 16/16 +
+  split 15/15`（merged 多一项基线检查）+ ALL GREEN 行；vue e2e 十五段
   日志齐 + passed。无 RESULT 行 = 工具链竞态早崩 → **重跑一次而非排查**
   （auto-edit F-RV6 同款口径）。
 - N 定谳（2026-09-22 link 扩单首锁 ≥5 连跑分布）：vm 双臂 **6/7 连跑
@@ -155,11 +172,23 @@ e2e 同单（断言域 = 结构/文本/磁盘字节，非像素）。
   面板行断言 1 败 + T-04 窗 save 磁盘标记失败点漂移 1 轮 + HTTP 400
   瞬时 pageerror 1 例全数 D-21 签名重跑即绿，ledger v10 扩记）；
   **gate ALL GREEN 一次通过**。file 组零失败漂移。
-- 结构基线 = `tests/baseline/structure-v7.txt`：state 段逐字节 +
-  snapshot vnode id 出现序列（v2 仪器延续；v7 = PLAN-007 store
-  new_open/delete_open + App new_q 入 dump + dialog 第四弹层（新建，
-  内嵌 input）+ 第五弹层（删除，预览两行零 input）id 序列 + EXPLORER
-  头部「＋」钮行的计划内重锁，v6/v5/v4/v3/v2/v1/v0 留档）。
+- N 定谳（2026-09-23 meta 扩单首锁，SD-803）：vm 双臂矩阵 **3 轮连跑
+  全绿**（merged **16/16** + split **15/15** + 基线 v8 零漂移逐跑
+  ——v8 锁后独立跑 ≥4 + gate 内矩阵段 7 连绿；执行窗 1 次进程死亡
+  [meta 组轮询 ECONNREFUSED] + 1 次 check-10 面板行渲染窗瞬态
+  [bl_rows 在态快照滞后] + split 臂 menubar popover 内容窗瞬态 2 次
+  [T-01 回归窗]，全数重跑即绿，ledger v11 扩记）；vue e2e **窗口
+  23 跑 8 绿**（PLAN-006 同款如实记：失败全数 **check-5 保存点 D-21
+  签名**[400 missing param `path` api-err-body 两次实锤——POST 先于
+  刷新 GETs 非新增 fetch 所致]，重跑即绿，最长连绿 3；meta 段自身
+  每轮达即 PASS）；**gate 第 8 跑 ALL GREEN**（前 7 跑败点如实记：
+  e2e 段 D-21 ×6 + 矩阵段瞬态 ×1）。meta 组零失败漂移。
+- 结构基线 = `tests/baseline/structure-v8.txt`：state 段逐字节 +
+  snapshot vnode id 出现序列（v2 仪器延续；v8 = PLAN-008 store
+  tags_open + App tags_rows/tag_expanded/wanted_rows 入 dump +
+  menubar 视图两新项（「切换标签」Ctrl+T/「悬空清单」Ctrl+Shift+D）
+  id 序列 + find_mode 值域扩 wanted[基线态仍 files]的计划内重锁，
+  v7/v6/v5/v4/v3/v2/v1/v0 留档）。
 
 ## 文档
 
@@ -168,7 +197,7 @@ e2e 同单（断言域 = 结构/文本/磁盘字节，非像素）。
 - [plans/attachments/081-t00-rulings.md](plans/attachments/081-t00-rulings.md) —
   T-00 三勘定决策档（auto-down PLAN-081 附件；双轨机制 / actions-vue
   现状 / 后端选型）
-- [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v10（SD-704 指针；二十五项三分类；PLAN-007 增补 D-25[App 上下文 .console 裸发射全局覆写] + D-21 PLAN-007 执行窗扩记）
+- [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v11（SD-804 指针；二十五项三分类；PLAN-008 增补 D-21 v11 扩记[PLAN-008 执行窗四形态实录：merged 臂进程死亡首例/check-10 渲染窗/split menubar popover 内容窗/gate 语境 e2e 保存点连发簇]）
 - [upstream/2026-09-jade-supply.md](upstream/2026-09-jade-supply.md) —
   上游供料包（D-16 预热 / D-15 残余 / D-17 键入发射 / D-18 投影双态，
   期望形态+复验条件+回执方式）

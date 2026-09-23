@@ -333,21 +333,72 @@ src/back/api.at           /api 契约（自有 Auto 源，与实现同 commit—
   **刷新触发集 v4**（SD-302 v3 扩）：v3 + **删除成功**（.DeleteGo 内
   链接重取——入链/出链行 exists 翻转 + 树重取 EXPLORER 行消失；新建
   直承「建页成功」口）。
+- **标签与悬空清单域语义（SD-801，PLAN-008 第六切片）**：Obsidian 组织
+  面（tags）+ 知识卫生闭环件（wanted pages——SD-701 悬空化语义的清道
+  夫），双件同批（PLAN-004 双件先例同构）。
+  **back 半·tags_index（唯一 back 增量）**：`tags_index(path, depth)`
+  **GET**（tree/link_index 同族：path/depth 工作区级 ASCII 常态——tag
+  值在响应 body，UTF-8 JSON 无 D-19 面）→ wsys.tags_json 返回聚合数组
+  JSON 字符串 `[{tag, paths:[相对路径]}]`（**顶层裸数组**——link_index
+  同裁定；tag 序 = walk 序 **first-seen** 确定性，link_index 哲学同判；
+  paths = walk 序）。**frontmatter 消费面只读首开（本域边界定文）**：
+  frontmatter 在 back 侧自此有两个消费面（read_body 剥离保留 +
+  frontmatter_of/page_tags 只读解析），**写面维持零**（D-14 逐字保留
+  哲学不动——补写/改写属功能池后续批；tag 编辑若立项 = r2 + D-14 裁决
+  联动）。解析面纯字符串层（C-1 纪律）：①frontmatter_of = read_body
+  互补件（首行界符 is_delim 双形态 + 闭合界符行定位；无 frontmatter/
+  无闭合 = 贡献零）；②page_tags：键定位 = **顶层级**（原行不以空格/\t
+  起——嵌套键头不误收）且 trim 后以 `tags:` 起；后段非空 = inline 数组
+  形态 → 贡献零不炸（语料无此形态，v1 记账）；后段空 = block-list 收集
+  态——后续行 trim 后以 `-` 起者收集（**缩进两形态** `- x` 与 `  - x`
+  trim 归一——语料实勘两种并在；行尾 `\r` trim 剥——CRLF 容错同族），
+  非列表行（次键/空行）即止（首个 tags: 键整体收工）；同页重复去重。
+  聚合两遍（D-20② 纪律）：pass1 全页 tag first-seen；pass2 每 tag 收
+  paths；装配 = json_esc + 逐项 `+` 重接；O(T×P) 重读 v0 规模可接受
+  （search_json O(P²) 同判）。**读原文 File.read_text 非 read_body**
+  （后者已剥 frontmatter）。六案双臂直证 = `tests/probe_tags.mjs`
+  （全集首锁/无 frontmatter 零/无 tags 键零/缩进两形态/同页去重/depth
+  传递 + CRLF 形态 + 双臂逐字节一致；语料已知答案 = 7 tag——执行期
+  校正：Hello World.ad 实有 demo，计划原记 6 漏勘）。
+  **front 半·tags 面板**：store `tags_open`/`TagsToggle`（backlinks
+  同构第三实例）+ TagsPanel 壳（013 组件纪律——行集/空态留根）+
+  `.TagsRefresh` 共享口（**fetch 单取形**：call-arg 形直入 json.to_value
+  ——D-20⑤ 免双取，比 links 面简一档；行 label 派生期拼接
+  `{tag} · {n}`——双段插值 avoidance）+ `.TagToggle` 单选手风琴
+  （tag 行 → 展开页行 → OpenLink 导航；空态「（无标签）」）。
+  **刷新触发集不扩（v4 同口多一 fetch）**：Init / Save 成功 / 面板开启
+  / 建页成功（.CreateGo/.NewGo）/ 重命名成功 / 删除成功 七触点全接
+  `.TagsRefresh()`。入口 = action `view.tags`（**Ctrl+T**——Ctrl+D 为
+  切换 Tab 在册，T 空闲）+ menubar 视图「切换标签」（checked 态；不挂
+  状态 enabled——D-24③）。
+  **front 半·wanted 模式（零 back 增量）**：find 面板第三模式
+  `find_mode == "wanted"`（**无 input 行/无触发钮**——纯清单）：行集 =
+  `wanted_rows_of(link_pages)` 纯函数（exists=false 出链按 target 聚合
+  计数，两遍规避列表元素定址替换未证形态；label 派生期拼接
+  `{target}（{n}）`；行序 first-seen），重算挂 `.LinksRefreshOf` 同触点
+  （link_pages 变化即消缺）+ 入口 `.ActFindWanted` 即重取。行点击 =
+  `.CreateClick(r.target)` **直连 PLAN-005 建页弹层**（预填/确认/创建
+  流全复用——「发现→建页→消缺」闭环：CreateGo → LinksRefreshOf →
+  wanted 行自动消失 + 出链 exists 翻转）；空态「（无悬空链接）」（消缺
+  后达成）。入口 = action `view.find-wanted`（**Ctrl+Shift+D**——
+  Ctrl+D/Shift+F 邻族修饰区分；checked_if 复合式 find-text 同构）+
+  menubar 视图「悬空清单」。wanted 行 v1 只显计数（源页可经反链面板/
+  检索到达——行内展开源清单留后续批）。
 - fixture workspace 每次全新隔离拷贝（源 = auto-down `tmp/wiki-demo`，
   `JADE_FIXTURE` 可覆）——测试会打字保存，源零污染。Auto back 无 config
   文件 ⇒ 旧「exe 旁陈年 config 压 env」事故类别结构性消失（belt 保留为
   ws_root 实际根断言）。
 
-## 6. 测试体系（双轨一致性门；PLAN-001 T-04 换基迁移；SD-402 find 扩单；SD-502 create 扩单；SD-602 rename 扩单；SD-702 file 扩单）
+## 6. 测试体系（双轨一致性门；PLAN-001 T-04 换基迁移；SD-402 find 扩单；SD-502 create 扩单；SD-602 rename 扩单；SD-702 file 扩单；SD-802 meta 扩单）
 
 | 门 | 命令 | 断言域 |
 | --- | --- | --- |
-| vm 矩阵（双臂） | `node tests/vm_matrix.mjs` | merged 臂（进程内直调）+ split 臂（`--no-merge` HTTP）各**十四组检查**（六检查 + 基线[merged] + tab/editops/link/find/rename/file 扩单 + quit——PLAN-002/003/004/005/006/007 扩单；**link 组含建页弧线子步 10c**[PLAN-005]、**rename 组含七子步**[PLAN-006：禁用态/弹层锚/取消零落盘/改名弧线/面板+树/case-only 拒/状态复原]、**file 组含八子步**[PLAN-007：新建/幂等/取消零落盘/CJK 新页/删除预览+取消/删除弧线/悬空翻转/未选中 no-op——激活邻档两臂异位 merged=同位保持[首页]/split=active 不变[D-19 开档面]，tab 警示行两臂分叉「1 个将关闭」/「无打开」]——子步不占检查位，fail 即臂败）+ 结构基线 v7 零漂移（merged 臂锁，`tests/baseline/structure-v7.txt`；v6/v5/v4/v3/v2/v1/v0 留档） |
+| vm 矩阵（双臂） | `node tests/vm_matrix.mjs` | merged 臂（进程内直调）+ split 臂（`--no-merge` HTTP）各**十五组检查**（六检查 + 基线[merged] + tab/editops/link/find/rename/file/meta 扩单 + quit——PLAN-002..008 扩单；**link 组含建页弧线子步 10c**[PLAN-005]、**rename 组含七子步**[PLAN-006：禁用态/弹层锚/取消零落盘/改名弧线/面板+树/case-only 拒/状态复原]、**file 组含八子步**[PLAN-007：新建/幂等/取消零落盘/CJK 新页/删除预览+取消/删除弧线/悬空翻转/未选中 no-op——激活邻档两臂异位 merged=同位保持[首页]/split=active 不变[D-19 开档面]，tab 警示行两臂分叉「1 个将关闭」/「无打开」]、**meta 组含八子步**[PLAN-008：tags 面板开 7 tag 行[语料实勘全集]/展开导航 ASCII 双臂+CJK 仅 merged[D-19]/Save 刷新外造新行；wanted 模式入口无 input/外造行+语料已知答案/取消零落盘/创建消缺+exists 翻转/空态闭环——执行序在 10c 后 11 前，tags 全集/悬空余量已知答案位]——子步不占检查位，fail 即臂败）+ 结构基线 v8 零漂移（merged 臂锁，`tests/baseline/structure-v8.txt`；v7/v6/v5/v4/v3/v2/v1/v0 留档） |
 | vue build | `pnpm build`（= regen-vue.mjs） | 裸 strict 生成 + 三残余补件 + vue-tsc 0 错 + vite build |
-| vue e2e | `pnpm test:e2e` | playwright **同一检查单**（含 10c 建页弧线 + 12 rename 七子步 + 13 file 段[9 quit 后段内最后——vue quit 垫片 no-op 无进程约束，删除素材 Hello World.ad 保 quit 三验面]；serve-back AutoVM 后端 + vite 双 webServer） |
+| vue e2e | `pnpm test:e2e` | playwright **同一检查单**（含 10c 建页弧线 + 12 rename 七子步 + 13 file 段[9 quit 后] + 14 meta 段[段内最后——tags 4 行此位已知答案 + wanted 建页闭环；建页全走 POST body CJK 已证面无 D-19 分野]；serve-back AutoVM 后端 + vite 双 webServer） |
 | 双臂总门 | `node scripts/gate.mjs` | ①vm 双臂 ②vue(build+e2e) 顺序全绿（契约漂移段已随自有源退役） |
 
-另：契约直证脚本 `tests/probe_create.mjs`（PLAN-005 create_page 六案）/ `tests/probe_rename.mjs`（PLAN-006 rename_page 八案——改写逐字节/锚透传/自链/CJK/清洗/三拒/副作用圈定）/ `tests/probe_delete.mjs`（PLAN-007 delete_page 九案——删存在/幂等闭环/缺失拒/非 .ad 两形拒/CJK 删/重建接回 + **悬空化不改写源文逐字节负证**，双臂返回值逐案对读）独立于矩阵按需跑（入库源，全案期望值 = SD-501/SD-601/SD-701 定文）。
+另：契约直证脚本 `tests/probe_create.mjs`（PLAN-005 create_page 六案）/ `tests/probe_rename.mjs`（PLAN-006 rename_page 八案——改写逐字节/锚透传/自链/CJK/清洗/三拒/副作用圈定）/ `tests/probe_delete.mjs`（PLAN-007 delete_page 九案——删存在/幂等闭环/缺失拒/非 .ad 两形拒/CJK 删/重建接回 + **悬空化不改写源文逐字节负证**，双臂返回值逐案对读）/ `tests/probe_tags.mjs`（PLAN-008 tags_index 六案——全集首锁[11 tag 含探针素材：first-seen 序 + 归属页逐项精确]/无 frontmatter 零/无 tags 键零/缩进两形态/同页去重/depth 传递[d1=仅根层+d2=d4] + CRLF 形态探针 + **双臂返回值逐字节一致**，merged 直调 + serve-back GET）独立于矩阵按需跑（入库源，全案期望值 = SD-501/SD-601/SD-701/SD-801 定文）。
 
 断言域 = 两轨交集（结构/文本/磁盘字节，**非像素**）；差异登记面 =
 [parity-ledger.md](parity-ledger.md)（从第一天记账）。
