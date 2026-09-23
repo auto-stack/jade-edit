@@ -1,10 +1,11 @@
 ---
 plan_id: PLAN-009
-status: reviewed
+status: archived
+completion_kind: delivered
 feature_name: mentions-inline-tag-slice
 author: [zhaopuming]
 created_at: 2026-09-23T13:03:40+08:00
-updated_at: 2026-09-23T15:18:14+08:00
+updated_at: 2026-09-23T15:26:00+08:00
 plan_revision: 1
 current_step: 5
 total_steps: 5
@@ -471,6 +472,29 @@ fn page_inline_tags(body str) List {
     致；语义契约零变更（review 不触发 revision bump）。
   - `next: merge`（用户本会话预授权「复审 OK 即 merge」——移交
     auto-plan-merge；F-R9-1/2 随 merge 窗 ledger refresh 一并校正）。
+
+- **2026-09-23 merge（auto-plan-merge）**——收据 `PLAN-009:r1`：
+  - `stage: merge` | plan_id: PLAN-009 | revision 1 |
+    outcome: **pass** | completion_kind: **delivered**。
+  - **prepared**——delivery commit **5a29e5b** = c1fab7c 的
+    docs-only 后代（diff 全窗口仅 3 文档：本计划 §9 复审记录
+    +102 行 + F-R9-1/2 校正各 1 行；实现/依赖零变化——gate
+    ALL GREEN 重放@c1fab7c 等价承继，复审窗已全量重放）。
+  - **landed**——main tip == 5a29e5b（直接 main 线性约定，无
+    合并提交；worktree list 单主检出实证）。
+  - **ledger_refreshed**——docs/parity-ledger.md **v12** 读回证
+    （H1 v12 + 26 行 D-01..D-26 + D-21 v12 扩记 + F-R8-1 收口 +
+    Time 供料候选）；F-R9-1/2 随本窗校正（H1 v11→v12 + README
+    「二十六项」）；无 live ledger 服务（PLAN-001..008 同判——
+    ledger = tracked file，经 git 提交即发布）。
+  - **archived**——git mv → docs/plans/archived/
+    009-mentions-inline-tag-slice.md + status: archived +
+    completion_kind: delivered；canonical 面（ARCHITECTURE §5
+    SD-901/§6 SD-902 + README SD-903/904）@5a29e5b 在 main。
+  - **cleaned**——无 worktree/无 dev 分支（直接 main 线性约定，
+    PLAN-005..008 同款）；主检出 status clean。
+  - `next: 无`（PLAN-010 候选池 §10.7——大纲[D-12 解锁首位]/
+    每日笔记[Time 原语解锁后]/移动+目录/aliases+casefold）。
 
 ## 10. 待澄清事项
 
