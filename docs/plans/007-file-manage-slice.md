@@ -4,9 +4,9 @@ status: executing
 feature_name: file-manage-slice
 author: [zhaopuming]
 created_at: 2026-09-23T02:34:22+08:00
-updated_at: 2026-09-23T09:26:11+08:00
+updated_at: 2026-09-23T10:05:00+08:00
 plan_revision: 1
-current_step: 1
+current_step: 2
 total_steps: 5
 supersedes_spec_components: []
 new_spec_components:
@@ -336,14 +336,38 @@ pub fn delete_page_impl(path str) str {
     create/rename 组回归零变化）。**[✅ 已完成]** merged 14/14 +
     split 13/13 ALL GREEN 一次通过（基线 v6 零漂移——回归零变化；
     delete_page 为纯增量契约，front 零触碰）。
-- **T-02 front 新建入口 + 弹层双形**（AC-02 前半）
-  - store new_open/NewOpen/NewClose + app.at EXPLORER「＋」钮 +
-    新建 dialog（第四弹层——input + footer 普通钮）+ `.NewGo` 流
+- **T-02 front 新建入口 + 弹层双形**（AC-02 前半）✅ 已完成
+  - store new_open/NewOpen/NewClose + app.at EXPLORER「＋」钮 + 新建
+    dialog（第四弹层——input + footer 普通钮）+ `.NewGo` 流
     （create_page 复用 + 触发集「建页成功」口 + ft_sel 置位）。
+    **[✅ 已完成]**（2026-09-23）store `new_open`/`delete_open` 双字
+    段 + 四开关口同批落位（§2.3 弹层面分野在册；删除弹层 T-03 消
+    费）；EXPLORER 头部改 row（text + 「＋」icon 钮——tab 条 plus 同
+    构）；新建 dialog **声明位在 rename 弹层前**（vm 快照恒渲染
+    input 序「后声明者居末」锚纪律——check 12 rename input 居末不
+    漂移，实测复核）；「创建」钮与 create_confirm 同名——快照序末
+    者消歧（弹层后声明居前纪律镜像）。NewGo = CreateGo 同构四步流
+    （store.Open 直口 + LinksRefreshOf(r) 显式 r + TreeRefresh +
+    ft_sel=r）。
   - `Delete` 键位 actions 面冒烟（keydown 回退层形态——F2 同构
-    预期，如实录）。
+    预期，如实录）。**[✅ 已完成] §10.1 已裁定**：shortcut "Delete"
+    字面 boot 吸收（merged boot ready = actions/menubar 面解析通
+    过——F2 同构预期兑现，零 fallback）；menubar-item vm 轨
+    Popover lowering 实勘=渲染为 button 头（`__menubar_item("删除…")`
+    ——冒烟调试实录，matrix pressButton 同口径）。action enabled_if
+    `.ft_sel != ""`（权威面）+ menubar 项不挂 enabled（D-24③）+
+    handler 守卫兜底（rename 同判三件套）。
   - 验证：merged 手动冒烟（新建/幂等/取消零落盘 + Delete no-op）+
-    `pnpm build` PASS。
+    `pnpm build` PASS。**[✅ 已完成]** e2e/.runtime/smoke-t02.mjs
+    **7/7 PASS**（①未选中 Delete no-op[delete_open 恒 false]②＋→
+    弹层开+new_q 置空③input 键入同步④创建→磁盘模板逐字节+active/
+    ft_sel 置位+树新行⑤同名幂等 tab 数不变+磁盘字节不变⑥取消零落
+    盘⑦选中态删除入口放行[delete_open=true——弹层 T-03 落]）；
+    `pnpm build` PASS（vue-tsc 0 错）；vm 矩阵 merged 13/14——唯一
+    FAIL = **基线 B 计划内漂移**（store new_open/delete_open + App
+    new_q 入 dump + 第四弹层 id 序列计划内扩——PLAN-006 T-02 同判
+    [a0659f3 先例]，T-04 v7 重锁），行为面 13 检查含 check 12
+    rename 全 PASS。
 - **T-03 删除流收口**（AC-02 后半）
   - store `CloseTabsOf`/`TabsCountOf` + 删除 dialog（第五弹层：
     `dangling_impact` 预览 + tab 警示行）+ `.DeleteGo` 流（触发集

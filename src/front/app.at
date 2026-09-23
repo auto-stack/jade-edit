@@ -259,6 +259,7 @@ widget App {
         CreateClick(str), CreateGo, CreateCancel,
         TreeRefresh, LinksRefreshOf(str),
         RenameOpen, RenameEdit(str), RenameGo, RenameCancel,
+        ActNewFile, NewEdit(str), NewGo, NewCancel, ActDelete,
     }
 
     model {
@@ -287,6 +288,10 @@ widget App {
         // —— 重命名弹层数据态（PLAN-006）：input 值（RenameOpen handler
         // 预填现 stem）——find_q 同构，不入 store（D-20④ 同款裁定）。
         var rename_q str = ""
+        // —— 新建弹层数据态（PLAN-007）：input 值（ActNewFile 置空）——
+        // rename_q 同构，不入 store（D-20④ 同款裁定）。删除弹层零新
+        // 字段（目标 = ft_sel；预览 = link_pages/tabs 现场派生 computed）。
+        var new_q str = ""
     }
 
     computed {
@@ -308,6 +313,8 @@ widget App {
                 enabled_if: ".store.tab_count > 0")
         action (id: "file.rename", handler: .RenameOpen, title: "重命名…", shortcut: "F2",
                 enabled_if: ".store.active_path != \"\" && !.store.active_dirty")
+        action (id: "file.delete", handler: .ActDelete, title: "删除…", shortcut: "Delete",
+                enabled_if: ".ft_sel != \"\"")
         action (id: "file.quit",   handler: .ActQuit,   title: "退出",  shortcut: "Alt+F4")
         action (id: "edit.undo",   handler: .ActUndo,   title: "撤销",  icon: "undo-2",      shortcut: "Ctrl+Z")
         action (id: "edit.redo",   handler: .ActRedo,   title: "重做",  icon: "redo-2",      shortcut: "Ctrl+Y")
@@ -350,12 +357,14 @@ widget App {
                             menubar-item (title: "新建", icon: "file-plus", shortcut: "Ctrl+N") { onclick: .ActNew }
                             menubar-item (title: "打开…", icon: "folder-open", shortcut: "Ctrl+O") { onclick: .ActOpen }
                             menubar-item (title: "保存", icon: "save", shortcut: "Ctrl+S", enabled: .store.tab_count > 0) { onclick: .ActSave }
-                            // 重命名项不挂 enabled——vm 轨 menubar-item 状态相关
-                            // enabled boot 冻结（T-02 实勘：boot 渲染定 handler 有
-                            // 无，状态变化不重评；复合式 `!`/`&&` 更致节点整丢）
-                            // ——禁用语义由 .RenameOpen handler 守卫兜底（action
-                            // enabled_if 仍为权威面），差异入 ledger v9。
+                            // 重命名/删除项不挂 enabled——vm 轨 menubar-item
+                            // 状态相关 enabled boot 冻结（T-02 实勘：boot
+                            // 渲染定 handler 有无，状态变化不重评；复合式
+                            // `!`/`&&` 更致节点整丢）——禁用语义由 handler
+                            // 守卫兜底（action enabled_if 仍为权威面），
+                            // 差异入 ledger v9。
                             menubar-item (title: "重命名…", shortcut: "F2") { onclick: .RenameOpen }
+                            menubar-item (title: "删除…", shortcut: "Delete") { onclick: .ActDelete }
                             menubar-separator
                             menubar-item (title: "退出", icon: "log-out", shortcut: "Alt+F4") { onclick: .ActQuit }
                         }
@@ -396,7 +405,18 @@ widget App {
             // —— 主区：explorer 树（行留根）+ 编辑区（tab 条 + 编辑器）——
             row (style: "flex-1 items-stretch overflow-hidden w-full") {
                 col (style: "w-56 shrink-0 border-r border-border bg-card hidden md:flex flex-col gap-2 p-2 overflow-y-auto") {
-                    text "EXPLORER" { style: "text-[11px] text-muted-foreground px-1 pt-1 tracking-wider" }
+                    // EXPLORER 头部行：标题 + 「＋」新建钮（PLAN-007——tab
+                    // 条 plus 钮同构：button + icon "plus"；入口 =
+                    // .ActNewFile 开新建弹层，落盘新档语义——与 Ctrl+N
+                    // untitled 草稿两口径并存，语境区隔 SD-701）。
+                    row (style: "items-center justify-between px-1 pt-1") {
+                        text "EXPLORER" { style: "text-[11px] text-muted-foreground tracking-wider" }
+                        button (variant: "text") {
+                            icon (name: "plus", style: "h-3.5 w-3.5 text-muted-foreground") {}
+                            onclick: .ActNewFile
+                            style: "h-5 w-5 px-0 py-0"
+                        }
+                    }
                     // 双段 ${} 插值 vue 发射错序（基座在册生成器 bug）——拆单段。
                     text .ws_name { style: "text-[11px] text-muted-foreground px-1" }
                     text .status { style: "text-[11px] text-muted-foreground px-1 pb-1" }
@@ -659,6 +679,31 @@ widget App {
                 }
             }
 
+            // —— 新建页面弹层（PLAN-007 第五切片；dialog 第四实例——
+            // 内嵌 input，重命名弹层同构形态：双钮 = 普通 button[D-24④
+            // 纪律]、闭态恒渲染 D-23③ 同判——测试定位锚内容制；声明位
+            // 在 rename 弹层前——vm 快照 input 序「弹层后声明者居末」
+            // 锚纪律，check 12 rename input 居末不漂移）。创建 = 复用
+            // create_page（PLAN-005 全套：幂等/清洗/模板/根落位）。——
+            dialog (open: .store.new_open) {
+                dialog-content {
+                    dialog-header {
+                        dialog-title "新建页面"
+                        dialog-description "在工作区根创建新页面"
+                    }
+                    input {
+                        value: .new_q
+                        oninput: .NewEdit
+                        placeholder: "页面名…"
+                        style: "w-full h-7 px-2 text-[12px] border rounded bg-background"
+                    }
+                    dialog-footer {
+                        button (text: "取消", variant: "outline") { onclick: .NewCancel }
+                        button (text: "创建", variant: "ghost") { onclick: .NewGo }
+                    }
+                }
+            }
+
             // —— 重命名弹层（PLAN-006 第四切片；dialog 控件族首个用例——
             // 内嵌 input 探针 B 定谳形态：双钮 = 普通 button[dialog-cancel/
             // action vm 轨死标签轨间不对称，禁用]、闭态恒渲染 D-23③ 同判
@@ -912,6 +957,68 @@ widget App {
                 .TreeRefresh()
             }
         }
+        // —— 新建页面流（PLAN-007 T-02；§2.3）——
+        // 入口 = EXPLORER「＋」钮：input 置空 + 开弹层（无守卫——任意
+        // 时刻可新建；Ctrl+N untitled 草稿流不动，语境区隔 SD-701）。
+        .ActNewFile -> {
+            .new_q = ""
+            store.NewOpen()
+        }
+        .NewEdit(q) -> {
+            .new_q = q
+        }
+        .NewCancel -> {
+            store.NewClose()
+        }
+        // NewGo 流（§2.3；CreateGo 四步流同构——back 半直承 PLAN-005）：
+        // ①back 契约直调 create_page（try/catch 落 console——backend-
+        //   offline 不炸；幂等守卫/清洗/模板/根落位全套在册）
+        // ②成功 = 关弹层 + store.Open（直口——已开即激活/新开播种）+
+        //   链接索引重取（触发集 v4：「建页成功」口直承——行重算内联
+        //   active=r，显式 r 两轨一致规避 handler 内 .store 陈旧投影）+
+        //   树重取（EXPLORER 新行 + 快开 ft_nodes 数据源新鲜）+ ft_sel
+        //   置位新行
+        // ③拒（""，空名清洗守卫）= console 注记 + 弹层留置（用户可改
+        //   名重试/取消——PLAN-006 v1 口径同判）。
+        .NewGo -> {
+            var r str = ""
+            var ok bool = true
+            try {
+                r = create_page(.new_q)
+            } catch (e) {
+                ok = false
+            }
+            if !ok {
+                console_log("create: failed")
+                .console = console_lines()
+            }
+            if r != "" {
+                store.NewClose()
+                store.Open({ path: r })
+                .LinksRefreshOf(r)
+                .TreeRefresh()
+                .ft_sel = r
+            } else {
+                if ok {
+                    console_log("create: rejected (empty name)")
+                    .console = console_lines()
+                }
+            }
+        }
+
+        // —— 删除入口（PLAN-007 T-02 落 action/menubar 面；T-03 弹层/
+        // 执行流）：守卫 = ft_sel 空拒（G2 未选中 no-op——console 注记 +
+        // 零弹层；action enabled_if 同公式权威面，menubar 项不挂 enabled
+        // ——D-24③ boot 冻结纪律，handler 守卫兜底）。
+        .ActDelete -> {
+            if .ft_sel == "" {
+                console_log("delete: no selection")
+                .console = console_lines()
+            } else {
+                store.DeleteOpen()
+            }
+        }
+
         .ActSwitchTab -> { store.ActSwitchTab() }
         .ActAbout -> { store.ActAbout() }
         .CloseRequest -> { store.CloseRequest() }

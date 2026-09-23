@@ -71,6 +71,11 @@ store EditorStore {
         // input 值/影响面预览在 App 模型（数据态不入 store——D-20④ 同裁
         // 裁定：find_q/链接态先例）。
         var rename_open bool = false
+        // 新建/删除弹层开态（PLAN-007；基线 v7 面）：弹层面分野同
+        // rename_open——new_q 在 App 模型；删除弹层零新字段（目标 =
+        // App .ft_sel、预览 = link_pages/tabs 现场派生）。
+        var new_open bool = false
+        var delete_open bool = false
     }
 
     // msg 载荷单类型（编译器约束）：Open 单 map、Edit 单 str。
@@ -85,6 +90,7 @@ store EditorStore {
         FindOpen(str), FindToggle, FindClose,
         CreateConfirmOpen(str), CreateConfirmCancel,
         RenameOpen, RenameClose, TabsRenamed(str, str),
+        NewOpen, NewClose, DeleteOpen, DeleteClose,
     }
 
     on {
@@ -429,6 +435,26 @@ store EditorStore {
         }
         .RenameClose -> {
             .rename_open = false
+            .console = console_lines()
+        }
+
+        // ---- 新建/删除弹层（PLAN-007）：Open/Close 只翻开态（new_q
+        // 置空在 App 侧 .ActNewFile；删除目标 = App .ft_sel，零新字段）。
+        // Cancel = Close（取消零落盘——无 back 调用）。----
+        .NewOpen -> {
+            .new_open = true
+            .console = console_lines()
+        }
+        .NewClose -> {
+            .new_open = false
+            .console = console_lines()
+        }
+        .DeleteOpen -> {
+            .delete_open = true
+            .console = console_lines()
+        }
+        .DeleteClose -> {
+            .delete_open = false
             .console = console_lines()
         }
 
