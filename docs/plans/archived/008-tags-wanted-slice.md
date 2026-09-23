@@ -1,10 +1,11 @@
 ---
 plan_id: PLAN-008
-status: reviewed
+status: archived
+completion_kind: delivered
 feature_name: tags-wanted-slice
 author: [zhaopuming]
 created_at: 2026-09-23T10:24:24+08:00
-updated_at: 2026-09-23T15:40:00+08:00
+updated_at: 2026-09-23T16:40:00+08:00
 plan_revision: 1
 current_step: 5
 total_steps: 5
@@ -613,6 +614,33 @@ pub fn tags_json(path str, depth int) str {
     [14 meta]/[B baseline] PASS 行、probe-tags RESULT 行为耐久证据
     （可重放：`node tests/probe_tags.mjs` / `node scripts/gate.mjs`）。
   - `next: merge`。
+
+- **2026-09-23 merge pass（auto-plan-merge）**：
+  - `stage: merge` | outcome: **pass** | completion_kind: **delivered**
+    | receipt key: **PLAN-008:r1**。
+  - **prepared** = reviewed 基线（reviewed_commit=6400f3b；复审提交
+    557bc19 为其 docs-only 后代[diff 全窗口仅计划文件 +63/-1，实现/
+    依赖零变化——delivery_commit=557bc19 资格成立]）；canonical
+    delta = SD-801..804 已于 T-05 落位 docs/ 根三件（本仓知识库约定
+    ——PLAN-001..007 在案先例，无 docs/specs/ 面，复审 AC-06 源检
+    通过）。
+  - **landed** = main tip == 557bc19 == delivery（直接 main 线性约定
+    ——本仓无 worktree/dev 分支；ancestry 2e16871→557bc19 七提交线
+    性直证）；归档前冒烟 merged **16/16 + 基线 v8 零漂移** ALL GREEN
+    （首跑 check-11 菜单项渲染窗瞬态重跑即绿——D-21 家族口径）。
+  - **ledger_refreshed** = docs/parity-ledger.md v11 于 main 读回
+    （header v11 + D-21 v11 扩记四形态在册 + 25 项三分类）——无
+    live ledger 服务，PLAN-001/005/006/007 同判（tracked 派生面即账
+    本）。
+  - **archived** = git mv → docs/plans/archived/008-tags-wanted-
+    slice.md + status: archived + completion_kind: delivered。
+  - **cleaned** = 无 worktree/dev 分支待清（直接 main 约定；worktree
+    清单仅主检出 D:/autostack/jade-edit、分支清单仅 main+origin/
+    main、工作树 tracked 零 WIP）。F-R8-1 遗留面（probe_delete/
+    probe_rename SPLIT_PORT 8252 在 WinNAT 排除区段内）随收据留档
+    ——后续批或重放需时同款一行适配。
+  - `next: —`（闭环；候选池 §10.7 在案 + PLAN-009 候选首位 = 大纲
+    [D-12 门控顺延]）。
 
 ## 10. 待澄清事项
 
