@@ -189,4 +189,31 @@ pub fn set_page_meta(path str, tags str, aliases str) str {
     return wsys.set_page_meta_impl(path, tags, aliases)
 }
 
+/// 新建目录（PLAN-012 第十切片；工作区组织二期）：清洗复用 title_to_path
+/// 去 .ad 段（九字符→'-'——弹层输入不可能含 "/"，嵌套名结构性不出现）→
+/// 工作区根落位（根落位口径同 create_page）；**幂等**（已存在目录 → 返回
+/// 现路径零变化）+ 双复核（File.is_dir 翻转——探针 B 定谳可调；同名文件
+/// 边案：create_dir 静默失败 → is_dir 不翻转 → ""）。成功返回工作区根
+/// 相对目录路径；"" = 空名守卫/同名文件/创建未生效。
+/// **POST 而非 GET**（D-19：目录名 CJK 常态，body 传参）。
+/// POST /api/create_dir
+#[api(method = "POST", path = "/api/create_dir")]
+pub fn create_dir(name str) str {
+    return wsys.create_dir_impl(name)
+}
+
+/// 移动档到目标目录（PLAN-012；**stem 不变 ⇒ 链接零改写零断链**——与
+/// rename_page（stem 变⇒改写入链）/delete_page（档消⇒入链悬空）构成
+/// 三联语义对照，SD-1201 并表）：POST 单事务五步（卫：源 exists + 目标
+/// is_dir[探针 B 定谳]/同路径幂等返回原 path/目标处同名冲突拒/read_text
+/// +write_text+delete 组合迁移[006 定文形态]+双复核）。成功返回工作区根
+/// 相对新 path；"" = 任一卫语句拒/迁移未生效。**不涉链接改写**（结构性
+/// 不需要——链接面纯 stem 解析，目录无感）。
+/// **POST 而非 GET**（D-19：path/dir CJK 常态，body 传参）。
+/// POST /api/move_page
+#[api(method = "POST", path = "/api/move_page")]
+pub fn move_page(path str, dir str) str {
+    return wsys.move_page_impl(path, dir)
+}
+
 

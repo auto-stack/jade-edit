@@ -363,6 +363,9 @@ pub fn links_json(path str, depth int) str {
 /// 构建期 gen 树源检复核）；命中序 = collect_ad_pages walk 序（确定性）；
 /// limit 钳 1..50（front 传 20 = 旧园 default_limit 同值）；walk depth = 4
 /// 内部常量（Init tree 首屏同值——快开/检索/链接三面覆盖一致）。
+/// **PLAN-012 扩**：title 命中面 = stem ∪ frontmatter aliases（010
+/// page_aliases 接入——alias-title-only 命中 snippet="" 同判；命中行
+/// title 恒 = stem 口径不变；序/walk 零变化）。
 /// snippet = body 中首条命中行 trim 后整行（⚠ D-20③：禁 .length 截断
 /// ——CJK heap 串字节语义；CRLF 行尾 \r 剥离——is_delim 同族容错，
 /// 行终止符非内容）；title-only 命中 = ""。装配 = json_esc + 逐项 `+`
@@ -391,10 +394,28 @@ pub fn search_json(query str, limit int) str {
             var stem_l str = p.stem.to_lower()
             var body str = read_body(p.rel)
             var body_l str = body.to_lower()
-            var is_hit bool = false
+            // PLAN-012：title 命中面 = stem ∪ aliases（frontmatter 解析接
+            // 010 在册件 page_aliases——links_json:331-338 同款模式）；
+            // alias-title-only 命中 → snippet = ""（下方 snippet 只从 body
+            // 取，天然满足——SD-401 口径续）。命中行 title 恒 = stem。
+            var als List = page_aliases(frontmatter_of(File.read_text(resolve(p.rel))))
+            var title_hit bool = false
             if stem_l.contains(ql) {
-                is_hit = true
+                title_hit = true
             }
+            if !title_hit {
+                var ai int = 0
+                while ai < als.len() {
+                    if !title_hit {
+                        var al str = als[ai]
+                        if al.to_lower().contains(ql) {
+                            title_hit = true
+                        }
+                    }
+                    ai = ai + 1
+                }
+            }
+            var is_hit bool = title_hit
             if !is_hit {
                 if body_l.contains(ql) {
                     is_hit = true
@@ -676,6 +697,106 @@ pub fn delete_page_impl(path str) str {
         return ""
     }
     return path
+}
+
+// ===== 目录面（PLAN-012 T-01；知识库第十切片 back 半）——工作区组织二期：
+// 新建目录 + 移动档。**移动 stem 不变 ⇒ 链接零改写零断链**——与
+// rename_page（SD-601 stem 变⇒源文改写）/delete_page（SD-701 档消⇒入链
+// 悬空）构成三联语义对照（SD-1201 并表）：链接面纯 stem 解析对目录结构
+// 完全无感——用户可自由重组目录而不伤链接网（组织自由度保证）。
+// 探针 A/B 定谳（2026-09-23）：File.create_dir / File.is_dir 双可调
+// （解析/执行/语义全过）；实勘 create_dir = create_dir_all **递归语义**
+// + 已存在幂等不炸——清洗层 "/" → '-' 在前，弹层输入结构性不含分隔符，
+// 递归面无暴露（v1 单层口径不变，§10 记账）。
+
+/// 目录段归一（move_page_impl 专用）：split("/") 去空段后 "/" 重接
+/// （"wiki"、"wiki/"、"wiki//sub"、"" → "wiki"/"wiki/sub"/""——尾斜杠/
+/// 重复分隔符 UI 输入容错；禁 .length+slice 取段——D-20③ CJK 字节语义）。
+fn dir_norm(dir str) str {
+    var segs = dir.split("/")
+    var out str = ""
+    var i int = 0
+    while i < segs.len() {
+        var seg str = segs[i]
+        if seg != "" {
+            if out != "" {
+                out = out + "/"
+            }
+            out = out + seg
+        }
+        i = i + 1
+    }
+    return out
+}
+
+/// 新建目录本体（api.create_dir 实现；SD-1201 back 半）：清洗（
+/// title_to_path_stem 复用——九字符→'-'/trim/空名守卫）→ 幂等卫（
+/// 已存在目录 → 返回现路径零变化——G1 口径：树无变化 + front console
+/// 可见）→ File.create_dir（返值忽略——D-24② 原语吞错族；同名文件边案
+/// 静默失败）→ 双复核 File.is_dir 翻转（探针 B 在册件——目录创建成功
+/// 唯一可信判据）。返回工作区根相对目录路径；"" = 空名守卫/同名文件/
+/// 创建未生效。
+pub fn create_dir_impl(name str) str {
+    var safe str = title_to_path_stem(name)
+    if safe == "" {
+        return ""
+    }
+    var full str = resolve(safe)
+    if File.is_dir(full) {
+        return safe
+    }
+    File.create_dir(full)
+    if File.is_dir(full) {
+        return safe
+    }
+    return ""
+}
+
+/// 移动档本体（api.move_page 实现；SD-1201 back 半）——POST 单事务五步：
+/// ①卫：源 exists（缺失拒）；目标目录有效——File.is_dir(resolve(
+///   dir_norm(dir)))（探针 B 定谳件；dir_norm 后 "" = 根——resolve("")
+///   即工作区根，is_dir 恒真，移动入根为合法弧线）；
+/// ②同路径幂等（新 rel == 原 path → 返回原 path 零变化——dir_norm 归一
+///   后比较，"wiki" 与 "wiki/" 同判）；
+/// ③冲突卫：File.exists(resolve(new_rel)) → ""（目标处同名 .ad 拒——
+///   fname = 源路径末段，stem/扩展名整段保留）；
+/// ④组合迁移：File.write_text(new, File.read_text(old)) → File.delete(
+///   old)（006 read+write+delete 定文形态原样；File.copy 解析层不可调
+///   [D-24①] 故字节整迁）；双复核：新档在 && 旧档无（delete 恒返 0 吞错
+///   [D-24②]——exists 翻转唯一可信）；
+/// ⑤返回新工作区根相对 rel。
+/// **全程零链接改写**（stem 不变——链接面 walk 期 stem 解析对目录无感）。
+pub fn move_page_impl(path str, dir str) str {
+    var full str = resolve(path)
+    if !File.exists(full) {
+        return ""
+    }
+    var d str = dir_norm(dir)
+    if !File.is_dir(resolve(d)) {
+        return ""
+    }
+    var fsegs = path.split("/")
+    var fname str = fsegs[fsegs.len() - 1]
+    var new_rel str = fname
+    if d != "" {
+        new_rel = d + "/" + fname
+    }
+    if new_rel == path {
+        return path
+    }
+    if File.exists(resolve(new_rel)) {
+        return ""
+    }
+    var new_full str = resolve(new_rel)
+    File.write_text(new_full, File.read_text(full))
+    File.delete(full)
+    if !File.exists(new_full) {
+        return ""
+    }
+    if File.exists(full) {
+        return ""
+    }
+    return new_rel
 }
 
 // ===== 提及转链接（PLAN-010 T-01；知识库第八切片 back 半） =====
