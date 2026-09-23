@@ -1,6 +1,6 @@
 ---
 plan_id: PLAN-008
-status: execution_done
+status: reviewed
 feature_name: tags-wanted-slice
 author: [zhaopuming]
 created_at: 2026-09-23T10:24:24+08:00
@@ -551,6 +551,68 @@ pub fn tags_json(path str, depth int) str {
   - `blockers: 无`。
   - `next: review`（execution_done；复审窗注意：e2e D-21 突发簇为
     本机家族会话并行日形态——AC 复现按 README 重跑口径）。
+
+- **2026-09-23 复审 pass（auto-plan-review；revision 1 保持）**：
+  - `stage: review`，PLAN-008，revision 1。
+  - `outcome: pass`——execution_done → reviewed，next=merge。
+  - `reviewed_commit: 6400f3b`（01750d2 的复审窗环境适配后代
+    [probe_tags split 臂端口 8254→8221——见 findings F-R8-1；diff
+    全窗口仅该测试仪具端口常量 +4/-1，实现/依赖零变化]）；
+    `base_commit: 2e16871`（plan007 归档态；merge-base 线性确认，
+    六提交无合并噪声）。
+  - `dependency_revisions`：无依赖工作树/分支（直接 main 线性约定；
+    deps/bps·stylekit 只读拷贝零触碰——家族仓 auto-down 工作树
+    status 0 项只读检视）。
+  - `spec_inputs`：ARCHITECTURE.md@01750d2（§5 SD-801 段/§6 SD-802
+    表）/README.md@01750d2（SD-803/SD-804）/parity-ledger.md@01750d2
+    （v11 25 项 D-21 v11 扩记）；frontmatter new_spec_components 四
+    项终化、supersedes 空（纯增量正确）。
+  - **独立性声明**：实现会话内复审（无独立会话），裁定自工件重建
+    ——AC 复现全部本地重放，不采信执行期摘要（PLAN-006/007 同款）。
+  - `acceptance_results`：
+    - **AC-01 pass**——`node tests/probe_tags.mjs` 复审基线重放：
+      六案全过 + 双臂逐字节一致=true（全集首锁 11 tag[first-seen
+      序 + 归属页逐项]/nofm 零/notags 零/缩进两形态/同页去重/depth
+      传递 + CRLF 形态）；契约/实现源检（diff 自 base）与 SD-801
+      定文逐条对应（GET 契约/顶层裸数组/顶层级键定位/inline 贡献零
+      /读原文 read_text）。
+    - **AC-02 pass**——gate 重放含 vm meta 组八子步双臂（14：7 tag
+      行全集/展开导航 CJK 仅 merged/wanted 入口无 input/取消零落盘/
+      创建消缺+exists 翻转/空态闭环）+ e2e meta 段（[14 meta] PASS
+      行实录 gate 日志；tags 4 行 + wanted Hello World（3）+ 页面名
+      （1）位态已知答案 + 建页闭环 + 空态 + 翻转）。
+    - **AC-03 pass**——`node scripts/gate.mjs` 复审重放 **exit 0
+      ALL GREEN**（重放第 2 跑；第 1 跑矩阵段 check-12 树行渲染窗
+      瞬态如实记——D-21 v9 家族变体首例[explorer 行整列快照缺失而
+      ft_nodes 在态]，重跑即绿）；merged 16/16 + split 15/15 +
+      vue build + e2e 十五段。
+    - **AC-04 pass**——gate B 检查 = 基线 v8 零漂移（两跑皆过）；
+      dump 含 tags_open/tags_rows[7 元素——Init 首刷在态]/tag_
+      expanded/wanted_rows 四字段（structure-v8.txt 源检）；v7 留档
+      在册。
+    - **AC-05 pass**——负向证六件复审重验：①App 上下文 `.console =`
+      赋值 **0**（grep 实证——D-25① 合规）；②旧园代码引用零（1 处
+      仅出处注释）；③补件面零增量（scripts/ diff 自 base = 0）；
+      ④语料源零写入（mtime 早于执行日）+ 家族仓零触碰；⑤frontmatter
+      写面零（wsys tags 组零 write 调用源检）；⑥变更面 14 文件全数
+      计划范围，gen/ 不入库零手改。
+    - **AC-06 pass**——SD-801..804 落位源检（ARCHITECTURE §5/§6 +
+      README 两节锚注齐）；frontmatter 只读/写面边界与「发现→建页→
+      消缺」闭环语义在 SD-801 定文；parity-ledger v11（D-21 v11
+      扩记四形态在册）。
+  - `findings`：
+    - **F-R8-1（环境级，非阻塞，已处置）**：Windows WinNAT 排除
+      区段扩至 **8251-8950**（netsh excludedportrange 复审窗实勘；
+      T-01 执行期 8254 尚可用）——probe_tags split 臂端口已适配
+      （6400f3b）；**遗留面 = probe_delete/probe_rename SPLIT_PORT
+      8252 同在区段内**（既有脚本，非本计划范围——后续批或复审需
+      重放时同款一行适配；serve-back 默认 8211 在区段外不受影响）。
+    - 复审重放 D-21 家族再现一次（gate 第 1 跑 check-12 树行渲染窗
+      ——变体首例，v11 扩记②同族）——重跑即绿，非阻塞。
+  - `evidence`：本记录 AC 段命令 + 结果均复审窗实录；gate 日志
+    [14 meta]/[B baseline] PASS 行、probe-tags RESULT 行为耐久证据
+    （可重放：`node tests/probe_tags.mjs` / `node scripts/gate.mjs`）。
+  - `next: merge`。
 
 ## 10. 待澄清事项
 
