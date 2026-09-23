@@ -420,21 +420,101 @@ src/back/api.at           /api 契约（自有 Auto 源，与实现同 commit—
   ② **双契约**：`page_meta(path)` GET（裸数组 `[{key,value}]`——D-20④ 顶层数组唯一健康形状；缺席键项不装配；value = 逗号连接串；GET 通道 path CJK 面 = D-19 同款降级口径）+ `set_page_meta(path, tags, aliases)` **POST**（D-19：CJK 路径/值常态 body 传参；返回 "ok"="" 卫/失败二态）。
   ③ **写引擎五步**（`set_page_meta_impl` + `fm_set_block` 标记法——is_delim/body_after_open/write_body 界符族第四件）：①exists 卫 + **幂等防线**（两键全空且档本无两键 → no-op "ok" 零写盘）；②段取（首行界符+闭合界符定位）；③`fm_set_block` ×2（tags 先 aliases 后）：删旧键行块（键行+`- ` 项行——两缩进形态，首个非列表行即止同 page_fm_list 收集语义）+ 原位插新块（键行+`- x` 无缩进归一）；未命中 → 尾追（闭合界符前）；④无 frontmatter 档增建界符段（body 前）；**CRLF 继承** = 原 text 含 `\r\n` → 新段行元素尾带 `\r`（split("\n") 空间恒等重接，界符行/非目标行原样直通）；⑤落盘+exists 复核。**幂等**：同值再写逐字节不变（归一形态同形）。
   ④ **front 面**：store `meta_open`（弹层族第四开态）+ App `meta_q_tags`/`meta_q_aliases`（数据态不入 store——D-20④ 同款裁定）；action `file.meta`（title「页面属性…」icon "sliders-horizontal"、shortcut **Ctrl+I**，不挂 enabled——D-24③ handler 守卫 untitled no-op）+ menubar 文件项（重命名与删除之间）；dialog 第六实例（双 input，placeholder 唯一锚；**声明位于 rename 弹层前**——input 序「弹层后声明者居末」锚纪律）；**预填回显 = 首个 fetch 型预填**（page_meta GET 单取形——vue 轨异步返回覆写竞态面在册，测试 fill 前置预填落定等待）；保存流 `.MetaGo`：set_page_meta → "ok" = 关弹层 + **自派生刷新族**（D-26② 纪律：LinksRefreshOf[alias 解析面/wanted 派生随产物 + 内链 MentionsRefreshOf 链式尾] + TagsRefresh[tags 面板即时]；tree 不刷——无文件名变化）；非 "ok" = console 注记 + 弹层留置（006 v1 口径同判）。取消零落盘。
+- **目录面 + 检索 alias 匹配（SD-1201，PLAN-012 第十切片）**：工作区
+  组织二期（EXPLORER 可组织面）+ alias 数据流检索消费缺口收口，双件同批。
+  **移动语义三联对照并表（本域核心定调）**：重命名（SD-601）= stem 变
+  ⇒ 改写入链源文；**移动（本域）= stem 不变 ⇒ 零改写零断链**——链接面
+  纯 stem 解析对目录结构完全无感（入链 `[[Target]]` 经 walk 自动指向
+  新位，面板行文本零变化），用户可自由重组目录而不伤链接网（组织
+  自由度保证）；删除（SD-701）= 档消 ⇒ 入链悬空化。canonical 并表防
+  「移动需清理引用/改写链接」的隐性期待——**移动中的链接改写结构性
+  不需要**。
+  **back 半·目录面双契约**：`create_dir(name)` / `move_page(path,
+  dir)` 均 **POST**（D-19 同款：目录名/路径 CJK 常态 body 传参）。
+  `create_dir_impl`：清洗（title_to_path_stem 复用——九字符→`-`——
+  弹层输入结构性不含 `/`，嵌套名 v1 不出现）→ **幂等卫**（已存在
+  目录 → 返回现路径零变化）→ `File.create_dir`（返值忽略——D-24②
+  原语吞错族；**探针 A 定谳 2026-09-24**：可调——实勘 = create_dir_all
+  **递归语义** + 已存在幂等不炸；清洗层在前，递归面零暴露，v1 单层
+  口径不变）→ 双复核 `File.is_dir` 翻转（**探针 B 定谳**：可调——
+  目录判真/文件判假准；同名文件边案：create_dir 静默失败 → is_dir
+  不翻转 → ""）。`move_page_impl` **五步**（read+write+delete 组合
+  迁移定文复用 SD-601——File.copy 解析层不可调 [D-24①] 故字节整迁；
+  ⚠ File.delete 恒返 0 吞错 [D-24②] → exists 双复核内建）：①卫（源
+  exists + 目标 `File.is_dir(resolve(dir_norm(dir)))`——dir_norm split
+  去空段归一：`wiki`/`wiki/`/`wiki//sub`/`""`（= 根，移动入根合法）
+  双形态接受）②同路径幂等（归一后新 rel == 原 path → 返回原 path
+  零变化）③冲突卫（目标处同名档 exists → ""）④`write_text(new,
+  read_text(old))` → `File.delete(old)` → 双复核（新在 && 旧无）⑤
+  返回新 rel（"" = 任一卫拒/迁移未生效；拒因前端不可见，front 失败
+  路径 = console 注记 + 弹层留置）。
+  **back 半·检索 alias 扩**：`search_json` title 命中面 = **stem ∪
+  frontmatter aliases**（`page_aliases` 010 在册件接入——links_json
+  同款模式）；alias-title-only 命中 → snippet = `""`（snippet 只从
+  body 取——SD-401 口径天然续）；命中行 title 恒 = stem（口径不变）；
+  命中序/walk 序零变化（stem 优先序 = walk 序不变）。**检索面是
+  alias 数据流最后消费缺口**（010 解析/011 写面交付后，面板/出链认
+  alias 而检索不认 = 可感知不一致的收口）。
+  **front 半**：store `dir_open`/`move_open` 双开态（弹层面分野同
+  meta_open——基线 v11 面）+ App `dir_q`/`move_q`（数据态不入
+  store——D-20④ 同款裁定）。EXPLORER 头部「⊕」第二钮（icon
+  folder-plus——「＋」同构相邻；**序纪律：「＋」居「⊕」前**——
+  EXPLORER 行首 button 结构锚在册 [vm_matrix pressExplorerPlus]，
+  序翻锚误中）→ `.ActDirNew`（dir_q 置空——零 fetch 预填形态）→
+  **dialog 第七实例**（单 input「目录名」；声明位 rename 弹层前——
+  vm 快照 input 序「后声明者居末」锚纪律）→ `.DirGo`：create_dir
+  直调 → 非空 = 关弹层 + TreeRefresh（G1——树新目录行可展开空态；
+  **链接/标签面不刷**——目录不进链接面，触发集纪律见下）；空 =
+  console 注记 + 弹层留置。移动入口 = action `file.move`（title
+  「移动到目录…」、shortcut **Ctrl+Shift+M**——M 空闲实核 [Ctrl+M/
+  Ctrl+Shift+M 均未用]；不挂 enabled——D-24③ handler 守卫兜底：
+  ft_sel 空拒 + 非 .ad 拒 [目录行进移动流会误当文件迁移]）+ menubar
+  文件项（重命名与页面属性之间）→ `.ActMove` 预填 = 源档现目录
+  （`dir_of_path` split 法**本地派生**——**零 fetch 预填**，D-28②
+  fetch 型预填竞态窗规避在册形态：双弹层预填全走本地派生，零暴露
+  面）→ **dialog 第八实例**（单 input「目标目录」+ placeholder =
+  ft_nodes 派生目录清单首项——`dirs_of`/`dirs_first` 栈式 while
+  纯函数 [collect_ad_paths 同族第三实例]，本地派生零 fetch 同判；
+  placeholder 动态绑定 vue 轨首证）→ `.MoveGo`：move_page 直调 →
+  非空 = 关弹层 + `TabsRenamed(old, r)`（006 在册口——tab path/
+  title/key 全量；title = strip_ad **全路径**口径——stem 段恒等、
+  目录段新）+ `Reload`（body 不变——重挂载播种链一致性，幂等无害）
+  + **刷新族 v5**：LinksRefreshOf(r)（bl/ol 行重算 + wanted/mentions
+  随产物——移动零扰动的面板面复核锚）+ TagsRefresh（路径面）+
+  MentionsRefreshOf(r) + TreeRefresh（档行入新目录）+ ft_sel = r；
+  空 = console 注记 + 弹层留置（006 v1 口径同判）。
+  **刷新触发集 v5**（SD-302 v4 扩）：v4 + **移动成功**（新建目录
+  **不**进链接/标签触发集——目录不进链接面，树单独刷）。十一案
+  直证 = `tests/probe_dir_move.mjs`（目录面八案：新建/清洗/同名
+  幂等/移动基础[字节整迁 + frontmatter 完整逐字节]/同路径幂等/
+  缺失目录拒/冲突拒/CJK 目录名+档名 POST 双臂 + 检索 alias 三案：
+  alias 命中[title=stem + snippet=""]/语料基线逐字节回归[walk 序 +
+  snippet 行口径零漂移]/alias+body 双命中[snippet 非空]——双臂返回
+  值逐案对读 + 磁盘逐字节复核 + 副作用圈定）。
+  **测试面固化**：vm file 组四子步（⊕新建目录/移动弧线[预填 wiki
+  断言 + tab 全量 + **面板快照前后逐字节一致** + **links_json 定向
+  diff 归一相等**（序无关集合语义——移动后 walk 位次迁移 [DirBox <
+  wiki] 属预期面）]/取消零落盘/冲突拒弹层留置）+ find 组 alias 子步
+  ——组数不变 16/15，子步不占检查位；e2e 同弧线（CJK 目录名
+  收件箱——create_dir/move_page POST 双臂面；placeholder 动态绑定
+  首证 [值 ∈ {wiki, 收件箱} 两可——序随 fs.tree casefold 实位]；
+  弹层钮定位纪律修订 = 标题锚 content 子树扫——「创建」双弹层同名，
+  末位序锚随第七实例声明破）。
 - fixture workspace 每次全新隔离拷贝（源 = auto-down `tmp/wiki-demo`，
   `JADE_FIXTURE` 可覆）——测试会打字保存，源零污染。Auto back 无 config
   文件 ⇒ 旧「exe 旁陈年 config 压 env」事故类别结构性消失（belt 保留为
   ws_root 实际根断言）。
 
-## 6. 测试体系（双轨一致性门；PLAN-001 T-04 换基迁移；SD-402 find 扩单；SD-502 create 扩单；SD-602 rename 扩单；SD-702 file 扩单；SD-802 meta 扩单；SD-902 meta/link 扩单；SD-1002 link 扩单；SD-1102 meta 属性子步扩单）
+## 6. 测试体系（双轨一致性门；PLAN-001 T-04 换基迁移；SD-402 find 扩单；SD-502 create 扩单；SD-602 rename 扩单；SD-702 file 扩单；SD-802 meta 扩单；SD-902 meta/link 扩单；SD-1002 link 扩单；SD-1102 meta 属性子步扩单；SD-1202 dir/alias 子步扩单）
 
 | 门 | 命令 | 断言域 |
 | --- | --- | --- |
-| vm 矩阵（双臂） | `node tests/vm_matrix.mjs` | merged 臂（进程内直调）+ split 臂（`--no-merge` HTTP）各**十五组检查**（六检查 + 基线[merged] + tab/editops/link/find/rename/file/meta 扩单 + quit——PLAN-002..008 扩单；**link 组含建页弧线子步 10c**[PLAN-005]、**mentions 子步 10m**[PLAN-009：三段标题/提及行已知答案+已链源排重/行点击 OpenLink/空态/激活变更刷新/面板关零 fetch——行为等价断言，素材 ASCII 双臂；**PLAN-010 扩 aliases 解析三步 + linkify 转链两步**]、**rename 组含七子步**[PLAN-006：禁用态/弹层锚/取消零落盘/改名弧线/面板+树/case-only 拒/状态复原]、**file 组含八子步**[PLAN-007：新建/幂等/取消零落盘/CJK 新页/删除预览+取消/删除弧线/悬空翻转/未选中 no-op——激活邻档两臂异位 merged=同位保持[首页]/split=active 不变[D-19 开档面]，tab 警示行两臂分叉「1 个将关闭」/「无打开」；**PLAN-010 增 F-R9-4 删后提及刷新断言**]、**meta 组含八子步 + inline 子步 + 属性子步**[PLAN-008 八子步：tags 面板开 7 tag 行[语料实勘全集]/展开导航 ASCII 双臂+CJK 仅 merged[D-19]/Save 刷新外造新行；wanted 模式入口无 input/外造行+语料已知答案/取消零落盘/创建消缺+exists 翻转/空态闭环——执行序在 10c 后 11 前，tags 全集/悬空余量已知答案位 + PLAN-009 inline：body #inline-meta 档保存后面板新行 + 语料基线零漂移回归（忽略面负向无 block-project-a）+ **PLAN-011 属性子步六案**：untitled no-op[meta_open 恒 false]/预填回显[目标页双臂异位 merged=CAP 定理 distributed-systems,theory/split=Tasks tasks——D-19 口径]/取消零落盘[磁盘零泄漏面——闭态弹层 input 回显恒在不适用快照断言]/tags 保存+面板即时刷[smoke-tag 行]/alias 帽烟别名 exists 翻转[links_json 断言双臂同构 D-19 免疫；Hello World body fs 预置 [[帽烟别名]] 悬空相位]/删值弧线[全空白 input=删键+tags: 键整删]/保存流互作[body 整文保存 frontmatter 存续]——弹层内定位=标题锚 content 子树扫[D-23③ 恒渲染全树首匹配误中他弹层——D-27④ 同款纪律]]——子步不占检查位，fail 即臂败）+ 结构基线 **v10** 零漂移（merged 臂锁，`tests/baseline/structure-v10.txt`；v9=PLAN-010 上游 PLAN-089 mouse-area 149 节点重锁留档、v8/v7/v6/v5/v4/v3/v2/v1/v0 留档——**v10=PLAN-011 计划内重锁**：store meta_open + App meta_q_tags/meta_q_aliases 入 dump + 属性弹层第六实例闭态恒渲染节点入 id 序列 + Ctrl+I 键位） |
+| vm 矩阵（双臂） | `node tests/vm_matrix.mjs` | merged 臂（进程内直调）+ split 臂（`--no-merge` HTTP）各**十五组检查**（六检查 + 基线[merged] + tab/editops/link/find/rename/file/meta 扩单 + quit——PLAN-002..008 扩单；**link 组含建页弧线子步 10c**[PLAN-005]、**mentions 子步 10m**[PLAN-009：三段标题/提及行已知答案+已链源排重/行点击 OpenLink/空态/激活变更刷新/面板关零 fetch——行为等价断言，素材 ASCII 双臂；**PLAN-010 扩 aliases 解析三步 + linkify 转链两步**]、**rename 组含七子步**[PLAN-006：禁用态/弹层锚/取消零落盘/改名弧线/面板+树/case-only 拒/状态复原]、**file 组含八子步 + F-R9-4 + 目录面四子步**[PLAN-007 八子步：新建/幂等/取消零落盘/CJK 新页/删除预览+取消/删除弧线/悬空翻转/未选中 no-op——激活邻档两臂异位 merged=同位保持[首页]/split=active 不变[D-19 开档面]，tab 警示行两臂分叉「1 个将关闭」/「无打开」；**PLAN-010 增 F-R9-4 删后提及刷新断言**；**PLAN-012 目录面四子步**：⊕新建目录[树新行+磁盘在]/移动弧线[Project X→DirBox：预填 wiki 断言 + tab 全量 DirBox/Project X + 字节整迁 + **面板快照前后逐字节一致** + **links_json 定向 diff 归一相等**（序无关集合语义——walk 位次迁移属预期面）——移动零扰动三联语义固化]/取消零落盘/冲突拒[弹层留置+磁盘零变化]——素材 ASCII 双臂，CJK 案 probe_dir_move 直证覆盖]、**find 组含 alias 检索子步**[PLAN-012：fs 造 alias 档[检索走 back walk 零树依赖]→搜「检别名」→AliasTgt.ad 命中行[title=stem 口径 T-01 直证面]→拾取开档双臂]、**meta 组含八子步 + inline 子步 + 属性子步**[PLAN-008 八子步：tags 面板开 7 tag 行[语料实勘全集]/展开导航 ASCII 双臂+CJK 仅 merged[D-19]/Save 刷新外造新行；wanted 模式入口无 input/外造行+语料已知答案/取消零落盘/创建消缺+exists 翻转/空态闭环——执行序在 10c 后 11 前，tags 全集/悬空余量已知答案位 + PLAN-009 inline：body #inline-meta 档保存后面板新行 + 语料基线零漂移回归（忽略面负向无 block-project-a）+ **PLAN-011 属性子步六案**：untitled no-op[meta_open 恒 false]/预填回显[目标页双臂异位 merged=CAP 定理 distributed-systems,theory/split=Tasks tasks——D-19 口径]/取消零落盘[磁盘零泄漏面——闭态弹层 input 回显恒在不适用快照断言]/tags 保存+面板即时刷[smoke-tag 行]/alias 帽烟别名 exists 翻转[links_json 断言双臂同构 D-19 免疫；Hello World body fs 预置 [[帽烟别名]] 悬空相位]/删值弧线[全空白 input=删键+tags: 键整删]/保存流互作[body 整文保存 frontmatter 存续]——弹层内定位=标题锚 content 子树扫[D-23③ 恒渲染全树首匹配误中他弹层——D-27④ 同款纪律]]——子步不占检查位，fail 即臂败）+ 结构基线 **v11** 零漂移（merged 臂锁，`tests/baseline/structure-v11.txt`；v10=PLAN-011 store meta_open + App meta_q 双字段 + 属性弹层第六实例 + Ctrl+I 键位留档、v9=PLAN-010 上游 PLAN-089 mouse-area 149 节点重锁留档、v8/v7/v6/v5/v4/v3/v2/v1/v0 留档——**v11=PLAN-012 计划内重锁**：store dir_open/move_open + App dir_q/move_q 入 dump + 弹层第七/八实例闭态恒渲染节点入 id 序列 + EXPLORER ⊕ 钮 + menubar「移动到目录…」项 + Ctrl+Shift+M 键位） |
 | vue build | `pnpm build`（= regen-vue.mjs） | 裸 strict 生成 + 三残余补件 + vue-tsc 0 错 + vite build |
-| vue e2e | `pnpm test:e2e` | playwright **同一检查单**（含 10c 建页弧线 + 10m mentions 段内增 linkify 行转链/段间迁移/磁盘逐字节 + aliases 解析/出链翻转/反链增行/删测试档 + 12 rename 七子步 + 13 file 段[9 quit 后] + 14 meta 段[段内最后——tags 4 行此位已知答案 + wanted 建页闭环 + **PLAN-011 属性弧线**：预填回显[placeholder 唯一锚]/取消零落盘/tags 保存面板即时刷/alias 帽烟别名 exists 翻转[快开面板导航 CAP 定理]/删值弧线/保存流互作[appendToEditor+磁盘 frontmatter 存续]——**vue 轨 fetch 型预填覆写竞态在册：fill 前置预填落定等待 toHaveValue**；建页全走 POST body CJK 已证面无 D-19 分野]；serve-back AutoVM 后端 + vite 双 webServer） |
+| vue e2e | `pnpm test:e2e` | playwright **同一检查单**（含 10c 建页弧线 + 10m mentions 段内增 linkify 行转链/段间迁移/磁盘逐字节 + aliases 解析/出链翻转/反链增行/删测试档 + 12 rename 七子步 + 13 file 段[9 quit 后] + **13 dir 目录面四子步**[PLAN-012：⊕新建目录[CJK 目录名 收件箱——弹层创建+树新行+磁盘在]/移动弧线[E2E Note→收件箱：placeholder=dirs_first 动态绑定首证（值 ∈ {wiki, 收件箱} 两可——序随 fs.tree casefold 实位）+ 根档预填空 + tab 题全量 收件箱/E2E Note + 磁盘整迁]/取消零落盘/冲突拒弹层留置] + 14 meta 段[段内最后——tags 4 行此位已知答案 + wanted 建页闭环 + **PLAN-011 属性弧线**：预填回显[placeholder 唯一锚]/取消零落盘/tags 保存面板即时刷/alias 帽烟别名 exists 翻转[快开面板导航 CAP 定理]/删值弧线/保存流互作[appendToEditor+磁盘 frontmatter 存续]——**vue 轨 fetch 型预填覆写竞态在册：fill 前置预填落定等待 toHaveValue**；建页全走 POST body CJK 已证面无 D-19 分野] + **11 find 段 alias 检索子步**[PLAN-012：write_wiki 内造 alias 档 → 搜「检别名」→ AliasTgt.ad 命中行 → 拾取开档双臂]]；serve-back AutoVM 后端 + vite 双 webServer） |
 | 双臂总门 | `node scripts/gate.mjs` | ①vm 双臂 ②vue(build+e2e) 顺序全绿（契约漂移段已随自有源退役） |
 
-另：契约直证脚本 `tests/probe_create.mjs`（PLAN-005 create_page 六案）/ `tests/probe_rename.mjs`（PLAN-006 rename_page 八案——改写逐字节/锚透传/自链/CJK/清洗/三拒/副作用圈定）/ `tests/probe_delete.mjs`（PLAN-007 delete_page 九案——删存在/幂等闭环/缺失拒/非 .ad 两形拒/CJK 删/重建接回 + **悬空化不改写源文逐字节负证**，双臂返回值逐案对读）/ `tests/probe_tags.mjs`（PLAN-008 tags_index 六案——全集首锁[11 tag 含探针素材：first-seen 序 + 归属页逐项精确]/无 frontmatter 零/无 tags 键零/缩进两形态/同页去重/depth 传递[d1=仅根层+d2=d4] + CRLF 形态探针 + **双臂返回值逐字节一致**，merged 直调 + serve-back GET）/ `tests/probe_inline_tags.mjs`（PLAN-009 tags_json 行内 #tag 七案——语料 7 tag 零漂移+忽略三则负向面/inline 计入/标题忽略/块锚忽略/纯数字忽略/fm+inline 并集去重/CJK token + 双臂逐字节一致，merged 直调 + serve-back GET 8224）/ `tests/probe_alias_linkify.mjs`（PLAN-010 别名解析五案 + 提及转链接五案十案双臂全绿，merged 直调 + serve-back GET/POST 8225）/ `tests/probe_page_meta.mjs`（PLAN-011 写引擎十案 + write_body 顺序互作案双臂全绿[①改写归一 ②非目标键逐字节 ③尾追 ④删键 ⑤无 fm 增建 ⑥CRLF 保真 ⑦幂等[同值重写+二次空写 no-op] ⑧双键同写 ⑨CJK 值 ⑩读回闭环+缺席形态；互作=属性写→write_body→frontmatter 段存续]——merged 直调 + serve-back GET/POST 8226，双臂磁盘逐字节一致）独立于矩阵按需跑（入库源，全案期望值 = SD-501/SD-601/SD-701/SD-801/SD-901/SD-1001/SD-1101 定文）。
+另：契约直证脚本 `tests/probe_create.mjs`（PLAN-005 create_page 六案）/ `tests/probe_rename.mjs`（PLAN-006 rename_page 八案——改写逐字节/锚透传/自链/CJK/清洗/三拒/副作用圈定）/ `tests/probe_delete.mjs`（PLAN-007 delete_page 九案——删存在/幂等闭环/缺失拒/非 .ad 两形拒/CJK 删/重建接回 + **悬空化不改写源文逐字节负证**，双臂返回值逐案对读）/ `tests/probe_tags.mjs`（PLAN-008 tags_index 六案——全集首锁[11 tag 含探针素材：first-seen 序 + 归属页逐项精确]/无 frontmatter 零/无 tags 键零/缩进两形态/同页去重/depth 传递[d1=仅根层+d2=d4] + CRLF 形态探针 + **双臂返回值逐字节一致**，merged 直调 + serve-back GET）/ `tests/probe_inline_tags.mjs`（PLAN-009 tags_json 行内 #tag 七案——语料 7 tag 零漂移+忽略三则负向面/inline 计入/标题忽略/块锚忽略/纯数字忽略/fm+inline 并集去重/CJK token + 双臂逐字节一致，merged 直调 + serve-back GET 8224）/ `tests/probe_alias_linkify.mjs`（PLAN-010 别名解析五案 + 提及转链接五案十案双臂全绿，merged 直调 + serve-back GET/POST 8225）/ `tests/probe_page_meta.mjs`（PLAN-011 写引擎十案 + write_body 顺序互作案双臂全绿[①改写归一 ②非目标键逐字节 ③尾追 ④删键 ⑤无 fm 增建 ⑥CRLF 保真 ⑦幂等[同值重写+二次空写 no-op] ⑧双键同写 ⑨CJK 值 ⑩读回闭环+缺席形态；互作=属性写→write_body→frontmatter 段存续]——merged 直调 + serve-back GET/POST 8226，双臂磁盘逐字节一致）/ `tests/probe_dir_move.mjs`（PLAN-012 create_dir/move_page 八案 + 检索 alias 三案双臂全绿——新建/清洗/同名幂等/移动基础[字节整迁+frontmatter 完整]/同路径幂等/缺失目录拒/冲突拒/CJK 目录名+档名 POST 双臂 + alias 命中[title=stem+snippet=""]/语料基线逐字节[walk 序+snippet 行口径]/alias+body 双命中[snippet 非空]；**探针 A/B 定谳件**：File.create_dir 可调[实勘 create_dir_all 递归语义+幂等不炸]/File.is_dir 可调——merged 直调 + serve-back POST 8227，双臂磁盘逐字节一致）独立于矩阵按需跑（入库源，全案期望值 = SD-501/SD-601/SD-701/SD-801/SD-901/SD-1001/SD-1101/SD-1201 定文）。
 
 断言域 = 两轨交集（结构/文本/磁盘字节，**非像素**）；差异登记面 =
 [parity-ledger.md](parity-ledger.md)（从第一天记账）。

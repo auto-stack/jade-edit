@@ -53,7 +53,15 @@
   兑现闭环）：仅 tags/aliases 两键改写/其余键逐字节直通/空值删键/无 frontmatter
   增建/CRLF 保真/幂等（写引擎五步+fm_set_block 界符族第四件）；page_meta GET+
   set_page_meta POST 双契约；属性弹层 dialog 第六实例（Ctrl+I 双 input 预填回显→
-  保存→自派生刷新族）；**第八切片 = 别名解析 + 提及转链接**（SD-1001，
+  保存→自派生刷新族）；**第十切片 = 目录面 + 检索 alias**（SD-1201，
+  2026-09-24）：EXPLORER「⊕」新建目录 + Ctrl+Shift+M/菜单「移动到目录…」
+  （弹层预填/placeholder 全走 ft_nodes 本地派生——零 fetch 预填，D-28②
+  竞态窗规避在册形态；create_dir/move_page POST 双契约——清洗复用/幂等/
+  is_dir 双复核/五步迁移 read+write+delete 组合）；**移动语义三联对照
+  并表**：改名=stem 变⇒改写入链 / **移动=stem 不变⇒零改写零断链**（链
+  接面纯 stem 解析对目录结构无感——组织自由度保证）/ 删除=档消⇒悬空；
+  检索 title 面扩 = stem ∪ aliases（alias-title-only → snippet=""——
+  alias 数据流最后消费缺口收口）；**第八切片 = 别名解析 + 提及转链接**（SD-1001，
   2026-09-23）：链接域二期——frontmatter `aliases:` block-list 只读解析（`page_fm_list`，解析序 stem 精确首现优先 → alias 精确首现，消费面 exists/target_path/反链/出链/wanted 全面对齐，检索/提及/改名不入面）+ `linkify_page` POST 契约（明区改写、frontmatter 逐字节保留、计数返回）+ 提及行「转为链接」钮（串联自派生刷新消除 vue 轨并发 fetch 竞态）+ F-R9-4 删除流提及刷新收口；图谱 tab 顺位后移——vm 轨组
   件面依赖上游），本仓零依赖其代码。
 - 编辑器内核 = `@autodown/engine`（auto-down，AutoUI 外部官方组件）：
@@ -103,12 +111,13 @@ node tests/vm_matrix.mjs            # 双臂（merged+split）检查单 + 基线
 pnpm test:e2e                       # vue 检查单（同一检查单；serve-back 后端）
 ```
 
-## Tests（判绿口径，SD-204；SD-304/403 扩定；SD-503 再扩定；SD-603 再扩定；SD-703 再扩定；SD-803 再扩定；SD-903 再扩定；SD-1003 再扩定；SD-1103 再扩定）
+## Tests（判绿口径，SD-204；SD-304/403 扩定；SD-503 再扩定；SD-603 再扩定；SD-703 再扩定；SD-803 再扩定；SD-903 再扩定；SD-1003 再扩定；SD-1103 再扩定；SD-1203 再扩定）
 
 检查单（PLAN-002 T-01 扩定 + PLAN-003 T-04 link 扩单 + PLAN-004 T-04
 find 扩单 + PLAN-005 T-04 create 扩单 + PLAN-006 T-04 rename 扩单 +
 PLAN-007 T-04 file 扩单 + PLAN-008 T-04 meta 扩单 + PLAN-009 T-04 mentions 扩单 +
-PLAN-010 T-04 alias/linkify 扩单 + PLAN-011 T-04 meta 属性扩单）：
+PLAN-010 T-04 alias/linkify 扩单 + PLAN-011 T-04 meta 属性扩单 + PLAN-012
+T-04 目录面/alias 检索扩单）：
 `boot / tree / open / edit / save / reload` 六检查 + **tab / editops /
 quit** 扩单三组 + **link / link-empty**（链接索引已知答案 + 反链面板双轨
 可用 + 空态——CJK 路径导航子步仅 vm merged 臂，D-19）+ **create**（建页
@@ -118,7 +127,9 @@ e2e 弧线 = ASCII 悬空源档测试内造零语料改动）+ **find**（查找
 式：快开[files]——input 锚/空 q 全量 5 行/过滤 Pro→Projects 独行/CJK
 文件名定理→CAP 独行/拾取即关；全文检索[text]——未运行提示/CJK 查询
 「任务列表」**POST 双臂**[D-19 面无]/行导航面板保持开/运行后空态；CJK
-文件名拾取导航子步仅 vm merged 臂——D-19 同款口径）+ **rename**（重命
+文件名拾取导航子步仅 vm merged 臂——D-19 同款口径；**alias 检索子步
+[PLAN-012]：内造 alias 档 → 搜「检别名」→ AliasTgt.ad 命中行 → 拾取开
+档双臂——title=stem 口径 = `tests/probe_dir_move.mjs` 直证面**）+ **rename**（重命
 名七子步：入口禁用态[untitled+脏档——handler 守卫，D-24③]/弹层锚[预填
 stem + 影响面预览 N 页 M 处]/取消零落盘/改名弧线[active 投影 + tab 更新
 + 磁盘改名 + 双页源文改写]/跨页改写可见[出链行新 stem + 点击导航新档 +
@@ -137,7 +148,12 @@ ft_sel 清空 + 激活邻档两臂异位——merged=同位保持→首页/split
 程约束 + 删除素材 Hello World.ad 保 quit 三验面]，删除弧线走
 Hello World.ad[ASCII 入链/出链面安全]；CJK 案 + no-op 案 vm 专属口
 径；删除 back 面 CJK/幂等/三拒案 = `tests/probe_delete.mjs` 九案双
-臂直证覆盖）+ **meta**（标签面板 + wanted 模式八子步[PLAN-008]：
+臂直证覆盖；**目录面四子步[PLAN-012]：⊕ 新建目录[树新行+磁盘在]/
+移动弧线[弹层预填=源档现目录本地派生 + tab 题全量 + 字节整迁 +
+**面板快照/links_json 定向 diff 零扰动**——移动 stem 不变零改写三联
+语义固化]/取消零落盘/冲突拒弹层留置——目录面八案 + 检索 alias 三案
+= `tests/probe_dir_move.mjs` 双臂直证覆盖；vm 素材 ASCII 双臂 + e2e
+CJK 目录名（收件箱——POST 双臂面）+ placeholder 动态绑定首证**）+ **meta**（标签面板 + wanted 模式八子步[PLAN-008]：
 tags 面板开 7 tag 行[语料实勘全集——执行期校正：Hello World.ad 实
 有 demo]/展开导航 ASCII 双臂 + CJK 仅 merged 臂[D-19]/Save 刷新外
 造新行；wanted 模式入口无 input 行/无检索钮/取消零落盘/创建开档+
@@ -210,10 +226,24 @@ e2e 同单（断言域 = 结构/文本/磁盘字节，非像素）。
   转链 + alias 别名解析双子步全通；D-21 write_wiki 400 丢参重跑即绿）+
   **gate ALL GREEN**；linkify 子步与 alias 子步均入 link 组——组数保持 16/15，
   子步不占检查位。
-- 结构基线 = `tests/baseline/structure-v10.txt`：state 段逐字节 +
-  snapshot vnode id 出现序列（v2 仪器延续；v10 = PLAN-011 计划内重锁
-  [store meta_open + App meta_q_tags/meta_q_aliases 入 dump + 属性弹层
-  第六实例闭态恒渲染节点 + Ctrl+I 键位]；v9 = PLAN-010 上游 MouseArea
+- N 定谳（2026-09-24 PLAN-012 T-04，SD-1203）：vm 双臂 **ALL GREEN ×多轮**
+  （判绿跑 merged **16/16** + split **15/15** + 基线 **v11** 零漂移逐跑
+  ——v11 锁后独立连跑 ×2 零漂移确认 + gate 内 ×2；file 组目录面四子步 +
+  find 组 alias 子步全通——移动零扰动三联语义断言[面板快照逐字节 +
+  links_json 定向 diff 归一]固化在案）+ e2e **11 跑 3 绿**（败点全数
+  D-21 签名——quit/check-5 保存点 400 missing param `path` + serve-back
+  ECONNRESET/HTTP 500 死亡形态；**连跑簇内 7 连中实录**[冷却 90s 后仍中
+  1 例]——与本窗口家族负载正相关，清卫前置[僵尸 auto.exe 清杀]后孤立
+  跑即绿 ×3；目录面/alias 子步自身零失败漂移）+ **gate 3 跑 ALL GREEN**
+  （第 1 跑 e2e 保存点 D-21、第 2 跑 vue-build 负载窗 0xC0000409 家族、
+  第 3 跑全过——败点如实记）；file/find 组子步扩——组数不变 16/15/十五段，
+  子步不占检查位。
+- 结构基线 = `tests/baseline/structure-v11.txt`：state 段逐字节 +
+  snapshot vnode id 出现序列（v2 仪器延续；v11 = PLAN-012 计划内重锁
+  [store dir_open/move_open + App dir_q/move_q 入 dump + 弹层第七/八
+  实例闭态恒渲染节点 + EXPLORER ⊕ 钮 + menubar「移动到目录…」项 +
+  Ctrl+Shift+M 键位]；v10 = PLAN-011 [store meta_open + App meta_q 双
+  字段 + 属性弹层第六实例 + Ctrl+I 键位]、v9 = PLAN-010 上游 MouseArea
   149 节点重锁、v8/v7/v6/v5/v4/v3/v2/v1/v0 留档）。
 
 ## 文档
@@ -223,7 +253,7 @@ e2e 同单（断言域 = 结构/文本/磁盘字节，非像素）。
 - [plans/attachments/081-t00-rulings.md](plans/attachments/081-t00-rulings.md) —
   T-00 三勘定决策档（auto-down PLAN-081 附件；双轨机制 / actions-vue
   现状 / 后端选型）
-- [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v14（SD-1104 指针；二十八项三分类；PLAN-010 增补 ledger v13；PLAN-011 增补 D-28[页面属性写面切片实勘集]+D-21 v14 扩记）
+- [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v15（SD-1204 指针；二十九项三分类；PLAN-010 增补 ledger v13；PLAN-011 增补 D-28[页面属性写面切片实勘集]+D-21 v14 扩记；PLAN-012 增补 D-29[create_dir 递归语义实勘/EXPLORER 双钮序纪律/placeholder 绑定首证]+探针 A/B 定谳）
 - [upstream/2026-09-jade-supply.md](upstream/2026-09-jade-supply.md) —
   上游供料包（D-16 预热 / D-15 残余 / D-17 键入发射 / D-18 投影双态，
   期望形态+复验条件+回执方式）

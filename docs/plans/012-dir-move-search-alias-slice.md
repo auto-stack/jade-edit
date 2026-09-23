@@ -1,12 +1,12 @@
 ---
 plan_id: PLAN-012
-status: executing
+status: execution_done
 feature_name: dir-move-search-alias-slice
 author: [zhaopuming]
 created_at: 2026-09-23T23:04:15+08:00
-updated_at: 2026-09-23T23:04:15+08:00
+updated_at: 2026-09-24T16:45:00+08:00
 plan_revision: 1
-current_step: 3
+current_step: 5
 total_steps: 5
 supersedes_spec_components: []
 new_spec_components:
@@ -401,6 +401,44 @@ pub fn move_page_impl(path str, dir str) str {
     task=T-02/T-03 | next: T-04（file/find 组回归 + e2e 子步 = T-04
     扩单一体——基线 v10 已因弹层第七/八实例漂移，现行组回归与
     v11 重锁同批做）`
+
+- **2026-09-24 work T-04（测试扩单 + 基线 v11 + 判绿，提交随本记录）**：
+  - vm file 组目录面四子步（⊕新建目录/移动弧线[预填 wiki + tab 全量
+    DirBox/Project X + 字节整迁 + **面板快照前后逐字节一致** +
+    **links_json 定向 diff 归一相等**——序无关集合语义，walk 位次
+    迁移属预期面]/取消零落盘/冲突拒弹层留置）+ find 组 alias 子步
+    （fs 造档→搜「检别名」→AliasTgt.ad 命中→拾取开档双臂）——
+    组数不变 16/15；执行期校正两件：①pressInNewDialog 末位序锚随
+    目录弹层「创建」同名钮破——改标题锚 content 子树扫（纪律修订
+    入 D-29）；②links_json 定向 diff 必须序无关（DirBox < wiki
+    casefold 位次迁移实勘）。
+  - 基线 **v11** 重锁（store dir_open/move_open + App dir_q/move_q +
+    弹层第七/八实例 + ⊕ 钮 + menubar 项 + Ctrl+Shift+M）；锁后连跑
+    ×2 零漂移确认；v10 留档。
+  - e2e file 段目录面四子步（CJK 目录名 收件箱——POST 双臂面；
+    **placeholder 动态绑定 vue 首证**——值 ∈ {wiki, 收件箱} 两可）
+    + find 段 alias 子步。
+  - 判绿实录：vm 双臂 ALL GREEN 多轮（merged 16/16 + split 15/15 +
+    基线 v11 零漂移逐跑）；e2e 11 跑 3 绿（败点全 D-21 签名——保存点
+    400 + serve-back 死亡形态；连跑簇 7 连中，清卫后孤立跑即绿）；
+    **gate 3 跑第 3 跑 ALL GREEN**（1 e2e D-21、2 build 负载窗，如实记）。
+  - `stage: work | PLAN-012 | rev 1 | outcome: pass(T-04) |
+    task=T-04 | next: T-05`
+
+- **2026-09-24 work T-05（文档 + ledger v15 + 收口，提交随本记录）**：
+  - SD-1201..1204 落位（ARCHITECTURE §5 目录面+检索 alias 段[三联
+    对照并表/探针 A/B 定谳/D-28② 零 fetch 预填声明/触发集 v5] + §6
+    表[file/find 子步 + 基线 v11 + probe_dir_move 入列] + README
+    Tests[SD-1203 扩定 + N 定谳] + 是什么[第十切片条目] + 文档节
+    [SD-1204 指针]）；parity-ledger **v15**（新 D-29 六件[探针 A
+    递归语义实勘/探针 B 定谳/双钮序纪律/placeholder 不投影/弹层钮
+    标题锚纪律/placeholder 绑定首证] + D-21 v15 扩记）。
+  - 负向证齐：`.console` App 上下文零赋值（grep 零）；api.at 既有
+    契约纯增量零删除；probe_page_meta 十案 + probe_alias_linkify
+    十案回归双臂全绿；链接网零扰动（matrix ⑪ 定向 diff 固化）；
+    冻结池/家族仓零接触（git 面仅本批文件）；gen/ 无手改。
+  - `stage: work | PLAN-012 | rev 1 | outcome: execution_done |
+    task=T-01..T-05 全收口 | next: review`
 
 - **2026-09-23 立项 handoff（auto-plan-new）**：
   - `stage: new`，PLAN-012，revision 1。
