@@ -653,3 +653,187 @@ pub fn delete_page_impl(path str) str {
     }
     return path
 }
+
+// ===== 工作区标签索引（PLAN-008 T-01；知识库第六切片 back 半）——
+// frontmatter 消费面**只读首开**（SD-801 边界定文）：本组全部 fn 零写盘
+// ——D-14 写面不动（补写/改写属功能池后续批）。frontmatter 在 back 侧
+// 自此有两个消费面（read_body 剥离保留 + 本组只读解析），写面仍为零。
+
+/// frontmatter 段提取（read_body 互补件）：首行 = 界符 → 逐行收至闭合
+/// 界符行（is_delim 双形态——"---"/"---\r"，CRLF 容错同族）；无
+/// frontmatter / 无闭合界符 → ""（调用面 page_tags 以空串 = 贡献零）。
+/// 段尾逐行 `+` 重接：frontmatter 体量小（数行），O(n) 重接可接受
+///（read_body 的 78s 案是大 body 面——此处不涉，标记法收益为零故从简）。
+fn frontmatter_of(text str) str {
+    var lines = text.split("\n")
+    if lines.len() < 1 {
+        return ""
+    }
+    if !is_delim(lines[0]) {
+        return ""
+    }
+    var out str = ""
+    var open bool = true
+    var i int = 1
+    while i < lines.len() {
+        if open {
+            // ⚠ D-20②：列表元素先拷局部变量再调方法。
+            var line str = lines[i]
+            if is_delim(line) {
+                open = false
+            } else {
+                out = out + line + "\n"
+            }
+        }
+        i = i + 1
+    }
+    if open {
+        return ""
+    }
+    return out
+}
+
+/// frontmatter 文本 → tag 列表（tags: block-list 只读解析——SD-801）。
+/// 逐行扫（行尾 \r 由 trim 剥——is_delim 同族容错）：
+/// ①键定位 = **顶层级**（原行不以空格/\t 起——缩进深于首键的嵌套键头
+///   不误收）且 trim 后以 "tags:" 起；"tags:" 后段 trim 非空 = inline
+///   数组形态 → 贡献零不炸（§10.1——语料无此形态，v1 口径记账）；后段
+///   空 = block-list 收集态 on；
+/// ②收集态 = trim 后以 "-" 起的行 → "-" 后段 trim 入集（**缩进两形态**
+///   `- x` 与 `  - x` trim 归一——语料实勘两种并在）；非列表行（次键/
+///   空行）即止（首个 tags: 键整体收工——frontmatter 映射唯一键约定）；
+/// ③同页重复 tag 去重（while 查重——D-11 禁 .find 闭包）。
+fn page_tags(fm str) List {
+    var out List = []
+    var lines = fm.split("\n")
+    var collecting bool = false
+    var done bool = false
+    var i int = 0
+    while i < lines.len() {
+        if !done {
+            // ⚠ D-20②：列表元素先拷局部变量再调方法。
+            var raw str = lines[i]
+            var line str = raw.trim()
+            if collecting {
+                if line.starts_with("-") {
+                    var ip = line.split_once("-")
+                    if ip.len() == 2 {
+                        var item str = ip[1].trim()
+                        if item != "" {
+                            var seen bool = false
+                            var di int = 0
+                            while di < out.len() {
+                                var dv str = out[di]
+                                if dv == item {
+                                    seen = true
+                                }
+                                di = di + 1
+                            }
+                            if !seen {
+                                out.push(item)
+                            }
+                        }
+                    }
+                } else {
+                    collecting = false
+                    done = true
+                }
+            } else {
+                var nested bool = false
+                if raw.starts_with(" ") {
+                    nested = true
+                }
+                if raw.starts_with("\t") {
+                    nested = true
+                }
+                if !nested {
+                    if line.starts_with("tags:") {
+                        var vp = line.split_once("tags:")
+                        if vp.len() == 2 {
+                            var val str = vp[1].trim()
+                            if val == "" {
+                                collecting = true
+                            } else {
+                                done = true
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        i = i + 1
+    }
+    return out
+}
+
+/// 工作区标签索引 JSON（api.tags_index 实现；SD-801 back 半）：页面数组
+/// [{tag, paths:[相对路径]}]——**顶层裸数组**（link_index 同裁定：front
+/// json.to_value 顶层 map 产物入态 = 裸 vmref 损坏，D-20④）；tag 序 =
+/// first-seen（walk 序确定性——link_index 哲学同判）；paths = walk 序。
+/// 解析 = frontmatter_of + page_tags 组合，**读原文 File.read_text 非
+/// read_body**（后者已剥 frontmatter）。两遍聚合（元素先拷局部——
+/// D-20②）：pass1 全页 tag first-seen 去重收集；pass2 每 tag 收 paths。
+/// 装配 = json_esc + 逐项 `+` 重接（links_json 同款）；O(T×P) 重读——
+/// v0 规模可接受（search_json O(P²) 同判，上量随检索批换 StringBuilder）。
+pub fn tags_json(path str, depth int) str {
+    var pages List = collect_ad_pages(path, depth)
+    var tags List = []
+    var i int = 0
+    while i < pages.len() {
+        var p = pages[i]
+        var rel str = p.rel
+        var ptags List = page_tags(frontmatter_of(File.read_text(resolve(rel))))
+        var k int = 0
+        while k < ptags.len() {
+            var tag str = ptags[k]
+            var seen bool = false
+            var j int = 0
+            while j < tags.len() {
+                var tj str = tags[j]
+                if tj == tag {
+                    seen = true
+                }
+                j = j + 1
+            }
+            if !seen {
+                tags.push(tag)
+            }
+            k = k + 1
+        }
+        i = i + 1
+    }
+    var out str = ""
+    var t int = 0
+    while t < tags.len() {
+        var tag2 str = tags[t]
+        var paths str = ""
+        var i2 int = 0
+        while i2 < pages.len() {
+            var p2 = pages[i2]
+            var rel2 str = p2.rel
+            var ptags2 List = page_tags(frontmatter_of(File.read_text(resolve(rel2))))
+            var has bool = false
+            var k2 int = 0
+            while k2 < ptags2.len() {
+                var tk str = ptags2[k2]
+                if tk == tag2 {
+                    has = true
+                }
+                k2 = k2 + 1
+            }
+            if has {
+                if paths != "" {
+                    paths = paths + ","
+                }
+                paths = paths + "\"" + json_esc(rel2) + "\""
+            }
+            i2 = i2 + 1
+        }
+        if out != "" {
+            out = out + ","
+        }
+        out = out + "{\"tag\":\"" + json_esc(tag2) + "\",\"paths\":[" + paths + "]}"
+        t = t + 1
+    }
+    return "[" + out + "]"
+}

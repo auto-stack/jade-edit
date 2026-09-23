@@ -142,3 +142,17 @@ pub fn delete_page(path str) str {
 pub fn rename_page(old_path str, new_name str) str {
     return wsys.rename_page_impl(old_path, new_name)
 }
+
+/// 工作区标签索引（PLAN-008 第六切片；frontmatter 消费面**只读首开**
+/// ——D-14 写面不动）：字符串层解析 tags: block-list（缩进两形态
+/// trim 归一；inline 数组形态贡献零不炸——§10.1）→ 聚合
+/// [{tag, paths:[相对路径]}]（**顶层裸数组**——link_index 同裁定；
+/// tag 序 = walk 序 first-seen 确定性）。语义定文见 wsys.tags_json
+/// （SD-801）。
+/// **GET 通道**（tree/link_index 同族：path/depth 工作区级 ASCII 常态
+/// ——tag 值在响应 body，UTF-8 JSON 无 D-19 面）。
+/// GET /api/tags_index?path=..&depth=..
+#[api(method = "GET", path = "/api/tags_index")]
+pub fn tags_index(path str, depth int) str {
+    return wsys.tags_json(path, depth)
+}
