@@ -112,6 +112,22 @@ pub fn create_page(title str) str {
     return wsys.create_page_impl(title)
 }
 
+/// 页面删除（PLAN-007 第五切片；工作区运维收口）：**入链悬空化，不改
+/// 写源文**——与 rename_page 反链改写成语义对照并表（SD-701）：改名保
+/// 完整性，删除如实悬空（出链行 exists 翻转可见；悬空行可再建页接回
+/// ——create_page 幂等弧线闭合）。卫语句序：.ad 后缀卫先于 exists
+///（目录名/裸名/其他扩展一律拒——既有路径同样拒，防目录误删）+ exists
+/// 缺失拒 + **删后 exists 双复核**（D-24②：File.delete 恒返 0 吞错，
+/// 删除成功唯一可信判据 = 删后存在性翻转）。成功返回工作区根相对
+/// path；"" = 非 .ad/缺失/删除未生效。
+/// **POST 而非 GET**（D-19 同 create_page/rename_page：path CJK 常态，
+/// body 传参）。
+/// POST /api/delete_page
+#[api(method = "POST", path = "/api/delete_page")]
+pub fn delete_page(path str) str {
+    return wsys.delete_page_impl(path)
+}
+
 /// 页面重命名 + 反链源文改写（PLAN-006 第四切片；知识完整性件——jade
 /// 链接面纯派生无索引可补丁，源文改写是唯一一致口径，Obsidian「更新链
 /// 接」同形态）：同目录 stem 变更；全部 [[Old]]/[[Old#anchor]] 精确

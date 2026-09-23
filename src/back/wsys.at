@@ -625,3 +625,31 @@ pub fn rename_page_impl(old_path str, new_name str) str {
     }
     return new_rel
 }
+
+// ===== 页面删除（PLAN-007 T-01；知识库第五切片 back 半）——工作区运维
+// 收口件。删除语义定调（SD-701）：**入链悬空化，不改写源文**——
+// rename_page（上方）以源文改写保链接完整性；delete_page 让入链如实
+// 悬空（link_index 下一次重取时出链行 exists 翻转；悬空行可经
+// create_page 再建页接回——PLAN-005 弧线反向闭合）。两语义对照入
+// canonical，杜绝「删除即清理引用」的隐性期待。
+
+/// 页面删除本体（api.delete_page 实现；SD-701 back 半）——三步：
+/// ①卫：.ad 后缀（非 .ad 一律拒——目录名/裸名/其他扩展，既有路径也
+///   拒，卫语句先于 exists 防目录误删）+ exists（缺失拒）；
+/// ②File.delete——返回值忽略（D-24②：stdlib shim 恒返 0 吞错）；
+/// ③双复核：删后 exists 翻转 → 成功返回工作区根相对 path；仍存在 →
+///   ""（删除未生效）。
+pub fn delete_page_impl(path str) str {
+    if !path.ends_with(".ad") {
+        return ""
+    }
+    var full str = resolve(path)
+    if !File.exists(full) {
+        return ""
+    }
+    File.delete(full)
+    if File.exists(full) {
+        return ""
+    }
+    return path
+}
