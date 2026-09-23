@@ -26,9 +26,10 @@ use status_bar: StatusBar
 use console_panel: ConsolePanel
 use backlinks_panel: BacklinksPanel
 use find_panel: FindPanel
+use tags_panel: TagsPanel
 use bps.navigation.filetree.tree_util: flatten_tree, toggle_id
 use bps.navigation.filetree.tree_icon: TreeIcon
-use back.api: tree, ws_root, link_index, search_wiki, create_page, rename_page, delete_page
+use back.api: tree, ws_root, link_index, search_wiki, create_page, rename_page, delete_page, tags_index
 
 style warn_label = "text-[12px] text-amber-400 mr-1"
 
@@ -313,6 +314,7 @@ widget App {
         RenameOpen, RenameEdit(str), RenameGo, RenameCancel,
         ActNewFile, NewEdit(str), NewGo, NewCancel, ActDelete,
         DeleteGo, DeleteCancel,
+        ActTags, TagToggle(str), TagsRefresh,
     }
 
     model {
@@ -345,6 +347,12 @@ widget App {
         // rename_q 同构，不入 store（D-20④ 同款裁定）。删除弹层零新
         // 字段（目标 = ft_sel；预览 = link_pages/tabs 现场派生 computed）。
         var new_q str = ""
+        // —— 标签面板数据态（PLAN-008）：聚合行 {tag,label,paths}
+        //（label 派生期拼接——双段 ${} 插值 avoidance，PLAN-003 先例）+
+        // 单选展开态（"" = 全收，手风琴 v1）——find_q 同构不入 store
+        //（D-20④ 同款裁定：find/链接态先例）。----
+        var tags_rows List = []
+        var tag_expanded str = ""
     }
 
     computed {
@@ -384,6 +392,8 @@ widget App {
                 checked_if: ".store.console_open")
         action (id: "view.backlinks",  handler: .ActBacklinks,  title: "切换反链", icon: "link-2", shortcut: "Ctrl+L",
                 checked_if: ".store.backlinks_open")
+        action (id: "view.tags",       handler: .ActTags,       title: "切换标签", icon: "tag",   shortcut: "Ctrl+T",
+                checked_if: ".store.tags_open")
         action (id: "view.find-files", handler: .ActFindFiles, title: "快速打开", icon: "file-search", shortcut: "Ctrl+P")
         action (id: "view.find-text",  handler: .ActFindText,  title: "全文检索", icon: "search", shortcut: "Ctrl+Shift+F",
                 checked_if: ".store.find_open && .store.find_mode == \"text\"")
@@ -444,6 +454,7 @@ widget App {
                         menubar-content {
                             menubar-checkbox-item (title: "切换 Console", icon: "terminal", checked: .store.console_open, shortcut: "Ctrl+J") { onclick: .ActConsole }
                             menubar-checkbox-item (title: "切换反链", icon: "link-2", checked: .store.backlinks_open, shortcut: "Ctrl+L") { onclick: .ActBacklinks }
+                            menubar-checkbox-item (title: "切换标签", icon: "tag", checked: .store.tags_open, shortcut: "Ctrl+T") { onclick: .ActTags }
                             menubar-item (title: "快速打开", icon: "file-search", shortcut: "Ctrl+P") { onclick: .ActFindFiles }
                             menubar-checkbox-item (title: "全文检索", icon: "search", checked: .store.find_open && .store.find_mode == "text", shortcut: "Ctrl+Shift+F") { onclick: .ActFindText }
                             menubar-item (title: "切换 Tab", shortcut: "Ctrl+D") { onclick: .ActSwitchTab }
@@ -575,11 +586,12 @@ widget App {
                 }
 
                 // —— 右栏：查找面板（PLAN-004，上方）+ 反链/出链面板
-                //（PLAN-003）——两面板独立开关可叠放（§2.3 布局）。壳组件
-                // = FindPanel/BacklinksPanel；input/行集/空态留根（MCP
-                // 快照锚不进组件子树，console_panel 同判）。行数据 = App
-                // 模型（vm 轨 store 上下文解析损坏，见模型注）。
-                if .store.find_open || .store.backlinks_open {
+                //（PLAN-003）+ 标签面板（PLAN-008）——三面板独立开关可
+                // 叠放（§2.3 布局）。壳组件 = FindPanel/BacklinksPanel/
+                // TagsPanel；input/行集/空态留根（MCP 快照锚不进组件子
+                // 树，console_panel 同判）。行数据 = App 模型（vm 轨
+                // store 上下文解析损坏，见模型注）。
+                if .store.find_open || .store.backlinks_open || .store.tags_open {
                     col (style: "w-72 shrink-0 border-l border-border bg-card hidden md:flex flex-col overflow-y-auto") {
                         if .store.find_open {
                             FindPanel()
@@ -682,6 +694,29 @@ widget App {
                                     button (text: "${r.target}（悬空）", variant: "ghost") {
                                         onclick: .CreateClick(r.target)
                                         style: "w-full justify-start px-3 h-6 text-left text-[12px] text-muted-foreground"
+                                    }
+                                }
+                            }
+                        }
+                        // —— 标签面板区（PLAN-008）：tag 行（label 派生期
+                        // 拼接 `{tag} · {n}`——双段插值 avoidance）→ 单选
+                        // 手风琴展开页行 → OpenLink 导航；空态留根。----
+                        if .store.tags_open {
+                            TagsPanel()
+                            if .tags_rows.len() == 0 {
+                                text "（无标签）" { style: "text-[11px] text-muted-foreground px-3" }
+                            }
+                            for r in .tags_rows {
+                                button (text: r.label, variant: "ghost") {
+                                    onclick: .TagToggle(r.tag)
+                                    style: "w-full justify-start px-3 h-6 text-left text-[12px]"
+                                }
+                                if .tag_expanded == r.tag {
+                                    for p in r.paths {
+                                        button (text: p, variant: "ghost") {
+                                            onclick: .OpenLink(p)
+                                            style: "w-full justify-start px-3 h-6 text-left text-[12px]"
+                                        }
                                     }
                                 }
                             }
@@ -826,6 +861,7 @@ widget App {
             // 不炸 boot——六检查前置卫生，原形态保留在共享口内）。
             .TreeRefresh()
             .LinksRefreshOf("")
+            .TagsRefresh()
         }
 
         // 目录展开/折叠（受控展开态，toggle_id 纯函数返回新 List）。
@@ -877,6 +913,7 @@ widget App {
             // 行，下次触点校正——先在语义保持）。
             .TreeRefresh()
             .LinksRefreshOf(.store.active_path)
+            .TagsRefresh()
         }
         .ActQuit -> { store.ActQuit() }
         .ActUndo -> { store.ActUndo() }
@@ -960,6 +997,54 @@ widget App {
             }
         }
 
+        // —— 标签索引重取共享口（PLAN-008 T-02；触发集 = 链接域 v4 同口
+        // 多一 fetch 不扩集：Init / Save 成功 / 面板开启 / 建页成功
+        //（.CreateGo/.NewGo 直承）/ 重命名成功（.RenameGo）/ 删除成功
+        //（.DeleteGo）+ 开关口 .ActTags）。
+        // fetch 单取形：tags 只需解析态 → call-arg 形直入 json.to_value
+        //（D-20⑤：call-arg 形发射 JSON.parse——免双取，比 links 面简一
+        // 档）。行 label 派生期拼接（`{tag} · {n}`——双段 ${} 插值
+        // avoidance，PLAN-003 先例）。
+        .TagsRefresh -> {
+            var rows List = []
+            var ok bool = true
+            try {
+                rows = json.to_value(tags_index("", 4))
+            } catch (e) {
+                ok = false
+            }
+            if !ok {
+                console_log("tags: refresh failed")
+            }
+            var out List = []
+            var i int = 0
+            while i < rows.len() {
+                // ⚠ D-20②：列表元素先拷局部变量再取字段。
+                var r = rows[i]
+                var paths List = r.paths
+                out.push({ tag: r.tag, label: r.tag + " · " + paths.len().str(), paths: paths })
+                i = i + 1
+            }
+            .tags_rows = out
+        }
+        // 标签面板入口（Ctrl+T/菜单/menubar 共口——BacklinksToggle 同构
+        // 第三实例）：开 → 重取（触发集：面板开启）。D-25① 纪律：App
+        // 上下文零 `.console` 写面（console 面由 store handler 自维护）。
+        .ActTags -> {
+            store.TagsToggle()
+            if .store.tags_open {
+                .TagsRefresh()
+            }
+        }
+        // tag 行单选手风琴（v1——再点同 tag 收起；点他 tag 换选）。
+        .TagToggle(tag) -> {
+            if .tag_expanded == tag {
+                .tag_expanded = ""
+            } else {
+                .tag_expanded = tag
+            }
+        }
+
         // —— 查找面板（PLAN-004 T-02/T-03）——
         // 输入分流：files 模式即时过滤（纯内存零 fetch——SD-401 刷新触发
         // 集=无）；text 模式只更 find_q（触发面 = 检索钮/onenter——探针 C）。
@@ -1039,6 +1124,7 @@ widget App {
                 store.CreateConfirmCancel()
                 .OpenLink(r)
                 .LinksRefreshOf(r)
+                .TagsRefresh()
                 .TreeRefresh()
             }
         }
@@ -1080,6 +1166,7 @@ widget App {
                 store.NewClose()
                 store.Open({ path: r })
                 .LinksRefreshOf(r)
+                .TagsRefresh()
                 .TreeRefresh()
                 .ft_sel = r
             } else {
@@ -1131,6 +1218,7 @@ widget App {
                 store.DeleteClose()
                 store.CloseTabsOf(r)
                 .LinksRefreshOf(.store.active_path)
+                .TagsRefresh()
                 .TreeRefresh()
                 .ft_sel = ""
             } else {
@@ -1198,6 +1286,7 @@ widget App {
                 store.TabsRenamed(old_path, r)
                 store.Reload()
                 .LinksRefreshOf(r)
+                .TagsRefresh()
                 .TreeRefresh()
                 if .ft_sel == old_path {
                     .ft_sel = r

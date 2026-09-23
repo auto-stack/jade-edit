@@ -372,13 +372,29 @@ pub fn tags_json(path str, depth int) str {
       过含基线 v7 零漂移；split 臂 **check-11 首步 menubar 项瞬态
       2 次**（popover 内容窗内未渲染——D-21 家族新形态注记，独占重跑
       **14/14 ALL GREEN**，重跑即绿口径）。
-- **T-02 front tags 面板**（AC-02 前半）
+- **T-02 front tags 面板**（AC-02 前半）✅ 已完成
   - store tags_open/TagsToggle + TagsPanel 壳（第三实例）+ app.at
     右栏 tags 区（tag 行/展开页行/空态——行集留根）+ actions
     Ctrl+T + menubar 项 + `refresh_tags()`（单取形）同触点接线 +
     `.TagToggle` 单选手风琴。
   - 验证：merged 手动冒烟（6 tag 集快照/展开/导航）+ `pnpm build`
     PASS。
+  - **证据（2026-09-23）**：
+    - 冒烟（e2e/.runtime/smoke-t02.mjs 临时件，merged 臂）**6/6 ALL
+      GREEN**——面板开（tags_open 态 + TAGS 壳 + 7 tag 行 label 全在
+      [语料实勘全集]）/tasks 展开 → wiki/Tasks.ad 开档/单选手风琴换选
+      distributed-systems → wiki/CAP 定理.ad CJK 导航（merged 臂）/外
+      造 Tagged Note.ad → 保存 → 面板新行 `meta-save · 1`（触发集：
+      Save 成功——List<map> 态 dump = 裸 vmref，断言面 = 快照行文本，
+      links 面同口径）/面板关断。首跑 ③ 处 1 次瞬态（面板页行 8s 未
+      渲染——aura 渲染节拍窗，重跑全绿，D-21 家族口径如实记）。
+    - `pnpm build` **PASS**（首次 gen-only exit 1 瞬态[上轮冒烟进程
+      残留窗]，同源二跑 OK：裸 strict 重建 + vue-tsc 零错 + vite
+      14.57s）。
+    - 触发集接线（v4 同口多 fetch 不扩集）：Init / ActSave /
+      ActTags(面板开启) / CreateGo / NewGo / DeleteGo / RenameGo 七
+      触点全接 `.TagsRefresh()`；D-25① 纪律落地（App 上下文零
+      `.console` 写面——console 面由 store handler 自维护）。
 - **T-03 wanted 模式 + 建页接回**（AC-02 后半）
   - find_mode 三分支（wanted 无 input）+ `view.find-wanted`
     （Ctrl+Shift+F 同族）+ `wanted_rows_of` 纯函数 + wanted_rows

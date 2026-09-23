@@ -71,6 +71,9 @@ store EditorStore {
         // input 值/影响面预览在 App 模型（数据态不入 store——D-20④ 同裁
         // 裁定：find_q/链接态先例）。
         var rename_open bool = false
+        // 标签面板开关（PLAN-008；基线 v8 面。数据态在 App 模型——
+        // D-20④ 同款裁定：find/链接态先例）。
+        var tags_open bool = false
         // 新建/删除弹层开态（PLAN-007；基线 v7 面）：弹层面分野同
         // rename_open——new_q 在 App 模型；删除弹层零新字段（目标 =
         // App .ft_sel、预览 = link_pages/tabs 现场派生）。
@@ -87,6 +90,7 @@ store EditorStore {
         ActQuit, ConsoleClear, CloseRequest, QuitDiscard, QuitSaveClose,
         QuitConfirmCancel,
         BacklinksToggle,
+        TagsToggle,
         FindOpen(str), FindToggle, FindClose,
         CreateConfirmOpen(str), CreateConfirmCancel,
         RenameOpen, RenameClose, TabsRenamed(str, str),
@@ -393,6 +397,13 @@ store EditorStore {
         // 反链面板开关（PLAN-003；数据刷新/行派生在 App 侧 ActBacklinks）。
         .BacklinksToggle -> {
             .backlinks_open = !.backlinks_open
+            .console = console_lines()
+        }
+
+        // 标签面板开关（PLAN-008；数据刷新/行派生在 App 侧 ActTags——
+        // BacklinksToggle 同构第三实例）。
+        .TagsToggle -> {
+            .tags_open = !.tags_open
             .console = console_lines()
         }
 
