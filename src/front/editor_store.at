@@ -83,6 +83,11 @@ store EditorStore {
         // rename_open——meta_q_tags/meta_q_aliases 在 App 模型（数据态
         // 不入 store——D-20④ 同款裁定：find_q/rename_q 先例）。
         var meta_open bool = false
+        // 新建/移动目录弹层开态（PLAN-012；基线 v11 面）：弹层面分野同
+        // rename_open——dir_q/move_q 在 App 模型（数据态不入 store——
+        // D-20④ 同款裁定：new_q/rename_q 先例）。
+        var dir_open bool = false
+        var move_open bool = false
     }
 
     // msg 载荷单类型（编译器约束）：Open 单 map、Edit 单 str。
@@ -100,6 +105,7 @@ store EditorStore {
         RenameOpen, RenameClose, TabsRenamed(str, str),
         NewOpen, NewClose, DeleteOpen, DeleteClose, CloseTabsOf(str),
         MetaOpen, MetaClose,
+        DirOpen, DirClose, MoveOpen, MoveClose,
     }
 
     on {
@@ -483,6 +489,26 @@ store EditorStore {
         }
         .MetaClose -> {
             .meta_open = false
+            .console = console_lines()
+        }
+
+        // ---- 新建/移动目录弹层（PLAN-012）：Open/Close 只翻开态（入口
+        // 守卫与 move_q 预填在 App 侧 .ActMove；取消零落盘——无 back
+        // 调用）。弹层面分野同 MetaOpen/MetaClose。----
+        .DirOpen -> {
+            .dir_open = true
+            .console = console_lines()
+        }
+        .DirClose -> {
+            .dir_open = false
+            .console = console_lines()
+        }
+        .MoveOpen -> {
+            .move_open = true
+            .console = console_lines()
+        }
+        .MoveClose -> {
+            .move_open = false
             .console = console_lines()
         }
 

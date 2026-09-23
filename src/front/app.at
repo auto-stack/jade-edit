@@ -29,7 +29,7 @@ use find_panel: FindPanel
 use tags_panel: TagsPanel
 use bps.navigation.filetree.tree_util: flatten_tree, toggle_id
 use bps.navigation.filetree.tree_icon: TreeIcon
-use back.api: tree, ws_root, link_index, search_wiki, create_page, rename_page, delete_page, tags_index, linkify_page, page_meta, set_page_meta
+use back.api: tree, ws_root, link_index, search_wiki, create_page, rename_page, delete_page, tags_index, linkify_page, page_meta, set_page_meta, create_dir, move_page
 
 style warn_label = "text-[12px] text-amber-400 mr-1"
 
@@ -209,6 +209,75 @@ fn file_rows_of(paths List, q str) List {
         i = i + 1
     }
     return out
+}
+
+/// 目录路径清单（PLAN-012 T-02；collect_ad_paths 同族第三实例——栈式
+/// while 展开 kind=="dir" 节点收 id，兄弟倒序压栈保 fs.tree 遍历序）：
+/// 移动弹层 placeholder 数据源——**ft_nodes 本地派生零 fetch**（D-28②
+/// fetch 型预填竞态窗规避在册形态：弹层预填全走本地派生，零暴露面）。
+fn dirs_of(nodes List) List {
+    var out List = []
+    var stack List = []
+    var i int = nodes.len()
+    while i > 0 {
+        i = i - 1
+        var n = nodes[i]
+        stack.push(n)
+    }
+    var si int = 0
+    while si < stack.len() {
+        // ⚠ D-20②：列表元素先拷局部变量再取字段/调方法。
+        var n = stack[si]
+        si = si + 1
+        var kind str = n.kind
+        if kind == "dir" {
+            out.push(n.id)
+        }
+        var kids List = n.children
+        var k int = kids.len()
+        while k > 0 {
+            k = k - 1
+            var c = kids[k]
+            stack.push(c)
+        }
+    }
+    return out
+}
+
+/// 目录清单首项（移动弹层 placeholder 定文——空清单 = ""）：
+/// dirs_of 委托 + 首现取（D-20② 元素先拷局部变量）。
+fn dirs_first(nodes List) str {
+    var ds List = dirs_of(nodes)
+    if ds.len() == 0 {
+        return ""
+    }
+    var d0 str = ds[0]
+    return d0
+}
+
+/// 路径目录段（"wiki/Page.ad" → "wiki"；"Page.ad" → ""）——split 法
+/// 去末段后 "/" 重接（wsys dir_norm 的 front 镜像——move_q 预填用；
+/// 禁 length+slice——D-20③ CJK 字节语义；无尾斜杠形态——back
+/// dir_norm 双形态归一接受）。
+fn dir_of_path(path str) str {
+    var segs = path.split("/")
+    var n int = segs.len()
+    if n < 2 {
+        return ""
+    }
+    var d str = ""
+    var i int = 0
+    var m int = n - 1
+    while i < m {
+        // ⚠ D-20②：列表元素先拷局部变量再拼接。
+        var seg str = segs[i]
+        if d != "" {
+            d = d + "/"
+        }
+        d = d + seg
+        i = i + 1
+    }
+    return d
 }
 
 /// 悬空建页路径预览（PLAN-005 T-02）——back wsys.title_to_path 的 front
@@ -428,6 +497,8 @@ widget App {
         ActTags, TagToggle(str), TagsRefresh,
         ActFindWanted,
         ActMeta, MetaEditTags(str), MetaEditAliases(str), MetaGo, MetaCancel,
+        ActDirNew, DirEdit(str), DirGo, DirCancel,
+        ActMove, MoveEdit(str), MoveGo, MoveCancel,
     }
 
     model {
@@ -465,6 +536,12 @@ widget App {
         // 形态 SD-1101）——rename_q 同构，不入 store（D-20④ 同款裁定）。
         var meta_q_tags str = ""
         var meta_q_aliases str = ""
+        // —— 新建/移动目录弹层数据态（PLAN-012；基线 v11 面）：单 input
+        // 值各一——dir_q 置空（ActDirNew）；move_q 预填 = 源档目录（
+        // dir_of_path 本地派生——零 fetch 预填，D-28② 规避在册形态）——
+        // new_q/rename_q 同构不入 store（D-20④ 同款裁定）。----
+        var dir_q str = ""
+        var move_q str = ""
         // —— 标签面板数据态（PLAN-008）：聚合行 {tag,label,paths}
         //（label 派生期拼接——双段 ${} 插值 avoidance，PLAN-003 先例）+
         // 单选展开态（"" = 全收，手风琴 v1）——find_q 同构不入 store
@@ -498,6 +575,10 @@ widget App {
         // 显示（权威在 back 单事务删除 + 悬空化 SD-701）。
         delete_dangling_preview => dangling_impact(.link_pages, path_stem(.ft_sel))
         delete_tabs_preview => tabs_impact_text(.store.tabs, .ft_sel)
+        // 移动弹层 placeholder（PLAN-012）：ft_nodes 派生目录清单首项
+        // （dirs_first 纯函数——本地派生零 fetch，D-28② 规避在册形态）；
+        // 空清单 = ""。
+        move_ph => dirs_first(.ft_nodes)
     }
 
     // —— actions 声明块（Plan 451 三源绑定：shortcut / toolbar 占位合成 /
@@ -510,6 +591,9 @@ widget App {
         action (id: "file.rename", handler: .RenameOpen, title: "重命名…", shortcut: "F2",
                 enabled_if: ".store.active_path != \"\" && !.store.active_dirty")
         action (id: "file.meta", handler: .ActMeta, title: "页面属性…", icon: "sliders-horizontal", shortcut: "Ctrl+I")
+        // 移动到目录（PLAN-012；不挂 enabled——D-24③ vm 轨 menubar
+        // enabled 冻结缺口，handler 守卫 ft_sel 兜底语义权威）。
+        action (id: "file.move", handler: .ActMove, title: "移动到目录…", shortcut: "Ctrl+Shift+M")
         action (id: "file.delete", handler: .ActDelete, title: "删除…", shortcut: "Delete",
                 enabled_if: ".ft_sel != \"\"")
         action (id: "file.quit",   handler: .ActQuit,   title: "退出",  shortcut: "Alt+F4")
@@ -565,6 +649,7 @@ widget App {
                             // 守卫兜底（action enabled_if 仍为权威面），
                             // 差异入 ledger v9。
                             menubar-item (title: "重命名…", shortcut: "F2") { onclick: .RenameOpen }
+                            menubar-item (title: "移动到目录…", shortcut: "Ctrl+Shift+M") { onclick: .ActMove }
                             menubar-item (title: "页面属性…", icon: "sliders-horizontal", shortcut: "Ctrl+I") { onclick: .ActMeta }
                             menubar-item (title: "删除…", shortcut: "Delete") { onclick: .ActDelete }
                             menubar-separator
@@ -612,12 +697,22 @@ widget App {
                     // EXPLORER 头部行：标题 + 「＋」新建钮（PLAN-007——tab
                     // 条 plus 钮同构：button + icon "plus"；入口 =
                     // .ActNewFile 开新建弹层，落盘新档语义——与 Ctrl+N
-                    // untitled 草稿两口径并存，语境区隔 SD-701）。
+                    // untitled 草稿两口径并存，语境区隔 SD-701）+「⊕」
+                    // 新建目录钮（PLAN-012 头部第二钮——「＋」同构相邻位：
+                    // button + icon "folder-plus"；入口 = .ActDirNew 开
+                    // 新建目录弹层，目录面 v1 根落位）。⚠ 序纪律：「＋」
+                    // 居「⊕」前——vm_matrix pressExplorerPlus 取 EXPLORER
+                    // 行首 button 子（结构锚在册），序翻则锚误中目录钮。
                     row (style: "items-center justify-between px-1 pt-1") {
                         text "EXPLORER" { style: "text-[11px] text-muted-foreground tracking-wider" }
                         button (variant: "text") {
                             icon (name: "plus", style: "h-3.5 w-3.5 text-muted-foreground") {}
                             onclick: .ActNewFile
+                            style: "h-5 w-5 px-0 py-0 ml-auto"
+                        }
+                        button (variant: "text") {
+                            icon (name: "folder-plus", style: "h-3.5 w-3.5 text-muted-foreground") {}
+                            onclick: .ActDirNew
                             style: "h-5 w-5 px-0 py-0"
                         }
                     }
@@ -1003,6 +1098,58 @@ widget App {
                 }
             }
 
+            // —— 新建目录弹层（PLAN-012 第十切片；dialog 第七实例——单
+            // input「目录名」，新建页面弹层同构形态：双钮 = 普通
+            // button[D-24④ 纪律]、闭态恒渲染 D-23③ 同判——测试定位锚
+            // 内容制。声明位在 rename 弹层前——vm 快照 input 序「弹层后
+            // 声明者居末」锚纪律（check 12 rename input 居末不漂移）。
+            // 预填 = 空（ActDirNew 置空——零 fetch 预填形态）；创建 =
+            // create_dir（PLAN-012 back 全套：清洗/根落位/幂等/双复核）。——
+            dialog (open: .store.dir_open) {
+                dialog-content {
+                    dialog-header {
+                        dialog-title "新建目录"
+                        dialog-description "在工作区根创建新目录"
+                    }
+                    input {
+                        value: .dir_q
+                        oninput: .DirEdit
+                        placeholder: "目录名…"
+                        style: "w-full h-7 px-2 text-[12px] border rounded bg-background"
+                    }
+                    dialog-footer {
+                        button (text: "取消", variant: "outline") { onclick: .DirCancel }
+                        button (text: "创建", variant: "ghost") { onclick: .DirGo }
+                    }
+                }
+            }
+
+            // —— 移动目录弹层（PLAN-012；dialog 第八实例——单 input
+            // 「目标目录」，同构形态纪律同上。声明位在 rename 弹层前——
+            // input 序锚纪律同上。预填 = 源档现目录（dir_of_path 本地
+            // 派生——零 fetch 预填，D-28② 竞态窗规避在册形态）+
+            // placeholder = ft_nodes 派生目录清单首项（move_ph
+            // computed——dirs_first 纯函数）；移动 = move_page（五步
+            // 定文——stem 不变链接零改写，SD-1201 三联对照并表）。——
+            dialog (open: .store.move_open) {
+                dialog-content {
+                    dialog-header {
+                        dialog-title "移动到目录"
+                        dialog-description "将移动 ${.ft_sel}（文件名不变——链接零改写）"
+                    }
+                    input {
+                        value: .move_q
+                        oninput: .MoveEdit
+                        placeholder: .move_ph
+                        style: "w-full h-7 px-2 text-[12px] border rounded bg-background"
+                    }
+                    dialog-footer {
+                        button (text: "取消", variant: "outline") { onclick: .MoveCancel }
+                        button (text: "移动", variant: "ghost") { onclick: .MoveGo }
+                    }
+                }
+            }
+
             // —— 重命名弹层（PLAN-006 第四切片；dialog 控件族首个用例——
             // 内嵌 input 探针 B 定谳形态：双钮 = 普通 button[dialog-cancel/
             // action vm 轨死标签轨间不对称，禁用]、闭态恒渲染 D-23③ 同判
@@ -1153,7 +1300,10 @@ widget App {
         // 建页成功 / Save 新档 + Init + **重命名成功**（PLAN-006——
         // EXPLORER 旧行消失新行在）+ **删除成功**（PLAN-007——
         // EXPLORER 行消失；触发集 v4 = v3 + 删除成功，新建直承
-        // 「建页成功」口））。fetch+parse 必须 handler 体内
+        // 「建页成功」口）+ **移动成功**（PLAN-012——档行入新目录/
+        // 新目录行；触发集 v5 = v4 + 移动成功——**新建目录亦走本口
+        // 但不算链接面触发**——目录不进链接面，链接触发集纪律见
+        // LinksRefreshOf 注））。fetch+parse 必须 handler 体内
         //（json.to_value 模块函数体被 ts_adapter 静默恒等——T-04 实勘；
         // store 上下文 vmref 损坏 D-20④）——故共享以 msg handler 形态
         // 收口（五触点同款理由）。
@@ -1171,11 +1321,13 @@ widget App {
             }
         }
 
-        // —— 链接索引重取共享口（PLAN-005 T-03 提取；触发集 v4 = Init
+        // —— 链接索引重取共享口（PLAN-005 T-03 提取；触发集 v5 = Init
         // / Save 成功/面板开启/**建页成功**（.CreateGo/.NewGo 直承）+
         // **重命名成功**（.RenameGo——v3 扩）+ **删除成功**（.DeleteGo
-        // ——PLAN-007 v4 扩：入链/出链行 exists=false 翻转）+ 手动口
-        // LinksRefresh）。
+        // ——PLAN-007 v4 扩：入链/出链行 exists=false 翻转）+ **移动
+        // 成功**（.MoveGo——PLAN-012 v5 扩：链接网对目录结构零感——
+        // 面板行语义不动（stem 解析），重取为路径面/wanted 派生新鲜
+        // 度；新建目录**不**进本触发集）+ 手动口 LinksRefresh）。
         // ⚠ to_value 双取形：ts_adapter 只对 call-arg
         // 发射 JSON.parse（identifier 实参静默降恒等——D-20⑤），原文态
         // links_json 与解析态分两次取（fetch 幂等，v0 规模双取无害）。
@@ -1286,10 +1438,10 @@ widget App {
             }
         }
 
-        // —— 标签索引重取共享口（PLAN-008 T-02；触发集 = 链接域 v4 同口
+        // —— 标签索引重取共享口（PLAN-008 T-02；触发集 = 链接域 v5 同口
         // 多一 fetch 不扩集：Init / Save 成功 / 面板开启 / 建页成功
         //（.CreateGo/.NewGo 直承）/ 重命名成功（.RenameGo）/ 删除成功
-        //（.DeleteGo）+ 开关口 .ActTags）。
+        //（.DeleteGo）/ 移动成功（.MoveGo——PLAN-012）+ 开关口 .ActTags）。
         // fetch 单取形：tags 只需解析态 → call-arg 形直入 json.to_value
         //（D-20⑤：call-arg 形发射 JSON.parse——免双取，比 links 面简一
         // 档）。行 label 派生期拼接（`{tag} · {n}`——双段 ${} 插值
@@ -1669,6 +1821,116 @@ widget App {
             } else {
                 if ok {
                     console_log("meta: save rejected")
+                }
+            }
+        }
+
+        // —— 新建目录流（PLAN-012 T-02；NewGo 同构——§2.3）——
+        // 入口 = EXPLORER「⊕」钮：input 置空 + 开弹层（无守卫——任意
+        // 时刻可在根新建目录）。DirGo 流：①back 契约直调 create_dir
+        //（try/catch 落 console——backend-offline 不炸；清洗/根落位/
+        // 幂等/双复核全套在册）②成功 = 关弹层 + 树重取（G1——EXPLORER
+        // 新目录行可展开空态；**链接/标签面不刷**——目录不进链接面，
+        // 触发集纪律见 TreeRefresh 注）③拒（""：空名/同名文件）=
+        // console 注记 + 弹层留置（用户可改名重试/取消——006 v1 口径
+        // 同判）。
+        .ActDirNew -> {
+            .dir_q = ""
+            store.DirOpen()
+        }
+        .DirEdit(q) -> {
+            .dir_q = q
+        }
+        .DirCancel -> {
+            store.DirClose()
+        }
+        .DirGo -> {
+            var r str = ""
+            var ok bool = true
+            try {
+                r = create_dir(.dir_q)
+            } catch (e) {
+                ok = false
+            }
+            if !ok {
+                console_log("create_dir: failed")
+            }
+            if r != "" {
+                store.DirClose()
+                .TreeRefresh()
+            } else {
+                if ok {
+                    console_log("create_dir: rejected (empty name/same-name file)")
+                }
+            }
+        }
+
+        // —— 移动入口（PLAN-012；action Ctrl+Shift+M/menubar 共口）：
+        // 守卫 = ft_sel 空拒 + 非 .ad 拒（G2 选中档语义——目录行进
+        // 移动流会误当文件迁移[back read_text 目录拒但面丑]，前置拦；
+        // action 不挂 enabled——D-24③ boot 冻结纪律，handler 守卫兜底
+        // 语义权威）。预填 = 源档现目录（dir_of_path 本地派生——零
+        // fetch 预填，D-28② 规避在册形态）；placeholder = ft_nodes 派生
+        // 目录清单首项（move_ph computed）。
+        .ActMove -> {
+            if .ft_sel == "" {
+                console_log("move: no selection")
+            } else {
+                var parts = .ft_sel.split(".ad")
+                if parts.len() == 1 {
+                    console_log("move: not a page")
+                } else {
+                    .move_q = dir_of_path(.ft_sel)
+                    store.MoveOpen()
+                }
+            }
+        }
+        .MoveEdit(q) -> {
+            .move_q = q
+        }
+        .MoveCancel -> {
+            store.MoveClose()
+        }
+        // 移动流（§2.3；RenameGo 同构守卫面 + TabsRenamed 复用）：
+        // ①back 契约直调 move_page（try/catch 落 console——backend-
+        //   offline 不炸；目标 = .ft_sel 先拷局部（弹层开启后无改写
+        //   源，直读等价）；五步定文：exists+is_dir 卫/同路径幂等/冲突
+        //   拒/组合迁移/双复核）
+        // ②成功 = 关弹层 + store.TabsRenamed(old, r)（tab 路径/标题/
+        //   key 全量更新——006 在册口；stem 不变故标题恒等、路径新）+
+        //   store.Reload（body 不变——重挂载播种链一致性，幂等无害）+
+        //   刷新族 v5：LinksRefreshOf(r)（bl/ol 行重算内联 + wanted/
+        //   mentions 随产物——链接网对移动零感语义的面板面复核锚）+
+        //   TagsRefresh（路径面）+ MentionsRefreshOf(r)（RenameGo 同款
+        //   串联形态）+ TreeRefresh（档行入新目录）+ ft_sel = r
+        // ③拒（""：冲突/缺失目录/源缺失）= console 注记 + 弹层留置
+        //   （用户可改目标重试/取消——006 v1 口径同判；**移动成功 =
+        //   链接/标签/树触发集 v5 新触点**——改名改写/移动零改写/删除
+        //   悬空三联语义并表，SD-1201）。
+        .MoveGo -> {
+            var old_path str = .ft_sel
+            var r str = ""
+            var ok bool = true
+            try {
+                r = move_page(old_path, .move_q)
+            } catch (e) {
+                ok = false
+            }
+            if !ok {
+                console_log("move: failed")
+            }
+            if r != "" {
+                store.MoveClose()
+                store.TabsRenamed(old_path, r)
+                store.Reload()
+                .LinksRefreshOf(r)
+                .TagsRefresh()
+                .MentionsRefreshOf(r)
+                .TreeRefresh()
+                .ft_sel = r
+            } else {
+                if ok {
+                    console_log("move: rejected (conflict/missing dir/missing page)")
                 }
             }
         }
