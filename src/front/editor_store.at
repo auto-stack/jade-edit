@@ -90,7 +90,7 @@ store EditorStore {
         FindOpen(str), FindToggle, FindClose,
         CreateConfirmOpen(str), CreateConfirmCancel,
         RenameOpen, RenameClose, TabsRenamed(str, str),
-        NewOpen, NewClose, DeleteOpen, DeleteClose,
+        NewOpen, NewClose, DeleteOpen, DeleteClose, CloseTabsOf(str),
     }
 
     on {
@@ -455,6 +455,29 @@ store EditorStore {
         }
         .DeleteClose -> {
             .delete_open = false
+            .console = console_lines()
+        }
+
+        // ---- 删除档 tab 全量关闭（PLAN-007 T-03；G2 tab 关闭面）：
+        // while 扫描（D-11 禁 .find 闭包——split 形态硬崩），命中即
+        // store.RemoveAt(i)（在册口：.tabs.remove(i) + 激活索引修正 +
+        // tab_count 维护免费复用——补件② splice 守 vue 面在册）；**命中
+        // 不增 i**——remove 后元素左移同位重查，未命中才 i+1（全删 =
+        // 循环至 len 归零，空态案 RemoveAt 免费收口）。关闭数 console
+        // 注记（弹层警示预览 = App 侧 tabs_impact_text 派生，执行期返
+        // 值仅日志）。----
+        .CloseTabsOf(path) -> {
+            var closed int = 0
+            var i int = 0
+            while i < .tabs.len() {
+                if .tabs[i].path == path {
+                    store.RemoveAt(i)
+                    closed = closed + 1
+                } else {
+                    i = i + 1
+                }
+            }
+            console_log("closed tabs of " + path + ": " + closed.str())
             .console = console_lines()
         }
 

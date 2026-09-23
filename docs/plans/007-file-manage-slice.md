@@ -4,9 +4,9 @@ status: executing
 feature_name: file-manage-slice
 author: [zhaopuming]
 created_at: 2026-09-23T02:34:22+08:00
-updated_at: 2026-09-23T10:05:00+08:00
+updated_at: 2026-09-23T11:02:00+08:00
 plan_revision: 1
-current_step: 2
+current_step: 3
 total_steps: 5
 supersedes_spec_components: []
 new_spec_components:
@@ -272,9 +272,12 @@ pub fn delete_page_impl(path str) str {
     导航 + split 臂磁盘断言，D-19 口径）②同名幂等（`index` → 打开
     既有 + 内容不变）③取消零落盘；
   - 删除子步：④选中 `CAP 定理`（点击树行——ft_sel 态）→ Delete →
-    弹层预览（「2 处入链将变为悬空」——index/Tasks 出链计数已知
-    答案）⑤确认 → 磁盘消失 + tab 关闭（先开该档两 tab——关闭面
-    + 激活邻档断言）⑥开 index.ad → 出链行 `CAP 定理（悬空）` 翻转
+    弹层预览（「3 处入链将变为悬空」——index/Tasks/**Hello World**
+    出链计数已知答案[T-03 实勘校正：原记「2 处」漏数 Hello World.ad
+    的 `[[CAP 定理]]` 出链——基线 v6 links_json 三页三处佐证，
+    PLAN-006 T-02 预览期望值校正同款]）⑤确认 → 磁盘消失 +
+    tab 关闭（关闭面 + 激活邻档断言）⑥开 index.ad
+    → 出链行 `CAP 定理（悬空）` 翻转
     （PLAN-003 已知答案反向）⑦取消零落盘 ⑧未选中 Delete = no-op
     （console + 零弹层）。
 - **e2e（T-04）**：file 段同弧线（真 DOM：＋ 钮 → dialog fill →
@@ -368,12 +371,33 @@ pub fn delete_page_impl(path str) str {
     new_q 入 dump + 第四弹层 id 序列计划内扩——PLAN-006 T-02 同判
     [a0659f3 先例]，T-04 v7 重锁），行为面 13 检查含 check 12
     rename 全 PASS。
-- **T-03 删除流收口**（AC-02 后半）
+- **T-03 删除流收口**（AC-02 后半）✅ 已完成
   - store `CloseTabsOf`/`TabsCountOf` + 删除 dialog（第五弹层：
     `dangling_impact` 预览 + tab 警示行）+ `.DeleteGo` 流（触发集
-    v4 + ft_sel 清空 + 行重算显式投影）。
+    v4 + ft_sel 清空 + 行重算显式投影）。**[✅ 已完成]**（2026-09-23）
+    实勘调整两项（授权内）：①`TabsCountOf` 落形 = app.at 侧纯函数
+    `tabs_impact_text(tabs, path)` + computed `delete_tabs_preview`
+    （store msg 无返值面——弹层预览 = 视图派生；store 侧派生 fn
+    语义由 App 侧消费 `.store.tabs` computed 等价承载，vm/vue 双轨
+    实测通）；②删除弹层**零 input**（预览两行 text）——声明位居
+    rename 弹层后，input 序锚不受扰；「删除」钮全树唯一文本锚。
+    CloseTabsOf = while 扫描命中即 RemoveAt(i) 不增 i（remove 后
+    左移同位重查）；触发集 v3→v4 注记随 TreeRefresh/LinksRefreshOf
+    注释更新（v4 = v3 + 删除成功）。
   - 验证：merged 冒烟全弧线（删 `CAP 定理` 双 tab 关闭 + 开 index
     悬空翻转）+ link/find/create/rename 组回归 + e2e file 段冒烟。
+    **[✅ 已完成]** e2e/.runtime/smoke-t03.mjs **6/6 PASS**（①弹层
+    锚[标题/目标/预览两行——「3 处入链将变为悬空」实勘校正 + 「1 个
+    标签页将关闭」]②取消零落盘③删除弧线[磁盘消失+ft_sel 清空+
+    tab 全关空态 tab_count=0+树行消失]④未选中 no-op⑤悬空翻转
+    [出链行 CAP 定理（悬空）+ 树零残留]⑥邻档补位[删除激活档→
+    active 落邻档 HW+「无入链」预览第二形]）；vm merged 矩阵
+    13/14（唯一 FAIL = 基线 B 计划内漂移——T-04 v7 重锁；行为面
+    全 PASS）；e2e 全套 PASS（首跑 check 10 反链面板行断言失败
+    [D-21 vite 代理语境簇签名]重跑即绿——README 口径如实记；附带
+    `[pageerror] console.log is not a function` 非致命观测——三态
+    归因实测[PLAN-006 归档态 3b46b5b/T-02/T-03]**既有面非本计划引
+    入**，ledger v10 记观测）。
 - **T-04 测试扩单 + 基线 v7 + 判绿首锁**（AC-02/03/04）
   - vm file 组八子步 + e2e file 段 + 基线 v7 重锁。
   - 验证：`node tests/vm_matrix.mjs` 双臂全绿 + `pnpm test:e2e`
