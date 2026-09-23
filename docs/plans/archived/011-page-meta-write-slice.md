@@ -1,7 +1,7 @@
 ---
 plan_id: PLAN-011
-status: reviewed
-completion_kind: executing_done
+status: archived
+completion_kind: delivered
 feature_name: page-meta-write-slice
 author: [zhaopuming]
 created_at: 2026-09-23T16:49:04+08:00
@@ -480,6 +480,29 @@ pub fn set_page_meta_impl(path, tags, aliases) str {
     fresh RESULT 行（本 §9 上文）+ 负向 grep 零值；f3c134d diff 12
     文件 +1449/-37 与 §9 work_summary 逐项吻合（fresh 通读）。
   - `next: merge`（docs-only 后代资格预审=本笔；直接 main 线性约定）。
+
+- **2026-09-23 merge（auto-plan-merge）**——收据 `PLAN-011:r1`：
+  - `stage: merge` | plan_id: PLAN-011 | revision 1 |
+    outcome: **pass** | completion_kind: **delivered**。
+  - **prepared**——delivery commit **0c7e534** = f3c134d 的 docs-only
+    后代（diff 全窗口仅本计划 §9 终审记录 +41/-1；实现/依赖零变化
+    ——gate ALL GREEN@f3c134d 等价承继，复审窗绿跑实录在案）。
+  - **landed**——main tip == 0c7e534（直接 main 线性约定，无合并
+    提交；worktree list 单主检出实证）。
+  - **ledger_refreshed**——docs/parity-ledger.md **v14** 读回证
+    （H1 v14 + 28 行 D-01..D-28 + D-28 四件 + D-21 v14 扩记）；无
+    live ledger 服务（PLAN-001..010 同判——ledger = tracked file，
+    经 git 提交即发布）。
+  - **archived**——git mv → docs/plans/archived/
+    011-page-meta-write-slice.md + status: archived +
+    completion_kind: delivered；canonical 面（ARCHITECTURE §5
+    SD-1101/§6 SD-1102 + README SD-1103/1104）@f3c134d 在 main。
+  - **cleaned**——无 worktree/无 dev 分支（直接 main 线性约定，
+    PLAN-005..010 同款）；主检出 status clean（随本笔归档提交
+    验证）。
+  - `next: 无`（PLAN-012 候选池 §10.7——大纲[D-12 解锁首位]/
+    每日笔记+时间戳补写[Time 原语解锁双件联动]/移动+目录/
+    casefold+词边界/检索 alias 匹配/title 键编辑）。
 - 仓库/动作范围：仅 jade-edit 主检出；冻结池与家族仓零接触
   （AC-05）。无预算/自动续跑/工具链版本指定（沿 README：≥1652）。
 
