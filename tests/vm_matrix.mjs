@@ -48,6 +48,16 @@
 //             +邻档补位，split 臂现场开→关同面；两臂删后激活均落
 //             Project X[右侧邻档同构]。收尾状态复原回 Hello World
 //             [quit 前置——typeWholeDoc 目标档]）。执行序在 12 后 9 前
+//   14 meta   标签面板+wanted 模式八子步（PLAN-008；双件同组——find
+//             组先例。tags 子步：面板开 7 tag 行[语料实勘全集——执行
+//             期校正：7 非计划记的 6，Hello World.ad 实有 demo]/展开
+//             导航 ASCII 双臂+CJK 仅 merged[D-19]/Save 刷新外造新行。
+//             wanted 子步：模式入口无 input 行无检索钮/语料已知答案
+//             页面名（1）[执行期校正：悬空全集=首页+页面名，首页已被
+//             10c 消缺故不在此位]+外造 Wanted Target（1）/取消零落盘/
+//             创建开档+消缺+exists 翻转+模板逐字节/空态闭环（无悬空
+//             链接）。执行序在 10c 后 11 前——此位 tags 全集/悬空余量
+//             已知答案成立；收尾复原反链面板开[check 11 首步口径]）
 //   9 quit    退出存盘：dirty → 文件菜单退出 → CloseRequest 确认弹层 →
 //             QuitSaveClose → 磁盘三验（原文/标记/frontmatter）+ 进程退出
 //             （Process.exit 可能先于 HTTP 响应——连接断开即成功路径；
@@ -84,7 +94,7 @@ const argOf = (name) => {
   return i >= 0 ? args[i + 1] : undefined
 }
 const ARM = argOf('--arm') ?? 'all' // all | merged | split
-const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v7.txt')
+const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v8.txt')
 const SAVE_BASELINE = argOf('--save-baseline')
 
 const EDIT_MARKER = 'jade-edit 冒烟标记：编辑回写可见。'
@@ -379,17 +389,16 @@ async function runArm(arm, port) {
       const stateDump = (await callTool('autoui_state', {})).trim()
       const snapIds = JSON.stringify([...(await snapshotText()).matchAll(/#(vnode_\d+)/g)].map((m) => m[1]))
       const headerFor = (file) =>
-        `// jade-edit vm 结构基线 v7（PLAN-007 T-04 重锁；v6=PLAN-006 T-04、v5=PLAN-005 T-04、\n` +
-        `// v4=PLAN-004 T-04、v3=PLAN-003 T-04、v2=PLAN-002 T-01、v1=PLAN-001 T-04 换基、\n` +
-        `// v0=PLAN-081 T-05 均留档）。\n` +
-        `// 重锁因由：①store 新增 new_open/delete_open 字段 + App 新增 new_q 字段（PLAN-007\n` +
-        `// 新建/删除弹层）进 autoui_state 全量 dump；②dialog 第四弹层（新建，内嵌 input）+\n` +
-        `// 第五弹层（删除，预览两行零 input）——vm 快照弹层内容恒渲染（D-23③ dialog 族同判），\n` +
-        `// snapshot vnode id 序列计划内扩（非漂移事故）；③EXPLORER 头部行改 row（text +\n` +
-        `// 「＋」icon 钮——PLAN-007 新建入口）。\n` +
-        `// 仪器同 v2..v6：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态\n` +
-        `//（chrome 全套 + Hello World.ad 开；查找面板/建页弹层/新建弹层/重命名弹层/删除弹层\n` +
-        `// 未开——find_*/create_*/new_*/rename_*/delete_* 全为默认值入 dump）。\n` +
+        `// jade-edit vm 结构基线 v8（PLAN-008 T-04 重锁；v7=PLAN-007 T-04、v6=PLAN-006 T-04、\n` +
+        `// v5=PLAN-005 T-04、v4=PLAN-004 T-04、v3=PLAN-003 T-04、v2=PLAN-002 T-01、\n` +
+        `// v1=PLAN-001 T-04 换基、v0=PLAN-081 T-05 均留档）。\n` +
+        `// 重锁因由：①store 新增 tags_open 字段 + App 新增 tags_rows/tag_expanded/wanted_rows\n` +
+        `// 字段（PLAN-008 标签面板/wanted 模式数据态）进 autoui_state 全量 dump；②menubar\n` +
+        `// 视图菜单两新项（「切换标签」Ctrl+T /「悬空清单」Ctrl+Shift+D）——snapshot vnode\n` +
+        `// id 序列计划内扩（非漂移事故）。find_mode 值域扩 "wanted"（基线态仍默认 files）。\n` +
+        `// 仪器同 v2..v7：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态\n` +
+        `//（chrome 全套 + Hello World.ad 开；查找面板/建页弹层/新建弹层/重命名弹层/删除弹层/\n` +
+        `// 标签面板未开——find_*/create_*/new_*/rename_*/delete_*/tags_* 全为默认值入 dump）。\n` +
         `// 再生成：node tests/vm_matrix.mjs --save-baseline ${path.relative(repoRoot, file).replace(/\\\\/g, '/')}\n`
       const baselineBodyOf = () => `## state\n${stateDump}\n\n## snapshot-ids\n${snapIds}\n`
       if (SAVE_BASELINE) {
@@ -399,9 +408,9 @@ async function runArm(arm, port) {
       } else if (fs.existsSync(BASELINE)) {
         const raw = fs.readFileSync(BASELINE, 'utf8')
         const ok = raw === headerFor(BASELINE) + baselineBodyOf()
-        check('B', 'baseline', ok, ok ? '结构基线 v7 零漂移（state 逐字节 + id 序列）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
+        check('B', 'baseline', ok, ok ? '结构基线 v8 零漂移（state 逐字节 + id 序列）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
       } else {
-        console.log('  [baseline] structure-v7 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v7.txt')
+        console.log('  [baseline] structure-v8 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v8.txt')
       }
     }
 
@@ -621,6 +630,130 @@ async function runArm(arm, port) {
       results.push({ id: '10c', name: 'create', ok: false })
       throw new Error('10c 建页弧线断言失守')
     }
+
+    // 14 meta（PLAN-008 T-04）：tags 面板 + wanted 模式八子步（双件同组
+    // ——PLAN-004 find 组先例；组内子步不占检查位，fail 即臂败，10c/12
+    // 同款）。执行序在 10c 后 11 前（此位语料态 = tags 全集 7[13 file
+    // 未删 CAP/12 rename 未改名] + 悬空仅剩 页面名（1）——首页已被 10c
+    // 建页消缺【执行期校正：语料悬空全集 = 首页+页面名，index.ad 尾行
+    // [[页面名]] 亦悬空】）。前置：关反链面板（10 开着——tags/wanted
+    // 行断言免反链行 .ad 路径文本重叠）；收尾：复原反链面板开（check
+    // 11 首步「开着→关」口径不漂移）+ find 面板关。
+    await pressButton('视图', { exact: true })
+    await pressButton('切换反链', { exact: true })
+    await stateIs('backlinks_open', 'false')
+    // tags ①：面板开启 + 7 tag 行（label 计数断言；语料实勘全集【执行
+    // 期校正：7 非 6——Hello World.ad 实有 `tags: - demo`，计划原记
+    // 「无 tags 键」漏勘】）
+    await pressButton('视图', { exact: true })
+    await pressButton('切换标签', { exact: true })
+    await stateIs('tags_open', 'true')
+    const metaTagsSnap = await snapshotText()
+    const metaTagLabels = ['tasks · 1', 'distributed-systems · 1', 'theory · 1', 'demo · 1', 'project-management · 1', 'index · 1', 'jade-garden · 1']
+    const metaTagsOk = metaTagLabels.every((l) => metaTagsSnap.includes(`"${l}"`))
+    if (!metaTagsOk) throw new Error('tags 面板 7 tag 行不全（已知答案失守）')
+    // tags ②：展开页行 + 导航（ASCII tasks 双臂；CJK CAP 仅 merged——
+    // D-19 口径，check 10 同款；单选手风琴换选语义随在）
+    await pressButton('tasks · 1', { exact: true })
+    await stateIs('tag_expanded', 'tasks')
+    await pressButton('wiki/Tasks.ad', { exact: true })
+    await stateIs('active_title', 'wiki/Tasks')
+    if (arm === 'merged') {
+      await pressButton('distributed-systems · 1', { exact: true })
+      await stateIs('tag_expanded', 'distributed-systems')
+      await pressButton('wiki/CAP 定理.ad', { exact: true })
+      await stateIs('active_title', 'wiki/CAP 定理')
+    }
+    // tags ③：空态不设运行时断言（§6——v1 以「面板开+行集非空」为常态
+    // 断言，空态走 wanted ⑦ 同判口径）
+    // tags ④：Save 后刷新——外造带 tag 档 → 保存 → 面板新行（List<map>
+    // 态 dump = 裸 vmref——断言面 = 快照行文本，10 link 面板行同口径）
+    fs.writeFileSync(path.join(FIXTURE, 'Tagged Note.ad'), '---\ntags:\n  - meta-save\n---\n\n# T\n', 'utf8')
+    await pressButton('保存')
+    let metaSaveOk = false
+    for (const dl = Date.now() + 8000; ; ) {
+      metaSaveOk = (await snapshotText()).includes('"meta-save · 1"')
+      if (metaSaveOk || Date.now() > dl) break
+      await sleep(300)
+    }
+    if (!metaSaveOk) throw new Error('tags Save 刷新失守（meta-save 行未现）')
+    await pressButton('视图', { exact: true })
+    await pressButton('切换标签', { exact: true })
+    await stateIs('tags_open', 'false')
+    // wanted ⑤：模式入口（无 input 行/无触发钮 + 语料已知答案行——首页
+    // 已消缺故不在，页面名（1）在）
+    await pressButton('视图', { exact: true })
+    await pressButton('悬空清单', { exact: true })
+    await stateIs('find_mode', 'wanted')
+    await stateIs('find_open', 'true')
+    const metaWantedSnap = await snapshotText()
+    const wantedNoInput = !metaWantedSnap.includes('输入查询词') && !metaWantedSnap.includes('过滤文件名') && !metaWantedSnap.includes('"检索"')
+    const wantedKnown = metaWantedSnap.includes('"页面名（1）"') && !metaWantedSnap.includes('"首页（1）"')
+    if (!(wantedNoInput && wantedKnown)) throw new Error(`wanted 入口断言失守（noInput=${wantedNoInput} known=${wantedKnown}）`)
+    // wanted ⑤b：外造悬空源档 → 重入口（ActFindWanted 即刷新）→ 新行
+    fs.writeFileSync(path.join(FIXTURE, 'Wanted Source.ad'), '# WS\n\nsee [[Wanted Target]].\n', 'utf8')
+    await pressButton('视图', { exact: true })
+    await pressButton('悬空清单', { exact: true })
+    let wantedRowOk = false
+    for (const dl = Date.now() + 8000; ; ) {
+      wantedRowOk = (await snapshotText()).includes('"Wanted Target（1）"')
+      if (wantedRowOk || Date.now() > dl) break
+      await sleep(300)
+    }
+    if (!wantedRowOk) throw new Error('wanted 外造行未现（入口刷新失守）')
+    // wanted ⑧（取消路前置——10c 同款纪律：悬空行素材先走取消路）：
+    // 行点击 → 弹层预填 → 取消零落盘
+    await pressButton('Wanted Target（1）', { exact: true })
+    await stateIs('create_confirm_open', 'true')
+    await stateIs('create_target', 'Wanted Target')
+    await pressInCreateDialog('取消')
+    await stateIs('create_confirm_open', 'false')
+    const wantedCancelOk = !fs.existsSync(path.join(FIXTURE, 'Wanted Target.ad'))
+    if (!wantedCancelOk) throw new Error('wanted 取消零落盘失守')
+    // wanted ⑥：创建 → 开档 + 消缺 + exists 翻转（三切片联动弧线；ASCII
+    // 目标双臂开档——D-19 面无[ASCII+空格路径简单转义解码在册]）
+    await pressButton('Wanted Target（1）', { exact: true })
+    await stateIs('create_confirm_open', 'true')
+    await pressInCreateDialog('创建')
+    await stateIs('active_title', 'Wanted Target')
+    let wantedFlipOk = false
+    for (const dl = Date.now() + 8000; ; ) {
+      wantedFlipOk = (await stateText('links_json')).includes('{\\"target\\":\\"Wanted Target\\",\\"anchor\\":\\"\\",\\"exists\\":true,\\"target_path\\":\\"Wanted Target.ad\\"}')
+      if (wantedFlipOk || Date.now() > dl) break
+      await sleep(300)
+    }
+    let wantedGoneOk = false
+    for (const dl = Date.now() + 8000; ; ) {
+      wantedGoneOk = !(await snapshotText()).includes('"Wanted Target（1）"')
+      if (wantedGoneOk || Date.now() > dl) break
+      await sleep(300)
+    }
+    const wantedDiskOk = fs.existsSync(path.join(FIXTURE, 'Wanted Target.ad'))
+      && fs.readFileSync(path.join(FIXTURE, 'Wanted Target.ad'), 'utf8') === '# Wanted Target\n\n'
+    if (!(wantedFlipOk && wantedGoneOk && wantedDiskOk)) throw new Error(`wanted 建页弧线失守（flip=${wantedFlipOk} gone=${wantedGoneOk} disk=${wantedDiskOk}）`)
+    // wanted ⑦：空态闭环——消缺余量（页面名，语料悬空第二目标【执行期
+    // 校正】；create_page POST body CJK 双臂已证——消缺面 = 磁盘+索引
+    // 重取+行集重算，双臂同达；split CJK 开档全败不涉本断言）→ wanted
+    // 清单空态「（无悬空链接）」
+    await pressButton('页面名（1）', { exact: true })
+    await stateIs('create_confirm_open', 'true')
+    await pressInCreateDialog('创建')
+    let wantedEmptyOk = false
+    for (const dl = Date.now() + 8000; ; ) {
+      wantedEmptyOk = (await snapshotText()).includes('（无悬空链接）')
+      if (wantedEmptyOk || Date.now() > dl) break
+      await sleep(300)
+    }
+    if (!wantedEmptyOk) throw new Error('wanted 空态闭环失守（（无悬空链接）未现）')
+    // 收尾：find 面板关（收起——tags/backlinks 已闭，收起钮唯一）+
+    // 反链面板复原开（check 11 首步按「开着→关」口径）
+    await pressButton('收起', { exact: true })
+    await stateIs('find_open', 'false')
+    await pressButton('视图', { exact: true })
+    await pressButton('切换反链', { exact: true })
+    await stateIs('backlinks_open', 'true')
+    check('14', 'meta', metaTagsOk && metaSaveOk && wantedNoInput && wantedKnown && wantedRowOk && wantedCancelOk && wantedFlipOk && wantedGoneOk && wantedDiskOk && wantedEmptyOk,
+      `meta 组八子步（tags：面板开 7 tag 行[语料实勘全集]/展开导航 ASCII 双臂+CJK 仅 merged[D-19]/Save 刷新外造新行；wanted：模式入口无 input 行无检索钮/语料已知答案 页面名（1）+外造 Wanted Target（1）/取消零落盘/创建开档+消缺+exists 翻转+模板逐字节/空态闭环（无悬空链接））`)
 
     // 11 find（PLAN-004 T-04）：查找面板双模式。执行序在 quit 前（quit
     // 恒为臂内最后一项）；先关反链面板（check 10 开着）——find 行断言免
@@ -1134,5 +1267,5 @@ for (const { arm, results } of all) {
 }
 if (failed > 0) process.exitCode = 1
 if (all.every(({ results }) => results.every((r) => r.ok))) {
-  console.log(`[matrix] ALL GREEN：${arms.join(' + ')} 臂检查单全过（六检查 + 基线[merged] + tab/editops/link/create/find/rename/file 扩单 + quit）`)
+  console.log(`[matrix] ALL GREEN：${arms.join(' + ')} 臂检查单全过（六检查 + 基线[merged] + tab/editops/link/create/find/rename/file/meta 扩单 + quit）`)
 }

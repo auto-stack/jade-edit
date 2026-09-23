@@ -54,6 +54,14 @@
 //             GET query 同败，新页 CJK 案不设）。无键位面（Delete
 //             键 = 真键盘，e2e 不覆盖——11/12 同口径，入口 = 文件
 //             菜单→删除…）。
+//   14 meta   标签面板+wanted 模式（PLAN-008；vm 矩阵 check 14 同单
+//             ——段内最后）：tags 4 行已知答案[13 后位态]+展开导航+
+//             write_wiki 外造 Save 刷新；wanted 无 input 三行清单
+//             [首页（1）/页面名（1）/CAP 定理（2）——语料实勘全集
+//             【执行期校正：页面名亦悬空】]/取消零落盘/创建开档模板
+//             逐字节/消缺/空态闭环（无悬空链接）/exists 翻转。建页
+//             全走 POST body CJK 已证面——无 vm 侧 D-19 分野。执行序
+//             在 13 后（段内最后——13 已定删除面，此位已知答案成立）。
 //
 // D-17 冲刷机制（vue 轨特有，7/8/9 共用）：切档重挂载后的编辑器实例，
 // 键入只进引擎模型、update:modelValue 门控至 blur——中性 blur（点
@@ -501,4 +509,85 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await page.getByText('切换反链', { exact: true }).click()
   await expect(page.getByText('Hello World（悬空）', { exact: true })).toBeVisible({ timeout: 10_000 })
   console.log('[13 file] PASS — file 组弧线（新建/幂等/取消/删除弧线/悬空翻转；no-op+CJK 案 vm 专属口径）')
+
+  // 14 meta（PLAN-008 T-04；vm 矩阵 check 14 同单——段内最后）：tags
+  // 面板 + wanted 模式。执行序在 13 后（此位已知答案——e2e 13 删的是
+  // Hello World.ad[vm 删 CAP 定理.ad，两轨素材异位既有口径]：tags 4 行
+  // [demo/distributed-systems/theory 随删除消失、12 改名 Projects→
+  // Project X——tasks/index/jade-garden/project-management]；wanted 2
+  // 行 = Hello World（3）[wiki/index + wiki/CAP 定理 + wiki/Tasks 三处
+  // 入链悬空] + 页面名（1）[wiki/index 尾行——语料实勘全集执行期校正
+  // 面]；首页 不悬空[唯一链接方 Hello World 已删]、CAP 定理 不悬空
+  // [wiki/CAP 定理.ad 在盘]。e2e 建页全走 POST body CJK 已证面——无
+  // vm 侧 D-19 分野。
+  await page.getByText('视图', { exact: true }).click()
+  await page.getByText('切换反链', { exact: true }).click()
+  // tags ①：面板开启 + 4 tag 行（label 计数；此位已知答案）
+  await page.getByText('视图', { exact: true }).click()
+  await page.getByText('切换标签', { exact: true }).click()
+  await expect(page.getByText('TAGS', { exact: true })).toBeVisible({ timeout: 10_000 })
+  for (const l of ['tasks · 1', 'index · 1', 'jade-garden · 1', 'project-management · 1']) {
+    await expect(page.getByRole('button', { name: l, exact: true })).toBeVisible({ timeout: 10_000 })
+  }
+  // tags ②：展开页行 + 导航（ASCII tasks）
+  await page.getByRole('button', { name: 'tasks · 1', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'wiki/Tasks.ad', exact: true })).toBeVisible({ timeout: 10_000 })
+  await page.getByRole('button', { name: 'wiki/Tasks.ad', exact: true }).click()
+  await expect(visibleEditor(page)).toContainText('原型设计', { timeout: 15_000 })
+  console.log('[14 meta] tags 面板 — 4 tag 行已知答案 + 展开导航（wiki/Tasks.ad 开档）')
+  // tags ④：write_wiki 外造带 tag 档 → 保存 → 面板新行（POST body
+  // 通道——write_wiki 对不存在档直写 body 全文，frontmatter 内嵌其上）
+  const wRes2 = await request.post('/api/write_wiki', {
+    data: { path: 'Tagged E2E.ad', body: '---\ntags:\n  - meta-e2e\n---\n\n# T\n' },
+  })
+  expect(wRes2.ok(), 'write_wiki 造带 tag 档 POST ok').toBe(true)
+  await page.locator('button[title="保存"]').click()
+  await expect(page.getByRole('button', { name: 'meta-e2e · 1', exact: true })).toBeVisible({ timeout: 10_000 })
+  await page.getByText('视图', { exact: true }).click()
+  await page.getByText('切换标签', { exact: true }).click()
+  console.log('[14 meta] tags Save 刷新 — 外造 meta-e2e → 保存 → 面板新行')
+  // wanted ⑤：模式入口（无 input 行/无检索钮 + 两行清单已知答案）
+  await page.getByText('视图', { exact: true }).click()
+  await page.getByText('悬空清单', { exact: true }).click()
+  await expect(page.getByText('悬空', { exact: true })).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByPlaceholder('输入查询词…')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: '检索', exact: true })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Hello World（3）', exact: true })).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByRole('button', { name: '页面名（1）', exact: true })).toBeVisible()
+  console.log('[14 meta] wanted 入口 — 无 input 行/无检索钮 + 两行清单已知答案')
+  // wanted ⑧+⑥：Hello World（3）行——取消零落盘 → 再点创建 → 消缺
+  //（根落位 Hello World.ad——与 13 删除的 wiki/Hello World.ad 异位不冲
+  // 突；三处入链一并接回）
+  await page.getByRole('button', { name: 'Hello World（3）', exact: true }).click()
+  await expect(page.getByText('创建缺失页面？')).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByText('[[Hello World]] 尚不存在')).toBeVisible()
+  await expect(page.getByText('将创建：Hello World.ad')).toBeVisible()
+  await page.getByRole('button', { name: '取消', exact: true }).last().click()
+  await expect(page.getByText('创建缺失页面？')).toBeHidden({ timeout: 10_000 })
+  expect(fs.existsSync(path.join(WORKSPACE, 'Hello World.ad')), '取消零落盘').toBe(false)
+  await page.getByRole('button', { name: 'Hello World（3）', exact: true }).click()
+  await page.getByRole('button', { name: '创建', exact: true }).click()
+  await expect(page.getByText('创建缺失页面？')).toBeHidden({ timeout: 10_000 })
+  await expect(visibleEditor(page)).toContainText('Hello World', { timeout: 15_000 })
+  await expect
+    .poll(() => fs.existsSync(path.join(WORKSPACE, 'Hello World.ad')) && fs.readFileSync(path.join(WORKSPACE, 'Hello World.ad'), 'utf8') === '# Hello World\n\n', { timeout: 10_000 })
+    .toBe(true)
+  await expect(page.getByRole('button', { name: 'Hello World（3）', exact: true })).toHaveCount(0, { timeout: 10_000 })
+  console.log('[14 meta] wanted 建页弧线 — 取消零落盘/创建开档（模板逐字节）/消缺（三处入链一并接回）')
+  // wanted ⑦：空态闭环——消缺余量（页面名）→「（无悬空链接）」
+  await page.getByRole('button', { name: '页面名（1）', exact: true }).click()
+  await page.getByRole('button', { name: '创建', exact: true }).click()
+  await expect(page.getByText('（无悬空链接）', { exact: true })).toBeVisible({ timeout: 10_000 })
+  console.log('[14 meta] wanted 空态闭环 — 全消缺 →（无悬空链接）')
+  // exists 翻转（既有弧线）：开 index tab → 反链面板出链行全 exists
+  //（Hello World/页面名 钮在、Hello World（悬空）文本不在——13 ⑤ 曾断
+  // 言其悬空，建页接回后翻转）
+  await page.getByRole('button', { name: 'wiki/index', exact: true }).click()
+  await page.getByText('视图', { exact: true }).click()
+  await page.getByText('切换反链', { exact: true }).click()
+  // 出链行钮消歧：根 Hello World.ad tab 题钮同名（wanted 建页后开档）
+  // ——面板渲染居后，.last() 取行钮
+  await expect(page.getByRole('button', { name: 'Hello World', exact: true }).last()).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByText('Hello World（悬空）', { exact: true })).toHaveCount(0)
+  console.log('[14 meta] PASS — meta 组（tags 面板+wanted 模式建页闭环+exists 翻转）')
 })

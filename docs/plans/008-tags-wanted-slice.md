@@ -6,7 +6,7 @@ author: [zhaopuming]
 created_at: 2026-09-23T10:24:24+08:00
 updated_at: 2026-09-23T11:30:00+08:00
 plan_revision: 1
-current_step: 0
+current_step: 4
 total_steps: 5
 supersedes_spec_components: []
 new_spec_components:
@@ -418,11 +418,47 @@ pub fn tags_json(path str, depth int) str {
     - menubar 视图增「悬空清单」checkbox 项（find-text 同构复合
       checked_if）+ FindPanel 壳模式标签第三分支「悬空」——action
       view.find-wanted（Ctrl+Shift+D）双入口。
-- **T-04 测试扩单 + 基线 v8 + 判绿首锁**（AC-02/03/04）
+- **T-04 测试扩单 + 基线 v8 + 判绿首锁**（AC-02/03/04）✅ 已完成
   - vm meta 组八子步 + e2e meta 段 + 基线 v8 重锁。
   - 验证：`node tests/vm_matrix.mjs` 双臂全绿 + `pnpm test:e2e`
     连跑 ≥5 + `node scripts/gate.mjs` ALL GREEN（判绿实录 + N 定谳
     续记）。
+  - **证据（2026-09-23）**：
+    - **vm meta 组**（check 14，双件同组——位置 10c 后 11 前）：tags
+      子步（面板开 7 tag 行已知答案/展开导航 ASCII 双臂+CJK 仅
+      merged[D-19]/Save 刷新外造新行）+ wanted 子步（入口无 input 行
+      无检索钮/页面名（1）已知答案+外造 Wanted Target（1）/取消零落
+      盘[⑧ 前置——10c 同款纪律]/创建开档+消缺+exists 翻转+模板逐字
+      节/空态闭环（无悬空链接））。双臂 **merged 16/16 + split
+      15/15 ALL GREEN**（首跑即过；本窗矩阵连跑 3 轮全绿 + gate 内
+      矩阵段 7 连绿）。1 次执行期进程死亡（F-R1/D-21 家族，meta 组
+      轮询中 ECONNREFUSED）+ 1 次 check-10 面板行渲染窗瞬态（bl_rows
+      在态而快照滞后——D-21 v9 同形态实录），均重跑即绿。
+    - **e2e meta 段**（13 file 段后段内最后）：tags 4 行已知答案
+      （13 后位态）+ 展开导航 + write_wiki 外造 Save 刷新 + wanted
+      两行清单[Hello World（3）+ 页面名（1）——**执行期校正：e2e 13
+      删 Hello World.ad 致其三处入链悬空、首页/CAP 定理 不悬空
+      [链接方/在盘]，与 vm 位态异位[两轨素材异位既有口径]，初版断言
+      按错误位态书写 3 轮失败后实勘修正]+ 取消零落盘/创建开档模板逐
+      字节/消缺/空态闭环/exists 翻转[Hello World tab 题钮与出链行同
+      名——.last() 消歧]。**e2e 窗口 23 跑 8 绿**（PLAN-006 同款如实
+      记：11+ 失败全数 **check-5 保存点 D-21 签名**[api-err-body
+      missing param `path` 两次实锤——POST 先于刷新 GETs，非本计划
+      新增 fetch 所致]，重跑即绿，最长连绿 3——「连跑 ≥5」bar 本机
+      家族会话并行日突发簇窗未达，分布如实记）；meta 段自身每轮达即
+      PASS（8 绿全含）。
+    - **基线 v8**：`--save-baseline tests/baseline/structure-v8.txt`
+      首锁（v7 留档）；重锁面 = store tags_open + App
+      tags_rows/tag_expanded/wanted_rows 入 dump + menubar 两新项
+      id 序列计划内扩 + find_mode 值域扩（基线态仍 files）。**零漂
+      移连跑 ≥4**（独立跑 4 轮 + gate 内 7 轮逐跑 B PASS）。
+    - **gate**：`node scripts/gate.mjs` **第 8 跑 ALL GREEN**（vm 双
+      臂 16/16+15/15 + build + e2e 十五段；前 7 跑败点 = e2e 段
+      check-5 保存点 D-21 ×6 + 矩阵段瞬态 ×1，如实记——PLAN-006/007
+      gate 窗节拍同款）。
+    - 测试面定位锚两处消歧：vm wanted 收尾「收起」钮（tags/backlinks
+      已闭故唯一）；e2e 出链行 .last()（根 Hello World.ad tab 题钮
+      同名）。
 - **T-05 文档 + ledger v11 + 收口**（AC-05/06）
   - SD-801..804 canonical 落位（锚注齐 + 只读边界/闭环语义定文）；
     ledger v10→v11（执行期实勘）。
