@@ -649,6 +649,90 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await page.locator('button[title="保存"]').click()
   await expect(page.getByRole('button', { name: 'inline-e2e · 1', exact: true })).toBeVisible({ timeout: 10_000 })
   console.log('[14 meta] inline tag 聚合 — 外造 inline 档保存后面板新行')
+  // meta 属性弧线（PLAN-011 T-04；vm 矩阵 meta 组属性子步同单）：预填
+  // 回显/取消零落盘/tags 保存+面板即时刷/alias 帽烟别名 exists 翻转/
+  // 删值弧线/保存流互作。input 定位 = placeholder 唯一锚（各弹层 input
+  // 形态独立——rename/新键 placeholder 各异无歧义）。悬空素材：**index.ad**
+  // body 尾 fs 直写 [[帽烟别名]]（**e2e 轨 D-19 口径：CJK 档 UI 开档全灭
+  // ——vm 10m CJK 开档仅 merged 同款**；index ASCII=出链行断言免 D-19；
+  // vm 侧素材=CAP 定理/CJK 无碍——links_json stateHas 断言免疫）。目标页 =
+  // wiki/Tasks（tags ② 已开档）。
+  const idxE2eFile = path.join(WORKSPACE, 'wiki', 'index.ad')
+  fs.writeFileSync(idxE2eFile, fs.readFileSync(idxE2eFile, 'utf8') + '\n[[帽烟别名]]\n', 'utf8')
+  const tasksE2eFile = path.join(WORKSPACE, 'wiki', 'Tasks.ad')
+  // 弹层内按钮 = role=dialog 作用域（radix portal——开弹层时 role=dialog
+  // 唯一；工具栏同名钮[保存]在 dialog 外不受扰）
+  const metaDialog = page.getByRole('dialog')
+  const metaBtn = (name: string) => metaDialog.getByRole('button', { name, exact: true })
+  // ① 入口 + 预填回显（tasks tag 已知答案）
+  await page.getByRole('menuitem', { name: '文件' }).click()
+  await page.getByText('页面属性…', { exact: true }).click()
+  await expect(page.getByText('页面属性', { exact: true })).toBeVisible({ timeout: 10_000 })
+  const metaTagsInput = page.getByPlaceholder('标签（逗号分隔）…')
+  await expect(metaTagsInput).toHaveValue('tasks', { timeout: 10_000 })
+  // ② 取消零落盘（ghost 值不落盘）
+  await metaTagsInput.fill('ghost-e2e')
+  await metaBtn('取消').click()
+  await expect(page.getByText('页面属性', { exact: true })).toBeHidden({ timeout: 10_000 })
+  expect(fs.readFileSync(tasksE2eFile, 'utf8').includes('ghost-e2e'), '取消零落盘').toBe(false)
+  // ③ tags 保存（追加 e2e-meta-tag）→ 弹层关 + tags 面板新行即时
+  await page.getByRole('menuitem', { name: '文件' }).click()
+  await page.getByText('页面属性…', { exact: true }).click()
+  await expect(page.getByText('页面属性', { exact: true })).toBeVisible({ timeout: 10_000 })
+  // 预填落定等待（vue 轨 fetch 型预填异步返回覆写竞态——fill 前先等
+  // 预填值现身；rename 预填=同步派生无此面，meta 首例）
+  await expect(page.getByPlaceholder('标签（逗号分隔）…')).toHaveValue('tasks', { timeout: 10_000 })
+  await page.getByPlaceholder('标签（逗号分隔）…').fill('tasks,e2e-meta-tag')
+  await metaBtn('保存').click()
+  await expect(page.getByText('页面属性', { exact: true })).toBeHidden({ timeout: 10_000 })
+  await expect(page.getByRole('button', { name: 'e2e-meta-tag · 1', exact: true })).toBeVisible({ timeout: 10_000 })
+  console.log('[14 meta] 属性弧线 — 预填回显/取消零落盘/tags 保存面板即时刷')
+  // ④ alias 解析兑现：Tasks 声明 帽烟别名 → index 出链行 exists 翻转
+  await page.getByRole('menuitem', { name: '文件' }).click()
+  await page.getByText('页面属性…', { exact: true }).click()
+  await expect(page.getByText('页面属性', { exact: true })).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByPlaceholder('标签（逗号分隔）…')).toHaveValue('tasks,e2e-meta-tag', { timeout: 10_000 })
+  await page.getByPlaceholder('别名（逗号分隔）…').fill('帽烟别名')
+  await metaBtn('保存').click()
+  await expect(page.getByText('页面属性', { exact: true })).toBeHidden({ timeout: 10_000 })
+  // index.ad 开档（ASCII——快开面板 check 11 已证形态；开面板前 Tasks
+  // 出链行按钮同名风险不涉 index）→ 出链段 帽烟别名 行 exists 断言
+  await page.getByRole('menuitem', { name: '视图' }).click()
+  await page.getByText('快速打开', { exact: true }).click()
+  await page.getByPlaceholder('过滤文件名…').fill('index')
+  await page.getByRole('button', { name: 'wiki/index.ad', exact: true }).click()
+  await expect(visibleEditor(page)).toContainText('Jade Garden', { timeout: 15_000 })
+  await page.getByRole('menuitem', { name: '视图' }).click()
+  await page.getByText('切换反链', { exact: true }).click()
+  await expect(page.getByRole('button', { name: '帽烟别名', exact: true })).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByText('帽烟别名（悬空）')).toHaveCount(0)
+  console.log('[14 meta] 属性弧线 — alias 帽烟别名 exists 翻转（出链行非悬空）')
+  // ⑤ 删值弧线：tags 清空（空值 = 删键）→ tags 面板行消失
+  await page.getByRole('menuitem', { name: '视图' }).click()
+  await page.getByText('快速打开', { exact: true }).click()
+  await page.getByRole('button', { name: 'wiki/Tasks.ad', exact: true }).click()
+  await expect(visibleEditor(page)).toContainText('原型设计', { timeout: 15_000 })
+  await page.getByRole('menuitem', { name: '文件' }).click()
+  await page.getByText('页面属性…', { exact: true }).click()
+  await expect(page.getByText('页面属性', { exact: true })).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByPlaceholder('标签（逗号分隔）…')).toHaveValue('tasks,e2e-meta-tag', { timeout: 10_000 })
+  await page.getByPlaceholder('标签（逗号分隔）…').fill('')
+  await metaBtn('保存').click()
+  await expect(page.getByText('页面属性', { exact: true })).toBeHidden({ timeout: 10_000 })
+  await expect(page.getByRole('button', { name: 'e2e-meta-tag · 1', exact: true })).toHaveCount(0, { timeout: 10_000 })
+  expect(fs.readFileSync(tasksE2eFile, 'utf8').includes('tags:'), '删值弧线 tags 键删除').toBe(false)
+  // ⑥ 保存流互作：body 追加保存 → frontmatter（aliases）段存续 + 标记入盘
+  await appendToEditor(page, ' META 互作标记。')
+  await neutralBlur()
+  await page.locator('button[title="保存"]').click()
+  await expect
+    .poll(() => fs.readFileSync(tasksE2eFile, 'utf8').includes('META 互作标记'), { timeout: 10_000 })
+    .toBe(true)
+  const tasksAfter = fs.readFileSync(tasksE2eFile, 'utf8')
+  expect(tasksAfter.includes('帽烟别名'), '保存流互作 frontmatter 存续').toBe(true)
+  console.log('[14 meta] 属性弧线 — 删值弧线 + 保存流互作（frontmatter 存续）')
+  await page.getByText('视图', { exact: true }).click()
+  await page.getByText('切换反链', { exact: true }).click()
   await page.getByText('视图', { exact: true }).click()
   await page.getByText('切换标签', { exact: true }).click()
   // wanted ⑤：模式入口（无 input 行/无检索钮 + 两行清单已知答案）

@@ -79,6 +79,10 @@ store EditorStore {
         // App .ft_sel、预览 = link_pages/tabs 现场派生）。
         var new_open bool = false
         var delete_open bool = false
+        // 页面属性弹层开态（PLAN-011；基线 v10 面）：弹层面分野同
+        // rename_open——meta_q_tags/meta_q_aliases 在 App 模型（数据态
+        // 不入 store——D-20④ 同款裁定：find_q/rename_q 先例）。
+        var meta_open bool = false
     }
 
     // msg 载荷单类型（编译器约束）：Open 单 map、Edit 单 str。
@@ -95,6 +99,7 @@ store EditorStore {
         CreateConfirmOpen(str), CreateConfirmCancel,
         RenameOpen, RenameClose, TabsRenamed(str, str),
         NewOpen, NewClose, DeleteOpen, DeleteClose, CloseTabsOf(str),
+        MetaOpen, MetaClose,
     }
 
     on {
@@ -466,6 +471,18 @@ store EditorStore {
         }
         .DeleteClose -> {
             .delete_open = false
+            .console = console_lines()
+        }
+
+        // ---- 页面属性弹层（PLAN-011）：Open/Close 只翻开态（入口守卫
+        // 与 meta_q 双预填在 App 侧 .ActMeta——action 不挂 enabled[D-24③
+        // ——handler 守卫 untitled no-op]；取消零落盘——无 back 调用）。----
+        .MetaOpen -> {
+            .meta_open = true
+            .console = console_lines()
+        }
+        .MetaClose -> {
+            .meta_open = false
             .console = console_lines()
         }
 

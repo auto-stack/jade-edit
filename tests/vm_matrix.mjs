@@ -65,8 +65,14 @@
 //             [quit 前置——typeWholeDoc 目标档]）+ F-R9-4 案（PLAN-010
 //             ⑨——删激活靶档→提及行随新激活刷新消[Fr94Src/Fr94Del 弹
 //             层造档，收尾双删复原]）。执行序在 12 后 9 前
-//   14 meta   标签面板+wanted 模式八子步 + inline tag 子步（PLAN-008 +
-//             PLAN-009；双件同组——find 组先例。tags 子步：面板开 7 tag
+//   14 meta   标签面板+wanted 模式八子步 + inline tag 子步 + 属性子步
+//             六案（PLAN-008 + PLAN-009 + **PLAN-011**；多件同组——find
+//             组先例。属性子步：untitled no-op/预填回显[目标页双臂异位
+//             merged=CAP 定理/split=Tasks，D-19]/取消零落盘[磁盘零泄漏
+//             面]/tags 保存+面板即时刷/alias 帽烟别名 exists 翻转
+//             [links_json 双臂]/删值弧线[全空白=删键]/保存流互作
+//             [frontmatter 存续]；弹层定位=标题锚 content 子树——D-27④
+//             同款纪律）。tags 子步：面板开 7 tag
 //             行[语料实勘全集——执行期校正：7 非计划记的 6，Hello
 //             World.ad 实有 demo]/展开导航 ASCII 双臂+CJK 仅 merged[D-19]/
 //             Save 刷新外造新行。wanted 子步：模式入口无 input 行无检索
@@ -117,7 +123,7 @@ const argOf = (name) => {
   return i >= 0 ? args[i + 1] : undefined
 }
 const ARM = argOf('--arm') ?? 'all' // all | merged | split
-const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v9.txt')
+const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v10.txt')
 const SAVE_BASELINE = argOf('--save-baseline')
 
 const EDIT_MARKER = 'jade-edit 冒烟标记：编辑回写可见。'
@@ -412,17 +418,28 @@ async function runArm(arm, port) {
       const stateDump = (await callTool('autoui_state', {})).trim()
       const snapIds = JSON.stringify([...(await snapshotText()).matchAll(/#(vnode_\d+)/g)].map((m) => m[1]))
       const headerFor = (file) =>
-        `// jade-edit vm 结构基线 v9（PLAN-009 T-04 重锁；v8=PLAN-008 T-04、v7=PLAN-007 T-04、\n` +
-        `// v6=PLAN-006 T-04、v5=PLAN-005 T-04、v4=PLAN-004 T-04、v3=PLAN-003 T-04、v2=PLAN-002\n` +
-        `// T-01、v1=PLAN-001 T-04 换基、v0=PLAN-081 T-05 均留档）。\n` +
-        `// 重锁因由：App 模型新增 mention_rows 字段（PLAN-009 未链接提及数据态——唯一新模型\n` +
-        `// 字段，store 零新增）进 autoui_state 全量 dump；反链面板第三段（未链接提及）在\n` +
-        `// backlinks_open 块内——基线采样点面板关故 snapshot vnode id 序列不扩（段节点仅在\n` +
-        `// 面板开时渲染）；零新增键位/菜单项。\n` +
-        `// 仪器同 v2..v8：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态\n` +
-        `//（chrome 全套 + Hello World.ad 开；查找面板/建页弹层/新建弹层/重命名弹层/删除弹层/\n` +
-        `// 标签面板/反链面板未开——find_*/create_*/new_*/rename_*/delete_*/tags_*/mention_rows 全为\n` +
-        `// 默认值入 dump）。\n` +
+        `// jade-edit vm 结构基线 v10（PLAN-011 T-04 重锁；v9=PLAN-009 T-04、v8=PLAN-008 T-04、
+` +
+        `// v7=PLAN-007 T-04、v6=PLAN-006 T-04、v5=PLAN-005 T-04、v4=PLAN-004 T-04、v3=PLAN-003
+` +
+        `// T-04、v2=PLAN-002 T-01、v1=PLAN-001 T-04 换基、v0=PLAN-081 T-05 均留档）。
+` +
+        `// 重锁因由：store 新增 meta_open 弹层开态 + App 模型新增 meta_q_tags/meta_q_aliases
+` +
+        `// 双 input 数据态（PLAN-011 页面属性写面）进 autoui_state 全量 dump；页面属性弹层
+` +
+        `//（dialog 第六实例，闭态恒渲染 D-23③）节点进 snapshot vnode id 序列；新增键位
+` +
+        `// Ctrl+I + menubar「页面属性…」项。
+` +
+        `// 仪器同 v2..v9：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态
+` +
+        `//（chrome 全套 + Hello World.ad 开；查找面板/建页弹层/新建弹层/属性弹层/重命名弹层/
+` +
+        `// 删除弹层/标签面板/反链面板未开——find_*/create_*/new_*/meta_*/rename_*/delete_*/
+` +
+        `// tags_*/mention_rows 全为默认值入 dump）。
+` +
         `// 再生成：node tests/vm_matrix.mjs --save-baseline ${path.relative(repoRoot, file).replace(/\\\\/g, '/')}\n`
       const baselineBodyOf = () => `## state\n${stateDump}\n\n## snapshot-ids\n${snapIds}\n`
       if (SAVE_BASELINE) {
@@ -432,9 +449,9 @@ async function runArm(arm, port) {
       } else if (fs.existsSync(BASELINE)) {
         const raw = fs.readFileSync(BASELINE, 'utf8')
         const ok = raw === headerFor(BASELINE) + baselineBodyOf()
-        check('B', 'baseline', ok, ok ? '结构基线 v9 零漂移（state 逐字节 + id 序列）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
+        check('B', 'baseline', ok, ok ? '结构基线 v10 零漂移（state 逐字节 + id 序列）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
       } else {
-        console.log('  [baseline] structure-v9 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v9.txt')
+        console.log('  [baseline] structure-v10 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v10.txt')
       }
     }
 
@@ -925,6 +942,147 @@ async function runArm(arm, port) {
       await sleep(300)
     }
     if (!metaInlineBaselineOk) throw new Error('inline ⑧ 语料基线漂移（7 tag 行不全或 block-project-a 入集）')
+    // meta 属性子步（PLAN-011 T-04；组内子步不占检查位）：页面属性弹层
+    // 六子步弧线（untitled no-op/预填回显/改值保存+tags 面板即时刷/alias
+    // 解析 exists 翻转/取消零落盘/删值弧线/保存流互作）。目标页双臂异位
+    //（merged=CAP 定理[tags ② 已开档]/split=Tasks[D-19 CJK 开档缺——tags
+    // ② 同款口径]）。弹层内定位 = 标题锚「页面属性」→ content 子树扫
+    //（各闭态弹层恒渲染 D-23③——全树首匹配会误中他弹层按钮/input，
+    // F-R10-1 修复窗同款纪律）。预置：Hello World body 尾 fs 直写
+    // [[帽烟别名]]（悬空相位素材——MetaGo 刷新族 LinksRefreshOf 收口）。
+    const findMetaContent = async () => {
+      const t = await snapshot()
+      const title = findFirst(t, (n) => ownText(n) === '页面属性')
+      if (!title) throw new Error('meta dialog title not found in snapshot')
+      const header = findParent(t, title)
+      const content = findParent(t, header)
+      if (!content) throw new Error('meta dialog content not resolved')
+      return content
+    }
+    const typeIntoMetaInput = async (idx, text) => {
+      const content = await findMetaContent()
+      const inputs = []
+      const collectInputs = (n) => {
+        if (n.head.startsWith('input ') && elementIdOf(n)) inputs.push(n)
+        for (const c of n.children) collectInputs(c)
+      }
+      collectInputs(content)
+      const inp = inputs[idx]
+      if (!inp) throw new Error(`meta input[${idx}] not found in dialog content`)
+      const res = await callTool('autoui_action', { element_id: elementIdOf(inp), action: 'type_text', value: text })
+      if (!/status: ok/.test(res)) throw new Error(`meta type_text not ok: ${res}`)
+    }
+    const pressInMetaDialog = async (buttonText) => {
+      const content = await findMetaContent()
+      const btn = findFirst(content, (n) => n.head.startsWith('button ') && elementIdOf(n) && ownText(n) === buttonText)
+      if (!btn) throw new Error(`meta button "${buttonText}" not found in dialog content`)
+      const res = await callTool('autoui_action', { element_id: elementIdOf(btn), action: 'press' })
+      if (!/status: ok/.test(res)) throw new Error(`press ${buttonText}(meta) not ok: ${res}`)
+    }
+    const metaTargetTitle = arm === 'merged' ? 'wiki/CAP 定理' : 'wiki/Tasks'
+    const metaTargetRel = arm === 'merged' ? 'wiki/CAP 定理.ad' : 'wiki/Tasks.ad'
+    const metaTargetTags0 = arm === 'merged' ? 'distributed-systems,theory' : 'tasks'
+    const hwBodyPath = path.join(FIXTURE, 'wiki', 'Hello World.ad')
+    fs.writeFileSync(hwBodyPath, fs.readFileSync(hwBodyPath, 'utf8') + '\n[[帽烟别名]]\n', 'utf8')
+    // ①a untitled no-op：ActNew → 未命名 → 入口 press → meta_open 恒 false
+    //（action 不挂 enabled D-24③——handler 守卫语义兜底）；收尾关 tab
+    await pressButton('文件', { exact: true })
+    await pressButton('新建', { exact: true })
+    await stateIs('active_title', '未命名')
+    await pressButton('文件', { exact: true })
+    await pressButton('页面属性…', { exact: true })
+    await stateIs('meta_open', 'false')
+    await pressActiveTabClose('未命名')
+    // 显式重激活目标页（untitled 关闭后激活落点=末位 clamp 面非邻位回
+    // 落——tab 序实勘）
+    await pressButton(metaTargetTitle, { exact: true })
+    await stateIs('active_title', metaTargetTitle)
+    // ①b 有路径档弹层 + 预填回显（语料已知答案）
+    await pressButton('文件', { exact: true })
+    await pressButton('页面属性…', { exact: true })
+    await stateIs('meta_open', 'true')
+    let metaPrefillOk = false
+    for (const dl = Date.now() + 8000; ; ) {
+      const st = await stateText('meta_q_tags')
+      metaPrefillOk = st.includes(metaTargetTags0)
+      if (metaPrefillOk || Date.now() > dl) break
+      await sleep(300)
+    }
+    if (!metaPrefillOk) throw new Error(`meta 预填回显失守（want ${metaTargetTags0}）`)
+    // ④ 取消零落盘（前置在改值前——取消路先行的 10c 同款纪律）
+    await typeIntoMetaInput(0, 'ghost-tag-x')
+    await pressInMetaDialog('取消')
+    await stateIs('meta_open', 'false')
+    // 取消零落盘 = 磁盘零泄漏面（闭态弹层 input 回显恒在——快照断言
+    // 不适用，D-23③ 恒渲染语义）
+    const metaCancelOk = !fs.readFileSync(path.join(FIXTURE, metaTargetRel), 'utf8').includes('ghost-tag-x')
+    if (!metaCancelOk) throw new Error('meta 取消零落盘失守（ghost 值落盘）')
+    // ② 改 tags 保存（追加 smoke-tag）→ 弹层关 + 磁盘 + tags 面板新行即时
+    await pressButton('文件', { exact: true })
+    await pressButton('页面属性…', { exact: true })
+    await stateIs('meta_open', 'true')
+    await typeIntoMetaInput(0, metaTargetTags0 + ',smoke-tag')
+    await pressInMetaDialog('保存')
+    await stateIs('meta_open', 'false')
+    let metaPanelOk = false
+    for (const dl = Date.now() + 8000; ; ) {
+      const t = await snapshotText()
+      const region = t.slice(t.indexOf('TAGS'))
+      metaPanelOk = region.includes('"smoke-tag · 1"')
+      if (metaPanelOk || Date.now() > dl) break
+      await sleep(300)
+    }
+    const metaDisk2 = fs.readFileSync(path.join(FIXTURE, metaTargetRel), 'utf8')
+    const metaSaveOk2 = metaPanelOk && metaDisk2.includes('smoke-tag')
+    if (!metaSaveOk2) throw new Error(`meta tags 保存失守（panel=${metaPanelOk}）`)
+    // ③ alias 解析兑现：CAP 定理/split 别名声明 → [[帽烟别名]] exists 翻转
+    //（links_json 断言双臂同构——D-19 免疫）
+    await pressButton('文件', { exact: true })
+    await pressButton('页面属性…', { exact: true })
+    await stateIs('meta_open', 'true')
+    await typeIntoMetaInput(1, '帽烟别名')
+    await pressInMetaDialog('保存')
+    await stateIs('meta_open', 'false')
+    let metaAliasOk = false
+    for (const dl = Date.now() + 8000; ; ) {
+      metaAliasOk = (await stateText('links_json')).includes('{\\"target\\":\\"帽烟别名\\",\\"anchor\\":\\"\\",\\"exists\\":true')
+      if (metaAliasOk || Date.now() > dl) break
+      await sleep(300)
+    }
+    if (!metaAliasOk) throw new Error('alias 解析兑现失守（帽烟别名 exists 未翻转）')
+    // ⑤ 删值弧线：tags input 清空（全空白 = 删键口径）→ tags 面板行消失
+    await pressButton('文件', { exact: true })
+    await pressButton('页面属性…', { exact: true })
+    await stateIs('meta_open', 'true')
+    await typeIntoMetaInput(0, ' ')
+    await pressInMetaDialog('保存')
+    await stateIs('meta_open', 'false')
+    let metaDelOk = false
+    for (const dl = Date.now() + 8000; ; ) {
+      const t = await snapshotText()
+      const region = t.slice(t.indexOf('TAGS'))
+      metaDelOk = !region.includes('"smoke-tag · 1"')
+      if (metaDelOk || Date.now() > dl) break
+      await sleep(300)
+    }
+    const metaDisk5 = fs.readFileSync(path.join(FIXTURE, metaTargetRel), 'utf8')
+    const metaDelDiskOk = metaDelOk && !metaDisk5.includes('tags:')
+    if (!metaDelDiskOk) throw new Error('meta 删值弧线失守（tags 键未删）')
+    // ⑥ 改写后档保存流回归：body 保存（整文+标记）→ frontmatter 存续
+    //（aliases 段在——磁盘现读界符段语义）+ 标记入盘
+    {
+      const cur = fs.readFileSync(path.join(FIXTURE, metaTargetRel), 'utf8')
+      const body = cur.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '')
+      const editorId = await findEditorId()
+      if (!editorId) throw new Error('editor not found（meta ⑥）')
+      await callTool('autoui_action', { element_id: editorId, action: 'type_text', value: body + '\n\nMETA 保存流互作标记。\n' })
+      await stateIs('active_dirty', 'true')
+      await pressButton('保存')
+      await stateIs('active_dirty', 'false')
+    }
+    const metaDisk6 = fs.readFileSync(path.join(FIXTURE, metaTargetRel), 'utf8')
+    const metaInterOk = metaDisk6.includes('META 保存流互作标记') && metaDisk6.includes('帽烟别名')
+    if (!metaInterOk) throw new Error('meta 保存流互作失守（标记/frontmatter 存续）')
     await pressButton('视图', { exact: true })
     await pressButton('切换标签', { exact: true })
     await stateIs('tags_open', 'false')
@@ -1000,8 +1158,8 @@ async function runArm(arm, port) {
     await pressButton('视图', { exact: true })
     await pressButton('切换反链', { exact: true })
     await stateIs('backlinks_open', 'true')
-    check('14', 'meta', metaTagsOk && metaSaveOk && metaInlineOk && metaInlineBaselineOk && wantedNoInput && wantedKnown && wantedRowOk && wantedCancelOk && wantedFlipOk && wantedGoneOk && wantedDiskOk && wantedEmptyOk,
-      `meta 组八子步 + inline 子步（tags：面板开 7 tag 行[语料实勘全集]/展开导航 ASCII 双臂+CJK 仅 merged[D-19]/Save 刷新外造新行；inline：body #inline-meta 档保存后面板新行+语料基线零漂移回归[忽略面负向无 block-project-a]；wanted：模式入口无 input 行无检索钮/语料已知答案 页面名（1）+外造 Wanted Target（1）/取消零落盘/创建开档+消缺+exists 翻转+模板逐字节/空态闭环（无悬空链接））`)
+    check('14', 'meta', metaTagsOk && metaSaveOk && metaInlineOk && metaInlineBaselineOk && wantedNoInput && wantedKnown && wantedRowOk && wantedCancelOk && wantedFlipOk && wantedGoneOk && wantedDiskOk && wantedEmptyOk && metaPrefillOk && metaCancelOk && metaSaveOk2 && metaAliasOk && metaDelDiskOk && metaInterOk,
+      `meta 组八子步 + inline 子步 + 属性子步（tags：面板开 7 tag 行[语料实勘全集]/展开导航 ASCII 双臂+CJK 仅 merged[D-19]/Save 刷新外造新行；inline：body #inline-meta 档保存后面板新行+语料基线零漂移回归[忽略面负向无 block-project-a]；wanted：模式入口无 input 行无检索钮/语料已知答案 页面名（1）+外造 Wanted Target（1）/取消零落盘/创建开档+消缺+exists 翻转+模板逐字节/空态闭环（无悬空链接）；属性[PLAN-011]：untitled no-op/预填回显/取消零落盘/tags 保存+面板即时刷/alias 帽烟别名 exists 翻转[links_json 双臂]/删值弧线[空空白=删键]/保存流互作[frontmatter 存续]——目标页双臂异位 merged=CAP 定理/split=Tasks[D-19]）`)
 
     // 11 find（PLAN-004 T-04）：查找面板双模式。执行序在 quit 前（quit
     // 恒为臂内最后一项）；先关反链面板（check 10 开着）——find 行断言免

@@ -1,12 +1,13 @@
 ---
 plan_id: PLAN-011
-status: executing
+status: review
+completion_kind: executing_done
 feature_name: page-meta-write-slice
 author: [zhaopuming]
 created_at: 2026-09-23T16:49:04+08:00
-updated_at: 2026-09-23T19:05:00+08:00
+updated_at: 2026-09-23T21:55:00+08:00
 plan_revision: 1
-current_step: 0
+current_step: 5
 total_steps: 5
 supersedes_spec_components: []
 new_spec_components:
@@ -190,8 +191,8 @@ Ctrl+I = 页面属性（新键位，唯一增量）；menubar 文件菜单「重
   对表 + §2.1 论据；handoff 未否决即生效（PLAN-004..010 同款约定）。
 - **D-14 受控裁决按默认提案落地**（§0 三原则）——handoff 呈报，
   用户可翻（翻则 r2：任意键编辑面/时间戳面另行评估）。
-- **work 启动前提**：PLAN-010 归档（单写者主线）；本计划保持
-  drafting 至彼时。
+  - **work 启动前提**：PLAN-010 归档（单写者主线）；本计划保持
+    drafting 至彼时。
 - 仓库/动作范围：仅 jade-edit 主检出；冻结池与家族仓零接触
   （AC-05）。无预算/自动续跑/工具链版本指定（沿 README：≥1652）。
 
@@ -361,6 +362,86 @@ pub fn set_page_meta_impl(path, tags, aliases) str {
   - `next: work`（010 归档后 T-01 起）。
   - **D-14 受控裁决随 handoff 呈报**（默认三原则——用户未否决即
     生效）；无待裁探针（界符族/弹层族/单取形全在册）。
+
+- **2026-09-23 work handoff（auto-plan-work，本会话）**：
+  - `stage: work`，PLAN-011，revision 1。
+  - `outcome: pass`——execution_done → review handoff。
+  - **耦合层核查**（双层预立项 §0 两层，work 启动时履行）：①010 执行
+    偏离共享面对表——resolve_target 形态=契约内/page_fm_list 契约内/
+    LinksRefreshOf=内部串联扩展（接口不变，MetaGo 刷新族直用）/提及
+    行结构不涉本计划面——**零 r2 触发**（§10.6 docs-only 不触发条同
+    判）；基线 v9 因上游展开 149 节点现行——011 v10 重锁流程不受影
+    响；②010 复审 findings 两件（F-R10-1 已修复/F-R10-2 记档）均不
+    涉本计划共享面。
+  - `work_summary`:
+    - **T-01 back 双契约+写引擎+十案直证**（提交 af126d0）：
+      - `src/back/api.at`: `page_meta` GET（裸数组 [{key,value}] 缺席
+        项不装配/csv_join+json_esc）+ `set_page_meta` POST（D-19）。
+      - `src/back/wsys.at`: `csv_split`（去重/trim）/`fm_block_lines`
+        （增建组块）/`fm_set_block`（标记法改写——原位插新块无缩进归
+        一/旧块 skipping 食项行/非目标行逐字节直通/末元素 artifact 抑
+        制）/`page_meta_json`/`set_page_meta_impl`（五步——幂等防线
+        两键空+档无键 no-op/CRLF 继承=新段行尾 \r+界符行原样直通/
+        body 重接 len-1 口径）。
+      - `tests/probe_page_meta.mjs`: 十案+互作案双臂全绿（磁盘逐字节
+        一致）。执行期校正三件：write_body 不挂 api 用 write_wiki/幂
+        等案独立素材档/split GET 响应 JSON 引号解包；**引擎修正两件**
+        （skipping 不设 removed 门——首版键行删后旧块项行漏出/body
+        len-1 重接）→ D-28①②。
+      - vm 矩阵现行组回归双臂全绿一次过（35 PASS）。
+    - **T-02 front 属性弹层 + T-03 保存流**：
+      - `src/front/editor_store.at`: `meta_open` 开态 + MetaOpen/
+        MetaClose 双口。
+      - `src/front/app.at`: 七触点（import/msg 五件/model meta_q 双字
+        段/action file.meta[Ctrl+I 不挂 enabled D-24③]/menubar 文件项
+        [重命名与删除之间]/dialog 第六实例[双 input placeholder 唯一
+        锚——**声明位于 rename 弹层前**保 input 序「居末」锚]/ActMeta
+        预填回显[单取形]+MetaGo 保存流[自派生刷新族——LinksRefreshOf
+        +TagsRefresh，tree 不刷]）。
+      - 验证：pnpm build PASS（首跑 gen 步瞬态败重跑绿如实记）+ merged
+        冒烟 16 项全过（弹层 scoped 定位=标题锚 content 子树——各闭态
+        弹层恒渲染全树首匹配误中他弹层，D-27④ 同款纪律；取消零落盘/
+        tags 面板即时刷/alias 悬空→声明→exists 翻转全弧线）。
+    - **T-04 测试扩单+基线 v10+判绿**：
+      - `tests/vm_matrix.mjs`: meta 组属性子步六案双臂（untitled no-op/
+        预填回显双臂异位 merged=CAP 定理 split=Tasks[D-19]/取消零落盘
+        [磁盘零泄漏面——闭态弹层 input 回显恒在不适用快照断言]/tags
+        保存+面板即时刷/alias 帽烟别名 exists 翻转[links_json 断言双
+        臂 D-19 免疫]/删值弧线[全空白=删键]/保存流互作[frontmatter 存
+        续]；弹层内定位=标题锚 content 子树扫）；双臂 ALL GREEN。
+      - `tests/baseline/structure-v10.txt`: 计划内重锁（store meta_open
+        + App meta_q_tags/meta_q_aliases 入 dump + 弹层第六实例闭态恒
+        渲染节点入 id 序列 + Ctrl+I 键位；v9 留档）。
+      - `e2e/matrix.spec.ts`: 14 meta 段属性弧线（placeholder 唯一锚/
+        **role=dialog 按钮作用域**[radix portal——工具栏同名保存钮免误
+        中]/**fetch 型预填落定等待**[vue 轨覆写竞态——fill 前置
+        toHaveValue]/快开面板导航[素材 **index.ad ASCII——D-19 免疫**
+        ：e2e 轨 CJK 档 UI 开档全灭，vm 侧素材 CAP 定理无碍=links_json
+        断言]/磁盘 frontmatter 存续）；**e2e 5 跑 1 绿** + gate 2 跑 1
+        绿（D-21 保存点 write_wiki 400 丢参形态续录 + **8211 僵尸
+        serve-back 端口清卫前置**[崩溃轮残留毒化面]）。
+      - `node scripts/gate.mjs`: **ALL GREEN**（merged 16/16 + split
+        15/15 + build + e2e 28.4s——绿跑实录在 gate-green-011.log）。
+    - **T-05 文档+ledger v14+收口**：
+      - `docs/ARCHITECTURE.md`: SD-1101（§5 页面属性写面子段——三原
+        则/双契约/写引擎五步/front 面含 fetch 型预填竞态在册）+ SD-1102
+        （§6 meta 属性子步注记+基线 v10）。
+      - `docs/README.md`: SD-1103（Tests 扩定+N 定谳）+ SD-1104（第九
+        切片条目+ledger v14 指针）。
+      - `docs/parity-ledger.md`: v13→v14——D-28 四件（①fm_set_block
+        skipping 门控 ②body len-1 重接 ③vue fetch 型预填覆写竞态首例
+        [D-26② 家族新实例] ④vm/e2e 树行 accessible name 双形态留观）+
+        D-21 v14 扩记。
+      - 负向证全清：.console App 上下文零赋值（store 上下文
+        console_lines=在册合法形态）/gen/ 零手改/deps 冻结池零接触/语
+        料源零写入。
+  - **执行期事故如实记（D-28④ 关联）**：e2e 判绿窗曾现 30 连败假象—
+    —前 17 轮死于 python 批量补丁误伤既有 [7 tab] 行（getByText
+    'Tasks.ad'+'原型设计' 模式与属性块同文，str.replace 全局双杀；
+    155 行恢复后即顺）——**批量替换必须逐处 count 核对**教训在案；
+    bisect 法（stash 隔离 src vs spec vs 全量三段）为正解路径。
+- 仓库/动作范围：仅 jade-edit 主检出；冻结池与家族仓零接触
+  （AC-05）。无预算/自动续跑/工具链版本指定（沿 README：≥1652）。
 
 ## 10. 待澄清事项
 

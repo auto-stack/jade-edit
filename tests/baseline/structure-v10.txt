@@ -1,0 +1,66 @@
+// jade-edit vm 结构基线 v10（PLAN-011 T-04 重锁；v9=PLAN-009 T-04、v8=PLAN-008 T-04、
+// v7=PLAN-007 T-04、v6=PLAN-006 T-04、v5=PLAN-005 T-04、v4=PLAN-004 T-04、v3=PLAN-003
+// T-04、v2=PLAN-002 T-01、v1=PLAN-001 T-04 换基、v0=PLAN-081 T-05 均留档）。
+// 重锁因由：store 新增 meta_open 弹层开态 + App 模型新增 meta_q_tags/meta_q_aliases
+// 双 input 数据态（PLAN-011 页面属性写面）进 autoui_state 全量 dump；页面属性弹层
+//（dialog 第六实例，闭态恒渲染 D-23③）节点进 snapshot vnode id 序列；新增键位
+// Ctrl+I + menubar「页面属性…」项。
+// 仪器同 v2..v9：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态
+//（chrome 全套 + Hello World.ad 开；查找面板/建页弹层/新建弹层/属性弹层/重命名弹层/
+// 删除弹层/标签面板/反链面板未开——find_*/create_*/new_*/meta_*/rename_*/delete_*/
+// tags_*/mention_rows 全为默认值入 dump）。
+// 再生成：node tests/vm_matrix.mjs --save-baseline tests\baseline\structure-v10.txt
+## state
+State:
+  __emit_msg: "" (str)
+  __emit_payload: nil (unknown)
+  __toast: "" (str)
+  active_body: "\n# Hello World ^hello-world\n\n这是一段示例文本，包含 **粗体**、*斜体* 和 `行内代码`。 ^384bb695-4bac-4618-a34a-1eab4c6fa82e\n\n## 列表 ^heading\n\n- 项目一 ^4517d73f-c7fd-4f20-8987-1ef5dcee0370\n- 项目二 ^d6ffab27-459f-40ee-a794-2ec0b2e2408f\n  - 子项目 A ^c00221ad-44e1-4b8d-b152-af4c3877ad29\n  - 子项目 B ^e6c05cec-2560-4a2f-9291-e233babc7519\n\n## 任务列表 ^heading-1\n\n- [x] 创建知识库 ^f8ddf99a-e16b-41a6-b3c4-414c52b450ac\n- [x] 学习 AutoDown 语法 ^d2be7ed2-c0b0-47d5-869c-42e526128a77\n- [ ] 探索 [[CAP 定理]] ^8c13bf06-8121-435b-82e6-7ef71d429204\n\n## 代码块 ^heading-2\n\n```rust\nfn main() {\n    println!(\"Hello, Jade Garden!\");\n}\n```\n\n返回 [[首页]]。 ^b15b3cce-c55b-4826-8630-287584e8f330\n\n\njade-edit 冒烟标记：编辑回写可见。\n外部重载标记：重载可见。\n" (str)
+  active_dirty: false (bool)
+  active_key: "wiki/Hello World.ad" (str)
+  active_path: "wiki/Hello World.ad" (str)
+  active_title: "wiki/Hello World" (str)
+  backlinks_open: false (bool)
+  bl_rows: [<vmref>, <vmref>, <vmref>] (list)
+  confirm_idx: -1 (int)
+  confirm_open: false (bool)
+  console: "saved: wiki/Hello World.ad\nopen: wiki/Hello World.ad\n[boot] MCP automation on 127.0.0.1:9381\n[boot] AutoUI VM app \"App\" started (1 app window)" (str)
+  console_open: false (bool)
+  create_confirm_open: false (bool)
+  create_target: "" (str)
+  delete_open: false (bool)
+  edits: 1 (int)
+  find_mode: "files" (str)
+  find_open: false (bool)
+  find_q: "" (str)
+  find_ran: false (bool)
+  find_rows: [] (list)
+  ft_expanded: ["wiki"] (list)
+  ft_nodes: [<vmref>, <vmref>] (list)
+  ft_sel: "wiki/Hello World.ad" (str)
+  link_pages: [<vmref>, <vmref>, <vmref>, <vmref>, <vmref>] (list)
+  links_json: "[{\"path\":\"wiki/CAP 定理.ad\",\"title\":\"CAP 定理\",\"links\":[{\"target\":\"Hello World\",\"anchor\":\"\",\"exists\":true,\"target_path\":\"wiki/Hello World.ad\"},{\"target\":\"Projects\",\"anchor\":\"\",\"exists\":true,\"target_path\":\"wiki/Projects.ad\"}]},{\"path\":\"wiki/Hello World.ad\",\"title\":\"Hello World\",\"links\":[{\"target\":\"CAP 定理\",\"anchor\":\"\",\"exists\":true,\"target_path\":\"wiki/CAP 定理.ad\"},{\"target\":\"首页\",\"anchor\":\"\",\"exists\":false,\"target_path\":\"\"}]},{\"path\":\"wiki/index.ad\",\"title\":\"index\",\"links\":[{\"target\":\"Hello World\",\"anchor\":\"\",\"exists\":true,\"target_path\":\"wiki/Hello World.ad\"},{\"target\":\"CAP 定理\",\"anchor\":\"\",\"exists\":true,\"target_path\":\"wiki/CAP 定理.ad\"},{\"target\":\"Projects\",\"anchor\":\"\",\"exists\":true,\"target_path\":\"wiki/Projects.ad\"},{\"target\":\"页面名\",\"anchor\":\"\",\"exists\":false,\"target_path\":\"\"}]},{\"path\":\"wiki/Projects.ad\",\"title\":\"Projects\",\"links\":[]},{\"path\":\"wiki/Tasks.ad\",\"title\":\"Tasks\",\"links\":[{\"target\":\"Hello World\",\"anchor\":\"\",\"exists\":true,\"target_path\":\"wiki/Hello World.ad\"},{\"target\":\"CAP 定理\",\"anchor\":\"block-consistency\",\"exists\":true,\"target_path\":\"wiki/CAP 定理.ad\"}]}]" (str)
+  mention_rows: [] (list)
+  meta_open: false (bool)
+  meta_q_aliases: "" (str)
+  meta_q_tags: "" (str)
+  new_open: false (bool)
+  new_q: "" (str)
+  ol_rows: [<vmref>, <vmref>] (list)
+  open_count: 0 (int)
+  quit_confirm_open: false (bool)
+  rename_open: false (bool)
+  rename_q: "" (str)
+  save_note: "reloaded: wiki/Hello World.ad" (str)
+  status: "ready" (str)
+  tab: 0 (int)
+  tab_count: 1 (int)
+  tabs: [<vmref>] (list)
+  tag_expanded: "" (str)
+  tags_open: false (bool)
+  tags_rows: [<vmref>, <vmref>, <vmref>, <vmref>, <vmref>, <vmref>, <vmref>] (list)
+  wanted_rows: [<vmref>, <vmref>] (list)
+  ws_name: "workspace" (str)
+
+## snapshot-ids
+["vnode_14695981039346656037","vnode_12642422519345821663","vnode_4305065243889594349","vnode_4321691031005245367","vnode_15876414090542715893","vnode_15876396498356671042","vnode_4321673438819200516","vnode_15861108888683884748","vnode_15861126480869929599","vnode_4321726215377335069","vnode_15907024494260378183","vnode_15907006902074333332","vnode_4321708623191290218","vnode_15891719292401547038","vnode_15891736884587591889","vnode_4305047651703549498","vnode_4306385829146414222","vnode_4306403421332459073","vnode_4306350644774324520","vnode_4306368236960369371","vnode_4306456197890593626","vnode_5950990685131874798","vnode_4306473790076638477","vnode_4306421013518503924","vnode_12642404927159776812","vnode_4289760042030763204","vnode_12781790891868631308","vnode_15900409796501198692","vnode_8766178259980025580","vnode_8766195852166070431","vnode_9233488399530102317","vnode_15900427388687243543","vnode_15900444980873288394","vnode_15900462573059333245","vnode_8812093865556519015","vnode_2284627688790664965","vnode_1899818256145108351","vnode_1854616255858290381","vnode_2284610096604620114","vnode_2284592504418575263","vnode_8812076273370474164","vnode_2269322486931833820","vnode_10359918117008494292","vnode_2269340079117878671","vnode_2269357671303923522","vnode_2269375263489968373","vnode_8812129049928608717","vnode_2315238092508327255","vnode_3426362608127888085","vnode_2315220500322282404","vnode_2315273276880416957","vnode_2315255684694372106","vnode_8812111457742563866","vnode_2299932890649496110","vnode_11886462468991274026","vnode_2299950482835540961","vnode_2299897706277406408","vnode_2299915298463451259","vnode_8812023496812339611","vnode_2223406881355340385","vnode_17293473625889100499","vnode_2223389289169295534","vnode_2223371696983250683","vnode_2223354104797205832","vnode_8812005904626294760","vnode_2208101679496509240","vnode_7306829413042934824","vnode_2208119271682554091","vnode_2208136863868598942","vnode_2208154456054643793","vnode_8812058681184429313","vnode_2254017285073002675","vnode_2253999692886957824","vnode_2254052469445092377","vnode_4289777634216808055","vnode_12797096093727462453","vnode_7440309935637812751","vnode_8742182554021542781","vnode_5393886225687582055","vnode_5393868633501537204","vnode_16367229749138979548","vnode_7440292343451767900","vnode_8726877352162711636","vnode_12797078501541417602","vnode_12797060909355372751","vnode_12642457703717911365","vnode_4335658055421211788","vnode_5832930181129193956","vnode_5841778465779584620","vnode_5841796057965629471","vnode_5832947773315238807","vnode_5857083667638415765","vnode_5857066075452370914","vnode_12642440111531866514","vnode_4320388037934470345","vnode_14323640445710242187","vnode_7392318523720847153","vnode_7392300931534802302","vnode_14323622853524197336","vnode_7377013321862016008","vnode_7377030914048060859","vnode_7377048506234105710","vnode_12642352150601642259","vnode_4243826844268224918","vnode_1253297125180854754","vnode_5985752701530481414","vnode_5985770293716526265","vnode_1253314717366899605","vnode_1253261940808765052","vnode_5955142297812819124","vnode_5955159889998863975","vnode_12642334558415597408","vnode_4228556826781483475","vnode_9744007389761902985","vnode_7536292759471743947","vnode_7536275167285699096","vnode_9743989797575858134","vnode_9743972205389813283","vnode_7505682355754081657","vnode_7505664763568036806","vnode_12642387334973731961","vnode_4274437247985887208","vnode_2779841477163634488","vnode_5937761289613515816","vnode_5937778881799560667","vnode_2779859069349679339","vnode_2779876661535724190","vnode_2779894253721769041","vnode_5983676895190009251","vnode_5983659303003964400","vnode_12642369742787687110","vnode_4259167230499145765","vnode_11270551741744682719","vnode_7488301347554778349","vnode_7488283755368733498","vnode_11270534149558637868","vnode_11270586926116772421","vnode_11270569333930727570","vnode_7503606549413609494","vnode_7503624141599654345","vnode_12642563256834180471","vnode_4427489266574198658","vnode_10412563237077533158","vnode_5697804230028687826","vnode_5697821822214732677","vnode_10412580829263578009","vnode_10412528052705443456","vnode_10412545644891488307","vnode_5682499028169856681","vnode_5682481435983811830","vnode_12642545664648135620","vnode_4412201656901412364","vnode_4412219249087457215","vnode_456529427949029773","vnode_456511835762984922","vnode_456494243576940071","vnode_456476651390895220","vnode_456459059204850369","vnode_7187123480534625779"]

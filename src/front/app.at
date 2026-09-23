@@ -29,7 +29,7 @@ use find_panel: FindPanel
 use tags_panel: TagsPanel
 use bps.navigation.filetree.tree_util: flatten_tree, toggle_id
 use bps.navigation.filetree.tree_icon: TreeIcon
-use back.api: tree, ws_root, link_index, search_wiki, create_page, rename_page, delete_page, tags_index, linkify_page
+use back.api: tree, ws_root, link_index, search_wiki, create_page, rename_page, delete_page, tags_index, linkify_page, page_meta, set_page_meta
 
 style warn_label = "text-[12px] text-amber-400 mr-1"
 
@@ -427,6 +427,7 @@ widget App {
         DeleteGo, DeleteCancel,
         ActTags, TagToggle(str), TagsRefresh,
         ActFindWanted,
+        ActMeta, MetaEditTags(str), MetaEditAliases(str), MetaGo, MetaCancel,
     }
 
     model {
@@ -459,6 +460,11 @@ widget App {
         // rename_q 同构，不入 store（D-20④ 同款裁定）。删除弹层零新
         // 字段（目标 = ft_sel；预览 = link_pages/tabs 现场派生 computed）。
         var new_q str = ""
+        // —— 页面属性弹层数据态（PLAN-011）：双 input 值（ActMeta 预填
+        // 回显——page_meta GET 单取形，缺席键项 = 空初值；逗号分隔串
+        // 形态 SD-1101）——rename_q 同构，不入 store（D-20④ 同款裁定）。
+        var meta_q_tags str = ""
+        var meta_q_aliases str = ""
         // —— 标签面板数据态（PLAN-008）：聚合行 {tag,label,paths}
         //（label 派生期拼接——双段 ${} 插值 avoidance，PLAN-003 先例）+
         // 单选展开态（"" = 全收，手风琴 v1）——find_q 同构不入 store
@@ -503,6 +509,7 @@ widget App {
                 enabled_if: ".store.tab_count > 0")
         action (id: "file.rename", handler: .RenameOpen, title: "重命名…", shortcut: "F2",
                 enabled_if: ".store.active_path != \"\" && !.store.active_dirty")
+        action (id: "file.meta", handler: .ActMeta, title: "页面属性…", icon: "sliders-horizontal", shortcut: "Ctrl+I")
         action (id: "file.delete", handler: .ActDelete, title: "删除…", shortcut: "Delete",
                 enabled_if: ".ft_sel != \"\"")
         action (id: "file.quit",   handler: .ActQuit,   title: "退出",  shortcut: "Alt+F4")
@@ -558,6 +565,7 @@ widget App {
                             // 守卫兜底（action enabled_if 仍为权威面），
                             // 差异入 ledger v9。
                             menubar-item (title: "重命名…", shortcut: "F2") { onclick: .RenameOpen }
+                            menubar-item (title: "页面属性…", icon: "sliders-horizontal", shortcut: "Ctrl+I") { onclick: .ActMeta }
                             menubar-item (title: "删除…", shortcut: "Delete") { onclick: .ActDelete }
                             menubar-separator
                             menubar-item (title: "退出", icon: "log-out", shortcut: "Alt+F4") { onclick: .ActQuit }
@@ -958,6 +966,39 @@ widget App {
                     dialog-footer {
                         button (text: "取消", variant: "outline") { onclick: .NewCancel }
                         button (text: "创建", variant: "ghost") { onclick: .NewGo }
+                    }
+                }
+            }
+
+            // —— 页面属性弹层（PLAN-011 第九切片；dialog 第六实例——
+            // 双 input（标签/别名逗号分隔），重命名弹层同构形态：双钮 =
+            // 普通 button[dialog-cancel/action vm 轨死标签轨间不对称，
+            // 禁用 D-24④ 纪律]、闭态恒渲染 D-23③ 同判——测试定位锚内容
+            // 制。声明位在 rename 弹层前——vm 快照 input 序「弹层后声明
+            // 者居末」锚纪律（check 12 rename input 居末不漂移）。预填
+            // 回显 = ActMeta 单取形 fetch（page_meta GET——缺席键项 =
+            // 空初值）；值权威在 back 单事务受控改写（D-14 三原则）。——
+            dialog (open: .store.meta_open) {
+                dialog-content {
+                    dialog-header {
+                        dialog-title "页面属性"
+                        dialog-description "标签与别名（逗号分隔）——${.store.active_title}"
+                    }
+                    input {
+                        value: .meta_q_tags
+                        oninput: .MetaEditTags
+                        placeholder: "标签（逗号分隔）…"
+                        style: "w-full h-7 px-2 text-[12px] border rounded bg-background"
+                    }
+                    input {
+                        value: .meta_q_aliases
+                        oninput: .MetaEditAliases
+                        placeholder: "别名（逗号分隔）…"
+                        style: "w-full h-7 px-2 text-[12px] border rounded bg-background"
+                    }
+                    dialog-footer {
+                        button (text: "取消", variant: "outline") { onclick: .MetaCancel }
+                        button (text: "保存", variant: "ghost") { onclick: .MetaGo }
                     }
                 }
             }
@@ -1553,6 +1594,81 @@ widget App {
             } else {
                 if ok {
                     console_log("rename: rejected (conflict/case-only/missing/empty)")
+                }
+            }
+        }
+
+        // —— 页面属性流（PLAN-011 T-02/T-03）——
+        // 入口（action Ctrl+I/menubar 共口）：守卫 untitled no-op（action
+        // 不挂 enabled——D-24③ vm 轨 menubar-item enabled 冻结缺口，
+        // handler 复核为语义兜底）。预填回显 = page_meta GET 单取形
+        //（json.to_value call-arg 形——D-20⑤ 免双取；缺席键项 = 空初值
+        //；CJK 路径 split 臂 D-19 降级空态——§10 记账）。D-25① 纪律：
+        // App 上下文零 `.console` 写面。
+        .ActMeta -> {
+            if .store.active_path != "" {
+                store.MetaOpen()
+                .meta_q_tags = ""
+                .meta_q_aliases = ""
+                var rows List = []
+                var ok bool = true
+                try {
+                    rows = json.to_value(page_meta(.store.active_path))
+                } catch (e) {
+                    ok = false
+                }
+                if !ok {
+                    console_log("meta: load failed")
+                }
+                var i int = 0
+                while i < rows.len() {
+                    // ⚠ D-20②：列表元素先拷局部变量再取字段。
+                    var r = rows[i]
+                    if r.key == "tags" {
+                        .meta_q_tags = r.value
+                    }
+                    if r.key == "aliases" {
+                        .meta_q_aliases = r.value
+                    }
+                    i = i + 1
+                }
+            }
+        }
+        .MetaEditTags(v) -> {
+            .meta_q_tags = v
+        }
+        .MetaEditAliases(v) -> {
+            .meta_q_aliases = v
+        }
+        .MetaCancel -> {
+            store.MetaClose()
+        }
+        // 保存流（§2.3）：set_page_meta POST（try/catch 落 console——
+        // backend-offline 不炸；D-19 body 传参 CJK 值常态）→ "ok" =
+        // 关弹层 + 自派生刷新族（D-26② 纪律——零跨 fetch 投影读）：
+        // LinksRefreshOf（alias 解析面——出链 exists 翻转/wanted 派生随
+        // 产物；内链 MentionsRefreshOf 链式尾——010 在册形态）+
+        // TagsRefresh（tags 面板新行即时可见）；tree 不刷（无文件名变
+        // 化）。非 "ok" = console 注记 + 弹层留置（006 v1 口径同判——
+        // 拒因前端不可见，用户可取消/重试）。
+        .MetaGo -> {
+            var r str = ""
+            var ok bool = true
+            try {
+                r = set_page_meta(.store.active_path, .meta_q_tags, .meta_q_aliases)
+            } catch (e) {
+                ok = false
+            }
+            if !ok {
+                console_log("meta: save failed")
+            }
+            if r == "ok" {
+                store.MetaClose()
+                .LinksRefreshOf(.store.active_path)
+                .TagsRefresh()
+            } else {
+                if ok {
+                    console_log("meta: save rejected")
                 }
             }
         }
