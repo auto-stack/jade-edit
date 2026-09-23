@@ -208,7 +208,7 @@ e2e 同单（断言域 = 结构/文本/磁盘字节，非像素）。
 - [plans/attachments/081-t00-rulings.md](plans/attachments/081-t00-rulings.md) —
   T-00 三勘定决策档（auto-down PLAN-081 附件；双轨机制 / actions-vue
   现状 / 后端选型）
-- [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v12（SD-904 指针；二十五项三分类；PLAN-008 增补 D-21 v11 扩记[PLAN-008 执行窗四形态实录：merged 臂进程死亡首例/check-10 渲染窗/split menubar popover 内容窗/gate 语境 e2e 保存点连发簇]；PLAN-009 增补（执行窗实勘——ledger v12 记账））
+- [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v12（SD-904 指针；二十六项三分类；PLAN-008 增补 D-21 v11 扩记[PLAN-008 执行窗四形态实录：merged 臂进程死亡首例/check-10 渲染窗/split menubar popover 内容窗/gate 语境 e2e 保存点连发簇]；PLAN-009 增补（执行窗实勘——ledger v12 记账））
 - [upstream/2026-09-jade-supply.md](upstream/2026-09-jade-supply.md) —
   上游供料包（D-16 预热 / D-15 残余 / D-17 键入发射 / D-18 投影双态，
   期望形态+复验条件+回执方式）

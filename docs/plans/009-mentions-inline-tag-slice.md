@@ -1,10 +1,10 @@
 ---
 plan_id: PLAN-009
-status: execution_done
+status: reviewed
 feature_name: mentions-inline-tag-slice
 author: [zhaopuming]
 created_at: 2026-09-23T13:03:40+08:00
-updated_at: 2026-09-23T14:44:27+08:00
+updated_at: 2026-09-23T15:18:14+08:00
 plan_revision: 1
 current_step: 5
 total_steps: 5
@@ -373,6 +373,104 @@ fn page_inline_tags(body str) List {
     [popover 内容窗/check-10 行渲染窗/tags 7 行渲染窗]全数 D-21
     签名重跑即绿——ledger v12 扩记；e2e 前序两轮 5/5 败为子步实勘
     期真 bug 迭代[排重竞态/收口态复原]非 D-21 签名，修复后 5 连绿）。
+
+- **2026-09-23 复审（auto-plan-review）**：
+  - `stage: review`，PLAN-009，revision 1。
+  - `outcome: pass`——execution_done → reviewed，next=merge。
+  - `reviewed_commit: c1fab7c`（T-05 收口态 = main tip，工作树
+    clean 零未提交实现）；`base_commit: d71ea91`（plan008 归档态
+    ——diff base，提交链 b7d1c77→464e567→3eac982→c1fab7c 线性
+    无合并噪声）。
+  - `dependency_revisions`：无依赖工作树/分支（直接 main 线性约定；
+    单 worktree = 主检出；deps/bps·stylekit 只读零触碰——diff
+    全窗口 gen//deps 零变化实证）。
+  - `spec_inputs`：ARCHITECTURE.md@c1fab7c（§5 SD-901 段/§6 SD-902
+    表）/README.md@c1fab7c（SD-903 Tests+N 定谳/SD-904 第七切片
+    条目）/parity-ledger.md@c1fab7c（v12 D-26 + D-21 v12 扩记）；
+    frontmatter new_spec_components 四项终化、supersedes/touched_
+    goals 空（纯增量正确——008 同款约定）。
+  - **独立性声明**：独立会话复审（实现由先行会话完成），裁定自
+    工件重建——AC 复现全部本地重放，不采信执行期摘要。
+  - `acceptance_results`：
+    - **AC-01 pass**——`node tests/probe_inline_tags.mjs` 重放：
+      七案双臂全过 + 双臂逐字节一致=true（语料 7 tag 零漂移[10 tag
+      全集 = 7 语料 + 3 探针注入]/归属页逐项精确/忽略面负向[标题/
+      块锚/纯数字/前导空白四则——block-project-a 不入集]/inline
+      计入/fm+inline 去重/CJK token）；`page_inline_tags` 源检与
+      SD-901 定文逐条对应（split 逐段标记法/四则忽略/split 首段链
+      取 D-20③/while 查重 D-11）。
+    - **AC-02 pass**——gate 重放 vm link 组 10m 六子步双臂 PASS
+      （三段标题/提及行已知答案+snippet+已链源排重负证/行点击
+      OpenLink/空态/激活刷新/面板关零 fetch 行为等价双断言）+ meta
+      组 inline ⑦⑧（新行 inline-meta · 1 + 语料零漂移负向无
+      block-project-a）+ e2e [10m mentions]/[14 meta] inline 段
+      PASS 行实录；七触点源检逐点对上（Init/OpenFile/ActNew/Save/
+      ActBacklinks/OpenLink/Rename——app.at 1024/1046/1065/1079/
+      1096/1205/1508）。
+    - **AC-03 pass**——`node scripts/gate.mjs` 复审重放 **exit 0
+      ALL GREEN 首跑**（merged **16/16** + split **15/15** + vue
+      build + e2e 1 passed 23.4s——复审窗零 D-21 签名零重跑）。
+    - **AC-04 pass**——基线 v9 重放零漂移（[B baseline] PASS：
+      state 逐字节 + id 序列；v9 含 mention_rows: [] 入 dump，
+      v8 留档对证无此字段）+ F-R8-1 收口复跑绿（probe_delete
+      九案@8222 / probe_rename 八案@8223——均 WinNAT 区段外，
+      双臂一致=true）。
+    - **AC-05 pass**——负向证复验：diff 全窗口（d71ea91..c1fab7c）
+      gen//deps 零变化、冻结池/家族仓零触碰（变更面仅本仓 12 文
+      件）；app.at `.console =` 赋值零处（grep 实证）；
+      `probe_tags` 六案回归绿（tags_index 契约形状零变化）+
+      probe_inline_tags 双臂逐字节一致（GET 契约零变化）；search_
+      wiki 契约零变化（消费面原样——源检）；语料源零写入（探针
+      隔离拷贝面）。
+    - **AC-06 pass**——SD-901..904 落位源检（§5 域语义段含忽略
+      四则含前导空白语义/§6 组表含 10m+inline 注记 + 基线 v9/
+      README Tests N 定谳 SD-903 条 + 文档节第七切片条 + ledger
+      v12 指针）；Time blocker 记账入 SD-901（供料候选）+ ledger
+      v12 changelog；D-26 三件在册。
+  - `findings`（四件，无一阻塞）：
+    - **F-R9-1（low·doc）**：parity-ledger H1 标题仍书「v11」——
+      本文件自定约定 = H1 载当前版本号（d71ea91 态 H1=v11 +
+      changelog「v10→v11」可证），v12 bump 漏 H1（changelog 内
+      「表头版本 v11→v12」与 README v12 指针均在）。校正 = merge
+      窗 ledger refresh 时 H1 v11→v12（随 merge 携带，不另开工作
+      批）。
+    - **F-R9-2（low·doc）**：README ledger 指针行「二十五项三分类
+      」——表实有 26 行（D-26 新增；d71ea91 态 25 行配二十五项
+      自洽可证）。校正 = merge 窗随 F-R9-1 同笔改「二十六项」。
+    - **F-R9-3（info·plan 文本）**：本计划 §1 G2/§4.2/AC-01 书
+      「6 tag」——语料实有 7 tag（PLAN-008 执行期校正已在案：
+      Hello World.ad 实有 demo——SD-801 定文「语料已知答案 = 7
+      tag」）；立项草案承袭旧数漏勘，执行面（probe/matrix/canonical）
+      全数一致用 7。零漂移语义（本判据实质）成立不受影响；仅计划
+      文本陈旧，随本记录存档不再改版。
+    - **F-R9-4（observation·域外留观）**：提及刷新未接 DeleteGo
+      ——删除提及源档后面板提及行滞留至次触点（激活变更/Save/
+      Rename）。约定范围即七触点（§2.3 与 SD-901 canonical 同枚
+      举、删除明确在外）——无意图偏离；候选记入未来触点族扩批
+      （与 §10.5 D-21 fetch 预算观测同窗裁决）。
+  - `evidence`（命令 + 结果行节录，复审窗 2026-09-23）：
+    - `node scripts/gate.mjs` → exit 0；`[matrix:merged] 16/16
+      checks passed`、`[matrix:split] 15/15 checks passed`、
+      `[10m mentions] PASS — 六子步…`（双臂）、`[14 meta] PASS —
+      …+ inline 子步…`（双臂）、`[B baseline] PASS — 结构基线 v9
+      零漂移`、`ok 1 e2e\matrix.spec.ts … (23.4s) / 1 passed`、
+      `[gate] ALL GREEN：vm 双臂矩阵 + vue build/e2e 全过`。
+    - `node tests/probe_inline_tags.mjs` → RESULT 七案双臂全过 +
+      `双臂逐字节一致=true`（got 全集 10 tag 序录在 RESULT 行）。
+    - `node tests/probe_tags.mjs` → RESULT 六案全过 + 双臂一致
+      =true（11 tag 全集——探针素材面，语料 7 零漂移同口径）。
+    - `node tests/probe_delete.mjs` → RESULT 九案双臂 + 一致=true
+      （SPLIT_PORT=8222）；`node tests/probe_rename.mjs` → RESULT
+      八案+空名守卫双臂 + 一致=true（SPLIT_PORT=8223）。
+    - 静态：`git diff --stat d71ea91..c1fab7c`（12 文件全清单在
+      案）；`grep -rn "\.console =" src/front/app.at` 零命中；
+      v8/v9 基线 mention_rows 差异对证。
+  - `delta 检定`：SD-901 canonical 文本与实现行为逐条对应（四则
+    忽略含执行期校正之前导空白语义——work pass + D-26① 如实记，
+    canonical 为准）；SD-902/903/904 与矩阵/README/ledger 实态一
+    致；语义契约零变更（review 不触发 revision bump）。
+  - `next: merge`（用户本会话预授权「复审 OK 即 merge」——移交
+    auto-plan-merge；F-R9-1/2 随 merge 窗 ledger refresh 一并校正）。
 
 ## 10. 待澄清事项
 
