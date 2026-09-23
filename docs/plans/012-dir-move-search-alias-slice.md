@@ -422,6 +422,9 @@ pub fn move_page_impl(path str, dir str) str {
     基线 v11 零漂移逐跑）；e2e 11 跑 3 绿（败点全 D-21 签名——保存点
     400 + serve-back 死亡形态；连跑簇 7 连中，清卫后孤立跑即绿）；
     **gate 3 跑第 3 跑 ALL GREEN**（1 e2e D-21、2 build 负载窗，如实记）。
+    **收口窗补记**：e2e 再 3 跑（短冷终验败[check-5 保存点 D-21] +
+    **长冷 4min 终验 GREEN**——"长冷却后过"口径再证；全窗口累计
+    14 跑 6 绿，败点全数 D-21 签名，目录面/alias 子步零失败漂移）。
   - `stage: work | PLAN-012 | rev 1 | outcome: pass(T-04) |
     task=T-04 | next: T-05`
 
