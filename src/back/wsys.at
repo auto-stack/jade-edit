@@ -180,18 +180,39 @@ fn json_esc(s str) str {
     return r
 }
 
-/// stem 集内解析 target → rel（首现命中——同名 stem 冲突 v1 取首现，
-/// walk 序，§10 默认裁定）；未命中 = ""。
-fn stem_resolve(stems List, rels List, target str) str {
+/// stem/alias 集内解析 target → rel（①stem 精确首现优先；②alias 集精确首现
+/// ——walk 序，同名 alias 冲突取首现；未命中 = ""；SD-302/SD-1001）。
+fn resolve_target(stems List, aliases List, rels List, target str) str {
     var hit str = ""
     var i int = 0
     while i < stems.len() {
         if hit == "" {
-            if stems[i] == target {
+            var s str = stems[i]
+            if s == target {
                 hit = rels[i]
             }
         }
         i = i + 1
+    }
+    if hit != "" {
+        return hit
+    }
+    var p int = 0
+    while p < aliases.len() {
+        if hit == "" {
+            var page_als List = aliases[p]
+            var a int = 0
+            while a < page_als.len() {
+                if hit == "" {
+                    var al str = page_als[a]
+                    if al == target {
+                        hit = rels[p]
+                    }
+                }
+                a = a + 1
+            }
+        }
+        p = p + 1
     }
     return hit
 }
@@ -202,11 +223,11 @@ fn stem_resolve(stems List, rels List, target str) str {
 /// 面：无闭合 ]]（不完整对）/ 候选含换行（跨行链接 v1 不做，语料无此
 /// 形态）/ trim 后空候选（旧园 links_gen 空标题同忽略）/ # 后空 target。
 /// # 首现拆分：前段 target 参与 stem 匹配，后段 anchor 透传（D-12：无
-/// 定位事件面，仅显示）。exists 判定 = stem_resolve 命中。
+/// 定位事件面，仅显示）。exists 判定 = resolve_target 命中。
 /// ⚠ VM 纪律（T-02 实勘）：列表元素上的链式方法调用错乱（heap 接收者
 /// CALL_SPEC 错位——`segs[i].split_once(..)` 返回垃圾长度），元素必须
 /// 先拷局部变量再调方法（links_json 节点收集循环同款已证形态）。
-fn extract_links_json(body str, stems List, rels List) str {
+fn extract_links_json(body str, stems List, aliases List, rels List) str {
     var out str = ""
     var segs = body.split("[[")
     var i int = 1
@@ -229,7 +250,7 @@ fn extract_links_json(body str, stems List, rels List) str {
                         anchor = a0
                     }
                     if target.length > 0 {
-                        var tp str = stem_resolve(stems, rels, target)
+                        var tp str = resolve_target(stems, aliases, rels, target)
                         if out != "" {
                             out = out + ","
                         }
@@ -307,18 +328,21 @@ pub fn links_json(path str, depth int) str {
     var pages List = collect_ad_pages(path, depth)
     var stems List = []
     var rels List = []
+    var aliases List = []
     var i int = 0
     while i < pages.len() {
         var p = pages[i]
         stems.push(p.stem)
         rels.push(p.rel)
+        var fm str = frontmatter_of(File.read_text(resolve(p.rel)))
+        aliases.push(page_aliases(fm))
         i = i + 1
     }
     var pages_out str = ""
     var j int = 0
     while j < rels.len() {
         var body str = read_body(rels[j])
-        var links str = extract_links_json(body, stems, rels)
+        var links str = extract_links_json(body, stems, aliases, rels)
         if pages_out != "" {
             pages_out = pages_out + ","
         }
@@ -654,6 +678,66 @@ pub fn delete_page_impl(path str) str {
     return path
 }
 
+// ===== 提及转链接（PLAN-010 T-01；知识库第八切片 back 半） =====
+
+/// 提及转链接本体（api.linkify_page 实现；SD-1001 back 半）：
+/// path 档 body 明区（[[..]] 标记外）stem 纯文本出现处改写为 [[stem]]
+/// （frontmatter 经 write_body 保留）；返回改写处数（"0"=无，""=卫语句拒）。
+/// POST body 传参（D-19：path/stem CJK 常态）。
+pub fn linkify_page_impl(path str, stem str) str {
+    if !File.exists(resolve(path)) {
+        return ""
+    }
+    if stem == "" {
+        return ""
+    }
+    var body str = read_body(path)
+    var segs = body.split("[[")
+    var count int = 0
+    var seg0 str = segs[0]
+    var p0 = seg0.split(stem)
+    var seg0_out str = p0[0]
+    if p0.len() > 1 {
+        count = count + p0.len() - 1
+        var k int = 1
+        while k < p0.len() {
+            var pk str = p0[k]
+            seg0_out = seg0_out + "[[" + stem + "]]" + pk
+            k = k + 1
+        }
+    }
+    var out str = seg0_out
+    var i int = 1
+    while i < segs.len() {
+        var seg str = segs[i]
+        var seg_out str = seg
+        var pair = seg.split_once("]]")
+        if pair.len() == 2 {
+            var cand str = pair[0]
+            var rest str = pair[1]
+            var rest_parts = rest.split(stem)
+            var rest_out str = rest_parts[0]
+            if rest_parts.len() > 1 {
+                count = count + rest_parts.len() - 1
+                var k2 int = 1
+                while k2 < rest_parts.len() {
+                    var rk str = rest_parts[k2]
+                    rest_out = rest_out + "[[" + stem + "]]" + rk
+                    k2 = k2 + 1
+                }
+            }
+            seg_out = cand + "]]" + rest_out
+        }
+        out = out + "[[" + seg_out
+        i = i + 1
+    }
+    if count > 0 {
+        write_body(path, out)
+        return count.str()
+    }
+    return "0"
+}
+
 // ===== 工作区标签索引（PLAN-008 T-01；知识库第六切片 back 半）——
 // frontmatter 消费面**只读首开**（SD-801 边界定文）：本组全部 fn 零写盘
 // ——D-14 写面不动（补写/改写属功能池后续批）。frontmatter 在 back 侧
@@ -693,21 +777,22 @@ fn frontmatter_of(text str) str {
     return out
 }
 
-/// frontmatter 文本 → tag 列表（tags: block-list 只读解析——SD-801）。
+/// frontmatter 文本 → 指定 key 的 block-list 列表（tags / aliases 只读解析——SD-801/SD-1001）。
 /// 逐行扫（行尾 \r 由 trim 剥——is_delim 同族容错）：
 /// ①键定位 = **顶层级**（原行不以空格/\t 起——缩进深于首键的嵌套键头
-///   不误收）且 trim 后以 "tags:" 起；"tags:" 后段 trim 非空 = inline
+///   不误收）且 trim 后以 key+":" 起；key+":" 后段 trim 非空 = inline
 ///   数组形态 → 贡献零不炸（§10.1——语料无此形态，v1 口径记账）；后段
 ///   空 = block-list 收集态 on；
 /// ②收集态 = trim 后以 "-" 起的行 → "-" 后段 trim 入集（**缩进两形态**
 ///   `- x` 与 `  - x` trim 归一——语料实勘两种并在）；非列表行（次键/
-///   空行）即止（首个 tags: 键整体收工——frontmatter 映射唯一键约定）；
-/// ③同页重复 tag 去重（while 查重——D-11 禁 .find 闭包）。
-fn page_tags(fm str) List {
+///   空行）即止（首个 key: 键整体收工——frontmatter 映射唯一键约定）；
+/// ③同页重复项去重（while 查重——D-11 禁 .find 闭包）。
+fn page_fm_list(fm str, key str) List {
     var out List = []
     var lines = fm.split("\n")
     var collecting bool = false
     var done bool = false
+    var khead str = key + ":"
     var i int = 0
     while i < lines.len() {
         if !done {
@@ -747,8 +832,8 @@ fn page_tags(fm str) List {
                     nested = true
                 }
                 if !nested {
-                    if line.starts_with("tags:") {
-                        var vp = line.split_once("tags:")
+                    if line.starts_with(khead) {
+                        var vp = line.split_once(khead)
                         if vp.len() == 2 {
                             var val str = vp[1].trim()
                             if val == "" {
@@ -765,6 +850,15 @@ fn page_tags(fm str) List {
     }
     return out
 }
+
+fn page_tags(fm str) List {
+    return page_fm_list(fm, "tags")
+}
+
+fn page_aliases(fm str) List {
+    return page_fm_list(fm, "aliases")
+}
+
 
 /// 纯数字串判定（PLAN-009 §5.1 忽略三则③——`#123` 非 tag）——十数字
 /// while-contains 收敛剥除后空串即纯数字（title_to_path_stem 同族惯用法；

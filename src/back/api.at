@@ -156,3 +156,14 @@ pub fn rename_page(old_path str, new_name str) str {
 pub fn tags_index(path str, depth int) str {
     return wsys.tags_json(path, depth)
 }
+
+/// 提及转链接（PLAN-010 第八切片；链接域二期写面补全）：path 档 body
+/// 明区（[[..]] 标记外）stem 纯文本出现处改写为 [[stem]]（frontmatter
+/// 保留）；返回改写处数（"0"=无，""=卫语句拒）。
+/// **POST 而非 GET**（D-19：path/stem CJK 常态，body 传参）。
+/// POST /api/linkify_page
+#[api(method = "POST", path = "/api/linkify_page")]
+pub fn linkify_page(path str, stem str) str {
+    return wsys.linkify_page_impl(path, stem)
+}
+

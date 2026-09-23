@@ -48,7 +48,8 @@
   属功能池后续批）；**第七切片 = 未链接提及 + 行内 #tag**（SD-901，
   2026-09-23）：反链面板第三段（search_wiki 派生，零新契约）+ tags
   聚合源扩 body 行内 #tag（忽略四则）；每日笔记 blocker 记账（Time
-  epoch-only，供料候选 ledger v12）；图谱 tab 顺位后移——vm 轨组
+  epoch-only，供料候选 ledger v12）；**第八切片 = 别名解析 + 提及转链接**（SD-1001，
+  2026-09-23）：链接域二期——frontmatter `aliases:` block-list 只读解析（`page_fm_list`，解析序 stem 精确首现优先 → alias 精确首现，消费面 exists/target_path/反链/出链/wanted 全面对齐，检索/提及/改名不入面）+ `linkify_page` POST 契约（明区改写、frontmatter 逐字节保留、计数返回）+ 提及行「转为链接」钮（串联自派生刷新消除 vue 轨并发 fetch 竞态）+ F-R9-4 删除流提及刷新收口；图谱 tab 顺位后移——vm 轨组
   件面依赖上游），本仓零依赖其代码。
 - 编辑器内核 = `@autodown/engine`（auto-down，AutoUI 外部官方组件）：
   vue 轨 npm link 消费；vm 轨经 auto-lang `autodown_editor` 官方件位。
@@ -97,11 +98,12 @@ node tests/vm_matrix.mjs            # 双臂（merged+split）检查单 + 基线
 pnpm test:e2e                       # vue 检查单（同一检查单；serve-back 后端）
 ```
 
-## Tests（判绿口径，SD-204；SD-304/403 扩定；SD-503 再扩定；SD-603 再扩定；SD-703 再扩定；SD-803 再扩定；SD-903 再扩定）
+## Tests（判绿口径，SD-204；SD-304/403 扩定；SD-503 再扩定；SD-603 再扩定；SD-703 再扩定；SD-803 再扩定；SD-903 再扩定；SD-1003 再扩定）
 
 检查单（PLAN-002 T-01 扩定 + PLAN-003 T-04 link 扩单 + PLAN-004 T-04
 find 扩单 + PLAN-005 T-04 create 扩单 + PLAN-006 T-04 rename 扩单 +
-PLAN-007 T-04 file 扩单 + PLAN-008 T-04 meta 扩单）：
+PLAN-007 T-04 file 扩单 + PLAN-008 T-04 meta 扩单 + PLAN-009 T-04 mentions 扩单 +
+PLAN-010 T-04 alias/linkify 扩单）：
 `boot / tree / open / edit / save / reload` 六检查 + **tab / editops /
 quit** 扩单三组 + **link / link-empty**（链接索引已知答案 + 反链面板双轨
 可用 + 空态——CJK 路径导航子步仅 vm merged 臂，D-19）+ **create**（建页
@@ -196,10 +198,17 @@ e2e 同单（断言域 = 结构/文本/磁盘字节，非像素）。
   竞态[D-26②]与 e2e 收口态复原两案，修复后 5/5 绿，非 D-21 签名）
   + **gate 首跑 ALL GREEN**；mentions 子步入 link 组、inline 子步入
   meta 组——组数不变 16/15，子步不占检查位。
+- N 定谳（2026-09-23 PLAN-010 T-04，SD-1003）：vm 双臂 **ALL GREEN**
+  （判绿跑 merged **16/16** + split **15/15** + 基线 v9 零漂移逐跑——snapshot
+  146 -> 149 节点因上游 auto-lang PLAN-089 `7183ca386` MouseArea 展开所致，
+  store 状态段 100% 逐字节零模型漂移重锁）+ e2e **15 段全绿**（linkify 提及
+  转链 + alias 别名解析双子步全通；D-21 write_wiki 400 丢参重跑即绿）+
+  **gate ALL GREEN**；linkify 子步与 alias 子步均入 link 组——组数保持 16/15，
+  子步不占检查位。
 - 结构基线 = `tests/baseline/structure-v9.txt`：state 段逐字节 +
-  snapshot vnode id 出现序列（v2 仪器延续；v9 = PLAN-009 App 模型
-  新增 mention_rows 入 dump 的计划内重锁，v8/v7/v6/v5/v4/v3/v2/v1/v0
-  留档）。
+  snapshot vnode id 出现序列（v2 仪器延续；v9 = PLAN-009 App 模型新增
+  mention_rows 入 dump，PLAN-010 维持零模型字段漂移，快照 146→149 节点
+  由上游 MouseArea 展开重锁；v8/v7/v6/v5/v4/v3/v2/v1/v0 留档）。
 
 ## 文档
 
@@ -208,7 +217,7 @@ e2e 同单（断言域 = 结构/文本/磁盘字节，非像素）。
 - [plans/attachments/081-t00-rulings.md](plans/attachments/081-t00-rulings.md) —
   T-00 三勘定决策档（auto-down PLAN-081 附件；双轨机制 / actions-vue
   现状 / 后端选型）
-- [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v12（SD-904 指针；二十六项三分类；PLAN-008 增补 D-21 v11 扩记[PLAN-008 执行窗四形态实录：merged 臂进程死亡首例/check-10 渲染窗/split menubar popover 内容窗/gate 语境 e2e 保存点连发簇]；PLAN-009 增补（执行窗实勘——ledger v12 记账））
+- [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v13（SD-1004 指针；二十七项三分类；PLAN-009 增补 ledger v12；PLAN-010 增补 D-27[别名与转为链接切片实勘集]+D-21 v13 扩记）
 - [upstream/2026-09-jade-supply.md](upstream/2026-09-jade-supply.md) —
   上游供料包（D-16 预热 / D-15 残余 / D-17 键入发射 / D-18 投影双态，
   期望形态+复验条件+回执方式）

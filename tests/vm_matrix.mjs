@@ -62,7 +62,9 @@
 //             素材 CAP 定理——merged 臂该档 tab 在[check 10 开]关闭面
 //             +邻档补位，split 臂现场开→关同面；两臂删后激活均落
 //             Project X[右侧邻档同构]。收尾状态复原回 Hello World
-//             [quit 前置——typeWholeDoc 目标档]）。执行序在 12 后 9 前
+//             [quit 前置——typeWholeDoc 目标档]）+ F-R9-4 案（PLAN-010
+//             ⑨——删激活靶档→提及行随新激活刷新消[Fr94Src/Fr94Del 弹
+//             层造档，收尾双删复原]）。执行序在 12 后 9 前
 //   14 meta   标签面板+wanted 模式八子步 + inline tag 子步（PLAN-008 +
 //             PLAN-009；双件同组——find 组先例。tags 子步：面板开 7 tag
 //             行[语料实勘全集——执行期校正：7 非计划记的 6，Hello
@@ -649,7 +651,101 @@ async function runArm(arm, port) {
     await stateIs('tab_count', arm === 'merged' ? '3' : '2')
     await pressButton('wiki/Hello World', { exact: true })
     await stateIs('active_title', tabTitleOf(TARGET_LABEL))
-    console.log(`  [10m mentions] PASS — 六子步（三段标题/提及行已知答案+snippet+已链源排重/行点击 OpenLink/空态[无提及档]/激活变更刷新/面板关零 fetch[行为等价]；素材 ASCII 双臂[search_wiki POST 面无]；收尾 tab 复原）`)
+
+    // linkify 子步（PLAN-010 T-04 ④⑤）：点击提及行「转为链接」钮
+    // → 提及行消失 + 反链段增行 + 磁盘逐字节含 [[Hello World]]
+    await pressButton('转为链接', { exact: true })
+    let linkifyOk = false
+    for (const dl = Date.now() + 8000; ; ) {
+      const t = await snapshotText()
+      const iLinks = t.indexOf('LINKS')
+      const iMentions = t.indexOf('未链接提及')
+      const linksPart = iMentions >= 0 ? t.slice(iLinks, iMentions) : t.slice(iLinks)
+      const mentionsPart = iMentions >= 0 ? t.slice(iMentions) : ''
+      if (linksPart.includes('Mention A.ad') && !mentionsPart.includes('Mention A.ad')) {
+        linkifyOk = true
+        break
+      }
+      if (Date.now() > dl) throw new Error(`linkify ④⑤ 失守（未能见 Mention A.ad 入反链段或提及段未消）:\n${t.slice(0, 600)}`)
+      await sleep(300)
+    }
+    const mnABodyAfter = fs.readFileSync(mnAFile, 'utf8')
+    if (!mnABodyAfter.includes('纯文本提到 [[Hello World]] 一词。')) {
+      throw new Error(`linkify 磁盘逐字节验证失守: ${mnABodyAfter}`)
+    }
+
+    // alias 子步（PLAN-010 T-04 ①②③）：
+    // ① 造 alias 档 + 呼叫源档 → 呼叫源档出链行「帽子定理」可点击（exists 翻转）
+    //   → 导航落 CAP.ad（merged 臂；split 臂 target_path/磁盘断言）
+    // ② CAP.ad 反链段增呼叫源档行
+    // ③ wanted 清单不含 alias 解析目标「帽子定理」
+    const aliasCapFile = path.join(FIXTURE, 'CAP.ad')
+    const aliasCallerFile = path.join(FIXTURE, 'AliasCaller.ad')
+    fs.writeFileSync(aliasCapFile, '---\ntitle: CAP\naliases:\n  - 帽子定理\n---\n\n# CAP\n\nCAP 定理内容。\n', 'utf8')
+    fs.writeFileSync(aliasCallerFile, '# Caller\n\n[[Hello World]]\n[[帽子定理]]\n', 'utf8')
+    // 关开一次反链面板触发 LinksRefreshOf，让 link_index 收集新造的 alias 档与 caller 档
+    await pressButton('视图', { exact: true })
+    await pressButton('切换反链', { exact: true })
+    await stateIs('backlinks_open', 'false')
+    await pressButton('视图', { exact: true })
+    await pressButton('切换反链', { exact: true })
+    await stateIs('backlinks_open', 'true')
+    // Hello World 的反链段中可见 AliasCaller.ad 钮，点击开档
+    await waitButton('AliasCaller.ad', { exact: true })
+    await pressButton('AliasCaller.ad', { exact: true })
+    await stateIs('active_title', 'AliasCaller')
+    // 检查出链段：帽子定理 为可点击钮（exists: true），非「帽子定理（悬空）」
+    let aliasOlOk = false
+    for (const dl = Date.now() + 8000; ; ) {
+      const t = await snapshotText()
+      const iOl = t.indexOf('出链')
+      const iMn = t.indexOf('未链接提及')
+      const olPart = iMn >= 0 ? t.slice(iOl, iMn) : t.slice(iOl)
+      if (olPart.includes('帽子定理') && !olPart.includes('帽子定理（悬空）')) {
+        aliasOlOk = true
+        break
+      }
+      if (Date.now() > dl) throw new Error(`alias ① 失守（出链段未见非悬空 帽子定理 钮）:\n${t.slice(0, 600)}`)
+      await sleep(300)
+    }
+    // ① 导航落 CAP.ad（merged 臂点击开档；split 臂 links_json target_path 断言）
+    if (arm === 'merged') {
+      await pressButton('帽子定理', { exact: true })
+      await stateIs('active_title', 'CAP')
+      // ② CAP.ad 反链段增呼叫源档行
+      let capBlOk = false
+      for (const dl = Date.now() + 8000; ; ) {
+        const t = await snapshotText()
+        const iLinks = t.indexOf('LINKS')
+        const iOl = t.indexOf('出链')
+        const blPart = iOl >= 0 ? t.slice(iLinks, iOl) : t.slice(iLinks)
+        if (blPart.includes('AliasCaller.ad')) {
+          capBlOk = true
+          break
+        }
+        if (Date.now() > dl) throw new Error(`alias ② 失守（CAP.ad 反链段未见 AliasCaller.ad）:\n${t.slice(0, 600)}`)
+        await sleep(300)
+      }
+    } else {
+      await stateHas('links_json', '{\\"target\\":\\"帽子定理\\",\\"anchor\\":\\"\\",\\"exists\\":true,\\"target_path\\":\\"CAP.ad\\"}')
+    }
+    // ③ wanted 清单不含 alias 解析目标「帽子定理」
+    const ljNow = await stateText('links_json')
+    if (ljNow.includes('{\\"target\\":\\"帽子定理\\",\\"anchor\\":\\"\\",\\"exists\\":false')) {
+      throw new Error('alias ③ 失守（帽子定理 误入 wanted 悬空集）')
+    }
+    // 收尾：关闭新开 tab，删除测试档，切回 Hello World
+    if (arm === 'merged') {
+      await pressActiveTabClose('CAP')
+    }
+    await pressButton('AliasCaller', { exact: true })
+    await pressActiveTabClose('AliasCaller')
+    fs.rmSync(aliasCapFile, { force: true })
+    fs.rmSync(aliasCallerFile, { force: true })
+    await pressButton('wiki/Hello World', { exact: true })
+    await stateIs('active_title', tabTitleOf(TARGET_LABEL))
+
+    console.log(`  [10m mentions] PASS — 六子步+aliases+linkify（三段标题/提及行已知答案+snippet+已链源排重/行点击 OpenLink/空态[无提及档]/激活变更刷新/面板关零 fetch[行为等价]；linkify 行转链+段间迁移+磁盘逐字节；alias 解析+出链翻转+反链归并+wanted 排除；素材 ASCII 双臂[search_wiki POST 面无]；收尾 tab 复原）`)
 
     // 10c 建页弧线（PLAN-005 T-04；子步不占检查位——组数不变 12）：悬空行
     // 点击 → 确认弹层（create_confirm_open/create_target 态）→ 取消零落盘
@@ -1355,15 +1451,88 @@ async function runArm(arm, port) {
     const noopOk = /delete_open:\s*false/.test(noopState)
     await pressButton('wiki/Hello World', { exact: true })
     await stateIs('active_title', tabTitleOf(TARGET_LABEL))
+    // ⑨ F-R9-4 案（PLAN-010 G3 收口断言；canonical §6 SD-1002 记载位
+    // = file 组）：删除激活档 → 提及段随新激活刷新。弹层造源档（存盘
+    // 带「Fr94Del」明文提及）+ 靶档（自动开档激活）→ 开面板提及行现 →
+    // UI 删除激活靶档 → 提及行消（DeleteGo 接 MentionsRefreshOf——未
+    // 接则陈旧行残留，判别面）。收尾源档亦 UI 删 + 复原 Hello World
+    //（quit 前置——typeWholeDoc 目标档）。
+    let fr94Up = false
+    let fr94Down = false
+    const fr94SrcFile = path.join(FIXTURE, 'Fr94Src.ad')
+    const fr94DelFile = path.join(FIXTURE, 'Fr94Del.ad')
+    fs.rmSync(fr94SrcFile, { force: true })
+    fs.rmSync(fr94DelFile, { force: true })
+    await pressExplorerPlus()
+    await stateIs('new_open', 'true')
+    await typeIntoNewInput('Fr94Src')
+    await pressInNewDialog('创建')
+    await stateIs('new_open', 'false')
+    await typeWholeDoc('# Fr94Src\n\nFr94Del plain mention here.\n')
+    await pressButton('保存')
+    await stateIs('active_dirty', 'false')
+    await pressExplorerPlus()
+    await stateIs('new_open', 'true')
+    await typeIntoNewInput('Fr94Del')
+    await pressInNewDialog('创建')
+    await stateIs('new_open', 'false')
+    await stateIs('active_title', 'Fr94Del')
+    await pressButton('视图', { exact: true })
+    await pressButton('切换反链', { exact: true })
+    await stateIs('backlinks_open', 'true')
+    for (const dl = Date.now() + 8000; ; ) {
+      const t = await snapshotText()
+      const iMn = t.indexOf('未链接提及')
+      // 有界切片（段内 ~400 字符）：快照 DFS 序 filetree 居面板后，无界
+      // slice 会误中树行 Fr94Src.ad（本案例外——树行在册；10m 素材走
+      // fs 造档不进树故无界可用）。
+      fr94Up = iMn >= 0 && t.slice(iMn, iMn + 400).includes('Fr94Src.ad')
+      if (fr94Up || Date.now() > dl) break
+      await sleep(300)
+    }
+    if (!fr94Up) {
+      throw new Error(`fr94Up 失守: diskSrc=${fs.existsSync(fr94SrcFile) ? JSON.stringify(fs.readFileSync(fr94SrcFile, 'utf8')) : '<gone>'} diskDel=${fs.existsSync(fr94DelFile) ? JSON.stringify(fs.readFileSync(fr94DelFile, 'utf8')) : '<gone>'}`)
+    }
+    await pressButton('文件', { exact: true })
+    await pressButton('删除…', { exact: true })
+    await stateIs('delete_open', 'true')
+    await pressInDeleteDialog('删除')
+    await stateIs('delete_open', 'false')
+    for (const dl = Date.now() + 8000; ; ) {
+      const t = await snapshotText()
+      const iMn = t.indexOf('未链接提及')
+      // 判别面 = 空态标记（（无未链接提及）与行互斥渲染）——新激活
+      // Fr94Src 提及集为空 → 空态现（未接刷新则 Fr94Src.ad 行残留）。
+      fr94Down = iMn >= 0 && t.slice(iMn, iMn + 400).includes('（无未链接提及）')
+      if (fr94Down || Date.now() > dl) break
+      await sleep(300)
+    }
+    if (!fr94Down) {
+      const t2 = await snapshotText()
+      const iMn2 = t2.indexOf('未链接提及')
+      const at2 = await stateText('active_title')
+      throw new Error(`fr94Down 失守: active=${JSON.stringify(at2)} tail=${JSON.stringify(iMn2 >= 0 ? t2.slice(iMn2, iMn2 + 300) : '<no-mention-marker>')}`)
+    }
+    // 收尾删源档：DeleteGo 清空 ft_sel（⑥ 弧线在册语义）——菜单删除
+    // 守卫 no-op 面（⑧ 同款），先点树行置 ft_sel 再删（⑥ 同款前置）。
+    await pressButton('Fr94Src.ad', { exact: true })
+    await pressButton('文件', { exact: true })
+    await pressButton('删除…', { exact: true })
+    await stateIs('delete_open', 'true')
+    await pressInDeleteDialog('删除')
+    await stateIs('delete_open', 'false')
+    await pressButton('wiki/Hello World', { exact: true })
+    await stateIs('active_title', tabTitleOf(TARGET_LABEL))
     const fileParts = {
       newDiskOk, newTreeOk, idemDiskOk, tabStable: tabCountPre === tabCountPost,
       ghostOk, cjkNavOk, delDlgOk, delCancelOk, capGone, flipOk, noopOk,
+      fr94Ok: fr94Up && fr94Down,
     }
     if (Object.values(fileParts).some((v) => !v)) {
       console.log(`  [13 dbg] ${JSON.stringify(fileParts)} tabPre=${JSON.stringify(tabCountPre)} tabPost=${JSON.stringify(tabCountPost)}`)
     }
     check('13', 'file', Object.values(fileParts).every((v) => v) && tabCountFinal >= 0,
-      `file 组八子步（新建 index 模板逐字节+树新行/同名幂等 tab+磁盘不变/取消零落盘/CJK 新页${arm === 'merged' ? '导航断言' : '磁盘断言[D-19]'}＋删除预览 3 处入链已知答案+tab 面「${delTabsLine}」+取消零落盘/删除弧线 磁盘消失+ft_sel 清空+激活${arm === 'merged' ? '落邻档首页[同位保持]' : '保持 index[CloseTabsOf 零关闭面，D-19]'}/悬空翻转 出链行 CAP 定理（悬空）/未选中 no-op）`)
+      `file 组八子步+F-R9-4 案（新建 index 模板逐字节+树新行/同名幂等 tab+磁盘不变/取消零落盘/CJK 新页${arm === 'merged' ? '导航断言' : '磁盘断言[D-19]'}＋删除预览 3 处入链已知答案+tab 面「${delTabsLine}」+取消零落盘/删除弧线 磁盘消失+ft_sel 清空+激活${arm === 'merged' ? '落邻档首页[同位保持]' : '保持 index[CloseTabsOf 零关闭面，D-19]'}/悬空翻转 出链行 CAP 定理（悬空）/未选中 no-op/F-R9-4 删后提及刷新[提及行现→UI 删激活→行消]）`)
 
     // 9 退出存盘：dirty → 文件菜单退出 → 确认弹层 → QuitSaveClose →
     // 磁盘三验 + 进程退出。恒为臂内最后一项（Process.exit 杀进程）。

@@ -314,7 +314,53 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await expect(page.getByRole('button', { name: 'Mention Source.ad', exact: true }).last()).toBeVisible({ timeout: 10_000 })
   await expect(page.getByText('plain see Hello World here.', { exact: true })).toBeVisible()
   await expect(page.getByText('（无未链接提及）', { exact: true })).toHaveCount(0)
-  console.log('[10m mentions] PASS — 三段标题 + 提及行 + snippet（ASCII 弧线全臂）')
+
+  // linkify: 点击「转为链接」钮 → 提及段 Mention Source.ad 消失 + 反链段出现 + 磁盘逐字节
+  await page.getByRole('button', { name: '转为链接', exact: true }).first().click()
+  await expect(page.getByText('（无未链接提及）', { exact: true })).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByRole('button', { name: 'Mention Source.ad', exact: true }).last()).toBeVisible({ timeout: 10_000 })
+  const rRes = await request.get('/api/read_wiki?path=Mention Source.ad')
+  expect(rRes.ok()).toBe(true)
+  expect(await rRes.text()).toContain('[[Hello World]]')
+
+  // alias: 造 alias 档 + 呼叫源档 → 呼叫源档出链行「帽子定理」非悬空 → 导航落 CAP.ad → 反链段增呼叫源档
+  const aRes1 = await request.post('/api/write_wiki', {
+    data: {
+      path: 'CAP.ad',
+      body: '---\ntitle: CAP\naliases:\n  - 帽子定理\n---\n\n# CAP\n',
+    },
+  })
+  expect(aRes1.ok()).toBe(true)
+  const aRes2 = await request.post('/api/write_wiki', {
+    data: {
+      path: 'AliasCaller.ad',
+      body: '# Caller\n\n[[Hello World]]\n[[帽子定理]]\n',
+    },
+  })
+  expect(aRes2.ok()).toBe(true)
+  // 关开反链面板刷新
+  await page.getByText('视图', { exact: true }).click()
+  await page.getByText('切换反链', { exact: true }).click()
+  await page.getByText('视图', { exact: true }).click()
+  await page.getByText('切换反链', { exact: true }).click()
+  // 反链段中点击 AliasCaller.ad 钮开档
+  await page.getByRole('button', { name: 'AliasCaller.ad', exact: true }).last().click()
+  await expect(visibleEditor(page)).toContainText('Caller', { timeout: 10_000 })
+  // 出链段中 帽子定理 为可点击钮（exists: true，非悬空）
+  await expect(page.getByRole('button', { name: '帽子定理', exact: true })).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByText('帽子定理（悬空）')).toHaveCount(0)
+  // 点击 帽子定理 导航到 CAP
+  await page.getByRole('button', { name: '帽子定理', exact: true }).click()
+  await expect(visibleEditor(page)).toContainText('CAP', { timeout: 10_000 })
+  // CAP 反链段含 AliasCaller.ad
+  await expect(page.getByRole('button', { name: 'AliasCaller.ad', exact: true }).last()).toBeVisible({ timeout: 10_000 })
+  // 删测试档
+  for (const p of ['CAP.ad', 'AliasCaller.ad']) {
+    const dRes = await request.post('/api/delete_page', { data: { path: p } })
+    expect(dRes.ok(), `delete_page ${p} ok`).toBe(true)
+  }
+
+  console.log('[10m mentions] PASS — 三段标题 + 提及行 + snippet + linkify + aliases（全臂）')
   // 收尾：删素材 + 重载复原（防 13 后 wanted 计数漂移）
   for (const p of ['Mention Source.ad', 'Mention Linked.ad']) {
     const dRes = await request.post('/api/delete_page', { data: { path: p } })

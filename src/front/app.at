@@ -29,7 +29,7 @@ use find_panel: FindPanel
 use tags_panel: TagsPanel
 use bps.navigation.filetree.tree_util: flatten_tree, toggle_id
 use bps.navigation.filetree.tree_icon: TreeIcon
-use back.api: tree, ws_root, link_index, search_wiki, create_page, rename_page, delete_page, tags_index
+use back.api: tree, ws_root, link_index, search_wiki, create_page, rename_page, delete_page, tags_index, linkify_page
 
 style warn_label = "text-[12px] text-amber-400 mr-1"
 
@@ -418,7 +418,7 @@ widget App {
         ActConsole, ActSwitchTab, ActAbout,
         CloseRequest, QuitDiscard, QuitSaveClose, QuitConfirmCancel,
         ActBacklinks, LinksRefresh, OpenLink(str),
-        MentionsRefreshOf(str),
+        MentionsRefreshOf(str), LinkifyGo(str),
         FindEdit(str), FindRun, ActFindFiles, ActFindText, FindPick(str),
         CreateClick(str), CreateGo, CreateCancel,
         TreeRefresh, LinksRefreshOf(str),
@@ -850,9 +850,15 @@ widget App {
                                 text "（无未链接提及）" { style: "text-[11px] text-muted-foreground px-3" }
                             }
                             for r in .mention_rows {
-                                button (text: r.path, variant: "ghost") {
-                                    onclick: .OpenLink(r.path)
-                                    style: "w-full justify-start px-3 h-6 text-left text-[12px]"
+                                row (style: "w-full items-center justify-between") {
+                                    button (text: r.path, variant: "ghost") {
+                                        onclick: .OpenLink(r.path)
+                                        style: "flex-1 justify-start px-3 h-6 text-left text-[12px]"
+                                    }
+                                    button (text: "转为链接", variant: "text") {
+                                        onclick: .LinkifyGo(r.path)
+                                        style: "text-[11px] h-5 px-2 text-muted-foreground shrink-0"
+                                    }
                                 }
                                 text r.snippet { style: "text-[11px] text-muted-foreground px-3" }
                             }
@@ -1155,6 +1161,10 @@ widget App {
             // wanted 行重算挂同触点（PLAN-008——link_pages 变化即消缺：
             // 建页成功后 wanted 行自动消失，G2 闭环）
             .wanted_rows = wanted_rows_of(.link_pages)
+            // 提及重算串联（PLAN-010）：link_pages 就绪后刷新提及，
+            // 确保 mentions_of 消费新鲜的 backlink_rows_of 排重源，
+            // 消除 vue 轨并发 fetch 时序竞态（D-26② 闭环）。
+            .MentionsRefreshOf(active)
         }
 
         // —— 未链接提及重取共享口（PLAN-009 T-02；SD-901 mentions 半）。
@@ -1192,6 +1202,35 @@ widget App {
                     .mention_rows = mentions_of(rows, active, backlink_rows_of(.link_pages, active))
                 } else {
                     .mention_rows = []
+                }
+            }
+        }
+        // —— 提及转链接（PLAN-010 T-02；SD-1001 linkify 半）：
+        // path 档正文内 stem 改写为 [[stem]]（frontmatter 保留）；
+        // stem = path_stem(.store.active_path)（D-20③ split 法）。
+        // 成功（!= "0" && != ""）→ LinksRefreshOf + MentionsRefreshOf 自派生刷新
+        // （D-26② 纪律：零跨 fetch 投影读；D-25①：零 .console 写面）。
+        .LinkifyGo(path str) -> {
+            if path != "" {
+                if .store.active_path != "" {
+                    var stem str = path_stem(.store.active_path)
+                    var res str = ""
+                    var ok bool = true
+                    try {
+                        res = linkify_page(path, stem)
+                    } catch (e) {
+                        ok = false
+                    }
+                    if !ok {
+                        console_log("linkify: failed")
+                    }
+                    if res != "0" {
+                        if res != "" {
+                            console_log("linkify: converted " + res + " mention(s)")
+                            .LinksRefreshOf(.store.active_path)
+                            .MentionsRefreshOf(.store.active_path)
+                        }
+                    }
                 }
             }
         }
@@ -1436,6 +1475,7 @@ widget App {
                 store.DeleteClose()
                 store.CloseTabsOf(r)
                 .LinksRefreshOf(.store.active_path)
+                .MentionsRefreshOf(.store.active_path)
                 .TagsRefresh()
                 .TreeRefresh()
                 .ft_sel = ""
