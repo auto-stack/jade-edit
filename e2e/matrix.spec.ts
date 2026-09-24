@@ -69,7 +69,15 @@
 //             预填空 + tab 题全量 收件箱/E2E Note + 磁盘整迁]/⑫ 取消
 //             零落盘/⑬ 冲突拒弹层留置 + 磁盘零变化]。执行序在 13 file
 //             段内（悬空翻转后——素材 E2E Note 在册；14 meta 已知答案
-//             免疫：收件箱/E2E Note.ad 无 tags 无链接）**
+//             免疫：收件箱/E2E Note.ad 无 tags 无链接）** + **目录面
+//             二期三子步（PLAN-014 T-04；vm file 组 ⑭-⑯ 同单——真 DOM
+//             + CJK 目录名 POST body 双臂面）：⑭ 重命名目录弧线[目录甲
+//             →目录乙：双 input 弹层/预览「将移动 1 个 .ad 页（链接零
+//             改写）」/tab 题恒 DirNote/磁盘整迁——三联对照目录级]/
+//             ⑮ 删除预览[计数行+无入链警示]+取消零落盘/⑯ 删除弧线[确
+//             认 → tab 全关 + 磁盘消；悬空翻转面 vm ⑯ 承载]（素材 =
+//             ⊕ 目录甲 + ＋ DirNote + 移动入——14 meta 已知答案免疫
+//             ：DirNote 无 tags 无链接）**
 //   14 meta   标签面板+wanted 模式+inline tag 子步（PLAN-008+PLAN-009；vm 矩阵 check 14 同单
 //             ——段内最后）：tags 4 行已知答案[13 后位态]+展开导航+
 //             write_wiki 外造 Save 刷新；wanted 无 input 三行清单
@@ -243,14 +251,21 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await page.getByText('视图', { exact: true }).click()
   await page.getByText('切换反链', { exact: true }).click()
   await expect(page.getByText('LINKS', { exact: true })).toBeVisible({ timeout: 10_000 })
-  await expect(page.getByRole('button', { name: 'wiki/index.ad', exact: true })).toBeVisible({ timeout: 10_000 })
-  await expect(page.getByRole('button', { name: 'wiki/CAP 定理.ad', exact: true })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'wiki/Tasks.ad', exact: true })).toBeVisible()
-  await expect(panel.getByRole('button', { name: 'CAP 定理', exact: true })).toBeVisible()
+  // 反链行 = **显示名**（PLAN-014 link 组⑤——SD-1301 §10.1 留口兑现：
+  // 有 title 显 title；无 title 显 stem[back dtitle 缺省装配定值]）。
+  // ⚠ 面板区锚（树行显示名同文——wiki/index.ad 树行亦显 首页）；'CAP
+  // 定理' 面板内双现[反链行 + 出链行 target 文本——出链恒链接文本⑥
+  // 零变化 SD-1401 定文]——.first() 反链行 / .last() 出链行（DOM 序
+  // 反链段先渲染）。
+  await expect(panel.getByRole('button', { name: '首页', exact: true })).toBeVisible({ timeout: 10_000 })
+  await expect(panel.getByRole('button', { name: 'CAP 定理', exact: true }).first()).toBeVisible()
+  await expect(panel.getByRole('button', { name: 'Tasks', exact: true })).toBeVisible()
+  await expect(panel.getByRole('button', { name: 'CAP 定理', exact: true }).last()).toBeVisible()
   await expect(page.getByText('首页（悬空）', { exact: true })).toBeVisible()
-  console.log('[10 link] PASS — 面板开 + 反链三源行 + 出链段（CAP 定理钮/首页悬空文本）')
-  // 点击反链行 → index.ad（ASCII）
-  await page.getByRole('button', { name: 'wiki/index.ad', exact: true }).click()
+  console.log('[10 link] PASS — 面板开 + 反链三源显示名行（首页/CAP 定理/Tasks）+ 出链段恒 target 文本（CAP 定理钮/首页悬空文本）')
+  // 点击反链行 → index.ad（ASCII；行文本=显示名 首页——身份域 path
+  // 零扰动 onclick 面）
+  await panel.getByRole('button', { name: '首页', exact: true }).click()
   await expect(visibleEditor(page)).toContainText('Jade Garden 测试知识库', { timeout: 15_000 })
   await expect(page.getByText('（无反链）', { exact: true })).toBeVisible({ timeout: 10_000 })
   // 出链行点击 → Hello World.ad（ASCII；两轨同单上限；**面板区锚**——
@@ -267,7 +282,7 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await activeTabX.click()
   await page.getByText('Hello World', { exact: true }).first().click()
   await expect(visibleEditor(page)).toContainText('这是一段示例文本', { timeout: 15_000 })
-  await expect(page.getByRole('button', { name: 'wiki/index.ad', exact: true })).toBeVisible({ timeout: 10_000 })
+  await expect(panel.getByRole('button', { name: '首页', exact: true })).toBeVisible({ timeout: 10_000 })
   console.log('[10 link] PASS — untitled 空态双文本 + 重开行恢复')
 
   // 10c 建页弧线（PLAN-005 T-04；vm 矩阵 10c 同单）：ASCII 悬空源档测试内
@@ -327,16 +342,18 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await page.getByText('视图', { exact: true }).click()
   await page.getByText('切换反链', { exact: true }).click()
   // ① 第三段标题 + ② 提及行/snippet（行钮消歧：树行同文本居先——.last()
-  // 取面板行钮，面板渲染居后）
+  // 取面板行钮，面板渲染居后）。行文本 = **stem**（PLAN-014 名化——
+  // Mention Source 无 title → back dtitle 缺省 stem，回落 path 仅 stale
+  // 面；树行[goto 重载后入树]同名居先消歧不变）。
   await expect(page.getByText('未链接提及', { exact: true })).toBeVisible({ timeout: 10_000 })
-  await expect(page.getByRole('button', { name: 'Mention Source.ad', exact: true }).last()).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByRole('button', { name: 'Mention Source', exact: true }).last()).toBeVisible({ timeout: 10_000 })
   await expect(page.getByText('plain see Hello World here.', { exact: true })).toBeVisible()
   await expect(page.getByText('（无未链接提及）', { exact: true })).toHaveCount(0)
 
-  // linkify: 点击「转为链接」钮 → 提及段 Mention Source.ad 消失 + 反链段出现 + 磁盘逐字节
+  // linkify: 点击「转为链接」钮 → 提及段 Mention Source 消失 + 反链段出现 + 磁盘逐字节
   await page.getByRole('button', { name: '转为链接', exact: true }).first().click()
   await expect(page.getByText('（无未链接提及）', { exact: true })).toBeVisible({ timeout: 10_000 })
-  await expect(page.getByRole('button', { name: 'Mention Source.ad', exact: true }).last()).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByRole('button', { name: 'Mention Source', exact: true }).last()).toBeVisible({ timeout: 10_000 })
   const rRes = await request.get('/api/read_wiki?path=Mention Source.ad')
   expect(rRes.ok()).toBe(true)
   expect(await rRes.text()).toContain('[[Hello World]]')
@@ -361,8 +378,8 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await page.getByText('切换反链', { exact: true }).click()
   await page.getByText('视图', { exact: true }).click()
   await page.getByText('切换反链', { exact: true }).click()
-  // 反链段中点击 AliasCaller.ad 钮开档
-  await page.getByRole('button', { name: 'AliasCaller.ad', exact: true }).last().click()
+  // 反链段中点击 AliasCaller 钮开档（行文本 = stem——PLAN-014 名化面）
+  await page.getByRole('button', { name: 'AliasCaller', exact: true }).last().click()
   await expect(visibleEditor(page)).toContainText('Caller', { timeout: 10_000 })
   // 出链段中 帽子定理 为可点击钮（exists: true，非悬空）
   await expect(page.getByRole('button', { name: '帽子定理', exact: true })).toBeVisible({ timeout: 10_000 })
@@ -370,8 +387,8 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   // 点击 帽子定理 导航到 CAP
   await page.getByRole('button', { name: '帽子定理', exact: true }).click()
   await expect(visibleEditor(page)).toContainText('CAP', { timeout: 10_000 })
-  // CAP 反链段含 AliasCaller.ad
-  await expect(page.getByRole('button', { name: 'AliasCaller.ad', exact: true }).last()).toBeVisible({ timeout: 10_000 })
+  // CAP 反链段含 AliasCaller
+  await expect(page.getByRole('button', { name: 'AliasCaller', exact: true }).last()).toBeVisible({ timeout: 10_000 })
   // 删测试档
   for (const p of ['CAP.ad', 'AliasCaller.ad']) {
     const dRes = await request.post('/api/delete_page', { data: { path: p } })
@@ -717,6 +734,81 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   const clashClean = await request.post('/api/delete_page', { data: { path: 'E2E Note.ad' } })
   expect(clashClean.ok(), 'delete_page 冲突素材收尾 ok').toBe(true)
   console.log('[13 dir] PASS — 目录面四子步（PLAN-012：新建/移动/取消/冲突拒）')
+  // ⑭-⑯ 目录面二期（PLAN-014 T-04；vm 矩阵 file 组目录二期三子步同单
+  // ——真 DOM；CJK 目录名 POST body 双臂面[delete_dir/rename_dir 双契
+  // 约 POST——D-19 面]）。素材自造：⊕ 目录甲 → ＋ DirNote（根落位开档
+  // ——tab 在）→ 移动到目录甲（MoveGo tab 题全量）→ ⑭ 重命名目录弧线
+  // [双 input 弹层/预览「将移动 1 个 .ad 页（链接零改写）」/tab 题恒
+  // DirNote/磁盘整迁 目录乙——三联对照目录级]/⑮ 删除预览[计数行]+
+  // 取消零落盘/⑯ 删除弧线[确认 → tab 全关 + 磁盘消；悬空翻转面 =
+  // vm ⑯ 承载（DirNote 零入链素材，e2e 无对应已知答案）]。键程 =
+  // menubar 共口（Ctrl+Shift+M 同款口径）。
+  await explorerFolderPlus.click()
+  await expect(page.getByPlaceholder('目录名…')).toBeVisible({ timeout: 10_000 })
+  await page.getByPlaceholder('目录名…').fill('目录甲')
+  await page.getByRole('button', { name: '创建', exact: true }).click()
+  await expect(page.getByText('新建目录')).toBeHidden({ timeout: 10_000 })
+  await expect
+    .poll(() => fs.existsSync(path.join(WORKSPACE, '目录甲')) && fs.statSync(path.join(WORKSPACE, '目录甲')).isDirectory(), { timeout: 10_000 })
+    .toBe(true)
+  await explorerPlus.click()
+  await expect(newNameInput).toBeVisible({ timeout: 10_000 })
+  await newNameInput.fill('DirNote')
+  await page.getByRole('button', { name: '创建', exact: true }).click()
+  await expect(page.getByText('新建页面')).toBeHidden({ timeout: 10_000 })
+  await expect(tabBtn('DirNote')).toHaveCount(1, { timeout: 15_000 })
+  await page.getByText('文件', { exact: true }).click()
+  await page.getByText('移动到目录…', { exact: true }).click()
+  await expect(moveText()).toBeVisible({ timeout: 10_000 })
+  await moveText().fill('目录甲')
+  await moveDialog.getByRole('button', { name: '移动', exact: true }).click()
+  await expect(page.getByText('移动到目录')).toBeHidden({ timeout: 10_000 })
+  await expect
+    .poll(() => fs.existsSync(path.join(WORKSPACE, '目录甲', 'DirNote.ad')) && fs.readFileSync(path.join(WORKSPACE, '目录甲', 'DirNote.ad'), 'utf8') === '# DirNote\n\n', { timeout: 10_000 })
+    .toBe(true)
+  await expect(tabBtn('DirNote')).toHaveCount(1, { timeout: 15_000 })
+  console.log('[13 dir2] 素材就绪 — 目录甲 + DirNote 移入（tab 题全量 + 磁盘整迁）')
+  // ⑭ 重命名目录弧线：双 textbox（目标[0]/新名[1]——视图序）+ 预览 +
+  // 确认 → tab 题恒 DirNote + 磁盘整迁 + 弹层闭。
+  await page.getByText('文件', { exact: true }).click()
+  await page.getByText('重命名目录…', { exact: true }).click()
+  const dir2Dialog = page.getByRole('dialog')
+  await expect(dir2Dialog).toBeVisible({ timeout: 10_000 })
+  const dir2Boxes = dir2Dialog.getByRole('textbox')
+  await expect(dir2Boxes).toHaveCount(2)
+  await dir2Boxes.nth(0).fill('目录甲')
+  await expect(page.getByText('将移动 1 个 .ad 页（链接零改写）', { exact: true })).toBeVisible({ timeout: 10_000 })
+  await dir2Boxes.nth(1).fill('目录乙')
+  await dir2Dialog.getByRole('button', { name: '重命名', exact: true }).click()
+  await expect(page.getByRole('heading', { name: '重命名目录' })).toBeHidden({ timeout: 10_000 })
+  await expect(tabBtn('DirNote')).toHaveCount(1, { timeout: 15_000 })
+  await expect
+    .poll(() => fs.existsSync(path.join(WORKSPACE, '目录乙', 'DirNote.ad')) && !fs.existsSync(path.join(WORKSPACE, '目录甲')), { timeout: 10_000 })
+    .toBe(true)
+  console.log('[13 dir2] PASS — 重命名目录弧线（双 input 弹层/预览「将移动 1 个 .ad 页（链接零改写）」/tab 题恒/磁盘整迁——三联对照目录级）')
+  // ⑮ 删除预览（计数行 + 无入链警示）+ 取消零落盘
+  await page.getByText('文件', { exact: true }).click()
+  await page.getByText('删除目录…', { exact: true }).click()
+  await expect(page.getByRole('dialog')).toBeVisible({ timeout: 10_000 })
+  await page.getByRole('dialog').getByRole('textbox').fill('目录乙')
+  await expect(page.getByText('将删除目录 目录乙 及 1 个文件（1 个 .ad 页）', { exact: true })).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByText('无入链', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: '取消', exact: true }).last().click()
+  await expect(page.getByRole('heading', { name: '删除目录' })).toBeHidden({ timeout: 10_000 })
+  expect(fs.existsSync(path.join(WORKSPACE, '目录乙')), '删除取消零落盘').toBe(true)
+  console.log('[13 dir2] PASS — 删除预览（计数行+无入链警示）+ 取消零落盘')
+  // ⑯ 删除弧线：确认 → tab 全关（DirNote tab 消）+ 磁盘消。
+  await page.getByText('文件', { exact: true }).click()
+  await page.getByText('删除目录…', { exact: true }).click()
+  await expect(page.getByRole('dialog')).toBeVisible({ timeout: 10_000 })
+  await page.getByRole('dialog').getByRole('textbox').fill('目录乙')
+  await page.getByRole('dialog').getByRole('button', { name: '删除', exact: true }).click()
+  await expect(page.getByRole('heading', { name: '删除目录' })).toBeHidden({ timeout: 10_000 })
+  await expect(tabBtn('DirNote')).toHaveCount(0, { timeout: 15_000 })
+  await expect
+    .poll(() => fs.existsSync(path.join(WORKSPACE, '目录乙')), { timeout: 10_000 })
+    .toBe(false)
+  console.log('[13 dir2] PASS — 删除目录弧线（强确认→tab 全关+磁盘消；悬空翻转面 vm ⑯ 承载[DirNote 零入链素材]）')
 
   // 14 meta（PLAN-008 T-04；vm 矩阵 check 14 同单——段内最后）：tags
   // 面板 + wanted 模式。执行序在 13 后（此位已知答案——e2e 13 删的是

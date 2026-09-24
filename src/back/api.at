@@ -225,4 +225,36 @@ pub fn move_page(path str, dir str) str {
     return wsys.move_page_impl(path, dir)
 }
 
+/// 删除目录（PLAN-014 第十切片；**目录生命周期收口**——SD-701 入链悬
+/// 空化语义目录级复现）：递归删除（`File.remove_dir_all`——probe C
+/// 定谳可调）+ 双复核（D-24②：返值忽略 → 删后 exists 翻转唯一可信
+/// 判据）。卫语句序：dir_norm 非空（根拒）先于 is_dir（非目录/缺失
+/// 拒——文件/既有路径同拒，防档误删目录口）。成功返回工作区根相对
+/// 归一目录路径；"" = 根/非目录/缺失/删除未生效。入链面零改写（悬空
+/// 化——delete_page 同判目录级；front 强确认弹层 = 计数/悬空警示双
+/// 防线，SD-1401）。
+/// **POST 而非 GET**（D-19：目录路径 CJK 常态，body 传参）。
+/// POST /api/delete_dir
+#[api(method = "POST", path = "/api/delete_dir")]
+pub fn delete_dir(path str) str {
+    return wsys.delete_dir_impl(path)
+}
+
+/// 重命名目录（PLAN-014；**三联对照目录级**——重命名 = 同层改名，
+/// **stem 不变 ⇒ 链接零改写零断链**（SD-1201 移动零改写同判目录级：
+/// 入链 `[[Target]]` 经 walk 自动指向新位，面板行/链接网零变化））：
+/// POST 单事务五步（卫：is_dir + 清洗 + 同层同名/casefold 拒 + **纯
+/// .ad 卫**[任一非 .ad 子件拒——混合目录 v1 不支持]；新目录建 +
+/// 嵌套镜像；逐文件迁移循环[read+write+delete——006/012 定文形态 +
+/// 双复核]；旧目录清理[嵌套逆序 remove_dir + 顶层]；复核旧无新有）。
+/// 成功返回工作区根相对新目录路径；"" = 任一卫拒/迁移未生效。部分
+/// 迁移容忍注记（循环中段失败留双份——006 非原子窗口家族同判）见
+/// wsys.rename_dir_impl 注。
+/// **POST 而非 GET**（D-19：目录路径/新名 CJK 常态，body 传参）。
+/// POST /api/rename_dir
+#[api(method = "POST", path = "/api/rename_dir")]
+pub fn rename_dir(path str, new_name str) str {
+    return wsys.rename_dir_impl(path, new_name)
+}
+
 

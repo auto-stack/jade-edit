@@ -29,7 +29,7 @@ use find_panel: FindPanel
 use tags_panel: TagsPanel
 use bps.navigation.filetree.tree_util: flatten_tree, toggle_id
 use bps.navigation.filetree.tree_icon: TreeIcon
-use back.api: tree, ws_root, link_index, search_wiki, create_page, rename_page, delete_page, tags_index, linkify_page, page_meta, set_page_meta, create_dir, move_page
+use back.api: tree, ws_root, link_index, search_wiki, create_page, rename_page, delete_page, tags_index, linkify_page, page_meta, set_page_meta, create_dir, move_page, delete_dir, rename_dir
 
 style warn_label = "text-[12px] text-amber-400 mr-1"
 
@@ -322,6 +322,196 @@ fn dir_of_path(path str) str {
     return d
 }
 
+/// 目录路径归一（PLAN-014 T-02；wsys.dir_norm 的 front 镜像——split 去
+/// 空段后 "/" 重接：尾斜杠/重复分隔符 UI 输入容错；D-20③ 禁
+/// length+slice——split 法同族纪律）。
+fn dir_trim(dir str) str {
+    var segs = dir.split("/")
+    var out str = ""
+    var i int = 0
+    while i < segs.len() {
+        // ⚠ D-20②：列表元素先拷局部变量再拼接。
+        var seg str = segs[i]
+        if seg != "" {
+            if out != "" {
+                out = out + "/"
+            }
+            out = out + seg
+        }
+        i = i + 1
+    }
+    return out
+}
+
+/// 目录下文件路径集（PLAN-014 T-02；collect_ad_paths/dirs_of 同族第四
+/// 实例——栈式 while 展开禁递归，兄弟倒序压栈保 fs.tree 遍历序）：返回
+/// dir 下**全部** file 路径（.ad 与非 .ad——删除面「N 个文件（M 个 .ad
+/// 页）」计数两态同源 + tab 关闭/更新循环消费 .ad 子集）。⚠ D-30①：
+/// 参数名 nodes/dir 避开模型字段名（ft_nodes/deldir_q——vue codegen
+/// 模型名 .value 阴影面）。
+fn paths_under(nodes List, dir str) List {
+    var out List = []
+    var d str = dir_trim(dir)
+    if d == "" {
+        return out
+    }
+    var prefix str = d + "/"
+    var stack List = []
+    var i int = nodes.len()
+    while i > 0 {
+        i = i - 1
+        var n = nodes[i]
+        stack.push(n)
+    }
+    var si int = 0
+    while si < stack.len() {
+        // ⚠ D-20②：列表元素先拷局部变量再取字段/调方法。
+        var n = stack[si]
+        si = si + 1
+        var kind str = n.kind
+        var nid str = n.id
+        if nid.starts_with(prefix) {
+            if kind == "file" {
+                out.push(nid)
+            }
+        }
+        if kind == "dir" {
+            var kids List = n.children
+            var k int = kids.len()
+            while k > 0 {
+                k = k - 1
+                var c = kids[k]
+                stack.push(c)
+            }
+        }
+    }
+    return out
+}
+
+/// 目录在树判定（PLAN-014 T-02；弹层预览守卫面——目标目录 ∉ ft_nodes
+/// 目录清单 = 输入未落定/树陈旧，预览明示不计数）。
+fn dir_known(nodes List, dir str) bool {
+    var d str = dir_trim(dir)
+    if d == "" {
+        return false
+    }
+    var ds List = dirs_of(nodes)
+    var i int = 0
+    while i < ds.len() {
+        var x str = ds[i]
+        if x == d {
+            return true
+        }
+        i = i + 1
+    }
+    return false
+}
+
+/// 删除目录预览·计数行（PLAN-014 T-02；SD-1401 强确认双防线之一）：
+/// 「将删除目录 X 及 N 个文件（M 个 .ad 页）」——N/M = paths_under 全
+/// 文件/.ad 两态计数（**ft_nodes 本地派生零 fetch**——D-28② 规避在册
+/// 形态）；空目标/未知目录 = 提示文本。仅弹层显示用（权威在 back 单
+/// 事务删除 + 悬空化 SD-701 目录级）。
+fn dir_del_files_text(nodes List, dir str) str {
+    var d str = dir_trim(dir)
+    if d == "" {
+        return "（输入目标目录）"
+    }
+    if !dir_known(nodes, d) {
+        return "（文件树中无此目录）"
+    }
+    var files List = paths_under(nodes, d)
+    var n int = files.len()
+    var m int = 0
+    var i int = 0
+    while i < n {
+        var f str = files[i]
+        if f.ends_with(".ad") {
+            m = m + 1
+        }
+        i = i + 1
+    }
+    return "将删除目录 " + d + " 及 " + n.str() + " 个文件（" + m.str() + " 个 .ad 页）"
+}
+
+/// 删除目录预览·悬空警示行（PLAN-014 T-02；强确认双防线之二——
+/// dangling_impact 目录级扩：link_pages 全页面出链扫 target_path 起于
+/// dir 前缀（target_path = walk 期解析产物——路径前缀精确圈定，stem
+/// 同名异位不误计）。「N 处入链将变为悬空」/「无入链」。⚠ D-30①：
+/// 参数名 rows 避开模型名 link_pages（D-30 同族纪律）。
+fn dir_del_dangling_text(rows List, dir str) str {
+    var d str = dir_trim(dir)
+    if d == "" {
+        return "—"
+    }
+    var prefix str = d + "/"
+    var m int = 0
+    var i int = 0
+    while i < rows.len() {
+        // ⚠ D-20②：列表元素先拷局部变量再取字段。
+        var page = rows[i]
+        var links List = page.links
+        var k int = 0
+        while k < links.len() {
+            var lnk = links[k]
+            var tp str = lnk.target_path
+            if tp != "" {
+                if tp.starts_with(prefix) {
+                    m = m + 1
+                }
+            }
+            k = k + 1
+        }
+        i = i + 1
+    }
+    if m == 0 {
+        return "无入链"
+    }
+    return m.str() + " 处入链将变为悬空"
+}
+
+/// 重命名目录预览行（PLAN-014 T-02；SD-1401 影响面预览——「将移动
+/// N 个 .ad 页（链接零改写）」——三联对照目录级语义面；paths_under
+/// .ad 子集计数）。
+fn dir_ren_preview_text(nodes List, dir str) str {
+    var d str = dir_trim(dir)
+    if d == "" {
+        return "（输入目标目录）"
+    }
+    if !dir_known(nodes, d) {
+        return "（文件树中无此目录）"
+    }
+    var files List = paths_under(nodes, d)
+    var m int = 0
+    var i int = 0
+    while i < files.len() {
+        var f str = files[i]
+        if f.ends_with(".ad") {
+            m = m + 1
+        }
+        i = i + 1
+    }
+    return "将移动 " + m.str() + " 个 .ad 页（链接零改写）"
+}
+
+/// 路径属目录判定（PLAN-014 T-02；双流收口 remap 面——余段提取）：
+/// path 起于 dir + "/" → 整前缀 split 取第二段（首元素恒 ""——split 法，
+/// D-20③ 禁 length+slice；⚠ split_once 无 ts_adapter 映射——vue 轨裸
+/// 发射 `.split_once` TypeError[pageerror 实勘 T-04，handler 中段断链
+/// D-23② 家族]故整前缀 split 等价通道）；否则 ""。
+fn rel_under(path str, dir str) str {
+    var pre str = dir_trim(dir) + "/"
+    if !path.starts_with(pre) {
+        return ""
+    }
+    var parts = path.split(pre)
+    if parts.len() < 2 {
+        return ""
+    }
+    var rest str = parts[1]
+    return rest
+}
+
 /// 悬空建页路径预览（PLAN-005 T-02）——back wsys.title_to_path 的 front
 /// 镜像纯函数（同一 while-contains 收敛惯用法 + dash-收敛空名探针）。
 /// **仅弹层显示用**：权威在 back（create_page 落盘名），漂移=观感非
@@ -541,6 +731,8 @@ widget App {
         ActMeta, MetaEditTitle(str), MetaEditTags(str), MetaEditAliases(str), MetaGo, MetaCancel,
         ActDirNew, DirEdit(str), DirGo, DirCancel,
         ActMove, MoveEdit(str), MoveGo, MoveCancel,
+        ActDelDir, DelDirEdit(str), DelDirGo, DelDirCancel,
+        ActRenDir, RenDirTargetEdit(str), RenDirEdit(str), RenDirGo, RenDirCancel,
     }
 
     model {
@@ -592,6 +784,13 @@ widget App {
         // new_q/rename_q 同构不入 store（D-20④ 同款裁定）。----
         var dir_q str = ""
         var move_q str = ""
+        // —— 删除/重命名目录弹层数据态（PLAN-014；基线 v13 面）：目标
+        // input + 新名 input（ActDelDir/ActRenDir 置空——零 fetch 预填
+        // 形态，placeholder = ft_nodes 派生目录清单首项同 012 移动弹层）
+        // ——dir_q/move_q 同构不入 store（D-20④ 同款裁定）。----
+        var deldir_q str = ""
+        var rendir_target str = ""
+        var rendir_q str = ""
         // —— 标签面板数据态（PLAN-008）：聚合行 {tag,label,paths}
         //（label 派生期拼接——双段 ${} 插值 avoidance，PLAN-003 先例）+
         // 单选展开态（"" = 全收，手风琴 v1）——find_q 同构不入 store
@@ -629,6 +828,13 @@ widget App {
         // （dirs_first 纯函数——本地派生零 fetch，D-28② 规避在册形态）；
         // 空清单 = ""。
         move_ph => dirs_first(.ft_nodes)
+        // 目录双弹层 placeholder + 预览行（PLAN-014 T-02；基线 v13 面）
+        // ——placeholder 同 move_ph 口径；预览 = 本地派生零 fetch（目标
+        // input 值随打随算——D-28② 规避在册形态）。
+        dir_ph => dirs_first(.ft_nodes)
+        deldir_files_preview => dir_del_files_text(.ft_nodes, .deldir_q)
+        deldir_dangling_preview => dir_del_dangling_text(.link_pages, .deldir_q)
+        rendir_preview => dir_ren_preview_text(.ft_nodes, .rendir_target)
     }
 
     // —— actions 声明块（Plan 451 三源绑定：shortcut / toolbar 占位合成 /
@@ -646,6 +852,12 @@ widget App {
         action (id: "file.move", handler: .ActMove, title: "移动到目录…", shortcut: "Ctrl+Shift+M")
         action (id: "file.delete", handler: .ActDelete, title: "删除…", shortcut: "Delete",
                 enabled_if: ".ft_sel != \"\"")
+        // 目录生命周期收口（PLAN-014 T-02；双入口与档 Delete/F2 分键——
+        // Shift+Delete/Ctrl+Shift+R；不挂 enabled——D-24③ vm 轨 menubar
+        // enabled 冻结缺口，目录目标经弹层 input 指定[ft_sel 不扩]故无
+        // 状态依赖可挂）。
+        action (id: "file.deldir", handler: .ActDelDir, title: "删除目录…", shortcut: "Shift+Delete")
+        action (id: "file.rendir", handler: .ActRenDir, title: "重命名目录…", shortcut: "Ctrl+Shift+R")
         action (id: "file.quit",   handler: .ActQuit,   title: "退出",  shortcut: "Alt+F4")
         action (id: "edit.undo",   handler: .ActUndo,   title: "撤销",  icon: "undo-2",      shortcut: "Ctrl+Z")
         action (id: "edit.redo",   handler: .ActRedo,   title: "重做",  icon: "redo-2",      shortcut: "Ctrl+Y")
@@ -702,6 +914,8 @@ widget App {
                             menubar-item (title: "移动到目录…", shortcut: "Ctrl+Shift+M") { onclick: .ActMove }
                             menubar-item (title: "页面属性…", icon: "sliders-horizontal", shortcut: "Ctrl+I") { onclick: .ActMeta }
                             menubar-item (title: "删除…", shortcut: "Delete") { onclick: .ActDelete }
+                            menubar-item (title: "删除目录…", shortcut: "Shift+Delete") { onclick: .ActDelDir }
+                            menubar-item (title: "重命名目录…", shortcut: "Ctrl+Shift+R") { onclick: .ActRenDir }
                             menubar-separator
                             menubar-item (title: "退出", icon: "log-out", shortcut: "Alt+F4") { onclick: .ActQuit }
                         }
@@ -970,7 +1184,13 @@ widget App {
                                 text "（无反链）" { style: "text-[11px] text-muted-foreground px-3" }
                             }
                             for r in .bl_rows {
-                                button (text: r.source_path, variant: "ghost") {
+                                // 行文本 = 显示名覆盖（PLAN-014 T-03——SD-1301
+                                // §10.1 留口兑现：dtitle_of fallback =
+                                // source_path 身份可读，无 title 档显示 stem
+                                // [back dtitle 缺省=stem 装配定值——回落仅
+                                // stale 面]；显示域覆盖，身份域 path 零扰动
+                                // ——onclick 恒 source_path）。
+                                button (text: dtitle_of(.titles, r.source_path, r.source_path), variant: "ghost") {
                                     onclick: .OpenLink(r.source_path)
                                     style: "w-full justify-start px-3 h-6 text-left text-[12px]"
                                 }
@@ -1013,7 +1233,11 @@ widget App {
                             }
                             for r in .mention_rows {
                                 row (style: "w-full items-center justify-between") {
-                                    button (text: r.path, variant: "ghost") {
+                                    // 行文本 = 显示名覆盖（PLAN-014 T-03——
+                                    // 提及行 path 首行同化反链行口径；无
+                                    // title 档显示 stem[back 缺省装配定值]；
+                                    // onclick 恒 path 身份域）。
+                                    button (text: dtitle_of(.titles, r.path, r.path), variant: "ghost") {
                                         onclick: .OpenLink(r.path)
                                         style: "flex-1 justify-start px-3 h-6 text-left text-[12px]"
                                     }
@@ -1215,6 +1439,67 @@ widget App {
                     dialog-footer {
                         button (text: "取消", variant: "outline") { onclick: .MoveCancel }
                         button (text: "移动", variant: "ghost") { onclick: .MoveGo }
+                    }
+                }
+            }
+
+            // —— 删除目录弹层（PLAN-014 第十切片；dialog 第十实例——单
+            // input「目标目录」+ 预览两行[计数/悬空警示——强确认双防线
+            // SD-1401]，移动目录弹层同构形态：双钮 = 普通 button[D-24④
+            // 纪律]、闭态恒渲染 D-23③ 同判——测试定位锚内容制。声明位在
+            // rename 弹层前——vm 快照 input 序「弹层后声明者居末」锚纪律
+            // （check 12 rename input 居末不漂移）。危险钮序：删除居末
+            //（D-29③ 弹层钮标题锚纪律——「删除目录」标题全树唯一）。——
+            dialog (open: .store.deldir_open) {
+                dialog-content {
+                    dialog-header {
+                        dialog-title "删除目录"
+                        dialog-description "将递归删除目录及其中全部文件（不可恢复）"
+                    }
+                    input {
+                        value: .deldir_q
+                        oninput: .DelDirEdit
+                        placeholder: .dir_ph
+                        style: "w-full h-7 px-2 text-[12px] border rounded bg-background"
+                    }
+                    text .deldir_files_preview { style: "text-[12px] text-muted-foreground px-1" }
+                    text .deldir_dangling_preview { style: "text-[12px] text-amber-600 px-1" }
+                    dialog-footer {
+                        button (text: "取消", variant: "outline") { onclick: .DelDirCancel }
+                        button (text: "删除", variant: "ghost") { onclick: .DelDirGo }
+                    }
+                }
+            }
+
+            // —— 重命名目录弹层（PLAN-014；dialog 第十一实例——双 input
+            // 「目标目录」+「新名」，页面属性弹层双 input 同构形态（新名
+            // 位次：目标居首——语义序同源）；影响面预览「将移动 N 个 .ad
+            // 页（链接零改写）」= 三联对照目录级语义面。声明位在 rename
+            // 弹层前——input 序锚纪律同上。⚠ 双 input 序：目标居首新名
+            // 居次——vm 测试锚 = 「重命名目录」标题 content 子树扫（
+            // D-29③ 标题锚纪律），input[idx] 序随视图序。——
+            dialog (open: .store.rendir_open) {
+                dialog-content {
+                    dialog-header {
+                        dialog-title "重命名目录"
+                        dialog-description "同层改名（stem 不变——链接零改写）"
+                    }
+                    input {
+                        value: .rendir_target
+                        oninput: .RenDirTargetEdit
+                        placeholder: .dir_ph
+                        style: "w-full h-7 px-2 text-[12px] border rounded bg-background"
+                    }
+                    input {
+                        value: .rendir_q
+                        oninput: .RenDirEdit
+                        placeholder: "新目录名…"
+                        style: "w-full h-7 px-2 text-[12px] border rounded bg-background"
+                    }
+                    text .rendir_preview { style: "text-[12px] text-muted-foreground px-1" }
+                    dialog-footer {
+                        button (text: "取消", variant: "outline") { onclick: .RenDirCancel }
+                        button (text: "重命名", variant: "ghost") { onclick: .RenDirGo }
                     }
                 }
             }
@@ -2015,6 +2300,160 @@ widget App {
             } else {
                 if ok {
                     console_log("move: rejected (conflict/missing dir/missing page)")
+                }
+            }
+        }
+
+        // —— 删除目录流（PLAN-014 T-02/T-03；DeleteGo 同构守卫面 + 目录
+        // 级扩）：入口（action Shift+Delete/menubar 共口）无状态守卫
+        //（目录目标 = 弹层 input 口径——ft_sel 不扩，SD-1401；input 置
+        // 空 + 开弹层）。DelDirGo 流：①back 契约直调 delete_dir（try/
+        // catch 落 console——backend-offline 不炸；目标 dir_trim 归一后
+        // 空拒——输入未落定弹层留置）
+        // ②成功 = 关弹层 + tab 全关循环（paths_under 本地派生 .ad 子集
+        //   → 逐 store.CloseTabsOf——007 在册口，激活邻档补位/空态免费
+        //   收口；零新 store 面）+ 刷新族 v6（LinksRefreshOf——入链悬
+        //   空翻转[wanted/bl 面随产物] + MentionsRefreshOf + TagsRefresh
+        //   [路径面] + TreeRefresh[树行消]）+ ft_sel 属目录则清空（删除
+        //   后无选中——⑥ 未选中 no-op 口径复位同判）
+        // ③拒（""：根/非目录/缺失）= console 注记 + 弹层留置（006 v1
+        //   口径同判）。
+        .ActDelDir -> {
+            .deldir_q = ""
+            store.DelDirOpen()
+        }
+        .DelDirEdit(q) -> {
+            .deldir_q = q
+        }
+        .DelDirCancel -> {
+            store.DelDirClose()
+        }
+        .DelDirGo -> {
+            var target str = dir_trim(.deldir_q)
+            if target == "" {
+                console_log("delete_dir: empty target")
+            } else {
+                var r str = ""
+                var ok bool = true
+                try {
+                    r = delete_dir(target)
+                } catch (e) {
+                    ok = false
+                }
+                if !ok {
+                    console_log("delete_dir: failed")
+                }
+                if r != "" {
+                    store.DelDirClose()
+                    var files List = paths_under(.ft_nodes, target)
+                    var i int = 0
+                    while i < files.len() {
+                        // ⚠ D-20②：列表元素先拷局部变量再调方法。
+                        var f str = files[i]
+                        if f.ends_with(".ad") {
+                            store.CloseTabsOf(f)
+                        }
+                        i = i + 1
+                    }
+                    .LinksRefreshOf(.store.active_path)
+                    .MentionsRefreshOf(.store.active_path)
+                    .TagsRefresh()
+                    .TreeRefresh()
+                    var sel str = .ft_sel
+                    if rel_under(sel, target) != "" {
+                        .ft_sel = ""
+                    }
+                } else {
+                    if ok {
+                        console_log("delete_dir: rejected (root/not-dir/missing)")
+                    }
+                }
+            }
+        }
+
+        // —— 重命名目录流（PLAN-014 T-03；MoveGo/RenameGo 同构守卫面 +
+        // TabsRenamed 循环复用）：入口（action Ctrl+Shift+R/menubar 共口）
+        // 无状态守卫（目标 input 口径同删除面）；双 input 置空 + 开弹层。
+        // RenDirGo 流：①back 契约直调 rename_dir（POST 单事务五步——
+        //   纯 .ad 卫/逐文件迁移/旧目录清理/复核全在 back；目标 + 新名
+        //   空拒——输入未落定弹层留置）
+        // ②成功 = 关弹层 + tab 全量更新循环（paths_under .ad 子集 → 余
+        //   段 rel_under → 新路径逐 store.TabsRenamed——006 在册口：path
+        //   /title/key 全量，stem 不变标题恒等）+ store.Reload（body 不
+        //   变——重挂载播种链一致性，MoveGo 同判）+ 刷新族 v6：LinksRef
+        //   reshOf(new_active)（链接网对目录改名零感——面板面复核锚）+
+        //   TagsRefresh + MentionsRefreshOf(new_active) + TreeRefresh（树
+        //   新位）+ ft_sel/active 属目录 remap（显式计算规避 handler 内
+        //   .store 陈旧投影——T-03 实勘同款）
+        // ③拒（""：同名/casefold/纯 .ad 卫/缺失）= console 注记 + 弹层
+        //   留置（006 v1 口径同判）。
+        .ActRenDir -> {
+            .rendir_target = ""
+            .rendir_q = ""
+            store.RenDirOpen()
+        }
+        .RenDirTargetEdit(v) -> {
+            .rendir_target = v
+        }
+        .RenDirEdit(q) -> {
+            .rendir_q = q
+        }
+        .RenDirCancel -> {
+            store.RenDirClose()
+        }
+        .RenDirGo -> {
+            var target str = dir_trim(.rendir_target)
+            if target == "" {
+                console_log("rename_dir: empty target")
+            } else {
+                if .rendir_q.trim() == "" {
+                    console_log("rename_dir: empty name")
+                } else {
+                    var r str = ""
+                    var ok bool = true
+                    try {
+                        r = rename_dir(target, .rendir_q)
+                    } catch (e) {
+                        ok = false
+                    }
+                    if !ok {
+                        console_log("rename_dir: failed")
+                    }
+                    if r != "" {
+                        store.RenDirClose()
+                        var files List = paths_under(.ft_nodes, target)
+                        var i int = 0
+                        while i < files.len() {
+                            // ⚠ D-20②：列表元素先拷局部变量再调方法。
+                            var f str = files[i]
+                            if f.ends_with(".ad") {
+                                var rest str = rel_under(f, target)
+                                store.TabsRenamed(f, r + "/" + rest)
+                            }
+                            i = i + 1
+                        }
+                        // active/ft_sel 属目录 remap（显式计算——.store
+                        // 读陈旧投影规避，RenameGo 同款）。
+                        var new_active str = .store.active_path
+                        var act_rest str = rel_under(new_active, target)
+                        if act_rest != "" {
+                            new_active = r + "/" + act_rest
+                        }
+                        store.Reload()
+                        .LinksRefreshOf(new_active)
+                        .TagsRefresh()
+                        .MentionsRefreshOf(new_active)
+                        .TreeRefresh()
+                        var sel str = .ft_sel
+                        var sel_rest str = rel_under(sel, target)
+                        if sel_rest != "" {
+                            .ft_sel = r + "/" + sel_rest
+                        }
+                    } else {
+                        if ok {
+                            console_log("rename_dir: rejected (same-name/casefold/pure-.ad/missing)")
+                        }
+                    }
                 }
             }
         }

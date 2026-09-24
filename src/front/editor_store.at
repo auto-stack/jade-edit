@@ -88,6 +88,11 @@ store EditorStore {
         // D-20④ 同款裁定：new_q/rename_q 先例）。
         var dir_open bool = false
         var move_open bool = false
+        // 删除/重命名目录弹层开态（PLAN-014；基线 v13 面）：弹层面分野
+        // 同上——deldir_q/rendir_target/rendir_q 在 App 模型（数据态不入
+        // store——D-20④ 同款裁定：dir_q/move_q 先例）。
+        var deldir_open bool = false
+        var rendir_open bool = false
     }
 
     // msg 载荷单类型（编译器约束）：Open 单 map、Edit 单 str。
@@ -106,6 +111,7 @@ store EditorStore {
         NewOpen, NewClose, DeleteOpen, DeleteClose, CloseTabsOf(str),
         MetaOpen, MetaClose,
         DirOpen, DirClose, MoveOpen, MoveClose,
+        DelDirOpen, DelDirClose, RenDirOpen, RenDirClose,
     }
 
     on {
@@ -509,6 +515,26 @@ store EditorStore {
         }
         .MoveClose -> {
             .move_open = false
+            .console = console_lines()
+        }
+
+        // ---- 删除/重命名目录弹层（PLAN-014）：Open/Close 只翻开态（目标
+        // input 置空在 App 侧 .ActDelDir/.ActRenDir——弹层面分野同
+        // MoveOpen/MoveClose；取消零落盘——无 back 调用）。----
+        .DelDirOpen -> {
+            .deldir_open = true
+            .console = console_lines()
+        }
+        .DelDirClose -> {
+            .deldir_open = false
+            .console = console_lines()
+        }
+        .RenDirOpen -> {
+            .rendir_open = true
+            .console = console_lines()
+        }
+        .RenDirClose -> {
+            .rendir_open = false
             .console = console_lines()
         }
 

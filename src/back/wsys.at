@@ -813,6 +813,179 @@ pub fn move_page_impl(path str, dir str) str {
     return new_rel
 }
 
+// ===== 目录面二期（PLAN-014 T-01；知识库第十二切片 back 半）——目录生命
+// 周期收口：删除目录（SD-701 语义目录级复现——入链悬空化）+ 重命名目录
+// （三联对照目录级——stem 不变 ⇒ 链接零改写，SD-1201 续）。**probe C
+// 定谳件**：File.remove_dir / File.remove_dir_all 可调（别名双表在册
+// [native_catalog 1014/1015]；create_dir/is_dir 同族已证探针 A/B——
+// 本批 probe_dir_ops 双臂直证承载可调性定谳，解析层不可调则模块 boot
+// 即 fatal[D-24① 同判面]）。返值忽略 D-24②——exists/is_dir 双复核
+// 内建同族纪律。
+
+/// 目录删除本体（api.delete_dir 实现；SD-1401）——三步：
+/// ①卫：dir_norm 归一（"wiki/"// 尾斜杠容错）非空（根拒——resolve("")
+///   即工作区根，绝不可删）+ `File.is_dir`（非目录拒——文件/缺失同判，
+///   探针 B 定谳件）；
+/// ②`File.remove_dir_all`（**递归原语——probe C 定谳可调**；返值忽略
+///   ——D-24② 原语吞错族）；
+/// ③双复核 `!File.exists`（目录存在性翻转——删除成功唯一可信判据，
+///   D-24② 同族）→ 返回归一 path；失败 ""。
+pub fn delete_dir_impl(path str) str {
+    var p str = dir_norm(path)
+    if p == "" {
+        return ""
+    }
+    var full str = resolve(p)
+    if !File.is_dir(full) {
+        return ""
+    }
+    File.remove_dir_all(full)
+    if File.exists(full) {
+        return ""
+    }
+    return p
+}
+
+/// 目录重命名本体（api.rename_dir 实现；SD-1401）——POST 单事务五步：
+/// ①卫：dir_norm 非空 + `File.is_dir`（缺失/非目录拒）+ 清洗 new_name
+///   （title_to_path_stem 复用——九字符→'-'/trim/空名守卫）+ 同层同名
+///   拒（新路径 exists → ""——同名目录/同名文件同判；**casefold 同判
+///   拒**——case-only 自身拒 006 G3 口径续[Windows 不敏感 FS exists
+///   已真，显式卫语义自载]）+ **纯 .ad 卫**（树 walk 段扫描——任一
+///   file 子件非 .ad 尾 → ""）；
+/// ②子件清单收集（同 walk 双收集：.ad files + 嵌套 subdirs——⚠ 树走
+///   **工作区根** `fs.tree(resolve(""), 8)` + 前缀过滤（id 起于
+///   `path + "/"`），不查子树——根相对 id 语义在册件[collect_ad_pages/
+///   front ft_nodes 同源]，子树 id 相对性未证免依赖；dirs-first walk
+///   序 ⇒ subdirs 父先子后）；
+/// ③新目录建（`File.create_dir`——create_dir_all 递归语义 + 幂等不炸，
+///   探针 A 定谳）+ 嵌套镜像目录逐个建 + **逐文件迁移循环**（余段 =
+///   rel.split_once(path + "/")[1]——split_once 首现即前缀位[rel 恒以
+///   前缀起]，D-20③ 禁 length+slice 安全通道；read_text → write_text →
+///   File.delete——move_page 五步体内复用 + 双复核[新在 && 旧无——
+///   delete 恒返 0 吞错 D-24②]）；
+/// ④旧目录清理：嵌套旧子目录**逆序** `File.remove_dir`（walk 序父先子
+///   后 ⇒ 逆序即子先于父——空目录原语非递归口径）+ 顶层 `File.remove_dir`
+///   + 复核（旧无 && 新 is_dir）；
+/// ⑤返回新工作区根相对目录路径；"" = 任一卫拒/迁移未生效。
+/// **stem 不变 ⇒ 链接零改写**（三联对照目录级——链接面纯 stem 解析对
+/// 目录无感，SD-1201 同判）。**部分迁移容忍注记**：循环中段失败留双份
+///（旧目录残留 + 新目录部分——v0 记账，006 copy+delete 非原子窗口家族
+/// 同判；File.rename 别名供料解锁后可整体原子化，§10.4）。
+pub fn rename_dir_impl(path str, new_name str) str {
+    var p str = dir_norm(path)
+    if p == "" {
+        return ""
+    }
+    var full str = resolve(p)
+    if !File.is_dir(full) {
+        return ""
+    }
+    var safe str = title_to_path_stem(new_name)
+    if safe == "" {
+        return ""
+    }
+    var parent str = dir_of(p)
+    var new_rel str = parent + safe
+    var new_full str = resolve(new_rel)
+    if File.exists(new_full) {
+        return ""
+    }
+    if casefold_eq(new_rel, p) {
+        return ""
+    }
+    // ②卫 + 清单：工作区根树段扫描 + 前缀过滤（⚠ D-20②：段元素先拷
+    // 局部变量再调方法——collect_ad_pages 同款）。段分类语义（树段
+    // 标记法——collect_ad_pages 注记同源）：每节点起一段；file 自身
+    // kind 恒落本段（叶无后裔——contains "kind":"file" ⟺ 本节点为
+    // file，祖先 dir 的 kind 落末孙段不误伤）；**非空目录段只含头 +
+    // `"children":[` 开括号**（自身 kind 落末孙段）→ ends_with
+    // 判定；空目录自身 kind 落本段（contains "kind":"dir"）。
+    var tree str = fs.tree(resolve(""), 8)
+    var segs = tree.split("{\"id\":")
+    var files List = []
+    var subdirs List = []
+    var i int = 1
+    while i < segs.len() {
+        var seg str = segs[i]
+        var head = seg.split_once(",\"label\":")
+        if head.len() == 2 {
+            var idq str = head[0]
+            var qparts = idq.split("\"")
+            if qparts.len() >= 2 {
+                var id str = qparts[1]
+                if id.starts_with(p + "/") {
+                    if seg.contains("\"kind\":\"file\"") {
+                        if !id.ends_with(".ad") {
+                            return ""
+                        }
+                        files.push(id)
+                    } else {
+                        if seg.contains("\"kind\":\"dir\"") {
+                            subdirs.push(id)
+                        } else {
+                            if seg.ends_with(",\"children\":[") {
+                                subdirs.push(id)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        i = i + 1
+    }
+    // ③新目录 + 嵌套镜像目录（create_dir_all 语义幂等）。
+    File.create_dir(new_full)
+    var d int = 0
+    while d < subdirs.len() {
+        var sd str = subdirs[d]
+        var sdp = sd.split_once(p + "/")
+        var sd_rest str = sd
+        if sdp.len() == 2 {
+            sd_rest = sdp[1]
+        }
+        File.create_dir(resolve(dir_norm(new_rel + "/" + sd_rest)))
+        d = d + 1
+    }
+    var j int = 0
+    while j < files.len() {
+        // ⚠ D-20②：列表元素先拷局部变量再调方法。
+        var rel str = files[j]
+        var rp = rel.split_once(p + "/")
+        var rest str = rel
+        if rp.len() == 2 {
+            rest = rp[1]
+        }
+        var new_file_rel str = new_rel + "/" + rest
+        var old_file_full str = resolve(rel)
+        var new_file_full str = resolve(new_file_rel)
+        File.write_text(new_file_full, File.read_text(old_file_full))
+        File.delete(old_file_full)
+        if !File.exists(new_file_full) {
+            return ""
+        }
+        if File.exists(old_file_full) {
+            return ""
+        }
+        j = j + 1
+    }
+    // ④旧目录清理：嵌套逆序（子先于父）+ 顶层；复核旧无新有。
+    var k int = subdirs.len()
+    while k > 0 {
+        k = k - 1
+        var sd2 str = subdirs[k]
+        File.remove_dir(resolve(sd2))
+    }
+    File.remove_dir(full)
+    if File.exists(full) {
+        return ""
+    }
+    if !File.is_dir(new_full) {
+        return ""
+    }
+    return new_rel
+}
+
 // ===== 提及转链接（PLAN-010 T-01；知识库第八切片 back 半） =====
 
 /// 提及转链接本体（api.linkify_page 实现；SD-1001 back 半）：
