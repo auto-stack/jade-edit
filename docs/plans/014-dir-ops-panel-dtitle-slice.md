@@ -1,12 +1,12 @@
 ---
 plan_id: PLAN-014
-status: executing
+status: execution_done
 feature_name: dir-ops-panel-dtitle-slice
 author: [zhaopuming]
 created_at: 2026-09-24T16:51:21+08:00
-updated_at: 2026-09-24T17:30:00+08:00
+updated_at: 2026-09-24T20:10:00+08:00
 plan_revision: 1
-current_step: 4
+current_step: 5
 total_steps: 5
 supersedes_spec_components: []
 new_spec_components:
@@ -378,15 +378,46 @@ pub fn rename_dir_impl(path str, new_name str) str {
     移动后 TreeRefresh 重建树展开态不继承（⑭ DirBox 折叠不可见
     ——展开态自适应前置）；③vm ⑯ 树行消失断言被闭态弹层 input
     value 投影误中（D-23③/D-29④ 族——explorer 区锚消歧）。
-- **T-05 文档 + ledger v17 + 收口**（AC-05/06）
+- **T-05 文档 + ledger v17 + 收口**（AC-05/06）[x]
   - SD-1401..1404 落位；ledger v16→v17；负向证（含参数纪律
     grep + probe 六代回归）；§9 work 记录。
   - 验证：文档 diff 检视 + gate 复跑绿。
+  - [✅ 已完成] SD-1401（ARCHITECTURE §5 目录面二期+面板行显示名化
+    段——三联对照目录级并表/back 双契约三步+五步/目标 input 口径/
+    强确认双防线/刷新族 v6/D-30① 首批次应用/名化两域口径 + §6 表
+    SD-1402[vm 行 link/file 组 PLAN-014 子步注记 + 基线 v13 重锁史
+    + e2e 13 dir2 + probe_dir_ops 清单条目]）+ SD-1403（README Tests
+    节——检查单扩定 + PLAN-014 N 定谳 + 基线 v13 指针 + 运行矩阵
+    v9 stale 指针校正）+ SD-1404（README 是什么第十二切片条目 + 文档
+    节 ledger v17 指针）；parity-ledger **v16→v17**（D-31 四件新行
+    [split_once 无映射 vue 裸发射面——gen 字符串方法映射表第四兄弟/
+    fs.tree 目录段判定实勘/getByText 弹层标题 strict 竞态纪律/临时
+    源端口碰撞环境项] + D-21 v17 扩记[独占窗零复现 + gate 首锁一次
+    过]）+ 负向证（AC-05：D-30① 参数纪律 grep 证七新函数零模型名
+    碰撞[源注记在案] + `.console` 零赋值 + probe 全族**九件** fresh
+    绿[008..013 六代 + 014 新件——013 教训兑现] + 契约纯增量
+    [api.at diff 仅追加双契约，既有零变化] + 冻结池/家族仓零接触 +
+    `gen/` 不入库 + 补件面零增量]）；gate 复跑绿（见 §9 收口记录）。
 
 依赖序：T-01 → T-02 → T-03 → T-04 → T-05（线性；probe C 首闸）。
 
 ## 9. 复审记录
 
+- **2026-09-24 work 收口（auto-plan-work）**：
+  - `stage: work | plan_id: PLAN-014 | plan_revision: 1 | outcome: pass
+    | code_commit: <T-05 收口提交> | task_ids: T-01..T-05 | evidence:
+    gate ALL GREEN 首锁一次通过[vm 双臂 16/16+15/15 + 基线 v13 零漂移
+    2 跑 + build + e2e 15 段] + probe 全族九件 fresh 绿[008..013 六代
+    + 014 probe_dir_ops——back 改后首跑] + AC-05 负向证齐[D-30① grep
+    七新函数零模型名碰撞/.console 零赋值/契约纯增量/冻结池零接触/gen
+    不入库/补件零增量] + SD-1401..1404 落位锚注齐 + ledger v16→v17
+    [D-31 四件 + D-21 v17 扩记] | blockers: 无 | next: review`
+  - 执行期校正汇总（canonical 已随 SD-1401 落位）：①无 title 源档显
+    示 = **stem**（back 缺省装配定值——计划 §6「回落 path」按 013 G1
+    同族口径校正落定）；②App 字段三枚（§4.2 旧形一字段——§2.3 修正
+    设计实取）；③fs.tree 非空目录段 children 开括号形态（D-31②）；
+    ④split_once 无 ts_adapter 映射——rel_under 整前缀 split 等价通
+    道（D-31①）；⑤probe 口 8228→8231（D-31④ 环境项）。
 - **2026-09-24 work T-01..T-04（auto-plan-work）**：
   - `stage: work`，PLAN-014，revision 1，T-01..T-04 完成 → next: T-05。
   - base commit = a6bb9f9；直接 main 线性约定（无 worktree/dev 分支）。
