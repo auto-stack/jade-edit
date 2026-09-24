@@ -1,6 +1,6 @@
 ---
 plan_id: PLAN-012
-status: reviewed
+status: archived
 feature_name: dir-move-search-alias-slice
 author: [zhaopuming]
 created_at: 2026-09-23T23:04:15+08:00
@@ -355,6 +355,26 @@ pub fn move_page_impl(path str, dir str) str {
 依赖序：T-01 → T-02 → T-03 → T-04 → T-05（线性；探针 A 为首闸）。
 
 ## 9. 复审记录
+
+- **2026-09-24 merge（归档 delivered——merge 五 checkpoint 闭环）**：
+  - `stage: merge | PLAN-012:r1 | outcome: pass | completion_kind:
+    delivered | delivery_commit=de32a47`
+  - **prepared**=reviewed 基线 41a3bce + canonical delta SD-1201..1204
+    落位核验（T-05 已入 ARCHITECTURE/README，复审实读在案）+
+    delivery=de32a47 docs-only 后代核验（diff 全窗口仅计划文件
+    +29/-2，实现/依赖零变化）；**landed**=main tip==de32a47 直接
+    main 线性约定（无 worktree/dev 分支——本仓在案约定）；
+    **ledger_refreshed**=parity-ledger v15 tracked 文件 T-05 已入
+    main 读回核验[表头 v15 + D-29 六件 + D-21 v15 扩记；无 live
+    ledger 服务，PLAN-001 同判]；**archived**=git mv
+    docs/plans/archived/012-dir-move-search-alias-slice.md + status
+    archived + completion_kind delivered；**cleaned**=无 worktree/
+    dev 分支（直接 main 约定，worktree 清单仅 main；代码工作树零
+    WIP[仅 013 计划簿记 untracked 在册——下一计划草稿，惯例内]）。
+  - 归档前已知良好：gate ALL GREEN 于同码树 41a3bce 当窗复现
+    （delivery 仅 docs——码面零变化，冒烟证据直接承继）。
+  - `next: 无（delivered 收口；PLAN-013 work 启动前提「012 归档」
+    兑现）`
 
 - **2026-09-24 review（复审 pass——独立会话工件重建口径）**：
   - 独立性声明：本复审会话零参与 012 实现（实现会话 = 2026-09-23/24
