@@ -1,10 +1,10 @@
 ---
 plan_id: PLAN-012
-status: execution_done
+status: reviewed
 feature_name: dir-move-search-alias-slice
 author: [zhaopuming]
 created_at: 2026-09-23T23:04:15+08:00
-updated_at: 2026-09-24T16:45:00+08:00
+updated_at: 2026-09-24T10:22:00+08:00
 plan_revision: 1
 current_step: 5
 total_steps: 5
@@ -355,6 +355,33 @@ pub fn move_page_impl(path str, dir str) str {
 依赖序：T-01 → T-02 → T-03 → T-04 → T-05（线性；探针 A 为首闸）。
 
 ## 9. 复审记录
+
+- **2026-09-24 review（复审 pass——独立会话工件重建口径）**：
+  - 独立性声明：本复审会话零参与 012 实现（实现会话 = 2026-09-23/24
+    前序会话；本会话证据全量自工件重放，不依赖实现判绿转述）。
+  - `stage: review | PLAN-012 | rev 1 | outcome: pass |
+    reviewed_commit=41a3bce | base_commit=b0011dd |
+    dependency_revisions=jade-edit 自有 back/front（无外部依赖面） |
+    spec_inputs=SD-1201..1204 canonical 落位实读[ARCHITECTURE §5 目录
+    面+检索 alias 段含三联并表锚 :425 / §6 表 / README Tests+是什么
+    节 / parity-ledger 表头 v15]`
+  - 验收复现（AC→证据）：**AC-01** probe_dir_move 十三案双臂全绿
+    （目录面八案+检索 alias 三案+磁盘逐字节/三拒/幂等复核）；
+    **AC-02** vm 双臂 file 组目录面四子步（⊕新建/移动弧线[预填+tab
+    全量+字节整迁+面板快照零变化+links_json 定向 diff 归一]/取消零
+    落盘/冲突拒留置）+ e2e file 段（gate 内）；**AC-03** probe ⑨⑩⑪
+    + vm find 组 alias 子步双臂 + e2e find 段；**AC-04 gate ALL
+    GREEN**（本窗 2 跑：第 1 跑 e2e check-5 保存点 D-21 签名 1 例 →
+    清卫 5 个本窗遗孤进程[auto×2+node×3 实杀] → 第 2 跑 ALL GREEN
+    ——v15 清卫前置口径再证；vm 双臂 16/16+15/15+基线 v11 在册
+    structure-v11.txt）；**AC-05** probe 全族七件回归全绿
+    [page_meta/alias_linkify/tags/rename/delete/create/inline_tags]
+    + `.console` App 上下文零赋值 grep 实勘 + diff 窗 12 文件全在
+    授权面（gen/ 冻结池 家族仓 零接触）；**AC-06** 锚注齐实勘
+    （SD-1201..1202 ARCHITECTURE ×3 / SD-1203..1204 README ×3）。
+  - findings: 无阻塞项；D-21 瞬态 1 例非阻塞（在册 v15 形态，重跑
+    口径内，如实记）。
+  - `next: merge`
 
 - **2026-09-23 work T-01（back 半收口，提交 2eb26ac）**：
   - 探针 A/B 定谳双绿（e2e/.runtime 临时探针实跑）：`File.create_dir`/
