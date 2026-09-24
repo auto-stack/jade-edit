@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// probe_page_meta.mjs — PLAN-011 T-01 页面属性写面十案 + 互作案直证（双臂）。
+// probe_page_meta.mjs — PLAN-011 T-01 页面属性写面十案 + 互作案直证（双臂）
+// + PLAN-013 T-01 title 面五案扩（三键契约回归——扩参不破旧）。
 //
 //   merged 臂  临时探针工程（e2e/.runtime/probe-page-meta/，脚本生成——
 //              pac.at render vm + src/back 整树拷贝 + 探针 widget Init 内
@@ -8,10 +9,11 @@
 //   split 臂   serve-back（`auto run --server vm`，同 matrix/e2e 后端配方）
 //              GET /api/page_meta + POST /api/set_page_meta 各案。
 //
-// 案表（§6 十案 + 互作案；全 ASCII 档名——CJK 值走 POST body 无 D-19 面，
-// GET path 面 CJK 排除）：
+// 案表（§6 十案 + 互作案 + PLAN-013 title 面五案；全 ASCII 档名——CJK 值
+// 走 POST body 无 D-19 面，GET path 面 CJK 排除；011 案全量带 title 现值
+// ——in-place 同字节改写，契约扩不破旧）：
 //   ① 既有键改写归一（MetaMix 两缩进 tags + inline aliases → 无缩进 block-list 原位）
-//   ② 其余键逐字节保留（MetaMix title/status/注释/folded/未知键——diff 仅目标键块）
+//   ② 其余键逐字节保留（MetaMix status/注释/folded/未知键——diff 仅目标键块）
 //   ③ 新增键尾追（MetaNoTags 有 frontmatter 无两键 → 闭合界符前追 tags/aliases）
 //   ④ 空值删键（MetaEmpty 两键清空 → 键行+项行整删）
 //   ⑤ 无 frontmatter 增建（MetaNoFm → 界符段插 body 前 + body 逐字节不变）
@@ -21,6 +23,12 @@
 //   ⑨ CJK 值（MetaCJK tags/aliases 中文——POST 双臂 + 读回保真）
 //   ⑩ 读回闭环（写→page_meta 读回一致；删键后缺席项形态）
 //   附 与 write_body 顺序互作案（属性写→body 保存→frontmatter 段存续）
+//   ③t title 写面（PLAN-013 SD-1301 单行键）：改写[MetaTitle 键行整行
+//      替换——diff 仅 title 行] + 删键/删后幂等[MetaTitleDel——防线三值
+//      扩] + 尾追[MetaTitleAdd status 后] + 三键同写增建[MetaTrio——
+//      title 位首] + 读回装配序[title,tags,aliases] + CJK title POST
+//   ②t 引号壳（MetaQuote `title: "Quoted Name"` → 读回剥壳 Quoted Name
+//      + 改写落裸值 Quoted Two——page_fm_value/fm_set_line 剥壳面）
 //
 // 用法（仓根）：node tests/probe_page_meta.mjs
 
@@ -196,6 +204,61 @@ tags:
 ---
 NEW BODY from write_body.`
 
+// —— PLAN-013 title 面素材（SD-1301 三键扩；单行值键）——
+
+const TITLE_BEFORE = `---
+title: 旧名
+status: draft
+---
+Body T.
+`
+const TITLE_AFTER_RW = `---
+title: 新名
+status: draft
+---
+Body T.
+`
+const TITLE_AFTER_DEL = `---
+status: draft
+---
+Body T.
+`
+
+const TITLEADD_BEFORE = `---
+status: draft
+---
+Body TA.
+`
+const TITLEADD_AFTER = `---
+status: draft
+title: T 后加
+---
+Body TA.
+`
+
+const TRIO_BEFORE = `Body TR.
+`
+const TRIO_AFTER = `---
+title: Trio 标
+tags:
+- tg1
+aliases:
+- al1
+---
+Body TR.
+`
+
+const QUOTE_BEFORE = `---
+title: "Quoted Name"
+---
+Body Q.
+`
+const QUOTE_AFTER = `---
+title: Quoted Two
+---
+Body Q.
+`
+
 function materializeWorkspace(ws) {
   fs.rmSync(ws, { recursive: true, force: true })
   fs.mkdirSync(ws, { recursive: true })
@@ -212,6 +275,11 @@ function materializeWorkspace(ws) {
   w('MetaRound.ad', ROUND_BEFORE)
   w('MetaIdem.ad', NOFM_BEFORE)
   w('MetaInter.ad', INTER_BEFORE)
+  w('MetaTitle.ad', TITLE_BEFORE)
+  w('MetaTitleDel.ad', TITLE_BEFORE)
+  w('MetaTitleAdd.ad', TITLEADD_BEFORE)
+  w('MetaTrio.ad', TRIO_BEFORE)
+  w('MetaQuote.ad', QUOTE_BEFORE)
 }
 
 // —— 双臂共通案序（返回值表 + 终态磁盘断言）——
@@ -221,24 +289,36 @@ const CJK_ALIASES = '别名甲'
 
 async function runCases(call) {
   // call: async (fn, args) -> str（merged 直调 / split HTTP POST/GET 封装）
+  // PLAN-013：set_page_meta 三值参（title 值参首位）——011 旧案全量带
+  // title 现值（in-place 同字节改写——契约扩不破旧）；新增 title 面五案。
   const r = {}
-  r.mix1 = await call('set_page_meta', ['wiki/MetaMix.ad', 'new-a, new-b', 'alias-x'])
-  r.mix2 = await call('set_page_meta', ['wiki/MetaMix.ad', 'new-a, new-b', 'alias-x'])
-  r.notags = await call('set_page_meta', ['wiki/MetaNoTags.ad', 't1', 'a1'])
-  r.empty1 = await call('set_page_meta', ['wiki/MetaEmpty.ad', '', ''])
-  r.empty2 = await call('set_page_meta', ['wiki/MetaEmpty.ad', '', ''])
-  r.nofm = await call('set_page_meta', ['wiki/MetaNoFm.ad', 'nf-1, nf-2', 'nf-a'])
-  r.crlf = await call('set_page_meta', ['wiki/MetaCRLF.ad', 'new-c', 'ca'])
-  r.both = await call('set_page_meta', ['wiki/MetaBoth.ad', 'b1,b2', 'ba1'])
-  r.cjk = await call('set_page_meta', ['wiki/MetaCJK.ad', CJK_TAGS, CJK_ALIASES])
-  r.round1 = await call('set_page_meta', ['wiki/MetaRound.ad', 'r1,r2', 'ra'])
+  r.mix1 = await call('set_page_meta', ['wiki/MetaMix.ad', 'Mix', 'new-a, new-b', 'alias-x'])
+  r.mix2 = await call('set_page_meta', ['wiki/MetaMix.ad', 'Mix', 'new-a, new-b', 'alias-x'])
+  r.notags = await call('set_page_meta', ['wiki/MetaNoTags.ad', 'NoTags', 't1', 'a1'])
+  r.empty1 = await call('set_page_meta', ['wiki/MetaEmpty.ad', 'Empty', '', ''])
+  r.empty2 = await call('set_page_meta', ['wiki/MetaEmpty.ad', 'Empty', '', ''])
+  r.nofm = await call('set_page_meta', ['wiki/MetaNoFm.ad', '', 'nf-1, nf-2', 'nf-a'])
+  r.crlf = await call('set_page_meta', ['wiki/MetaCRLF.ad', 'CRLF Doc', 'new-c', 'ca'])
+  r.both = await call('set_page_meta', ['wiki/MetaBoth.ad', 'Both', 'b1,b2', 'ba1'])
+  r.cjk = await call('set_page_meta', ['wiki/MetaCJK.ad', 'CJK', CJK_TAGS, CJK_ALIASES])
+  r.round1 = await call('set_page_meta', ['wiki/MetaRound.ad', 'Round', 'r1,r2', 'ra'])
   r.roundRead1 = await call('page_meta', ['wiki/MetaRound.ad'])
-  r.roundDel = await call('set_page_meta', ['wiki/MetaRound.ad', '', 'ra'])
+  r.roundDel = await call('set_page_meta', ['wiki/MetaRound.ad', 'Round', '', 'ra'])
   r.roundRead2 = await call('page_meta', ['wiki/MetaRound.ad'])
-  r.inter1 = await call('set_page_meta', ['wiki/MetaInter.ad', 'i1', ''])
+  r.inter1 = await call('set_page_meta', ['wiki/MetaInter.ad', 'Inter', 'i1', ''])
   r.interBody = await call('write_wiki', ['wiki/MetaInter.ad', 'NEW BODY from write_body.'])
   r.missing = await call('page_meta', ['wiki/nonexistent.ad'])
-  r.idemNoKey = await call('set_page_meta', ['wiki/MetaIdem.ad', '', ''])
+  r.idemNoKey = await call('set_page_meta', ['wiki/MetaIdem.ad', '', '', ''])
+  // title 面五案（T-01 ③④⑤⑦⑧）：
+  r.titleRewrite = await call('set_page_meta', ['wiki/MetaTitle.ad', '新名', '', ''])
+  r.titleRead1 = await call('page_meta', ['wiki/MetaTitle.ad'])
+  r.titleDel = await call('set_page_meta', ['wiki/MetaTitleDel.ad', '', '', ''])
+  r.titleDelIdem = await call('set_page_meta', ['wiki/MetaTitleDel.ad', '', '', ''])
+  r.titleAdd = await call('set_page_meta', ['wiki/MetaTitleAdd.ad', 'T 后加', '', ''])
+  r.trio = await call('set_page_meta', ['wiki/MetaTrio.ad', 'Trio 标', 'tg1', 'al1'])
+  r.trioRead = await call('page_meta', ['wiki/MetaTrio.ad'])
+  r.quoteRead = await call('page_meta', ['wiki/MetaQuote.ad'])
+  r.quoteWrite = await call('set_page_meta', ['wiki/MetaQuote.ad', 'Quoted Two', '', ''])
   return r
 }
 
@@ -258,6 +338,12 @@ function verifyDisk(ws, tag, failures) {
   ck(rd('MetaCJK.ad') === CJK_AFTER, '⑨ MetaCJK CJK 值落盘')
   ck(rd('MetaRound.ad') === ROUND_AFTER_DEL, '⑩ MetaRound 删键后终态')
   ck(rd('MetaInter.ad') === INTER_AFTER, '附 MetaInter 属性写→body 保存互作（frontmatter 段存续）')
+  // PLAN-013 title 面：
+  ck(rd('MetaTitle.ad') === TITLE_AFTER_RW, '③t MetaTitle title 改写（键行整行替换——diff 仅 title 行，status 直通）')
+  ck(rd('MetaTitleDel.ad') === TITLE_AFTER_DEL, '③t MetaTitleDel title 删键（键行删——无项行块）')
+  ck(rd('MetaTitleAdd.ad') === TITLEADD_AFTER, '③t MetaTitleAdd 无 title 键尾追（fm 段闭合界符前——status 后）')
+  ck(rd('MetaTrio.ad') === TRIO_AFTER, '⑦t MetaTrio 三键同写增建（title 位首 + tags/aliases 归一）')
+  ck(rd('MetaQuote.ad') === QUOTE_AFTER, '②t MetaQuote 引号壳档 title 改写（壳不落新值——裸值形态）')
 }
 
 function verifyReturns(r, tag, failures) {
@@ -274,20 +360,46 @@ function verifyReturns(r, tag, failures) {
   ck(r.cjk === 'ok', '⑨ CJK 写返回 ok')
   const rd1 = JSON.parse(r.roundRead1)
   ck(
-    Array.isArray(rd1) && rd1.length === 2
-    && rd1[0].key === 'tags' && rd1[0].value === 'r1,r2'
-    && rd1[1].key === 'aliases' && rd1[1].value === 'ra',
-    '⑩ 读回闭环：写后裸数组 [{tags r1,r2},{aliases ra}]',
+    Array.isArray(rd1) && rd1.length === 3
+    && rd1[0].key === 'title' && rd1[0].value === 'Round'
+    && rd1[1].key === 'tags' && rd1[1].value === 'r1,r2'
+    && rd1[2].key === 'aliases' && rd1[2].value === 'ra',
+    '⑩ 读回闭环：写后裸数组 [{title Round},{tags r1,r2},{aliases ra}]——013 三项装配（title 位首）',
   )
   const rd2 = JSON.parse(r.roundRead2)
   ck(
-    Array.isArray(rd2) && rd2.length === 1 && rd2[0].key === 'aliases' && rd2[0].value === 'ra',
-    '⑩ 删键后缺席项形态（仅 aliases 项）',
+    Array.isArray(rd2) && rd2.length === 2
+    && rd2[0].key === 'title' && rd2[0].value === 'Round'
+    && rd2[1].key === 'aliases' && rd2[1].value === 'ra',
+    '⑩ 删键后缺席项形态（title + aliases 两项——tags 缺席不装配）',
   )
   ck(r.roundDel === 'ok', '⑩ 删键写返回 ok')
   ck(r.inter1 === 'ok', '附 属性写 ok（body 保存面由磁盘终态断言承载）')
   ck(r.missing === '[]', '⑩ 缺失档 page_meta → []')
-  ck(r.idemNoKey === 'ok', '① 幂等防线：两键空 + 档无键 → no-op ok')
+  ck(r.idemNoKey === 'ok', '① 幂等防线：三值空 + 档无键 → no-op ok')
+  // PLAN-013 title 面返回值：
+  const rt1 = JSON.parse(r.titleRead1)
+  ck(
+    Array.isArray(rt1) && rt1.length === 1 && rt1[0].key === 'title' && rt1[0].value === '新名',
+    '③t title 改写读回（CJK 值 POST 双臂保真 + title 位首单项形态）',
+  )
+  ck(r.titleDel === 'ok' && r.titleDelIdem === 'ok', '③t title 删键 ok + 删后空写幂等 no-op ok（防线三值扩）')
+  ck(r.titleAdd === 'ok', '③t title 尾追 ok')
+  ck(r.trio === 'ok', '⑦t 三键同写 ok')
+  const rt2 = JSON.parse(r.trioRead)
+  ck(
+    Array.isArray(rt2) && rt2.length === 3
+    && rt2[0].key === 'title' && rt2[0].value === 'Trio 标'
+    && rt2[1].key === 'tags' && rt2[1].value === 'tg1'
+    && rt2[2].key === 'aliases' && rt2[2].value === 'al1',
+    '⑦t 三项读回装配序 title,tags,aliases（title 位首）',
+  )
+  const rt3 = JSON.parse(r.quoteRead)
+  ck(
+    Array.isArray(rt3) && rt3.length === 1 && rt3[0].key === 'title' && rt3[0].value === 'Quoted Name',
+    '②t 引号壳剥离读回（`"Quoted Name"` → Quoted Name——page_fm_value 剥壳）',
+  )
+  ck(r.quoteWrite === 'ok', '②t 引号壳档改写 ok')
 }
 
 // —— 期望磁盘终态（跨臂字节对读用）——
@@ -301,6 +413,11 @@ const DISK_FILES = [
   ['MetaCJK.ad', CJK_AFTER],
   ['MetaRound.ad', ROUND_AFTER_DEL],
   ['MetaInter.ad', INTER_AFTER],
+  ['MetaTitle.ad', TITLE_AFTER_RW],
+  ['MetaTitleDel.ad', TITLE_AFTER_DEL],
+  ['MetaTitleAdd.ad', TITLEADD_AFTER],
+  ['MetaTrio.ad', TRIO_AFTER],
+  ['MetaQuote.ad', QUOTE_AFTER],
 ]
 
 // ---------------- merged 臂 ----------------
@@ -328,6 +445,15 @@ widget App {
         var r_interBody bool = false
         var r_missing str = ""
         var r_idemNoKey str = ""
+        var r_titleRewrite str = ""
+        var r_titleRead1 str = ""
+        var r_titleDel str = ""
+        var r_titleDelIdem str = ""
+        var r_titleAdd str = ""
+        var r_trio str = ""
+        var r_trioRead str = ""
+        var r_quoteRead str = ""
+        var r_quoteWrite str = ""
     }
     view {
         col (style: "h-full w-full items-center justify-center") {
@@ -336,23 +462,32 @@ widget App {
     }
     on {
         .Init -> {
-            r_mix1 = set_page_meta("wiki/MetaMix.ad", "new-a, new-b", "alias-x")
-            r_mix2 = set_page_meta("wiki/MetaMix.ad", "new-a, new-b", "alias-x")
-            r_notags = set_page_meta("wiki/MetaNoTags.ad", "t1", "a1")
-            r_empty1 = set_page_meta("wiki/MetaEmpty.ad", "", "")
-            r_empty2 = set_page_meta("wiki/MetaEmpty.ad", "", "")
-            r_nofm = set_page_meta("wiki/MetaNoFm.ad", "nf-1, nf-2", "nf-a")
-            r_crlf = set_page_meta("wiki/MetaCRLF.ad", "new-c", "ca")
-            r_both = set_page_meta("wiki/MetaBoth.ad", "b1,b2", "ba1")
-            r_cjk = set_page_meta("wiki/MetaCJK.ad", "标签一, 标签二", "别名甲")
-            r_round1 = set_page_meta("wiki/MetaRound.ad", "r1,r2", "ra")
+            r_mix1 = set_page_meta("wiki/MetaMix.ad", "Mix", "new-a, new-b", "alias-x")
+            r_mix2 = set_page_meta("wiki/MetaMix.ad", "Mix", "new-a, new-b", "alias-x")
+            r_notags = set_page_meta("wiki/MetaNoTags.ad", "NoTags", "t1", "a1")
+            r_empty1 = set_page_meta("wiki/MetaEmpty.ad", "Empty", "", "")
+            r_empty2 = set_page_meta("wiki/MetaEmpty.ad", "Empty", "", "")
+            r_nofm = set_page_meta("wiki/MetaNoFm.ad", "", "nf-1, nf-2", "nf-a")
+            r_crlf = set_page_meta("wiki/MetaCRLF.ad", "CRLF Doc", "new-c", "ca")
+            r_both = set_page_meta("wiki/MetaBoth.ad", "Both", "b1,b2", "ba1")
+            r_cjk = set_page_meta("wiki/MetaCJK.ad", "CJK", "标签一, 标签二", "别名甲")
+            r_round1 = set_page_meta("wiki/MetaRound.ad", "Round", "r1,r2", "ra")
             r_roundRead1 = page_meta("wiki/MetaRound.ad")
-            r_roundDel = set_page_meta("wiki/MetaRound.ad", "", "ra")
+            r_roundDel = set_page_meta("wiki/MetaRound.ad", "Round", "", "ra")
             r_roundRead2 = page_meta("wiki/MetaRound.ad")
-            r_inter1 = set_page_meta("wiki/MetaInter.ad", "i1", "")
+            r_inter1 = set_page_meta("wiki/MetaInter.ad", "Inter", "i1", "")
             r_interBody = write_wiki("wiki/MetaInter.ad", "NEW BODY from write_body.")
             r_missing = page_meta("wiki/nonexistent.ad")
-            r_idemNoKey = set_page_meta("wiki/MetaIdem.ad", "", "")
+            r_idemNoKey = set_page_meta("wiki/MetaIdem.ad", "", "", "")
+            r_titleRewrite = set_page_meta("wiki/MetaTitle.ad", "新名", "", "")
+            r_titleRead1 = page_meta("wiki/MetaTitle.ad")
+            r_titleDel = set_page_meta("wiki/MetaTitleDel.ad", "", "", "")
+            r_titleDelIdem = set_page_meta("wiki/MetaTitleDel.ad", "", "", "")
+            r_titleAdd = set_page_meta("wiki/MetaTitleAdd.ad", "T 后加", "", "")
+            r_trio = set_page_meta("wiki/MetaTrio.ad", "Trio 标", "tg1", "al1")
+            r_trioRead = page_meta("wiki/MetaTrio.ad")
+            r_quoteRead = page_meta("wiki/MetaQuote.ad")
+            r_quoteWrite = set_page_meta("wiki/MetaQuote.ad", "Quoted Two", "", "")
             done = true
         }
     }
@@ -459,6 +594,15 @@ async function runMergedArm() {
         interBody: field('r_interBody'),
         missing: field('r_missing'),
         idemNoKey: field('r_idemNoKey'),
+        titleRewrite: field('r_titleRewrite'),
+        titleRead1: field('r_titleRead1'),
+        titleDel: field('r_titleDel'),
+        titleDelIdem: field('r_titleDelIdem'),
+        titleAdd: field('r_titleAdd'),
+        trio: field('r_trio'),
+        trioRead: field('r_trioRead'),
+        quoteRead: field('r_quoteRead'),
+        quoteWrite: field('r_quoteWrite'),
       },
       diskCheck: (failures) => verifyDisk(MERGED_WS, 'merged', failures),
     }
@@ -506,7 +650,7 @@ async function runSplitArm() {
     const r = await runCases(async (fn, args) => {
       if (fn === 'page_meta') return getMeta(args[0])
       if (fn === 'write_wiki') return post(fn, { path: args[0], body: args[1] })
-      return post(fn, { path: args[0], tags: args[1], aliases: args[2] })
+      return post(fn, { path: args[0], title: args[1], tags: args[2], aliases: args[3] })
     })
 
     return {
@@ -545,9 +689,12 @@ for (const [rel, want] of DISK_FILES) {
 }
 ck(merged.r.roundRead1 === split.r.roundRead1, '双臂 page_meta 读回一致')
 ck(merged.r.roundRead2 === split.r.roundRead2, '双臂 page_meta 删后读回一致')
+ck(merged.r.titleRead1 === split.r.titleRead1, '双臂 title 面读回一致（PLAN-013）')
+ck(merged.r.trioRead === split.r.trioRead, '双臂 三项读回一致（PLAN-013）')
+ck(merged.r.quoteRead === split.r.quoteRead, '双臂 引号壳读回一致（PLAN-013）')
 
 if (failures.length > 0) {
   console.error(`\n[probe-page-meta] FAIL（${failures.length} 项）:\n  - ${failures.join('\n  - ')}`)
   process.exit(1)
 }
-console.log(`\n[probe-page-meta] RESULT: merged + split 全案通过（十案 + 互作案双臂全绿）`)
+console.log(`\n[probe-page-meta] RESULT: merged + split 全案通过（011 十案 + 互作案 + 013 title 面五案双臂全绿）`)

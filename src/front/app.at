@@ -211,6 +211,48 @@ fn file_rows_of(paths List, q str) List {
     return out
 }
 
+/// titles 行集派生（PLAN-013 T-02；SD-1301 显示域）：link_pages →
+/// {path,dtitle} 映射行——LinksRefreshOf 派生段顺产（**零新状态面
+/// 原则**：显示期映射表随链接索引刷新同鲜度，触发集 v5 零扩）；
+/// dtitle 缺省 = stem 已在 back 装配面定值（links_json dtitle 字段）。
+fn titles_rows_of(pages List) List {
+    var out List = []
+    var i int = 0
+    while i < pages.len() {
+        // ⚠ D-20②：列表元素先拷局部变量再取字段。
+        var p = pages[i]
+        out.push({ path: p.path, dtitle: p.dtitle })
+        i = i + 1
+    }
+    return out
+}
+
+/// 显示名解析（PLAN-013 显示域首开；SD-1301）：titles 行扫 path 精确
+/// 相等 → dtitle（空值防御返 fallback——缺省即 stem 双保险）；未命中
+/// → fallback（调用面定 = stem/path/identity）。**显示期纯函数**
+///（computed 族先例——ft_rows 同形：store 零状态面，基线 dump 零
+/// 扰动注记）。两域边界：本件只服务显示面（tab/树/快开/检索四面）；
+/// 解析域（链接 stem 匹配/检索匹配面）零接入。
+/// ⚠ 首参名 **rows**（非 titles）——vue codegen 对模型名发射 .value
+///（D-30 阴影面：参数与模型名同名 → 参数被误发射 .value → undefined
+/// 炸，T-04 实勘首例；同族纪律：纯函数参数避开模型名）。
+fn dtitle_of(rows List, path str, fallback str) str {
+    var i int = 0
+    while i < rows.len() {
+        // ⚠ D-20②：列表元素先拷局部变量再取字段。
+        var r = rows[i]
+        if r.path == path {
+            var dt str = r.dtitle
+            if dt == "" {
+                return fallback
+            }
+            return dt
+        }
+        i = i + 1
+    }
+    return fallback
+}
+
 /// 目录路径清单（PLAN-012 T-02；collect_ad_paths 同族第三实例——栈式
 /// while 展开 kind=="dir" 节点收 id，兄弟倒序压栈保 fs.tree 遍历序）：
 /// 移动弹层 placeholder 数据源——**ft_nodes 本地派生零 fetch**（D-28②
@@ -496,7 +538,7 @@ widget App {
         DeleteGo, DeleteCancel,
         ActTags, TagToggle(str), TagsRefresh,
         ActFindWanted,
-        ActMeta, MetaEditTags(str), MetaEditAliases(str), MetaGo, MetaCancel,
+        ActMeta, MetaEditTitle(str), MetaEditTags(str), MetaEditAliases(str), MetaGo, MetaCancel,
         ActDirNew, DirEdit(str), DirGo, DirCancel,
         ActMove, MoveEdit(str), MoveGo, MoveCancel,
     }
@@ -518,6 +560,11 @@ widget App {
         var link_pages List = []
         var bl_rows List = []
         var ol_rows List = []
+        // —— 显示名映射（PLAN-013 T-02；SD-1301 显示域）：path→dtitle
+        // 行集——LinksRefreshOf 派生段顺产（titles_rows_of），四面显示期
+        // 覆盖消费（dtitle_of）。零新状态面（find/链接态先例——不入
+        // store，D-20④ 同款裁定）。----
+        var titles List = []
         // —— 查找面板数据态（PLAN-004）：查询词/行集/已运行旗标——检索
         // 空态两形（未运行提示/运行后无结果）以 find_ran 区分；数据不入
         // store（D-20④ 同款裁定，链接态先例）。----
@@ -531,9 +578,12 @@ widget App {
         // rename_q 同构，不入 store（D-20④ 同款裁定）。删除弹层零新
         // 字段（目标 = ft_sel；预览 = link_pages/tabs 现场派生 computed）。
         var new_q str = ""
-        // —— 页面属性弹层数据态（PLAN-011）：双 input 值（ActMeta 预填
-        // 回显——page_meta GET 单取形，缺席键项 = 空初值；逗号分隔串
-        // 形态 SD-1101）——rename_q 同构，不入 store（D-20④ 同款裁定）。
+        // —— 页面属性弹层数据态（PLAN-011 双 input + **PLAN-013 第三
+        // input「标题」**：三 input 值（ActMeta 预填回显——page_meta GET
+        // 单取形，缺席键项 = 空初值；title 语义位首——视图序同源；逗号
+        // 分隔串形态 tags/aliases SD-1101；title 单行裸值）——rename_q
+        // 同构，不入 store（D-20④ 同款裁定）。
+        var meta_q_title str = ""
         var meta_q_tags str = ""
         var meta_q_aliases str = ""
         // —— 新建/移动目录弹层数据态（PLAN-012；基线 v11 面）：单 input
@@ -744,8 +794,10 @@ widget App {
                             TreeIcon (name: r.icon) {}
                             // 单按钮全行（vue 生成器对 v-for 内互补兄弟 template
                             // 对丢作用域——T-03 实勘；目录/文件分流在 OpenFile
-                            // handler 按 .ad 后缀判别）。
-                            button (text: r.label, variant: "ghost") {
+                            // handler 按 .ad 后缀判别）。行文本 = 显示名覆盖
+                            //（PLAN-013——dtitle_of 显示期纯函数；fallback
+                            // = r.label 恒文件名，无 title 档现状零变化）。
+                            button (text: dtitle_of(.titles, r.id, r.label), variant: "ghost") {
                                 onclick: .OpenFile(r.id)
                                 style: "flex-1 px-1 text-left text-sm"
                             }
@@ -761,7 +813,10 @@ widget App {
                         for i, t in .store.tabs {
                             if i == .store.tab {
                                 row (style: "items-center bg-[#1C1D24]") {
-                                    button (text: t.title, variant: "text") {
+                                    // tab 标题 = 显示名覆盖（PLAN-013——t.title
+                                    // 恒 stem 面 store 零改动；dtitle_of fallback
+                                    // = t.title，无 title 档现状零变化）。
+                                    button (text: dtitle_of(.titles, t.path, t.title), variant: "text") {
                                         onclick: .OpenLink(t.path)
                                         style: "h-8 px-3 text-[12px] text-foreground font-medium"
                                     }
@@ -777,7 +832,7 @@ widget App {
                             }
                             if i != .store.tab {
                                 row (style: "items-center") {
-                                    button (text: t.title, variant: "text") {
+                                    button (text: dtitle_of(.titles, t.path, t.title), variant: "text") {
                                         onclick: .OpenLink(t.path)
                                         style: "h-8 px-3 text-[12px] text-muted-foreground"
                                     }
@@ -854,13 +909,15 @@ widget App {
                             }
                             }
                             // files 模式：即时过滤行集 + 空态（拾取即关——
-                            // FindPick 口）。
+                            // FindPick 口）。行文本 = 显示名覆盖（PLAN-013
+                            // ——fallback = path 身份可读：无 title 档显示
+                            // 完整 path 与现状一致零变化，§10.3 注记）。
                             if .store.find_mode == "files" {
                                 if .find_rows.len() == 0 {
                                     text "（无匹配文件）" { style: "text-[11px] text-muted-foreground px-3" }
                                 }
                                 for r in .find_rows {
-                                    button (text: r.path, variant: "ghost") {
+                                    button (text: dtitle_of(.titles, r.path, r.path), variant: "ghost") {
                                         onclick: .FindPick(r.path)
                                         style: "w-full justify-start px-3 h-6 text-left text-[12px]"
                                     }
@@ -877,8 +934,10 @@ widget App {
                                     if .find_rows.len() == 0 {
                                         text "（无结果）" { style: "text-[11px] text-muted-foreground px-3" }
                                     }
+                                    // 行文本 = 显示名覆盖（PLAN-013——fallback
+                                    // = r.title 恒 stem 检索口径）。
                                     for r in .find_rows {
-                                        button (text: r.path, variant: "ghost") {
+                                        button (text: dtitle_of(.titles, r.path, r.title), variant: "ghost") {
                                             onclick: .FindPick(r.path)
                                             style: "w-full justify-start px-3 h-6 text-left text-[12px]"
                                         }
@@ -1065,19 +1124,29 @@ widget App {
                 }
             }
 
-            // —— 页面属性弹层（PLAN-011 第九切片；dialog 第六实例——
-            // 双 input（标签/别名逗号分隔），重命名弹层同构形态：双钮 =
-            // 普通 button[dialog-cancel/action vm 轨死标签轨间不对称，
-            // 禁用 D-24④ 纪律]、闭态恒渲染 D-23③ 同判——测试定位锚内容
-            // 制。声明位在 rename 弹层前——vm 快照 input 序「弹层后声明
-            // 者居末」锚纪律（check 12 rename input 居末不漂移）。预填
-            // 回显 = ActMeta 单取形 fetch（page_meta GET——缺席键项 =
-            // 空初值）；值权威在 back 单事务受控改写（D-14 三原则）。——
+            // —— 页面属性弹层（PLAN-011 第九切片 + **PLAN-013 第三 input
+            // 扩容**；dialog 第六实例——三 input（标题/标签/别名——title
+            // 语义位首，视图序与 page_meta 装配序同源），重命名弹层同构
+            // 形态：双钮 = 普通 button[dialog-cancel/action vm 轨死标签轨
+            // 间不对称，禁用 D-24④ 纪律]、闭态恒渲染 D-23③ 同判——测试
+            // 定位锚内容制。声明位在 rename 弹层前——vm 快照 input 序
+            // 「弹层后声明者居末」锚纪律（check 12 rename input 居末不
+            // 漂移；第三 input 居 meta 组内序列首位——基线 v12 变更面）。
+            // 预填回显 = ActMeta 单取形 fetch（page_meta GET 三项——缺席
+            // 键项 = 空初值；D-28② fetch 型预填竞态窗同乘 011 接受口径，
+            // 测试侧预填落定等待）。值权威在 back 单事务受控改写（D-14
+            // 三原则 + 三键扩 SD-1301）。——
             dialog (open: .store.meta_open) {
                 dialog-content {
                     dialog-header {
                         dialog-title "页面属性"
-                        dialog-description "标签与别名（逗号分隔）——${.store.active_title}"
+                        dialog-description "标题与标签、别名（逗号分隔）——${.store.active_title}"
+                    }
+                    input {
+                        value: .meta_q_title
+                        oninput: .MetaEditTitle
+                        placeholder: "标题…"
+                        style: "w-full h-7 px-2 text-[12px] border rounded bg-background"
                     }
                     input {
                         value: .meta_q_tags
@@ -1349,6 +1418,9 @@ widget App {
                 console_log("links: refresh failed")
             }
             .link_pages = lp
+            // titles 表顺产（PLAN-013——显示名映射随链接索引刷新同鲜度；
+            // 触发集 v5 零扩：本口既有触点全覆盖显示面消费）。
+            .titles = titles_rows_of(.link_pages)
             .bl_rows = backlink_rows_of(.link_pages, active)
             .ol_rows = outlink_rows_of(.link_pages, active)
             // wanted 行重算挂同触点（PLAN-008——link_pages 变化即消缺：
@@ -1750,16 +1822,19 @@ widget App {
             }
         }
 
-        // —— 页面属性流（PLAN-011 T-02/T-03）——
+        // —— 页面属性流（PLAN-011 T-02/T-03 + **PLAN-013 三值扩**）——
         // 入口（action Ctrl+I/menubar 共口）：守卫 untitled no-op（action
         // 不挂 enabled——D-24③ vm 轨 menubar-item enabled 冻结缺口，
         // handler 复核为语义兜底）。预填回显 = page_meta GET 单取形
-        //（json.to_value call-arg 形——D-20⑤ 免双取；缺席键项 = 空初值
-        //；CJK 路径 split 臂 D-19 降级空态——§10 记账）。D-25① 纪律：
-        // App 上下文零 `.console` 写面。
+        //（json.to_value call-arg 形——D-20⑤ 免双取；三项装配序
+        // title,tags,aliases——**三值预填**（011 双值 + title 位首；
+        // 缺席键项 = 空初值；D-28② fetch 型预填竞态窗同乘 011 接受口径
+        // ——测试侧预填落定等待）；CJK 路径 split 臂 D-19 降级空态——
+        // §10 记账）。D-25① 纪律：App 上下文零 `.console` 写面。
         .ActMeta -> {
             if .store.active_path != "" {
                 store.MetaOpen()
+                .meta_q_title = ""
                 .meta_q_tags = ""
                 .meta_q_aliases = ""
                 var rows List = []
@@ -1776,6 +1851,9 @@ widget App {
                 while i < rows.len() {
                     // ⚠ D-20②：列表元素先拷局部变量再取字段。
                     var r = rows[i]
+                    if r.key == "title" {
+                        .meta_q_title = r.value
+                    }
                     if r.key == "tags" {
                         .meta_q_tags = r.value
                     }
@@ -1786,6 +1864,9 @@ widget App {
                 }
             }
         }
+        .MetaEditTitle(v) -> {
+            .meta_q_title = v
+        }
         .MetaEditTags(v) -> {
             .meta_q_tags = v
         }
@@ -1795,19 +1876,22 @@ widget App {
         .MetaCancel -> {
             store.MetaClose()
         }
-        // 保存流（§2.3）：set_page_meta POST（try/catch 落 console——
-        // backend-offline 不炸；D-19 body 传参 CJK 值常态）→ "ok" =
-        // 关弹层 + 自派生刷新族（D-26② 纪律——零跨 fetch 投影读）：
-        // LinksRefreshOf（alias 解析面——出链 exists 翻转/wanted 派生随
-        // 产物；内链 MentionsRefreshOf 链式尾——010 在册形态）+
+        // 保存流（§2.3 + PLAN-013 三值）：set_page_meta POST 三值参
+        //（title 值参首位——**契约签名扩唯一消费者同批改** SD-1301；
+        // try/catch 落 console——backend-offline 不炸；D-19 body 传参
+        // CJK 值常态）→ "ok" = 关弹层 + 自派生刷新族（D-26② 纪律——
+        // 零跨 fetch 投影读）：LinksRefreshOf（alias 解析面——出链
+        // exists 翻转/wanted 派生随产物；**titles 表顺产**——四面显示
+        // 名即时刷新；内链 MentionsRefreshOf 链式尾——010 在册形态）+
         // TagsRefresh（tags 面板新行即时可见）；tree 不刷（无文件名变
-        // 化）。非 "ok" = console 注记 + 弹层留置（006 v1 口径同判——
-        // 拒因前端不可见，用户可取消/重试）。
+        // 化）。**title 编辑零链接扰动**（SD-1301 两域边界——解析域
+        // stem 面零接入：bl/ol 行语义不动）。非 "ok" = console 注记 +
+        // 弹层留置（006 v1 口径同判——拒因前端不可见，用户可取消/重试）。
         .MetaGo -> {
             var r str = ""
             var ok bool = true
             try {
-                r = set_page_meta(.store.active_path, .meta_q_tags, .meta_q_aliases)
+                r = set_page_meta(.store.active_path, .meta_q_title, .meta_q_tags, .meta_q_aliases)
             } catch (e) {
                 ok = false
             }

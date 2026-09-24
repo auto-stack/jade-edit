@@ -99,6 +99,7 @@ import {
   TARGET_FILE,
   TARGET_LABEL,
   appendToEditor,
+  displayTitleOf,
   fixtureAdNames,
   visibleEditor,
 } from './helpers'
@@ -120,15 +121,17 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await expect(page.getByText('ready', { exact: true }).first()).toBeVisible({ timeout: 15_000 })
   console.log('[1 boot] PASS')
 
-  // 2 tree（换基后 fs.tree 层级形态：先展开 wiki 目录再断言行可见）
+  // 2 tree（换基后 fs.tree 层级形态：先展开 wiki 目录再断言行可见；
+  // **显示名面** PLAN-013——行文本 = dtitle 覆盖，期望 = 磁盘 title 直读
+  // 同源已知答案[无 title = stem——back dtitle 缺省装配]）
   await page.getByText('wiki', { exact: true }).first().click()
-  for (const name of fixtureAdNames()) {
-    await expect(page.getByText(name, { exact: true }).first()).toBeVisible()
+  for (const f of fixtureAdNames()) {
+    await expect(page.getByText(displayTitleOf(f), { exact: true }).first()).toBeVisible()
   }
-  console.log(`[2 tree] PASS — ${fixtureAdNames().length} 个 .ad 全数列出`)
+  console.log(`[2 tree] PASS — ${fixtureAdNames().length} 档全数列出（显示名面——dtitle 覆盖）`)
 
-  // 3 open
-  await page.getByText(TARGET_LABEL, { exact: true }).first().click()
+  // 3 open（树行显示名——Hello World.ad title=Hello World）
+  await page.getByText('Hello World', { exact: true }).first().click()
   await expect(visibleEditor(page)).toContainText('这是一段示例文本', { timeout: 10_000 })
   console.log('[3 open] PASS — 编辑器渲染内容可见')
 
@@ -161,22 +164,25 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   // D-17（切档重挂载实例键入不逐键发射、blur 冲刷）：切档后键入的 store
   // 可见断言前置一次中性 blur（点 EXPLORER 头，无 handler）——vue 轨冲刷
   // 机制，与 vm type_text 即发同语义收敛。
-  const tabTitle = (name: string) => page.getByRole('button', { name, exact: true })
-  await page.getByText('Tasks.ad', { exact: true }).first().click()
+  // tab 题钮 = 显示名（PLAN-013——类锚 button[class*="h-8 px-3"] 消歧：
+  // 树行/面板行同文名后 tab 条区域锚为唯一域；显示名 = title 裸值/无
+  // title = stem）。树行 = 显示名（Tasks.ad → 'Tasks'）。
+  const tabBtn = (name: string) => page.locator('button[class*="h-8 px-3"]', { hasText: name })
+  await page.getByText('Tasks', { exact: true }).first().click()
   await expect(visibleEditor(page)).toContainText('原型设计', { timeout: 15_000 })
   console.log('[7 tab] 开两档 — Tasks.ad 激活，编辑器内容互换到位')
-  await tabTitle('wiki/Hello World').click()
+  await tabBtn('Hello World').click()
   await expect(visibleEditor(page)).toContainText('这是一段示例文本', { timeout: 15_000 })
-  await tabTitle('wiki/Tasks').click()
+  await tabBtn('Tasks').click()
   await expect(visibleEditor(page)).toContainText('原型设计', { timeout: 15_000 })
   console.log('[7 tab] 切换互换 — 双向 active 断言过（D-03 切换面同步在测）')
   // dirty Tasks（真键盘追加）→ blur 冲刷 → 切走再切回：脏标经 TabActivate 投影还原
   await appendToEditor(page, ` ${TAB_MARKER}`)
   await neutralBlur()
   await expect(page.getByText('未保存', { exact: true }).first()).toBeVisible({ timeout: 10_000 })
-  await tabTitle('wiki/Hello World').click()
+  await tabBtn('Hello World').click()
   await expect(visibleEditor(page)).toContainText('这是一段示例文本', { timeout: 15_000 })
-  await tabTitle('wiki/Tasks').click()
+  await tabBtn('Tasks').click()
   await expect(visibleEditor(page)).toContainText('原型设计', { timeout: 15_000 })
   await expect(page.getByText('未保存', { exact: true }).first()).toBeVisible({ timeout: 15_000 })
   console.log('[7 tab] 脏标跨后台还原 — TabActivate 投影断言过')
@@ -194,7 +200,7 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await expect(page.getByText('关闭前要保存吗?')).toBeVisible({ timeout: 10_000 })
   await page.getByRole('button', { name: '直接关闭', exact: true }).click()
   await expect(page.getByText('关闭前要保存吗?')).toBeHidden({ timeout: 10_000 })
-  await expect(page.getByRole('button', { name: 'wiki/Tasks', exact: true })).toHaveCount(0, { timeout: 10_000 })
+  await expect(tabBtn('Tasks')).toHaveCount(0, { timeout: 10_000 })
   await expect(visibleEditor(page)).toContainText('这是一段示例文本', { timeout: 15_000 })
   const tabDisk = fs.readFileSync(TARGET_FILE.replace('Hello World.ad', 'Tasks.ad'), 'utf8')
   expect(tabDisk, '弃改关闭 = 磁盘零写入').not.toContain(TAB_MARKER)
@@ -233,21 +239,23 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   // 子步（出链点 CAP 定理）仅 vm merged 臂——HTTP GET query UTF-8 解码
   // 缺口（D-19 上游先在缺口），vue 轨同败故跳过（D-17 先例：轨内机制
   // 差异注记）。
+  const panel = page.locator('.w-72')
   await page.getByText('视图', { exact: true }).click()
   await page.getByText('切换反链', { exact: true }).click()
   await expect(page.getByText('LINKS', { exact: true })).toBeVisible({ timeout: 10_000 })
   await expect(page.getByRole('button', { name: 'wiki/index.ad', exact: true })).toBeVisible({ timeout: 10_000 })
   await expect(page.getByRole('button', { name: 'wiki/CAP 定理.ad', exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'wiki/Tasks.ad', exact: true })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'CAP 定理', exact: true })).toBeVisible()
+  await expect(panel.getByRole('button', { name: 'CAP 定理', exact: true })).toBeVisible()
   await expect(page.getByText('首页（悬空）', { exact: true })).toBeVisible()
   console.log('[10 link] PASS — 面板开 + 反链三源行 + 出链段（CAP 定理钮/首页悬空文本）')
   // 点击反链行 → index.ad（ASCII）
   await page.getByRole('button', { name: 'wiki/index.ad', exact: true }).click()
   await expect(visibleEditor(page)).toContainText('Jade Garden 测试知识库', { timeout: 15_000 })
   await expect(page.getByText('（无反链）', { exact: true })).toBeVisible({ timeout: 10_000 })
-  // 出链行点击 → Hello World.ad（ASCII；两轨同单上限）
-  await page.getByRole('button', { name: 'Hello World', exact: true }).click()
+  // 出链行点击 → Hello World.ad（ASCII；两轨同单上限；**面板区锚**——
+  // 树行/tab 显示名同文后唯一消歧域）
+  await panel.getByRole('button', { name: 'Hello World', exact: true }).click()
   await expect(visibleEditor(page)).toContainText('这是一段示例文本', { timeout: 15_000 })
   console.log('[10 link] PASS — 反链行开 index.ad（空态文本）+ 出链行开 Hello World.ad')
   // 空态（无激活档）：文件→新建（untitled，path 空 → 行集空）
@@ -257,7 +265,7 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await expect(page.getByText('（无出链）', { exact: true })).toBeVisible()
   // 关 untitled（未脏直接关）→ 树重开 Hello World → 反链行恢复
   await activeTabX.click()
-  await page.getByText('Hello World.ad', { exact: true }).first().click()
+  await page.getByText('Hello World', { exact: true }).first().click()
   await expect(visibleEditor(page)).toContainText('这是一段示例文本', { timeout: 15_000 })
   await expect(page.getByRole('button', { name: 'wiki/index.ad', exact: true })).toBeVisible({ timeout: 10_000 })
   console.log('[10 link] PASS — untitled 空态双文本 + 重开行恢复')
@@ -274,7 +282,7 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await page.goto('/')
   await expect(page.getByText('ready', { exact: true }).first()).toBeVisible({ timeout: 15_000 })
   await page.getByText('wiki', { exact: true }).first().click()
-  await page.getByText('Create Source.ad', { exact: true }).first().click()
+  await page.getByText('Create Source', { exact: true }).first().click()
   await expect(visibleEditor(page)).toContainText('see', { timeout: 15_000 })
   await page.getByText('视图', { exact: true }).click()
   await page.getByText('切换反链', { exact: true }).click()
@@ -292,7 +300,7 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await page.getByRole('button', { name: '创建', exact: true }).click()
   await expect(page.getByText('创建缺失页面？')).toBeHidden({ timeout: 10_000 })
   await expect(visibleEditor(page)).toContainText('NewPage', { timeout: 15_000 })
-  await expect(page.getByText('NewPage.ad', { exact: true }).first()).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByText('NewPage', { exact: true }).first()).toBeVisible({ timeout: 10_000 })
   await expect(page.getByRole('button', { name: 'NewPage', exact: true }).first()).toBeVisible({ timeout: 10_000 })
   await expect(page.getByText('NewPage（悬空）', { exact: true })).toHaveCount(0)
   const npDisk = fs.readFileSync(path.join(WORKSPACE, 'NewPage.ad'), 'utf8')
@@ -314,7 +322,7 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await page.goto('/')
   await expect(page.getByText('ready', { exact: true }).first()).toBeVisible({ timeout: 15_000 })
   await page.getByText('wiki', { exact: true }).first().click()
-  await page.getByText('Hello World.ad', { exact: true }).first().click()
+  await page.getByText('Hello World', { exact: true }).first().click()
   await expect(visibleEditor(page)).toContainText('这是一段示例文本', { timeout: 15_000 })
   await page.getByText('视图', { exact: true }).click()
   await page.getByText('切换反链', { exact: true }).click()
@@ -397,13 +405,13 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await page.getByText('快速打开', { exact: true }).click()
   const findInput = page.getByPlaceholder('过滤文件名…')
   await expect(findInput).toBeVisible({ timeout: 10_000 })
-  for (const p of ['wiki/CAP 定理.ad', 'wiki/Hello World.ad', 'wiki/index.ad', 'wiki/Projects.ad', 'wiki/Tasks.ad']) {
-    await expect(page.getByRole('button', { name: p, exact: true })).toBeVisible()
+  for (const f of fixtureAdNames()) {
+    await expect(panel.getByRole('button', { name: displayTitleOf(f), exact: true })).toBeVisible()
   }
   await findInput.fill('Pro')
-  await expect(page.getByRole('button', { name: 'wiki/Projects.ad', exact: true })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'wiki/CAP 定理.ad', exact: true })).toHaveCount(0)
-  await page.getByRole('button', { name: 'wiki/Projects.ad', exact: true }).click()
+  await expect(panel.getByRole('button', { name: 'Projects', exact: true })).toBeVisible()
+  await expect(panel.getByRole('button', { name: 'CAP 定理', exact: true })).toHaveCount(0)
+  await panel.getByRole('button', { name: 'Projects', exact: true }).click()
   await expect(visibleEditor(page)).toContainText('当前进行中的项目', { timeout: 15_000 })
   await expect(findInput).toHaveCount(0, { timeout: 10_000 })
   console.log('[11 find] PASS — 快开：空 q 全量 5 行 + 过滤 Pro→Projects 独行 + 拾取开档即关')
@@ -416,8 +424,8 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await expect(page.getByText('（输入查询词后检索）', { exact: true })).toBeVisible()
   await searchText.fill('任务列表')
   await page.getByRole('button', { name: '检索', exact: true }).click()
-  await expect(page.getByRole('button', { name: 'wiki/Hello World.ad', exact: true })).toBeVisible({ timeout: 10_000 })
-  await page.getByRole('button', { name: 'wiki/Hello World.ad', exact: true }).click()
+  await expect(panel.getByRole('button', { name: 'Hello World', exact: true })).toBeVisible({ timeout: 10_000 })
+  await panel.getByRole('button', { name: 'Hello World', exact: true }).click()
   await expect(visibleEditor(page)).toContainText('这是一段示例文本', { timeout: 15_000 })
   await expect(searchText).toBeVisible()
   await searchText.fill('zzz-无此词-xyz')
@@ -434,15 +442,15 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   expect(aliasRes.ok(), 'write_wiki 造 alias 档 POST ok').toBe(true)
   await searchText.fill('检别名')
   await page.getByRole('button', { name: '检索', exact: true }).click()
-  await expect(page.getByRole('button', { name: 'AliasTgt.ad', exact: true })).toBeVisible({ timeout: 10_000 })
-  await page.getByRole('button', { name: 'AliasTgt.ad', exact: true }).click()
+  await expect(panel.getByRole('button', { name: 'AliasTgt', exact: true })).toBeVisible({ timeout: 10_000 })
+  await panel.getByRole('button', { name: 'AliasTgt', exact: true }).click()
   await expect(visibleEditor(page)).toContainText('AliasTgt', { timeout: 15_000 })
   await expect(searchText).toBeVisible()
   const aliasClean = await request.post('/api/delete_page', { data: { path: 'AliasTgt.ad' } })
   expect(aliasClean.ok(), 'delete_page AliasTgt 收尾 ok').toBe(true)
-  await page.getByRole('button', { name: 'wiki/Hello World', exact: true }).click()
+  await tabBtn('Hello World').click()
   await expect(visibleEditor(page)).toContainText('这是一段示例文本', { timeout: 15_000 })
-  console.log('[11 find] PASS — alias 检索（PLAN-012）：内造 alias 档 → 搜「检别名」→ AliasTgt.ad 命中行 → 拾取开档（双臂）')
+  console.log('[11 find] PASS — alias 检索（PLAN-012）：内造 alias 档 → 搜「检别名」→ AliasTgt 命中行 → 拾取开档（双臂）')
 
   // 12 rename（PLAN-006 T-04；vm 矩阵 check 12 同单）：重命名+反链改写
   // 全弧线。素材 Projects.ad（ASCII——D-19 面无；入链 index/CAP 定理 两
@@ -470,7 +478,7 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   console.log('[12 rename] 脏档禁用 — 弹层不开 + 重载复原')
   // ② 弹层内容锚：开 Projects.ad → 入口 → 弹层（预填 Projects + 预览
   // 「将改写 2 页 2 处链接」）
-  await page.getByText('Projects.ad', { exact: true }).first().click()
+  await page.getByText('Projects', { exact: true }).first().click()
   await expect(visibleEditor(page)).toContainText('当前进行中的项目', { timeout: 15_000 })
   await page.getByText('文件', { exact: true }).click()
   await page.getByText('重命名…', { exact: true }).click()
@@ -495,7 +503,9 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await renameInput.fill('Project X')
   await page.getByRole('button', { name: '重命名', exact: true }).click()
   await expect(page.getByText('重命名页面')).toBeHidden({ timeout: 10_000 })
-  await expect(page.getByRole('button', { name: 'wiki/Project X', exact: true })).toBeVisible({ timeout: 15_000 })
+  // tab 题显示不变（PLAN-013 SD-1301 联动定文：改名 = stem 变、title 不
+  // 变 → 显示恒 'Projects'——title 键不随 rename 迁移）。
+  await expect(tabBtn('Projects')).toBeVisible({ timeout: 15_000 })
   expect(fs.existsSync(projectsFile), '旧档消失').toBe(false)
   expect(fs.existsSync(renamedFile), '新档在').toBe(true)
   const indexDisk = fs.readFileSync(path.join(WORKSPACE, 'wiki', 'index.ad'), 'utf8')
@@ -508,17 +518,19 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   //（tab wiki/Project X——改写链接可走通）+ 树新行（Project X.ad 在、
   // Projects.ad 消失）。（index 无反链——Project X 零真实出链[语料转义
   // 面]故非任何页反链源；反链行新 stem 正证面 = probe_rename 案①。）
-  await page.getByText('index.ad', { exact: true }).first().click()
+  await page.getByText('首页', { exact: true }).first().click()
   await expect(visibleEditor(page)).toContainText('Jade Garden 测试知识库', { timeout: 15_000 })
   await page.getByText('视图', { exact: true }).click()
   await page.getByText('切换反链', { exact: true }).click()
   await expect(page.getByText('（无反链）', { exact: true })).toBeVisible({ timeout: 10_000 })
-  await expect(page.getByRole('button', { name: 'Project X', exact: true })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Projects', exact: true })).toHaveCount(0, { timeout: 10_000 })
-  await expect(page.getByText('Project X.ad', { exact: true }).first()).toBeVisible()
+  await expect(panel.getByRole('button', { name: 'Project X', exact: true })).toBeVisible()
+  await expect(panel.getByRole('button', { name: 'Projects', exact: true })).toHaveCount(0, { timeout: 10_000 })
+  // 树行显示不变（stale title 语义面——'Projects' 行在、旧/新档名行无）
+  await expect(page.getByText('Projects', { exact: true }).first()).toBeVisible()
   await expect(page.getByText('Projects.ad', { exact: true })).toHaveCount(0, { timeout: 10_000 })
-  await page.getByRole('button', { name: 'Project X', exact: true }).click()
-  await expect(page.getByRole('button', { name: 'wiki/Project X', exact: true })).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByText('Project X.ad', { exact: true })).toHaveCount(0, { timeout: 10_000 })
+  await panel.getByRole('button', { name: 'Project X', exact: true }).click()
+  await expect(tabBtn('Projects')).toBeVisible({ timeout: 15_000 })
   await expect(visibleEditor(page)).toContainText('当前进行中的项目', { timeout: 15_000 })
   await page.getByText('视图', { exact: true }).click()
   await page.getByText('切换反链', { exact: true }).click()
@@ -539,7 +551,7 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await expect(page.getByText('重命名页面')).toBeHidden({ timeout: 10_000 })
   console.log('[12 rename] PASS — case-only 拒（弹层留置 + 磁盘零变化）')
   // ⑦ 状态复原：回 Hello World tab（quit 检查前置）
-  await page.getByRole('button', { name: 'wiki/Hello World', exact: true }).click()
+  await tabBtn('Hello World').click()
   await expect(visibleEditor(page)).toContainText('这是一段示例文本', { timeout: 15_000 })
   console.log('[12 rename] PASS — rename 组全弧线（七子步；状态复原 Hello World）')
 
@@ -576,7 +588,7 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await page.getByRole('button', { name: '创建', exact: true }).click()
   await expect(page.getByText('新建页面')).toBeHidden({ timeout: 10_000 })
   await expect(visibleEditor(page)).toContainText('E2E Note', { timeout: 15_000 })
-  await expect(page.getByText('E2E Note.ad', { exact: true }).first()).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByText('E2E Note', { exact: true }).first()).toBeVisible({ timeout: 10_000 })
   const e2eNoteFile = path.join(WORKSPACE, 'E2E Note.ad')
   await expect
     .poll(() => fs.existsSync(e2eNoteFile) && fs.readFileSync(e2eNoteFile, 'utf8') === '# E2E Note\n\n', { timeout: 10_000 })
@@ -588,7 +600,8 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await newNameInput.fill('E2E Note')
   await page.getByRole('button', { name: '创建', exact: true }).click()
   await expect(page.getByText('新建页面')).toBeHidden({ timeout: 10_000 })
-  await expect(page.getByRole('button', { name: 'E2E Note', exact: true })).toHaveCount(1, { timeout: 10_000 })
+  // tab 不重复（树行/tab 同文名后 tab 条区锚计数）
+  await expect(tabBtn('E2E Note')).toHaveCount(1, { timeout: 10_000 })
   expect(fs.readFileSync(e2eNoteFile, 'utf8'), '幂等磁盘字节不变').toBe('# E2E Note\n\n')
   console.log('[13 file] 同名幂等 — tab 不重复 + 磁盘字节不变')
   // ③ 取消零落盘
@@ -603,7 +616,7 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   // 理已知答案；tab 开且激活 = 1 个标签页警示）：树行选中 → 菜单删除…
   // → 弹层锚 → 取消零落盘 → 再开 → 确认 → 磁盘消失 + tab 关闭 + 树行
   // 消失
-  await page.getByText('Hello World.ad', { exact: true }).first().click()
+  await page.getByText('Hello World', { exact: true }).first().click()
   await expect(visibleEditor(page)).toContainText('这是一段示例文本', { timeout: 15_000 })
   await page.getByText('文件', { exact: true }).click()
   await page.getByText('删除…', { exact: true }).click()
@@ -622,12 +635,12 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await expect
     .poll(() => fs.existsSync(TARGET_FILE), { timeout: 10_000 })
     .toBe(false)
-  await expect(page.getByRole('button', { name: 'wiki/Hello World', exact: true })).toHaveCount(0, { timeout: 10_000 })
+  await expect(tabBtn('Hello World')).toHaveCount(0, { timeout: 10_000 })
   await expect(page.getByText('Hello World.ad', { exact: true })).toHaveCount(0, { timeout: 10_000 })
   console.log('[13 file] 删除弧线 — 弹层锚（3 处入链+1 tab 警示）/取消零落盘/确认→磁盘消失+tab 关闭+树行消失')
   // ⑤ 悬空翻转：开 index tab（12 段已开）→ 反链面板出链行 Hello
   // World（悬空）（PLAN-003 已知答案反向）
-  await page.getByRole('button', { name: 'wiki/index', exact: true }).click()
+  await tabBtn('首页').click()
   await expect(visibleEditor(page)).toContainText('Jade Garden 测试知识库', { timeout: 15_000 })
   await page.getByText('视图', { exact: true }).click()
   await page.getByText('切换反链', { exact: true }).click()
@@ -655,7 +668,7 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   // 根档预填 = ""；tab 题全量更新（path 去 .ad 口径——vm 同判）。
   const moveDialog = page.getByRole('dialog')
   const moveText = () => moveDialog.getByRole('textbox')
-  await page.getByText('E2E Note.ad', { exact: true }).first().click()
+  await page.getByText('E2E Note', { exact: true }).first().click()
   await page.getByText('文件', { exact: true }).click()
   await page.getByText('移动到目录…', { exact: true }).click()
   await expect(moveText()).toBeVisible({ timeout: 10_000 })
@@ -665,8 +678,9 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await moveText().fill('收件箱')
   await moveDialog.getByRole('button', { name: '移动', exact: true }).click()
   await expect(page.getByText('移动到目录')).toBeHidden({ timeout: 10_000 })
-  await expect(page.getByRole('button', { name: '收件箱/E2E Note', exact: true })).toBeVisible({ timeout: 15_000 })
-  await expect(page.getByRole('button', { name: 'E2E Note', exact: true })).toHaveCount(0, { timeout: 10_000 })
+  // tab 题显示名 = stem（移动不改 stem/title——'E2E Note' 恒；无重名 tab
+  // 计数 1 = 移动后 tab 面唯一性面）
+  await expect(tabBtn('E2E Note')).toHaveCount(1, { timeout: 15_000 })
   const movedE2eFile = path.join(WORKSPACE, '收件箱', 'E2E Note.ad')
   await expect
     .poll(() => fs.existsSync(movedE2eFile) && fs.readFileSync(movedE2eFile, 'utf8') === '# E2E Note\n\n', { timeout: 10_000 })
@@ -688,7 +702,7 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await newNameInput.fill('E2E Note')
   await page.getByRole('button', { name: '创建', exact: true }).click()
   await expect(page.getByText('新建页面')).toBeHidden({ timeout: 10_000 })
-  await page.getByText('E2E Note.ad', { exact: true }).first().click()
+  await page.getByText('E2E Note', { exact: true }).first().click()
   await page.getByText('文件', { exact: true }).click()
   await page.getByText('移动到目录…', { exact: true }).click()
   await expect(moveText()).toBeVisible({ timeout: 10_000 })
@@ -769,7 +783,34 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await expect(page.getByText('页面属性', { exact: true })).toBeVisible({ timeout: 10_000 })
   const metaTagsInput = page.getByPlaceholder('标签（逗号分隔）…')
   await expect(metaTagsInput).toHaveValue('tasks', { timeout: 10_000 })
-  // ② 取消零落盘（ghost 值不落盘）
+  // ①t title 预填回显（PLAN-013——第三 input 位首；page_meta 三项装配
+  // title 首项；D-28② fetch 型预填落定等待同 011 口径）
+  const metaTitleInput = page.getByPlaceholder('标题…')
+  await expect(metaTitleInput).toHaveValue('Tasks', { timeout: 10_000 })
+  // ①u title 编辑弧线：改 title → 保存 → 磁盘 title 行受控改写 + tab
+  // 显示即时刷新（titles 表随 LinksRefreshOf 顺产）；清空 → 删键回 stem
+  await metaTitleInput.fill('Tasks 日志')
+  await metaBtn('保存').click()
+  await expect(page.getByText('页面属性', { exact: true })).toBeHidden({ timeout: 10_000 })
+  await expect
+    .poll(() => fs.readFileSync(tasksE2eFile, 'utf8').includes('title: Tasks 日志'), { timeout: 10_000 })
+    .toBe(true)
+  await expect(tabBtn('Tasks 日志')).toBeVisible({ timeout: 15_000 })
+  await page.getByRole('menuitem', { name: '文件' }).click()
+  await page.getByText('页面属性…', { exact: true }).click()
+  await expect(page.getByText('页面属性', { exact: true })).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByPlaceholder('标题…')).toHaveValue('Tasks 日志', { timeout: 10_000 })
+  await page.getByPlaceholder('标题…').fill('')
+  await metaBtn('保存').click()
+  await expect(page.getByText('页面属性', { exact: true })).toBeHidden({ timeout: 10_000 })
+  await expect
+    .poll(() => !/^title: /m.test(fs.readFileSync(tasksE2eFile, 'utf8')), { timeout: 10_000 })
+    .toBe(true)
+  await expect(tabBtn('Tasks')).toBeVisible({ timeout: 15_000 })
+  // ② 取消零落盘（ghost 值不落盘；title 弧线保存已闭弹层——重开）
+  await page.getByRole('menuitem', { name: '文件' }).click()
+  await page.getByText('页面属性…', { exact: true }).click()
+  await expect(page.getByText('页面属性', { exact: true })).toBeVisible({ timeout: 10_000 })
   await metaTagsInput.fill('ghost-e2e')
   await metaBtn('取消').click()
   await expect(page.getByText('页面属性', { exact: true })).toBeHidden({ timeout: 10_000 })
@@ -799,7 +840,9 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await page.getByRole('menuitem', { name: '视图' }).click()
   await page.getByText('快速打开', { exact: true }).click()
   await page.getByPlaceholder('过滤文件名…').fill('index')
-  await page.getByRole('button', { name: 'wiki/index.ad', exact: true }).click()
+  // 行显示名：wiki/index.ad → '首页'（root index.ad 行 = stem 'index'——
+  // 面板区锚点击 wiki 档行）
+  await panel.getByRole('button', { name: '首页', exact: true }).click()
   await expect(visibleEditor(page)).toContainText('Jade Garden', { timeout: 15_000 })
   await page.getByRole('menuitem', { name: '视图' }).click()
   await page.getByText('切换反链', { exact: true }).click()
@@ -809,7 +852,7 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   // ⑤ 删值弧线：tags 清空（空值 = 删键）→ tags 面板行消失
   await page.getByRole('menuitem', { name: '视图' }).click()
   await page.getByText('快速打开', { exact: true }).click()
-  await page.getByRole('button', { name: 'wiki/Tasks.ad', exact: true }).click()
+  await panel.getByRole('button', { name: 'Tasks', exact: true }).click()
   await expect(visibleEditor(page)).toContainText('原型设计', { timeout: 15_000 })
   await page.getByRole('menuitem', { name: '文件' }).click()
   await page.getByText('页面属性…', { exact: true }).click()
@@ -870,7 +913,7 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   // exists 翻转（既有弧线）：开 index tab → 反链面板出链行全 exists
   //（Hello World/页面名 钮在、Hello World（悬空）文本不在——13 ⑤ 曾断
   // 言其悬空，建页接回后翻转）
-  await page.getByRole('button', { name: 'wiki/index', exact: true }).click()
+  await tabBtn('首页').click()
   await page.getByText('视图', { exact: true }).click()
   await page.getByText('切换反链', { exact: true }).click()
   // 出链行钮消歧：根 Hello World.ad tab 题钮同名（wanted 建页后开档）

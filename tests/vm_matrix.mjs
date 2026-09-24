@@ -134,7 +134,7 @@ const argOf = (name) => {
   return i >= 0 ? args[i + 1] : undefined
 }
 const ARM = argOf('--arm') ?? 'all' // all | merged | split
-const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v11.txt')
+const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v12.txt')
 const SAVE_BASELINE = argOf('--save-baseline')
 
 const EDIT_MARKER = 'jade-edit 冒烟标记：编辑回写可见。'
@@ -295,12 +295,15 @@ async function runArm(arm, port) {
     }
   }
   /** 活动档的 x 关闭钮：vm 快照中图标钮 ownText 空（icon 投影 [Image]），
-   *  定位 = tab 标题钮的父行内兄弟空文本按钮。 */
+   *  定位 = tab 标题钮的父行内兄弟空文本按钮。**PLAN-013 区域锚**：检索
+   *  收进 tab 条区（树行/面板行显示名同文名不误中——pressTab 同款）。 */
   async function pressActiveTabClose(tabTitle) {
     const tree = await snapshot()
-    const titleBtn = findFirst(tree, (n) => n.head.startsWith('button ') && elementIdOf(n) && ownText(n) === tabTitle)
+    const strip = tabStripRegion(tree)
+    if (!strip) throw new Error('tab strip region not found')
+    const titleBtn = findFirst(strip, (n) => n.head.startsWith('button ') && elementIdOf(n) && ownText(n) === tabTitle)
     if (!titleBtn) throw new Error(`active tab button "${tabTitle}" not found`)
-    const parent = findParent(tree, titleBtn)
+    const parent = findParent(strip, titleBtn)
     if (!parent) throw new Error('tab title button has no parent row')
     const xBtn = parent.children.find(
       (c) => c !== titleBtn && c.head.startsWith('button ') && elementIdOf(c) && ownText(c) === '',
@@ -309,6 +312,110 @@ async function runArm(arm, port) {
     const res = await callTool('autoui_action', { element_id: elementIdOf(xBtn), action: 'press' })
     if (!/status: ok/.test(res)) throw new Error(`press tab-x not ok: ${res}`)
   }
+  // —— 区域锚（PLAN-013 T-04；显示名四面后树行/tab 题/快开检索行文本
+  // 同形——如 Hello World 三处齐现，全树 findFirst 序锚失效。D-29 结构
+  // 锚纪律续：区域限定 = 唯一消歧面）——
+  /** EXPLORER 树区（'EXPLORER' 头 text 上溯两代 = 树 col）。 */
+  function explorerRegion(t) {
+    const label = findFirst(t, (n) => ownText(n) === 'EXPLORER')
+    if (!label) return null
+    const row = findParent(t, label)
+    return row ? findParent(t, row) : null
+  }
+  /** tab 条区（style 行**精确等于** tab 条样式——toolbar 行同为
+   *  bg-muted/30 族[带 px-2 后缀]，includes 会误中，精确锚消歧）。 */
+  function tabStripRegion(t) {
+    return findFirst(
+      t,
+      (n) => n.head.startsWith('row ')
+        && n.children.some((c) => c.head === 'style: "h-8 items-center bg-muted/30 shrink-0 w-full gap-0"'),
+    )
+  }
+  /** 右面板区（style 行含 w-72 的容器——vm 轨 col+overflow lowering =
+   *  scrollable 节点，双形态兼容；查找/反链/标签面板宿主）。 */
+  function panelRegion(t) {
+    return findFirst(
+      t,
+      (n) => (n.head.startsWith('col ') || n.head.startsWith('scrollable '))
+        && n.children.some((c) => c.head.includes('w-72 shrink-0')),
+    )
+  }
+  async function waitButtonIn(regionPred, label, { exact = true, timeoutMs = 6000 } = {}) {
+    const deadline = Date.now() + timeoutMs
+    for (;;) {
+      const tree = await snapshot()
+      const region = regionPred(tree)
+      const hit = region
+        ? findFirst(region, (n) => n.head.startsWith('button ') && elementIdOf(n) && (exact ? ownText(n) === label : ownText(n).endsWith(label)))
+        : null
+      if (hit) return hit
+      if (Date.now() > deadline) {
+        const dbg = await snapshotText()
+        fs.writeFileSync(`e2e/.runtime/fail-snap-${Date.now()}.txt`, dbg)
+        throw new Error(`button "${label}" not found in region (snap dumped)`)
+      }
+      await sleep(300)
+    }
+  }
+  /** tab 题钮 press（区域锚消歧——树行/面板行同文名不误中）。 */
+  async function pressTab(label) {
+    const btn = await waitButtonIn(tabStripRegion, label)
+    const res = await callTool('autoui_action', { element_id: elementIdOf(btn), action: 'press' })
+    if (!/status: ok/.test(res)) throw new Error(`press tab "${label}" not ok: ${res}`)
+  }
+  /** EXPLORER 树行 press（显示名文本——OpenFile 口）。 */
+  async function pressTree(label) {
+    const btn = await waitButtonIn(explorerRegion, label)
+    const res = await callTool('autoui_action', { element_id: elementIdOf(btn), action: 'press' })
+    if (!/status: ok/.test(res)) throw new Error(`press tree "${label}" not ok: ${res}`)
+  }
+  /** 右面板行 press（反链/出链/快开/检索行——路径或显示名）。 */
+  async function pressPanelRow(label) {
+    const btn = await waitButtonIn(panelRegion, label)
+    const res = await callTool('autoui_action', { element_id: elementIdOf(btn), action: 'press' })
+    if (!/status: ok/.test(res)) throw new Error(`press panel row "${label}" not ok: ${res}`)
+  }
+  /** 右面板行文本集（快开/检索行集断言域——树行/同文 tab 不入集）。 */
+  async function panelRowTexts() {
+    const tree = await snapshot()
+    const region = panelRegion(tree)
+    const out = []
+    const collect = (n) => {
+      if (n.head.startsWith('button ') && elementIdOf(n)) out.push(ownText(n))
+      for (const c of n.children) collect(c)
+    }
+    if (region) collect(region)
+    return out
+  }
+  /** 右面板全节点文本集（text+button——空态文本/行文本混合断言域）。 */
+  async function panelTexts() {
+    const tree = await snapshot()
+    const region = panelRegion(tree)
+    const out = []
+    const collect = (n) => {
+      const t = ownText(n)
+      if (t) out.push(t)
+      for (const c of n.children) collect(c)
+    }
+    if (region) collect(region)
+    return out
+  }
+  /** 语料档显示名（磁盘 frontmatter title 直读——tree/快开行显示面与
+   *  dtitle_of 同源已知答案；无 title = **stem**[back dtitle 缺省=stem
+   *  装配定值——G1 口径「无 title 档四面显示 stem」]）。 */
+  const displayTitleOf = (file) => {
+    const m = fs.readFileSync(path.join(FIXTURE, 'wiki', file), 'utf8').match(/^title: (.*)$/m)
+    return m ? m[1].trim() : file.replace(/\.ad$/, '')
+  }
+  /** tab 题显示名（有 title = title 裸值；无 title = **stem**——back
+   *  dtitle 缺省=stem 短路 fallback[front fallback 仅 stale 防御面]）。 */
+  const tabDtitleOf = (file) => {
+    const m = fs.readFileSync(path.join(FIXTURE, 'wiki', file), 'utf8').match(/^title: (.*)$/m)
+    return m ? m[1].trim() : file.replace(/\.ad$/, '')
+  }
+  /** active_title 路径面（state 恒全路径去 .ad——PLAN-013 显示域零扰动：
+   *  state 面不投影显示名，dump 断言保留路径口径）。 */
+  const tabTitleOf = (label) => `wiki/${label.replace(/\.ad$/, '')}`
   /** 编辑器整文替换（C-5）：每次重取 editor id——tab 切换即重挂载，
    *  旧 vnode id 跨重挂载失效。 */
   async function typeWholeDoc(text) {
@@ -367,16 +474,18 @@ async function runArm(arm, port) {
     }
     check('1', 'boot', bootText.includes('ready') && bootText.includes('没有打开的文档'), 'status ready + 空态可见')
 
-    // 2 tree：展开 wiki 目录 → .ad 行可见
+    // 2 tree：展开 wiki 目录 → .ad 行可见（**显示名面**——行文本 =
+    // dtitle_of 覆盖：有 title 显 title、无 title 显档名；期望 = 磁盘
+    // title 直读同源已知答案，PLAN-013 T-04）
     await pressButton('wiki')
     await sleep(400)
     const treeText = await snapshotText()
     const fixtureFiles = fs.readdirSync(path.join(FIXTURE, 'wiki')).filter((f) => f.endsWith('.ad'))
-    const listedCount = fixtureFiles.filter((f) => treeText.includes(`"${f}"`)).length
-    check('2', 'tree', listedCount === fixtureFiles.length && listedCount >= 5, `filetree 列出 ${listedCount}/${fixtureFiles.length} 个 fixture .ad`)
+    const listedCount = fixtureFiles.filter((f) => treeText.includes(`"${displayTitleOf(f)}"`)).length
+    check('2', 'tree', listedCount === fixtureFiles.length && listedCount >= 5, `filetree 列出 ${listedCount}/${fixtureFiles.length} 个 fixture 档（显示名面——dtitle 覆盖）`)
 
-    // 3 open
-    await pressButton(TARGET_LABEL)
+    // 3 open（树行显示名 press——Hello World.ad title=Hello World）
+    await pressTree('Hello World')
     const editorId = await (async () => {
       const deadline = Date.now() + 10000
       for (;;) {
@@ -463,39 +572,39 @@ async function runArm(arm, port) {
       } else if (fs.existsSync(BASELINE)) {
         const raw = fs.readFileSync(BASELINE, 'utf8')
         const ok = raw === headerFor(BASELINE) + baselineBodyOf()
-        check('B', 'baseline', ok, ok ? '结构基线 v11 零漂移（state 逐字节 + id 序列）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
+        check('B', 'baseline', ok, ok ? '结构基线 v12 零漂移（state 逐字节 + id 序列）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
       } else {
-        console.log('  [baseline] structure-v11 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v11.txt')
+        console.log('  [baseline] structure-v12 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v12.txt')
       }
     }
 
     // 7 tab 面：开两档 → 切换（active 断言 + 内容互换）→ dirty 档关闭确认两路。
     // vm 快照中 alert-dialog 内容恒渲染（闭态也在树里），弹层开出与否以
     // state confirm_open 断言，不以按钮出现为准；弹层按钮 press 恒可达。
-    await pressButton(TAB_LABEL)
+    // tab 题钮 = 显示名（PLAN-013——pressTab 区域锚 + tabDtitleOf 已知答案）。
+    await pressTree('Tasks')
     await stateIs('tab_count', '2')
     await stateHas('active_body', TAB_ANCHOR)
-    const tabTitleOf = (label) => `wiki/${label.replace(/\.ad$/, '')}`
-    await pressButton(tabTitleOf(TARGET_LABEL))
+    await pressTab('Hello World')
     await stateHas('active_body', PARA_ANCHOR)
-    await pressButton(tabTitleOf(TAB_LABEL))
+    await pressTab('Tasks')
     await stateHas('active_body', TAB_ANCHOR)
     // dirty Tasks（C-5 整文构造）→ 切走再切回：脏标经 TabActivate 投影还原
     await typeWholeDoc(`${bodyOf(fs.readFileSync(path.join(FIXTURE, 'wiki', TAB_LABEL), 'utf8'))}\n\n${TAB_MARKER}`)
     await stateIs('active_dirty', 'true')
-    await pressButton(tabTitleOf(TARGET_LABEL))
+    await pressTab('Hello World')
     await stateHas('active_body', PARA_ANCHOR)
-    await pressButton(tabTitleOf(TAB_LABEL))
+    await pressTab('Tasks')
     await stateIs('active_dirty', 'true')
     // 取消路：弹层开 → 取消 → 档留 + 脏标保
-    await pressActiveTabClose(tabTitleOf(TAB_LABEL))
+    await pressActiveTabClose('Tasks')
     await stateIs('confirm_open', 'true')
     await pressButton('取消', { exact: true })
     await stateIs('confirm_open', 'false')
     await stateIs('tab_count', '2')
     await stateIs('active_dirty', 'true')
     // 直接关闭路：弃改关闭（磁盘零写入）→ 档数回落 + 激活回落 Hello World
-    await pressActiveTabClose(tabTitleOf(TAB_LABEL))
+    await pressActiveTabClose('Tasks')
     await stateIs('confirm_open', 'true')
     await pressButton('直接关闭', { exact: true })
     await stateIs('tab_count', '1')
@@ -545,15 +654,16 @@ async function runArm(arm, port) {
       if (Date.now() > emptyDeadline) throw new Error('empty-state text （无反链） never appeared for index.ad')
       await sleep(300)
     }
-    // 出链行点击（ASCII 目标 Hello World——两轨同单）；随后 CJK 目标子步
+    // 出链行点击（ASCII 目标 Hello World——两轨同单；**区域锚**：树行
+    // 显示名同名后 pressPanelRow 消歧——PLAN-013）；随后 CJK 目标子步
     // 仅 merged（D-19 上游缺口：HTTP GET query UTF-8 不解码，CJK 路径
     // exists/read_wiki 全败——先在缺口，vue/split 轨点 CJK 树行同败，
     // 本切片首测暴露；unlock = 上游 HTTP 层解码修复）
-    await pressButton('Hello World', { exact: true })
+    await pressPanelRow('Hello World')
     await stateIs('active_title', tabTitleOf(TARGET_LABEL))
     await stateHas('active_body', PARA_ANCHOR)
     if (arm === 'merged') {
-      await pressButton('CAP 定理', { exact: true })
+      await pressPanelRow('CAP 定理')
       await stateIs('active_title', 'wiki/CAP 定理')
       await stateHas('active_body', 'CAP 定理指出')
     }
@@ -574,7 +684,7 @@ async function runArm(arm, port) {
     // 关 untitled（未脏直接关）→ 重开 Hello World（树仍展开；Open 已开即
     // 激活）→ 反链行恢复，quit 检查前置状态还原（此时 tabs = HW/index/CAP）
     await pressActiveTabClose('未命名')
-    await pressButton(TARGET_LABEL)
+    await pressTree('Hello World')
     await stateIs('active_title', tabTitleOf(TARGET_LABEL))
     await waitButton('wiki/CAP 定理.ad', { exact: true })
     check('10b', 'link-empty', emptyOk, `点击反链行开 index.ad + 出链行开 CAP 定理.ad + 空态（untitled 激活）双文本=${emptyOk} + 重开行恢复`)
@@ -640,9 +750,9 @@ async function runArm(arm, port) {
         await sleep(300)
       }
     }
-    // ④ 激活变更刷新：树行开 Tasks（OpenFile 触点）→ 提及段随 stem 变
-    // （C 行在、A 行不在——段区域断言）
-    await pressButton('Tasks.ad')
+    // ④ 激活变更刷新：树行开 Tasks（OpenFile 触点——显示名 press）→
+    // 提及段随 stem 变（C 行在、A 行不在——段区域断言）
+    await pressTree('Tasks')
     await stateIs('active_title', 'wiki/Tasks')
     {
       const dl = Date.now() + 8000
@@ -661,7 +771,7 @@ async function runArm(arm, port) {
     await pressButton('视图', { exact: true })
     await pressButton('切换反链', { exact: true })
     await stateIs('backlinks_open', 'false')
-    await pressButton('wiki/Hello World', { exact: true })
+    await pressTab('Hello World')
     await stateIs('active_title', tabTitleOf(TARGET_LABEL))
     const mnStateAfter = (await stateText('mention_rows')).trim()
     if (mnStateBefore !== mnStateAfter) throw new Error(`mentions ⑥ 守卫失守（面板关激活变更后 mention_rows 变：${mnStateBefore} -> ${mnStateAfter}）`)
@@ -675,12 +785,12 @@ async function runArm(arm, port) {
     await stateIs('backlinks_open', 'true')
     // tab 关闭 hygiene：先激活（tab 题钮 press = OpenLink 激活）再 x 关
     //（非激活 tab 行无 x 钮——view 结构在册）
-    await pressButton('Mention A', { exact: true })
+    await pressTab('Mention A')
     await pressActiveTabClose('Mention A')
-    await pressButton(tabTitleOf(TAB_LABEL), { exact: true })
-    await pressActiveTabClose(tabTitleOf(TAB_LABEL))
+    await pressTab('Tasks')
+    await pressActiveTabClose('Tasks')
     await stateIs('tab_count', arm === 'merged' ? '3' : '2')
-    await pressButton('wiki/Hello World', { exact: true })
+    await pressTab('Hello World')
     await stateIs('active_title', tabTitleOf(TARGET_LABEL))
 
     // linkify 子步（PLAN-010 T-04 ④⑤）：点击提及行「转为链接」钮
@@ -721,9 +831,10 @@ async function runArm(arm, port) {
     await pressButton('视图', { exact: true })
     await pressButton('切换反链', { exact: true })
     await stateIs('backlinks_open', 'true')
-    // Hello World 的反链段中可见 AliasCaller.ad 钮，点击开档
-    await waitButton('AliasCaller.ad', { exact: true })
-    await pressButton('AliasCaller.ad', { exact: true })
+    // Hello World 的反链段中可见 AliasCaller.ad 钮，点击开档（**区域锚**
+    // ——树行同名后 pressPanelRow 消歧）
+    await waitButtonIn(panelRegion, 'AliasCaller.ad')
+    await pressPanelRow('AliasCaller.ad')
     await stateIs('active_title', 'AliasCaller')
     // 检查出链段：帽子定理 为可点击钮（exists: true），非「帽子定理（悬空）」
     let aliasOlOk = false
@@ -769,11 +880,11 @@ async function runArm(arm, port) {
     if (arm === 'merged') {
       await pressActiveTabClose('CAP')
     }
-    await pressButton('AliasCaller', { exact: true })
+    await pressTab('AliasCaller')
     await pressActiveTabClose('AliasCaller')
     fs.rmSync(aliasCapFile, { force: true })
     fs.rmSync(aliasCallerFile, { force: true })
-    await pressButton('wiki/Hello World', { exact: true })
+    await pressTab('Hello World')
     await stateIs('active_title', tabTitleOf(TARGET_LABEL))
 
     console.log(`  [10m mentions] PASS — 六子步+aliases+linkify（三段标题/提及行已知答案+snippet+已链源排重/行点击 OpenLink/空态[无提及档]/激活变更刷新/面板关零 fetch[行为等价]；linkify 行转链+段间迁移+磁盘逐字节；alias 解析+出链翻转+反链归并+wanted 排除；素材 ASCII 双臂[search_wiki POST 面无]；收尾 tab 复原）`)
@@ -833,13 +944,14 @@ async function runArm(arm, port) {
     // 翻转行只在本源档[Hello World]出链段可见）。merged 从新档 tab 返回；
     // split 同按 tab 题钮（ASCII 路径——行重算随 OpenLink 显式 path，原地
     // 激活语义）。
-    await pressButton('wiki/Hello World', { exact: true })
+    await pressTab('Hello World')
     await stateIs('active_title', tabTitleOf(TARGET_LABEL))
     // 翻转断言：悬空钮消失 + 面板行钮在（'首页' 与 tab 题钮同名[merged 新
     // 档 tab 在]——计数消歧：merged ≥2[tab+行]、split ≥1[行]；行钮 = 快照
     // 序最后一个——tab 条先于右面板渲染）。
     let treeRowOk = false
     let flipBtnOk = false
+    let homeBtnsN = 0
     for (const dl = Date.now() + 8000; ; ) {
       const t = await snapshotText()
       const tree = await snapshot()
@@ -849,7 +961,19 @@ async function runArm(arm, port) {
         for (const c of n.children) collect(c)
       }
       collect(tree)
-      treeRowOk = t.includes('"首页.ad"')
+      homeBtnsN = homeBtns.length
+      // 树新行 = 显示名 stem（back dtitle 缺省=stem——新建档树行『首页』
+      // 与 wiki/index.ad 树行同文——explorer 区计数 ≥2 为新行在册证）。
+      const exr = explorerRegion(tree)
+      let homeTreeBtns = 0
+      if (exr) {
+        const collectTree = (n) => {
+          if (n.head.startsWith('button ') && elementIdOf(n) && ownText(n) === '首页') homeTreeBtns++
+          for (const c of n.children) collectTree(c)
+        }
+        collectTree(exr)
+      }
+      treeRowOk = homeTreeBtns >= 2
       flipBtnOk = !t.includes('首页（悬空）') && homeBtns.length >= (arm === 'merged' ? 2 : 1)
       if (treeRowOk && flipBtnOk) break
       if (Date.now() > dl) break
@@ -996,6 +1120,9 @@ async function runArm(arm, port) {
     const metaTargetTitle = arm === 'merged' ? 'wiki/CAP 定理' : 'wiki/Tasks'
     const metaTargetRel = arm === 'merged' ? 'wiki/CAP 定理.ad' : 'wiki/Tasks.ad'
     const metaTargetTags0 = arm === 'merged' ? 'distributed-systems,theory' : 'tasks'
+    const metaTargetTab = arm === 'merged' ? 'CAP 定理' : 'Tasks'
+    const metaTargetTitle0 = metaTargetTab
+    const metaTargetTitleNew = arm === 'merged' ? 'CAP 定理日志' : 'Tasks 日志'
     const hwBodyPath = path.join(FIXTURE, 'wiki', 'Hello World.ad')
     fs.writeFileSync(hwBodyPath, fs.readFileSync(hwBodyPath, 'utf8') + '\n[[帽烟别名]]\n', 'utf8')
     // ①a untitled no-op：ActNew → 未命名 → 入口 press → meta_open 恒 false
@@ -1008,8 +1135,8 @@ async function runArm(arm, port) {
     await stateIs('meta_open', 'false')
     await pressActiveTabClose('未命名')
     // 显式重激活目标页（untitled 关闭后激活落点=末位 clamp 面非邻位回
-    // 落——tab 序实勘）
-    await pressButton(metaTargetTitle, { exact: true })
+    // 落——tab 序实勘；tab 题钮 = 显示名——pressTab 区域锚）
+    await pressTab(metaTargetTab)
     await stateIs('active_title', metaTargetTitle)
     // ①b 有路径档弹层 + 预填回显（语料已知答案）
     await pressButton('文件', { exact: true })
@@ -1023,8 +1150,50 @@ async function runArm(arm, port) {
       await sleep(300)
     }
     if (!metaPrefillOk) throw new Error(`meta 预填回显失守（want ${metaTargetTags0}）`)
+    // ①c title 预填回显（PLAN-013——第三 input 位首；page_meta 三项装配
+    // title 首项 → 预填 title 裸值；D-28② fetch 型预填落定等待同款）
+    let metaTitlePrefillOk = false
+    for (const dl = Date.now() + 8000; ; ) {
+      const st = await stateText('meta_q_title')
+      metaTitlePrefillOk = st.includes(metaTargetTitle0)
+      if (metaTitlePrefillOk || Date.now() > dl) break
+      await sleep(300)
+    }
+    if (!metaTitlePrefillOk) throw new Error(`meta title 预填回显失守（want ${metaTargetTitle0}）`)
+    // ④t title 编辑弧线（PLAN-013 T-04 meta 组子步）：改 title → 保存 →
+    // 磁盘 title 行受控改写（diff 仅 title 行）+ 树行显示即时刷新（titles
+    // 表随 LinksRefreshOf 顺产——四面之一树面断言）。
+    await typeIntoMetaInput(0, metaTargetTitleNew)
+    await pressInMetaDialog('保存')
+    await stateIs('meta_open', 'false')
+    const metaTitleDisk = fs.readFileSync(path.join(FIXTURE, metaTargetRel), 'utf8')
+    const metaTitleDiskOk = metaTitleDisk.includes(`title: ${metaTargetTitleNew}`)
+      && !metaTitleDisk.includes(`title: ${metaTargetTitle0}\n`) && !metaTitleDisk.includes(`title: ${metaTargetTitle0}\r`)
+    let metaTitleTreeOk = false
+    for (const dl = Date.now() + 8000; ; ) {
+      metaTitleTreeOk = (await snapshotText()).includes(`"${metaTargetTitleNew}"`)
+      if (metaTitleTreeOk || Date.now() > dl) break
+      await sleep(300)
+    }
+    if (!(metaTitleDiskOk && metaTitleTreeOk)) throw new Error(`meta title 编辑弧线失守（disk=${metaTitleDiskOk} tree=${metaTitleTreeOk}）`)
+    // ⑤t 清空 title → 删键回 stem（显示回落——四面回落面；两域边界：
+    // 解析域零感——links_json target 面零变化随 ③ alias 断言域承载）
+    await pressButton('文件', { exact: true })
+    await pressButton('页面属性…', { exact: true })
+    await stateIs('meta_open', 'true')
+    await typeIntoMetaInput(0, ' ')
+    await pressInMetaDialog('保存')
+    await stateIs('meta_open', 'false')
+    const metaTitleClearDiskOk = !fs.readFileSync(path.join(FIXTURE, metaTargetRel), 'utf8').match(/^title: /m)
+    let metaTitleFallOk = false
+    for (const dl = Date.now() + 8000; ; ) {
+      metaTitleFallOk = (await snapshotText()).includes(`"${metaTargetTitle0}"`)
+      if (metaTitleFallOk || Date.now() > dl) break
+      await sleep(300)
+    }
+    if (!(metaTitleClearDiskOk && metaTitleFallOk)) throw new Error(`meta title 清空回落失守（disk=${metaTitleClearDiskOk} tree=${metaTitleFallOk}）`)
     // ④ 取消零落盘（前置在改值前——取消路先行的 10c 同款纪律）
-    await typeIntoMetaInput(0, 'ghost-tag-x')
+    await typeIntoMetaInput(1, 'ghost-tag-x')
     await pressInMetaDialog('取消')
     await stateIs('meta_open', 'false')
     // 取消零落盘 = 磁盘零泄漏面（闭态弹层 input 回显恒在——快照断言
@@ -1035,7 +1204,7 @@ async function runArm(arm, port) {
     await pressButton('文件', { exact: true })
     await pressButton('页面属性…', { exact: true })
     await stateIs('meta_open', 'true')
-    await typeIntoMetaInput(0, metaTargetTags0 + ',smoke-tag')
+    await typeIntoMetaInput(1, metaTargetTags0 + ',smoke-tag')
     await pressInMetaDialog('保存')
     await stateIs('meta_open', 'false')
     let metaPanelOk = false
@@ -1054,7 +1223,7 @@ async function runArm(arm, port) {
     await pressButton('文件', { exact: true })
     await pressButton('页面属性…', { exact: true })
     await stateIs('meta_open', 'true')
-    await typeIntoMetaInput(1, '帽烟别名')
+    await typeIntoMetaInput(2, '帽烟别名')
     await pressInMetaDialog('保存')
     await stateIs('meta_open', 'false')
     let metaAliasOk = false
@@ -1068,7 +1237,7 @@ async function runArm(arm, port) {
     await pressButton('文件', { exact: true })
     await pressButton('页面属性…', { exact: true })
     await stateIs('meta_open', 'true')
-    await typeIntoMetaInput(0, ' ')
+    await typeIntoMetaInput(1, ' ')
     await pressInMetaDialog('保存')
     await stateIs('meta_open', 'false')
     let metaDelOk = false
@@ -1172,8 +1341,8 @@ async function runArm(arm, port) {
     await pressButton('视图', { exact: true })
     await pressButton('切换反链', { exact: true })
     await stateIs('backlinks_open', 'true')
-    check('14', 'meta', metaTagsOk && metaSaveOk && metaInlineOk && metaInlineBaselineOk && wantedNoInput && wantedKnown && wantedRowOk && wantedCancelOk && wantedFlipOk && wantedGoneOk && wantedDiskOk && wantedEmptyOk && metaPrefillOk && metaCancelOk && metaSaveOk2 && metaAliasOk && metaDelDiskOk && metaInterOk,
-      `meta 组八子步 + inline 子步 + 属性子步（tags：面板开 7 tag 行[语料实勘全集]/展开导航 ASCII 双臂+CJK 仅 merged[D-19]/Save 刷新外造新行；inline：body #inline-meta 档保存后面板新行+语料基线零漂移回归[忽略面负向无 block-project-a]；wanted：模式入口无 input 行无检索钮/语料已知答案 页面名（1）+外造 Wanted Target（1）/取消零落盘/创建开档+消缺+exists 翻转+模板逐字节/空态闭环（无悬空链接）；属性[PLAN-011]：untitled no-op/预填回显/取消零落盘/tags 保存+面板即时刷/alias 帽烟别名 exists 翻转[links_json 双臂]/删值弧线[空空白=删键]/保存流互作[frontmatter 存续]——目标页双臂异位 merged=CAP 定理/split=Tasks[D-19]）`)
+    check('14', 'meta', metaTagsOk && metaSaveOk && metaInlineOk && metaInlineBaselineOk && wantedNoInput && wantedKnown && wantedRowOk && wantedCancelOk && wantedFlipOk && wantedGoneOk && wantedDiskOk && wantedEmptyOk && metaPrefillOk && metaTitlePrefillOk && metaCancelOk && metaSaveOk2 && metaAliasOk && metaDelDiskOk && metaInterOk && metaTitleDiskOk && metaTitleTreeOk && metaTitleClearDiskOk && metaTitleFallOk,
+      `meta 组八子步 + inline 子步 + 属性子步（tags：面板开 7 tag 行[语料实勘全集]/展开导航 ASCII 双臂+CJK 仅 merged[D-19]/Save 刷新外造新行；inline：body #inline-meta 档保存后面板新行+语料基线零漂移回归[忽略面负向无 block-project-a]；wanted：模式入口无 input 行无检索钮/语料已知答案 页面名（1）+外造 Wanted Target（1）/取消零落盘/创建开档+消缺+exists 翻转+模板逐字节/空态闭环（无悬空链接）；属性[PLAN-011+013]：untitled no-op/预填回显[tags+title 位首]/title 编辑弧线[磁盘 title 行受控改写+树行显示即时刷新]+清空回落[删键回 stem 显示]/取消零落盘/tags 保存+面板即时刷/alias 帽烟别名 exists 翻转[links_json 双臂]/删值弧线[空空白=删键]/保存流互作[frontmatter 存续]——目标页双臂异位 merged=CAP 定理/split=Tasks[D-19]）`)
 
     // 11 find（PLAN-004 T-04）：查找面板双模式。执行序在 quit 前（quit
     // 恒为臂内最后一项）；先关反链面板（check 10 开着）——find 行断言免
@@ -1194,18 +1363,19 @@ async function runArm(arm, port) {
     const findTree0 = await snapshot()
     const findInput0 = findFirst(findTree0, (n) => n.head.startsWith('input ') && elementIdOf(n))
     if (!findInput0) throw new Error('find input not found in snapshot（快开子步）')
-    const findRowsAll = await snapshotText()
-    const allFive = ['wiki/CAP 定理.ad', 'wiki/Hello World.ad', 'wiki/index.ad', 'wiki/Projects.ad', 'wiki/Tasks.ad']
-      .every((p) => findRowsAll.includes(`"${p}"`))
-    if (!allFive) throw new Error('empty-q 快开应列全量 5 行')
+    // 行文本 = 显示名（PLAN-013 快开面——dtitle_of fallback=path：有 title
+    // 显 title、无 title 显全路径）；断言域 = panelRowTexts 面板行集（树行
+    // 同文名不误中——区域锚）。
+    const panelRows0 = await panelRowTexts()
+    const allFive = ['首页', 'Hello World', 'CAP 定理', 'Projects', 'Tasks']
+      .every((d) => panelRows0.includes(d))
+    if (!allFive) throw new Error('empty-q 快开应列全量 5 行（显示名面）')
     await callTool('autoui_action', { element_id: elementIdOf(findInput0), action: 'type_text', value: 'Pro' })
     await stateHas('find_q', 'Pro')
-    const findRowsPro = await snapshotText()
-    const proOk = findRowsPro.includes('"wiki/Projects.ad"')
-      && !findRowsPro.includes('"wiki/CAP 定理.ad"')
-      && !findRowsPro.includes('"wiki/index.ad"')
-    if (!proOk) throw new Error('files 过滤 "Pro" 未隔离 Projects.ad 独行')
-    await callTool('autoui_action', { element_id: elementIdOf(await waitButton('wiki/Projects.ad', { exact: true })), action: 'press' })
+    const proRows = await panelRowTexts()
+    const proOk = proRows.includes('Projects') && !proRows.includes('CAP 定理') && !proRows.includes('首页')
+    if (!proOk) throw new Error('files 过滤 "Pro" 未隔离 Projects 独行')
+    await pressPanelRow('Projects')
     await stateIs('active_title', 'wiki/Projects')
     await stateIs('find_open', 'false')
     // CJK 文件名过滤（重开面板；行断言双臂，拾取导航子步仅 merged）
@@ -1215,11 +1385,11 @@ async function runArm(arm, port) {
     const findInput1 = findFirst(findTree1, (n) => n.head.startsWith('input ') && elementIdOf(n))
     await callTool('autoui_action', { element_id: elementIdOf(findInput1), action: 'type_text', value: '定理' })
     await stateHas('find_q', '定理')
-    const findRowsCjk = await snapshotText()
-    const cjkFilterOk = findRowsCjk.includes('"wiki/CAP 定理.ad"') && !findRowsCjk.includes('"wiki/Projects.ad"')
-    if (!cjkFilterOk) throw new Error('CJK 文件名过滤「定理」未隔离 CAP 定理.ad')
+    const cjkRows = await panelRowTexts()
+    const cjkFilterOk = cjkRows.includes('CAP 定理') && !cjkRows.includes('Projects')
+    if (!cjkFilterOk) throw new Error('CJK 文件名过滤「定理」未隔离 CAP 定理')
     if (arm === 'merged') {
-      await callTool('autoui_action', { element_id: elementIdOf(await waitButton('wiki/CAP 定理.ad', { exact: true })), action: 'press' })
+      await pressPanelRow('CAP 定理')
       await stateIs('active_title', 'wiki/CAP 定理')
       await stateIs('find_open', 'false')
     }
@@ -1236,10 +1406,10 @@ async function runArm(arm, port) {
     await stateHas('find_q', '任务列表')
     await pressButton('检索', { exact: true })
     await stateIs('find_ran', 'true')
-    const hitRows = await snapshotText()
-    const hitOk = hitRows.includes('"wiki/Hello World.ad"')
-    if (!hitOk) throw new Error('CJK 检索「任务列表」未出 Hello World.ad 行（POST 通道双臂）')
-    await callTool('autoui_action', { element_id: elementIdOf(await waitButton('wiki/Hello World.ad', { exact: true })), action: 'press' })
+    // 命中行文本 = 显示名（PLAN-013 检索面——fallback r.title 恒 stem）
+    const hitOk = (await panelRowTexts()).includes('Hello World')
+    if (!hitOk) throw new Error('CJK 检索「任务列表」未出 Hello World 行（POST 通道双臂）')
+    await pressPanelRow('Hello World')
     await stateIs('active_title', tabTitleOf(TARGET_LABEL))
     await stateIs('find_open', 'true')
     const findTree3 = await snapshot()
@@ -1250,21 +1420,21 @@ async function runArm(arm, port) {
     const emptyFindOk = (await snapshotText()).includes('（无结果）')
     // ⑤ alias 检索子步（PLAN-012 T-04）：fs 造 alias 档（10m 同款——
     // 检索走 back walk 零树依赖；POST 通道双臂无 D-19 面）→ 搜 alias
-    // 「检别名」→ 命中行 AliasTgt.ad（title=stem 口径由 T-01 probe
-    // ⑨ 直证——面板行渲染 path 面）→ 拾取开档（ASCII 双臂）→ 复原
-    // Hello World 激活（check 12 前置口径）。
+    // 「检别名」→ 命中行（行文本 = 显示名——AliasTgt 无 title → fallback
+    // r.title 恒 stem 口径，title=stem 面由 T-01 probe ⑨ 直证）→ 拾取
+    // 开档（ASCII 双臂）→ 复原 Hello World 激活（check 12 前置口径）。
     fs.writeFileSync(path.join(FIXTURE, 'AliasTgt.ad'), '---\ntags:\naliases:\n  - 检别名\n---\n# AliasTgt\n\n正文无别名一词。\n')
     const findTree4 = await snapshot()
     const findInput4 = findFirst(findTree4, (n) => n.head.startsWith('input ') && elementIdOf(n))
     await callTool('autoui_action', { element_id: elementIdOf(findInput4), action: 'type_text', value: '检别名' })
     await stateHas('find_q', '检别名')
     await pressButton('检索', { exact: true })
-    const aliasHitOk = (await snapshotText()).includes('"AliasTgt.ad"')
-    if (!aliasHitOk) throw new Error('alias 检索「检别名」未出 AliasTgt.ad 行（PLAN-012 alias 命中面）')
-    await callTool('autoui_action', { element_id: elementIdOf(await waitButton('AliasTgt.ad', { exact: true })), action: 'press' })
+    const aliasHitOk = (await panelRowTexts()).includes('AliasTgt')
+    if (!aliasHitOk) throw new Error('alias 检索「检别名」未出 AliasTgt 行（PLAN-012 alias 命中面）')
+    await pressPanelRow('AliasTgt')
     await stateIs('active_title', 'AliasTgt')
     await stateIs('find_open', 'true')
-    await pressButton(tabTitleOf(TARGET_LABEL))
+    await pressTab('Hello World')
     await stateIs('active_title', tabTitleOf(TARGET_LABEL))
     check('11', 'find', allFive && proOk && cjkFilterOk && notRanOk && hitOk && emptyFindOk && aliasHitOk,
       `快开（input 锚/空q全量5行/Pro→Projects 独行拾取即关/定理→CAP 独行${arm === 'merged' ? '+CJK 拾取开档' : '（CJK 拾取仅 merged 臂 D-19）'}）+ 检索（text 切换/未运行提示/CJK「任务列表」POST 双臂命中/行导航面板保持开/运行后空态）+ alias 检索（PLAN-012——fs 造档→搜「检别名」→AliasTgt.ad 行→拾取开档双臂）`)
@@ -1332,8 +1502,9 @@ async function runArm(arm, port) {
     await stateIs('active_dirty', 'false')
     // ② 弹层内容锚（D-23③ 纪律）：开 Projects → 入口 → rename_open +
     // rename_q 预填 + 影响面预览行（「将改写 2 页 2 处链接」——index/CAP
-    // 定理 两页各一出链）。
-    await pressButton(RENAME_LABEL)
+    // 定理 两页各一出链）。树行 = 显示名（title=Projects → 'Projects'，
+    // pressTree 区域锚）。
+    await pressTree('Projects')
     await stateIs('active_title', RENAME_OLD_TITLE)
     await pressButton('文件', { exact: true })
     await pressButton('重命名…', { exact: true })
@@ -1363,13 +1534,16 @@ async function runArm(arm, port) {
     const rewriteOk = indexDisk.includes('[[Project X]]') && capDisk.includes('[[Project X]]')
       && !indexDisk.includes('[[Projects]]')
     if (!(renamedExists && oldGone && rewriteOk)) throw new Error(`rename 磁盘断言失守（renamed=${renamedExists} oldGone=${oldGone} rewrite=${rewriteOk}）`)
-    // ⑤ 跨页改写可见：开 index.ad（ASCII 双臂）→ 反链面板（index 反链空
+    // ⑤ 跨页改写可见：开 index.ad（ASCII 双臂——树行显示名『首页』；
+    // **双『首页』树行消歧**：root 首页.ad[10c 建档]与 wiki/index.ad 同
+    // 文——pressTree 首中不可靠，改 tab 题钮 pressTab[wiki-index tab 先
+    // 于 root 首页 tab 入 strip]）→ 反链面板（index 反链空
     // 态 + 出链行新 stem『Project X』『CAP Theorem』）→ **出链行点击导航
     // 到新档**（active_title = wiki/Project X——改写链接可走通）+ 树刷新
     //（Project X.ad 行在、Projects.ad 行消失）。（index 无反链——Project
     // X 零真实出链[语料转义面]故非任何页反链源；反链行新 stem 的正证面
     // = probe_rename 案①index/Tasks 改写逐字节。）
-    await pressButton('index.ad')
+    await pressTab('首页')
     await stateIs('active_title', 'wiki/index')
     await pressButton('视图', { exact: true })
     await pressButton('切换反链', { exact: true })
@@ -1380,8 +1554,14 @@ async function runArm(arm, port) {
     for (const dl = Date.now() + 8000; ; ) {
       const pt = await snapshotText()
       panelDbg = pt
-      renamePanelOk = pt.includes('（无反链）') && pt.includes('"Project X"') && !pt.includes('"Projects"')
-      renameTreeOk = pt.includes('"Project X.ad"') && !pt.includes('"Projects.ad"')
+      // 面板断言域 = panelTexts()（区域文本集——树行显示名『Projects』
+      // [stale title 语义面] 同文后全文 includes 误伤，区域锚消歧）。
+      const ptx = await panelTexts()
+      renamePanelOk = ptx.includes('（无反链）') && ptx.includes('Project X') && !ptx.includes('Projects')
+      // 树行显示不变（PLAN-013 SD-1301 联动定文：改名 = stem 变、title
+      // 不变 → 显示名恒 'Projects'——title 键不随 rename 迁移的语义并表
+      // 断言面；旧档名行消失）。
+      renameTreeOk = pt.includes('"Projects"') && !pt.includes('"Projects.ad"') && !pt.includes('"Project X.ad"')
       if (renamePanelOk && renameTreeOk) break
       if (Date.now() > dl) break
       await sleep(300)
@@ -1390,7 +1570,7 @@ async function runArm(arm, port) {
       fs.writeFileSync(`e2e/.runtime/fail-panel-${Date.now()}.txt`, panelDbg)
       throw new Error(`rename 面板/树断言失守（panel=${renamePanelOk} tree=${renameTreeOk}）`)
     }
-    await pressButton('Project X', { exact: true })
+    await pressPanelRow('Project X')
     await stateIs('active_title', RENAME_NEW_TITLE)
     await pressButton('视图', { exact: true })
     await pressButton('切换反链', { exact: true })
@@ -1415,7 +1595,7 @@ async function runArm(arm, port) {
     // ⑦ 状态复原：回 Hello World tab（quit 检查前置——typeWholeDoc 目
     // 标档）。CJK 改名导航子步不设——probe_rename 八案已直证 CJK 面，
     // 本组素材 ASCII 双臂（D-19 口径注记同 10c）。
-    await pressButton('wiki/Hello World', { exact: true })
+    await pressTab('Hello World')
     await stateIs('active_title', tabTitleOf(TARGET_LABEL))
     check('12', 'rename', dlgOk && renameCancelOk && renamedExists && oldGone && rewriteOk && renamePanelOk && renameTreeOk && rejOk,
       `rename 组七子步（禁用态 untitled+脏档/弹层锚 预填+预览 2页2处/取消零落盘/改名弧线 active+磁盘+双页改写/面板+树新 stem/case-only 拒弹层留置/状态复原）`)
@@ -1563,7 +1743,9 @@ async function runArm(arm, port) {
       if (newDiskOk || Date.now() > dl) break
       await sleep(200)
     }
-    let newTreeOk = (await snapshotText()).includes(`"${FILE_NEW_REL}"`)
+    // 树新行 = 显示名 stem（新建档无 title——『index』；同文 wiki/index.ad
+    // 树行为『首页』不误中）。
+    let newTreeOk = (await snapshotText()).includes('"index"')
     // ⑵ 同名幂等：打开既有（tab 数不变 + 磁盘字节不变；基线采样 =
     // ⑴ 落定后——⑴ 自身新增 index tab 计入基线）
     const tabCountPre = await stateText('tab_count')
@@ -1613,7 +1795,7 @@ async function runArm(arm, port) {
     // 开过）→ 预览「1 个标签页将关闭」；split CJK 开档全败（exists
     // GET query 不解码——Open 落 not-found 不入 tab）→ active 保持
     // index、预览「无打开标签页」。ft_sel 两臂同置（OpenFile 前置）。
-    await pressButton(FILE_DEL_LABEL)
+    await pressTree('CAP 定理')
     await stateIs('ft_sel', FILE_DEL_REL)
     if (arm === 'merged') {
       await stateIs('active_title', 'wiki/CAP 定理')
@@ -1659,7 +1841,7 @@ async function runArm(arm, port) {
     // index.ad ⑴ 新建后与 wiki/index.ad label 同名，tab 题钮唯一）→
     // 反链面板出链行 CAP 定理（悬空）（PLAN-003 已知答案反向）+ 树
     // 零残留；面板复原关闭
-    await pressButton('wiki/index', { exact: true })
+    await pressTab('首页')
     await stateIs('active_title', 'wiki/index')
     await pressButton('视图', { exact: true })
     await pressButton('切换反链', { exact: true })
@@ -1680,7 +1862,7 @@ async function runArm(arm, port) {
     await pressButton('删除…', { exact: true })
     const noopState = await callTool('autoui_state', { fields: ['delete_open'] })
     const noopOk = /delete_open:\s*false/.test(noopState)
-    await pressButton('wiki/Hello World', { exact: true })
+    await pressTab('Hello World')
     await stateIs('active_title', tabTitleOf(TARGET_LABEL))
     // ⑨ F-R9-4 案（PLAN-010 G3 收口断言；canonical §6 SD-1002 记载位
     // = file 组）：删除激活档 → 提及段随新激活刷新。弹层造源档（存盘
@@ -1746,13 +1928,13 @@ async function runArm(arm, port) {
     }
     // 收尾删源档：DeleteGo 清空 ft_sel（⑥ 弧线在册语义）——菜单删除
     // 守卫 no-op 面（⑧ 同款），先点树行置 ft_sel 再删（⑥ 同款前置）。
-    await pressButton('Fr94Src.ad', { exact: true })
+    await pressTree('Fr94Src')
     await pressButton('文件', { exact: true })
     await pressButton('删除…', { exact: true })
     await stateIs('delete_open', 'true')
     await pressInDeleteDialog('删除')
     await stateIs('delete_open', 'false')
-    await pressButton('wiki/Hello World', { exact: true })
+    await pressTab('Hello World')
     await stateIs('active_title', tabTitleOf(TARGET_LABEL))
     // ⑩ 新建目录（PLAN-012）：⊕ → 弹层 → 创建 → 磁盘在 + 树新行
     await pressExplorerFolderPlus()
@@ -1783,7 +1965,7 @@ async function runArm(arm, port) {
       await pressButton('切换反链', { exact: true })
     }
     await stateIs('backlinks_open', 'true')
-    await pressButton('Project X.ad', { exact: true })
+    await pressTree('Projects')
     await stateIs('ft_sel', RENAME_NEW_REL)
     await waitButton('wiki/index.ad', { exact: true })
     const panelBefore = panelSliceOf(await snapshotText())
@@ -1838,7 +2020,7 @@ async function runArm(arm, port) {
     // Hello World 激活（quit 前置——typeWholeDoc 目标档）。
     let idxSel = ''
     for (let tries = 0; tries < 2; tries++) {
-      await pressButton('index.ad', { exact: true })
+      await pressTree('index')
       idxSel = (await stateText('ft_sel')).match(/ft_sel:\s*"([^"]*)"/)?.[1] ?? ''
       if (idxSel === 'index.ad') break
       await pressButton('wiki', { exact: true })
@@ -1864,7 +2046,7 @@ async function runArm(arm, port) {
     await pressButton('视图', { exact: true })
     await pressButton('切换反链', { exact: true })
     await stateIs('backlinks_open', 'false')
-    await pressButton(tabTitleOf(TARGET_LABEL))
+    await pressTab('Hello World')
     await stateIs('active_title', tabTitleOf(TARGET_LABEL))
     const fileParts = {
       newDiskOk, newTreeOk, idemDiskOk, tabStable: tabCountPre === tabCountPost,

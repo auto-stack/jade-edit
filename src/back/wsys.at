@@ -311,7 +311,7 @@ pub fn collect_ad_pages(path str, depth int) List {
     return pages
 }
 
-/// 工作区链接索引 JSON：页面数组 [{"path","title","links":[…]},…]。
+/// 工作区链接索引 JSON：页面数组 [{"path","title","dtitle","links":[…]},…]。
 /// ⚠ 顶层形状 = 裸数组（无 {"pages":…} 包壳）：front json.to_value 消费
 /// 面只对顶层 array 产物健康（App ft_nodes 同款已证；顶层 map 产物入态
 /// = 裸 vmref 损坏，C-1 家族——T-04 实勘立案）。path = 工作区根相对路径
@@ -319,6 +319,11 @@ pub fn collect_ad_pages(path str, depth int) List {
 /// stem（旧园 links.rs rebuild 同语义：title = file_stem，非 frontmatter
 /// title——[[首页]] 对 index.ad = 悬空）；links = 出链对象
 /// {target,anchor,exists,target_path}。
+/// **PLAN-013 增量字段 dtitle**（SD-1301 显示域首开）：= page_fm_value
+/// (fm, "title")（引号壳剥离）；空 = 缺省 stem（显示名缺省即 stem 口径
+/// ——front dtitle_of fallback 同款双保险）。**title 字段链接域语义
+/// 不动**（stem 恒——解析域零变化）；dtitle = 纯增量字段（既有消费者
+/// 零感知——backlink/outlink/wanted/mentions 派生面不读）。
 /// 三步：①walk = collect_ad_pages（本切片 T-01 提取共享——链接/检索两面
 /// 覆盖一致）②逐档 read_body 后 extract_links_json 标记法提取 ③stem 解析
 /// 装配。装配逐页 `+` 重接：v0 规模 O(P²) 前缀复制可接受（对照 read_body
@@ -329,6 +334,7 @@ pub fn links_json(path str, depth int) str {
     var stems List = []
     var rels List = []
     var aliases List = []
+    var dtitles List = []
     var i int = 0
     while i < pages.len() {
         var p = pages[i]
@@ -336,6 +342,7 @@ pub fn links_json(path str, depth int) str {
         rels.push(p.rel)
         var fm str = frontmatter_of(File.read_text(resolve(p.rel)))
         aliases.push(page_aliases(fm))
+        dtitles.push(page_fm_value(fm, "title"))
         i = i + 1
     }
     var pages_out str = ""
@@ -343,10 +350,17 @@ pub fn links_json(path str, depth int) str {
     while j < rels.len() {
         var body str = read_body(rels[j])
         var links str = extract_links_json(body, stems, aliases, rels)
+        // dtitle 缺省 = stem（page_fm_value 空 → stem——front 侧 fallback
+        // 双保险口径，back 侧装配即定值）。
+        var dt str = dtitles[j]
+        if dt == "" {
+            dt = stems[j]
+        }
         if pages_out != "" {
             pages_out = pages_out + ","
         }
         pages_out = pages_out + "{\"path\":\"" + json_esc(rels[j]) + "\",\"title\":\"" + json_esc(stems[j])
+        pages_out = pages_out + "\",\"dtitle\":\"" + json_esc(dt)
         pages_out = pages_out + "\",\"links\":[" + links + "]}"
         j = j + 1
     }
@@ -1021,16 +1035,100 @@ fn fm_set_block(fm str, key str, items List, cr bool) str {
     return out
 }
 
+/// 单行值键块（增建路径用——fm_block_lines 单行姊妹件）："key: value\n"
+///（冒号后带空格——语料 title 行形态同款）；value 空 → ""（增建面无键）；
+/// cr = true → 行尾带 "\r"（CRLF 继承同 fm_block_lines）。
+fn fm_line_block(key str, value str, cr bool) str {
+    if value == "" {
+        return ""
+    }
+    var crs str = ""
+    if cr {
+        crs = "\r"
+    }
+    return key + ": " + value + crs + "\n"
+}
+
+/// frontmatter 单行键受控改写（PLAN-013 title——SD-1301；fm_set_block
+/// 单行姊妹件，011 块引擎原样不动——title 走独立分支）：顶层级键行命中
+/// → **键行整行替换**（value 空 = 键行删——无项行块，单行键契约形态）；
+/// 其余行逐字节直通（split/join 同分隔符恒等——行元素含 CRLF 残留 "\r"
+/// 原样保留）；未命中且 value 非空 → 尾追（fm 段闭合界符前语义——
+/// fm_set_block 同款）。后继行不吞（title 无块收集态——项行属
+/// page_fm_list 域，title 行后直跟项行属异常形态，v1 契约外不设防）。
+fn fm_set_line(fm str, key str, value str, cr bool) str {
+    var lines = fm.split("\n")
+    var khead str = key + ":"
+    var crs str = ""
+    if cr {
+        crs = "\r"
+    }
+    var out str = ""
+    var done bool = false
+    var ln int = lines.len()
+    var i int = 0
+    while i < ln {
+        // ⚠ D-20②：列表元素先拷局部变量再调方法。
+        var raw str = lines[i]
+        var line str = raw.trim()
+        var emit bool = true
+        // 末元素 = ""（fm 恒以 "\n" 结尾）：不发射——fm_set_block 同款
+        // 防逐次写累积空行。
+        if i == ln - 1 {
+            if line == "" {
+                emit = false
+            }
+        }
+        if !done {
+            var nested bool = false
+            if raw.starts_with(" ") {
+                nested = true
+            }
+            if raw.starts_with("\t") {
+                nested = true
+            }
+            if emit {
+                if !nested {
+                    if line.starts_with(khead) {
+                        done = true
+                        emit = false
+                        if value != "" {
+                            out = out + key + ": " + value + crs + "\n"
+                        }
+                    }
+                }
+            }
+        }
+        if emit {
+            out = out + raw + "\n"
+        }
+        i = i + 1
+    }
+    if !done {
+        if value != "" {
+            out = out + key + ": " + value + crs + "\n"
+        }
+    }
+    return out
+}
+
 /// 页面元数据读（api.page_meta 实现）：exists 卫 → frontmatter_of →
-/// page_fm_list 两键 → 裸数组装配（缺席键项不装配；value = 逗号连接）。
+/// page_fm_value title + page_fm_list 两键 → 裸数组装配（缺席键项不装配
+/// ——title 空值同判；**装配序 title,tags,aliases——title 位首**，front
+/// 弹层第三 input 预填序同源）。**PLAN-013 三项扩**（SD-1301——011 两键
+/// → 三键）。
 pub fn page_meta_json(path str) str {
     if !File.exists(resolve(path)) {
         return "[]"
     }
     var fm str = frontmatter_of(File.read_text(resolve(path)))
+    var title_v str = page_fm_value(fm, "title")
     var tags = page_fm_list(fm, "tags")
     var aliases = page_fm_list(fm, "aliases")
     var out str = "["
+    if title_v != "" {
+        out = out + "{\"key\":\"title\",\"value\":\"" + json_esc(title_v) + "\"}"
+    }
     if tags.len() > 0 {
         if out != "[" {
             out = out + ","
@@ -1048,18 +1146,24 @@ pub fn page_meta_json(path str) str {
 }
 
 /// 页面元数据受控写（api.set_page_meta 实现；五步）：
-/// ①exists 卫 + 幂等防线（两键全空且档本无两键 → no-op "ok" 零写盘）；
+/// ①exists 卫 + 幂等防线（三值全空且档本无三键 → no-op "ok" 零写盘）；
 /// ②段取（首行界符 + 闭合界符定位——frontmatter_of 同判）；
-/// ③fm_set_block ×2（tags 先 aliases 后——同现时键序 tags,aliases 归一）；
-/// ④无 frontmatter 档增建界符段（fm_block_lines 组块）；CRLF 继承 =
-/// 原 text 含 "\r\n" → 新段行元素尾带 "\r"（split("\n") 空间恒等重接）；
+/// ③fm_set_line title（**单行键独立分支**——SD-1301；先行保新键追时
+///   键序 title,tags,aliases 位首归一）+ fm_set_block ×2（tags 先
+///   aliases 后——同现时键序归一）；其余键逐字节保留（011 七则全量继承）；
+/// ④无 frontmatter 档增建界符段（fm_line_block title + fm_block_lines
+///   组块——title 位首）；CRLF 继承 = 原 text 含 "\r\n" → 新段行元素尾
+///   带 "\r"（split("\n") 空间恒等重接）；
 /// ⑤write_text 落盘 + exists 复核 → "ok"/""。
-pub fn set_page_meta_impl(path str, tags str, aliases str) str {
+/// **PLAN-013 三键扩**（SD-1301——签名扩参 title 首参[值参首位]；011
+/// 唯一消费者 front 同批改，probe 旧案全量回归承载契约扩不破旧）。
+pub fn set_page_meta_impl(path str, title str, tags str, aliases str) str {
     if !File.exists(resolve(path)) {
         return ""
     }
     var full str = resolve(path)
     var text str = File.read_text(full)
+    var title_v str = title.trim()
     var tags_list = csv_split(tags)
     var aliases_list = csv_split(aliases)
     var cr bool = text.contains("\r\n")
@@ -1086,30 +1190,35 @@ pub fn set_page_meta_impl(path str, tags str, aliases str) str {
             }
         }
     }
-    // ①幂等防线：两键全空（csv_split 后空表——全空白同判）且档本无两键
-    // → no-op "ok"（零写盘）。
-    if tags_list.len() == 0 {
-        if aliases_list.len() == 0 {
-            var fm0 str = ""
-            if has_fm {
-                var j0 int = 1
-                while j0 < close_idx {
-                    var l0 str = lines[j0]
-                    fm0 = fm0 + l0 + "\n"
-                    j0 = j0 + 1
+    // ①幂等防线：三值全空（title trim 空 + csv_split 后空表——全空白
+    // 同判）且档本无三键 → no-op "ok"（零写盘）。
+    if title_v == "" {
+        if tags_list.len() == 0 {
+            if aliases_list.len() == 0 {
+                var fm0 str = ""
+                if has_fm {
+                    var j0 int = 1
+                    while j0 < close_idx {
+                        var l0 str = lines[j0]
+                        fm0 = fm0 + l0 + "\n"
+                        j0 = j0 + 1
+                    }
                 }
-            }
-            if page_fm_list(fm0, "tags").len() == 0 {
-                if page_fm_list(fm0, "aliases").len() == 0 {
-                    return "ok"
+                if page_fm_value(fm0, "title") == "" {
+                    if page_fm_list(fm0, "tags").len() == 0 {
+                        if page_fm_list(fm0, "aliases").len() == 0 {
+                            return "ok"
+                        }
+                    }
                 }
             }
         }
     }
     var out str = ""
     if has_fm {
-        // ③段内受控改写：fm 段逐行重建（fm_set_block ×2）+ 界符行/体逐
-        // 字节直通（行元素含 CRLF 残留 "\r" 原样保留——非目标行零变化）。
+        // ③段内受控改写：fm 段逐行重建（fm_set_line title 先行 + fm_set_
+        // block ×2）+ 界符行/体逐字节直通（行元素含 CRLF 残留 "\r" 原样
+        // 保留——非目标行零变化）。
         var fm str = ""
         var j int = 1
         while j < close_idx {
@@ -1117,7 +1226,8 @@ pub fn set_page_meta_impl(path str, tags str, aliases str) str {
             fm = fm + l + "\n"
             j = j + 1
         }
-        var new_fm str = fm_set_block(fm, "tags", tags_list, cr)
+        var new_fm str = fm_set_line(fm, "title", title_v, cr)
+        new_fm = fm_set_block(new_fm, "tags", tags_list, cr)
         new_fm = fm_set_block(new_fm, "aliases", aliases_list, cr)
         // ⚠ D-20②：界符行元素先拷局部再拼接。
         var open_line str = lines[0]
@@ -1140,8 +1250,10 @@ pub fn set_page_meta_impl(path str, tags str, aliases str) str {
             k = k + 1
         }
     } else {
-        // ④增建：界符段（tags 先 aliases 后）+ 原文直通（body 前）。
-        var seg str = fm_block_lines("tags", tags_list, cr)
+        // ④增建：界符段（title 位首 + tags 先 aliases 后）+ 原文直通
+        //（body 前）。
+        var seg str = fm_line_block("title", title_v, cr)
+        seg = seg + fm_block_lines("tags", tags_list, cr)
         seg = seg + fm_block_lines("aliases", aliases_list, cr)
         var d1 str = "---"
         var d2 str = "---"
@@ -1274,6 +1386,50 @@ fn page_fm_list(fm str, key str) List {
 
 fn page_tags(fm str) List {
     return page_fm_list(fm, "tags")
+}
+
+/// frontmatter 文本 → 指定 key 的单行值（PLAN-013 显示域首开——title；
+/// page_fm 家族第三件——block-list 的退化形）。逐行扫定位**顶层级**
+/// key:（trim + 缩进排除同 page_fm_list 收集语义；首个命中即返——
+/// frontmatter 映射唯一键约定同款）→ 冒号后段 trim → **引号壳剥离**
+///（首尾 `"` 对：starts_with/ends_with ASCII 检查——两端切点恒 ASCII
+/// 引号字节界，CJK 内文 slice 安全）；空值返 ""、无键返 ""。
+/// 两域边界（SD-1301）：本件只服务显示域（dtitle/属性弹层预填）——
+/// 解析域（stem_resolve/检索 title 面）**零接入**，title 不进任何匹配面。
+fn page_fm_value(fm str, key str) str {
+    var lines = fm.split("\n")
+    var khead str = key + ":"
+    var i int = 0
+    while i < lines.len() {
+        // ⚠ D-20②：列表元素先拷局部变量再调方法。
+        var raw str = lines[i]
+        var line str = raw.trim()
+        var nested bool = false
+        if raw.starts_with(" ") {
+            nested = true
+        }
+        if raw.starts_with("\t") {
+            nested = true
+        }
+        if !nested {
+            if line.starts_with(khead) {
+                var vp = line.split_once(":")
+                if vp.len() == 2 {
+                    var v str = vp[1].trim()
+                    if v.len() >= 2 {
+                        if v.slice(0, 1) == "\"" {
+                            if v.ends_with("\"") {
+                                v = v.slice(1, v.len() - 1)
+                            }
+                        }
+                    }
+                    return v
+                }
+            }
+        }
+        i = i + 1
+    }
+    return ""
 }
 
 fn page_aliases(fm str) List {

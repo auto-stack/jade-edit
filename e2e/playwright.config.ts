@@ -9,7 +9,9 @@ import { fileURLToPath } from 'node:url'
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const vueDir = path.join(repoRoot, 'gen', 'front', 'vue')
 const BACK_PORT = 8211
-const FRONT_PORT = 4181
+// 4443 = F-R8-1 同款环境适配（2026-09-24 实勘：原 4181 落入 WinNAT 排除
+// 区段 4094-4193 新窗——EACCES listen 拒；排除区随重启漂移，ledger v16 记账）
+const FRONT_PORT = 4443
 
 export default defineConfig({
   testDir: '.',

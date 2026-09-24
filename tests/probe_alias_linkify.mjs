@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// probe_alias_linkify.mjs — PLAN-010 T-01 别名解析 + 提及转链接十案直证（双臂）。
+// probe_alias_linkify.mjs — PLAN-010 T-01 别名解析 + 提及转链接十案直证（双臂）
+// + PLAN-013 T-01 dtitle 增量面五案扩（link_index 纯增量字段——SD-1301）。
 //
 //   merged 臂  临时探针工程（e2e/.runtime/probe-alias-linkify/，脚本生成——
 //              pac.at render vm + src/back 整树拷贝 + 探针 widget Init 内
@@ -185,6 +186,21 @@ function verifyLinkIndex(jsonStr, tag, failures) {
 
   // ⑤ CJK alias 在 link_index 中正确呈现
   ck(!!l1 && l1.target === '帽子定理', '⑤ CJK alias target 字段保真')
+
+  // —— PLAN-013 ⑪ dtitle 增量面（SD-1301 显示域首开——link_index 纯增量
+  // 字段；title 字段链接域语义不动）——
+  const idx = pages.find((p) => p.path === 'wiki/index.ad')
+  ck(!!idx && idx.title === 'index' && idx.dtitle === '首页', '⑪a index.ad dtitle 增量（title=index 链接域 + dtitle=首页 显示域——双字段并存）')
+  const tasks = pages.find((p) => p.path === 'wiki/Tasks.ad')
+  ck(!!tasks && tasks.title === 'Tasks' && tasks.dtitle === 'Tasks', '⑪b Tasks.ad dtitle=stem（语料 title=stem 同值——零变化面）')
+  const other = pages.find((p) => p.path === 'wiki/Other.ad')
+  ck(!!other && other.title === 'Other' && other.dtitle === 'Other', '⑪c Other.ad 无 title 键 → dtitle 缺省=stem（fallback 面）')
+  const src = pages.find((p) => p.path === 'wiki/LinkifySource.ad')
+  ck(!!src && src.dtitle === 'Source', '⑪d LinkifySource.ad dtitle=title 直读（单行值形态）')
+  // ⑪e 两域边界并证（SD-1301 定文断言）：index.ad dtitle=首页 在册而
+  // [[首页]] 解析仍悬空——解析域 title 零接入（l4 = ④ 同一断言对象，
+  // 此处与 ⑪a 并读 = 边界证）。
+  ck(!!l4 && l4.exists === false && !!idx && idx.dtitle === '首页', '⑪e 两域边界：dtitle=首页 在册 而 [[首页]] 解析仍悬空')
 }
 
 // ---------------- merged 臂 ----------------

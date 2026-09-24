@@ -167,9 +167,11 @@ pub fn linkify_page(path str, stem str) str {
     return wsys.linkify_page_impl(path, stem)
 }
 
-/// 页面元数据读（PLAN-011 第九切片；D-14 受控写面读半）：path 档
-/// frontmatter 的 tags/aliases 两键读出——裸数组 [{key,value}]（D-20④
-/// 顶层数组唯一健康形状；缺席键项不装配），value = 逗号连接串。
+/// 页面元数据读（PLAN-011 立面 + PLAN-013 三项扩；D-14 受控写面读半）：
+/// path 档 frontmatter 的 title/tags/aliases 三键读出——裸数组
+/// [{key,value}]（D-20④ 顶层数组唯一健康形状；缺席键项不装配——title
+/// 空值同判；装配序 title,tags,aliases），value = 单行值[title，引号壳
+/// 剥离]/逗号连接串[tags/aliases]。
 /// GET 通道（path CJK 面 = D-19 同款口径：split 臂 CJK 路径降级空态，
 /// merged/进程内全量可用——v1 记账 §10）。
 /// GET /api/page_meta?path=..
@@ -178,15 +180,22 @@ pub fn page_meta(path str) str {
     return wsys.page_meta_json(path)
 }
 
-/// 页面元数据受控写（PLAN-011；**D-14 受控裁决落地**——仅 tags/aliases
-/// 两键改写、其余键逐字节保留、空值删键、无 frontmatter 档增建界符段、
-/// 值归一无缩进 block-list、CRLF 行尾风格继承、同值重写逐字节幂等）；
-/// 返回 "ok"（成功/幂等 no-op）或 ""（卫语句拒）。
+/// 页面元数据受控写（PLAN-011 立面 + **PLAN-013 三键扩**；**D-14 受控
+/// 裁决落地**——仅 title/tags/aliases 三键改写、其余键逐字节保留、空值
+/// 删键[title 同判——清空回 stem 显示语义]、无 frontmatter 档增建界符段
+/// [title 位首]、值归一无缩进 block-list[tags/aliases]+单行值[title]、
+/// CRLF 行尾风格继承、同值重写逐字节幂等）；返回 "ok"（成功/幂等
+/// no-op）或 ""（卫语句拒）。
+/// **签名扩参注记（SD-1301——本仓 pre-1.0 契约修订首例）**：两值参 →
+/// 三值参（+title 值参首位：path, title, tags, aliases）。011 单消费者
+/// front 同批改（App .MetaGo 三参 fetch）；旧两参调用不存在（011 落地
+/// 时唯一消费者实核）。两域边界：title 为显示域键——解析域匹配面
+///（stem ∪ aliases）零接入。
 /// **POST 而非 GET**（D-19：path/值 CJK 常态，body 传参）。
 /// POST /api/set_page_meta
 #[api(method = "POST", path = "/api/set_page_meta")]
-pub fn set_page_meta(path str, tags str, aliases str) str {
-    return wsys.set_page_meta_impl(path, tags, aliases)
+pub fn set_page_meta(path str, title str, tags str, aliases str) str {
+    return wsys.set_page_meta_impl(path, title, tags, aliases)
 }
 
 /// 新建目录（PLAN-012 第十切片；工作区组织二期）：清洗复用 title_to_path

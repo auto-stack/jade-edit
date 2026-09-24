@@ -40,3 +40,11 @@ export async function appendToEditor(page: Page, text: string) {
 export function fixtureAdNames(): string[] {
   return fs.readdirSync(path.join(WORKSPACE, 'wiki')).filter((f) => f.endsWith('.ad'))
 }
+
+/** 语料档显示名（磁盘 frontmatter title 直读——tree/快开行显示面与
+ *  dtitle_of 同源已知答案；无 title = **stem**——back dtitle 缺省=stem
+ *  装配定值，G1 口径「无 title 档四面显示 stem」；PLAN-013 T-04）。 */
+export function displayTitleOf(file: string): string {
+  const m = fs.readFileSync(path.join(WORKSPACE, 'wiki', file), 'utf8').match(/^title: (.*)$/m)
+  return m ? m[1].trim() : file.replace(/\.ad$/, '')
+}
