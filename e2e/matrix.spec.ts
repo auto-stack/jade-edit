@@ -849,9 +849,11 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await expect(page.getByRole('button', { name: '帽烟别名', exact: true })).toBeVisible({ timeout: 10_000 })
   await expect(page.getByText('帽烟别名（悬空）')).toHaveCount(0)
   console.log('[14 meta] 属性弧线 — alias 帽烟别名 exists 翻转（出链行非悬空）')
-  // ⑤ 删值弧线：tags 清空（空值 = 删键）→ tags 面板行消失
+  // ⑤ 删值弧线：tags 清空（空值 = 删键）→ tags 面板行消失（快开重开
+  // 显式清过滤——find_q 跨段残留[④ 'index']非确定面，执行期校正 T-04）
   await page.getByRole('menuitem', { name: '视图' }).click()
   await page.getByText('快速打开', { exact: true }).click()
+  await page.getByPlaceholder('过滤文件名…').fill('')
   await panel.getByRole('button', { name: 'Tasks', exact: true }).click()
   await expect(visibleEditor(page)).toContainText('原型设计', { timeout: 15_000 })
   await page.getByRole('menuitem', { name: '文件' }).click()

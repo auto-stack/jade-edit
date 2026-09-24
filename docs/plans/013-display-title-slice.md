@@ -1,12 +1,12 @@
 ---
 plan_id: PLAN-013
-status: executing
+status: execution_done
 feature_name: display-title-slice
 author: [zhaopuming]
 created_at: 2026-09-24T08:14:24+08:00
-updated_at: 2026-09-24T12:10:00+08:00
+updated_at: 2026-09-24T13:05:00+08:00
 plan_revision: 1
-current_step: 3
+current_step: 5
 total_steps: 5
 supersedes_spec_components: []
 new_spec_components:
@@ -336,10 +336,10 @@ fn page_fm_value(fm str, key str) str {
     两域边界冒烟（编辑 title 后 `[[首页]]` 仍悬空）。
   - 验证：merged 冒烟（改 title → 四面刷新 → 解析域无感）+ meta/
     link 组回归 + e2e 子步冒烟。
-- **T-04 测试扩单 + 基线 v12 + 判绿首锁**（AC-02/03/04）🔄
+- **T-04 测试扩单 + 基线 v12 + 判绿首锁**（AC-02/03/04）✅
   - 四组子步 + e2e 弧线 + 基线 v12 重锁 + 两域边界断言固化。
   - 验证：双臂全绿 + `pnpm test:e2e` 连跑 ≥5 + gate ALL GREEN。
-- **T-05 文档 + ledger v16 + 收口**（AC-05/06）
+- **T-05 文档 + ledger v16 + 收口**（AC-05/06）✅
   - SD-1301..1304 落位（两域边界 + 签名扩参注记）；ledger v15→v16
     （执行期实勘）；负向证采集（probe 全族五代回归）；§9 work 记录。
   - 验证：文档 diff 检视 + gate 复跑绿。
@@ -413,6 +413,48 @@ fn page_fm_value(fm str, key str) str {
     task=T-04（vm/e2e/基线面全收口；e2e 判绿+gate ALL GREEN 挂
     D-21 负载窗+工具链 drift——外部条件，重跑口径） | next: T-05`
 
+- **2026-09-24 work T-04 终验补记（gate ALL GREEN，提交随本记录）**：
+  - 判绿终验：**gate 第 6 跑 ALL GREEN**（vm 双臂 16/16+15/15 + vue
+    build + e2e 十五段全过——**清卫前置口径再证**：遗孤进程清杀后
+    孤立跑即绿）；e2e 独立跑 GREEN 31.9s（15 段全过含 title 弧线）。
+  - gate 六跑实录（如实记）：①vm 段 menubar popover 内容窗[「页面
+    属性…」]②同窗[「悬空清单」]——v11③ 家族负载形态 ×2；③vm 段
+    过 + **build 段 schema drift 窗**[家族会话活改 auto-lang 源树——
+    build 实时读其 schema，窗口期后复绿实勘：同 exe 10:59 绿/gate3
+    败/复探针绿——D-27① 工具链敏感窗实锤精化＝**源树活改窗**非
+    exe 重建]；④⑤e2e 段 D-21 保存点 400 ×2[check-5/quit]；⑥ ALL
+    GREEN。e2e 窗口累计 9 跑 2 绿（败点全数 D-21 保存点签名 + 本批
+    真 bug 三件迭代在案）。
+  - **执行期校正第三件**：e2e 14⑤ 快开重开 **find_q 跨段残留**
+    （④ 'index' 过滤面非确定——FindOpen 不清 find_q 在册语义）→
+    测试侧显式 fill('') 清过滤（FindOpen 清面化后续 UX 批候选）。
+  - `stage: work | PLAN-013 | rev 1 | outcome: pass(T-04) |
+    task=T-04 | next: T-05`
+
+- **2026-09-24 work T-05（文档 + ledger v16 + 收口，提交随本记录）**：
+  - SD-1301..1304 落位：ARCHITECTURE §5 显示名段（两域边界定文/
+    dtitle 增量/三件 back/四面 front/D-30 阴影纪律/测试面固化）+
+    §6 表 SD-1302（title 弧线四断言 + 改名显示不变语义面 + 基线
+    v12 + probe 扩注）+ README SD-1303（Tests 扩定 + N 定谳 + 基线
+    v12 指针）+ 是什么节第十一切片条目 + 文档节 ledger v16 指针
+    （SD-1304）；**§10.3 执行期校正落账**（快开 stem 口径——G1/
+    §2.2/probe ⑪c 同源定文）。
+  - parity-ledger **v15→v16**：新 **D-30** 三件（①vue codegen 模型
+    名 .value 阴影面——gen 标识符解析三兄弟家族[D-24⑤/D-25① 同族]
+    ②dtitle stem 缺省口径定谳 + §10.3 校正 ③WinNAT 排除区漂移面
+    FR-13-1[4181→4443，F-R8-1 同族]）+ D-21 v16 扩记（e2e/gate 窗
+    六跑实录 + schema drift 源树活改窗精化）。
+  - 负向证齐（AC-05）：`.console` App 上下文零赋值（grep 零）；
+    api.at 既有契约纯增量零删除（tree/read/write/links 全保留——
+    set_page_meta 签名扩参为计划内首例修订）；probe 全族七件双臂
+    全绿（本窗实跑在案——probe_page_meta 011 十案+title 面五案/
+    probe_alias_linkify ⑪ 案组含两域边界并证）；冻结池/家族仓零
+    接触（diff 面仅 src/back+src/front+tests+e2e+docs——auto-lang
+    源树零触碰）；gen/ 无手改（git 面）；链接网零扰动（vm 12⑤
+    面板断言 + probe ⑩ 语料基线 + ⑪e 解析域悬空面三重固化）。
+  - `stage: work | PLAN-013 | rev 1 | outcome: execution_done |
+    task=T-01..T-05 全收口 | next: review`
+
 - **2026-09-24 立项 handoff（auto-plan-new）**：
   - `stage: new`，PLAN-013，revision 1。
   - `outcome: pass`——可进 work，**前提 = PLAN-012 归档**（§0 预立
@@ -429,9 +471,12 @@ fn page_fm_value(fm str, key str) str {
 2. **title 编辑与改名的关系**（语义注记已定）：改名改 stem（链接
    域）、title 编辑改显示（显示域）——两弹层并列不合并；「改名即
    改 title」合并交互后续 UX 批（需双写联动裁决）。
-3. **快开行 fallback = path**（已随 r1 定）：快开行显示 dtitle、
-   无 title 档显示完整 path（非 stem——与现状一致零变化）；统一
-   stem 化后续批（快开语境 path 更可辨——维持现状注记）。
+3. **快开行 fallback = path**（已随 r1 定；**执行期校正 2026-09-24
+   T-04**）：back links_json dtitle 缺省=stem **装配定值**（§2.2
+   定文 + probe ⑪c 直证）短路 front fallback——无 title 档四面实显
+   **stem**（fallback 参数仅 stale 面防御）；本条 r1「显示完整
+   path」注记与 G1「无 title 档四面显示 stem」/§2.2 矛盾，**按 G1
+   stem 口径落定**（canonical SD-1301 已定文；矩阵/探针断言同源）。
 4. **D-28② 预填竞态面**（011 口径沿用不扩大）：属性弹层预填三值
    同一 fetch——竞态窗同 011（测试侧 toHaveValue 落定等待）；产品
    侧接受（快速键入被回显覆盖——011 已裁）。
