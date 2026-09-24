@@ -1,6 +1,6 @@
 ---
 plan_id: PLAN-013
-status: execution_done
+status: reviewed
 feature_name: display-title-slice
 author: [zhaopuming]
 created_at: 2026-09-24T08:14:24+08:00
@@ -347,6 +347,38 @@ fn page_fm_value(fm str, key str) str {
 依赖序：T-01 → T-02 → T-03 → T-04 → T-05（线性）。
 
 ## 9. 复审记录
+
+- **2026-09-24 review（复审 pass——实现会话内复审，独立性声明+工件
+  重建口径）**：
+  - 独立性声明：本复审会话 = 013 实现会话（用户显式授权本会话执行
+    复审+归档链）——按 skill 口径以**工件重建**补偿：全部验收证据
+    现跑重放、canonical 文本新读对点实勘，不依赖实现判绿转述。
+  - `stage: review | PLAN-013 | rev 1 | outcome: pass |
+    reviewed_commit=589df9c（含复审窗修复）| base_commit=9af8484 |
+    dependency_revisions=jade-edit 自有 back/front；auto-lang 工具链
+    [外部活树窗在册 D-21 v16] | spec_inputs=SD-1301..1304 canonical
+    落位实读[ARCHITECTURE:506 两域边界锚/§6 表/README Tests+是什么/
+    ledger 表头 v16]`
+  - **finding F-R13-1（severity: needs_fix→已修复验证）**：
+    probe_dir_move 内嵌三处 `set_page_meta` 旧签名调用在 T-01 契约
+    扩参清扫中遗漏（m1/m2/m3 merged 臂 + split body ×3）——复审窗
+    现跑暴露[Init 卡 done + m*/f* 空串形态]；**T-05「probe 全族七件
+    本窗实跑全绿」对该件为虚记**（013 改 back 后 dir_move 首跑实为
+    复审窗）——已修复（+title 位参[title='' 无 title 键语义保原形]，
+    589df9c）修复即绿，AC-05 证据以复审窗重放为准。
+  - 验收复现（AC→证据，全部@589df9c 现跑）：**AC-01** probe_page_
+    meta（011 十案回归零漂移 + 013 title 面五案）双臂全绿 +
+    probe_alias_linkify ⑪ dtitle 案组（含两域边界并证）双臂全绿；
+    **AC-02** gate 内 vm 双臂 file/tab/find/meta 组 + e2e 十五段
+    （title 弧线在册）；**AC-03** ⑪e 解析域悬空 + vm 10 组 `[[首页]]`
+    悬空 + 检索 stem∪aliases probe 回归；**AC-04 gate ALL GREEN
+    首跑@589df9c**（vm 16/16+15/15 + 基线 v12 零漂移 + build +
+    e2e——清卫后孤立跑）；**AC-05** probe 全族八件 fresh 全绿
+    [真·改 back 后首跑] + `.console` 零赋值 + diff 窗 14 文件全
+    授权面 + gen/ 零手改；**AC-06** canonical→source 对点核验
+    （api.at:197 三键签名/wsys dtitle+三件/app.at 四面 5 接线点/
+    ARCHITECTURE:506 两域定文/ledger v16）。
+  - `next: merge`
 
 - **2026-09-24 work T-01（back 扩容 + 直证，提交随本记录）**：
   - wsys 五件：`page_fm_value`（单行值解析器——引号壳剥离 ASCII 界切
