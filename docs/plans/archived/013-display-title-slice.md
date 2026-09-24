@@ -1,6 +1,6 @@
 ---
 plan_id: PLAN-013
-status: reviewed
+status: archived
 feature_name: display-title-slice
 author: [zhaopuming]
 created_at: 2026-09-24T08:14:24+08:00
@@ -347,6 +347,26 @@ fn page_fm_value(fm str, key str) str {
 依赖序：T-01 → T-02 → T-03 → T-04 → T-05（线性）。
 
 ## 9. 复审记录
+
+- **2026-09-24 merge（归档 delivered——merge 五 checkpoint 闭环）**：
+  - `stage: merge | PLAN-013:r1 | outcome: pass | completion_kind:
+    delivered | delivery_commit=f2185fe`
+  - **prepared**=reviewed 基线 589df9c[复审窗修复含] + canonical
+    delta SD-1301..1304 落位核验（T-05 已入 ARCHITECTURE/README，
+    复审对点实读在案）+ delivery=f2185fe docs-only 后代核验（diff
+    全窗口仅计划文件 +33/-1，实现/依赖零变化）；**landed**=main
+    tip==f2185fe 直接 main 线性约定（无 worktree/dev 分支——本仓
+    在案约定）；**ledger_refreshed**=parity-ledger v16 tracked 文件
+    T-05 已入 main 读回核验[表头 v16 + D-30 三件 + D-21 v16 扩记；
+    无 live ledger 服务，PLAN-001 同判]；**archived**=git mv
+    docs/plans/archived/013-display-title-slice.md + status archived
+    + completion_kind delivered；**cleaned**=无 worktree/dev 分支
+    （直接 main 约定，worktree 清单仅 main；代码工作树零 WIP）。
+  - 归档前已知良好：gate ALL GREEN 首跑于 589df9c（delivery 仅
+    docs——码面零变化，冒烟证据直接承继；F-R13-1 修复件 probe
+    全族重放亦在该基线）。
+  - `next: 无（delivered 收口；PLAN-014 候选池首位 = 大纲[D-12 顺延
+    解锁候]——随候选池对表裁定）`
 
 - **2026-09-24 review（复审 pass——实现会话内复审，独立性声明+工件
   重建口径）**：
