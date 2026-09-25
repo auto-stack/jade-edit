@@ -1,10 +1,10 @@
 ---
 plan_id: PLAN-017
-status: execution_done
+status: reviewed
 feature_name: casefold-boundary-slice
 author: [zhaopuming]
 created_at: 2026-09-25T17:50:50+08:00
-updated_at: 2026-09-25T21:05:00+08:00
+updated_at: 2026-09-25T22:10:00+08:00
 plan_revision: 1
 current_step: 5
 total_steps: 5
@@ -411,6 +411,55 @@ fn resolve_target(stems, aliases, rels, target) str {
     链稳定窗（分段判绿在案）；②case-only 迁移段失败残留（发生率
     预期零——全窗实录零残留）。
   - `next: review`（复审独立会话/工件重建口径——016 同款）。
+- **2026-09-25 复审 r1（auto-plan-review）**：
+  - `stage: review | PLAN-017 | revision 1 | outcome: pass`
+  - `reviewed_commit`: 898a4e7（全窗五提交 ed7fc3c→0c6422d→b3fd5a3→
+    47103d9→898a4e7；base=6039a8a）；`base_commit`: 6039a8a；
+    `dependency_revisions`: auto-lang 双 exe 家族重建中间态（debug
+    11:00 / release 17:58——ledger D-21 v20 全录；无依赖工作树）。
+  - **独立性声明**：与执行同会话——按技能口径以**工件重建**重构裁定
+    （实现 diff 全文实勘 + 全部 AC 现跑复放 + 锚注核验），不以执行
+    摘要为凭。工作树零 WIP。
+  - `spec_inputs`: ARCHITECTURE.md（§5 链接域/§6 测试体系）、
+    README.md（Tests/是什么·文档）、parity-ledger.md v19→v20、
+    计划 §5.3 规范增量表。
+  - `acceptance_results`（全现跑复放）：
+    - AC-01 **pass**：probe_casefold 双臂现跑全绿（解析四级序 ①..⑥
+      + pristine 10 链接零漂移 + 双臂深等）+ matrix check 10/⑦
+      links_json target_path 直证含。
+    - AC-02 **pass**：probe_rename 现跑全绿（⑧ 翻转/⑧b 全等拒/006
+      八案回归零变化）+ matrix check 12 case-only 弧线双臂。
+    - AC-03 **pass**：probe_alias_linkify 现跑全绿（⑪..⑮ + 010/013
+      案组回归）+ matrix ⑧ 三态体磁盘逐字节。
+    - AC-04 **pass（F-R17-1 观察项随记）**：vm_matrix ALL GREEN
+      现跑（merged 16/16 含基线 v15 零漂移——零重锁第二例 + split
+      15/15；**复审窗 popover 内容窗瞬态 3 连后冷却即绿**——v11③
+      在册家族签名，冷却重跑判绿与史载口径一致）+ vue build 绿
+      （记录在案环境路由：AUTO_EXE=release + SCHEMA_DRIFT_GENERATE_
+      AT=1）+ vue e2e 十五段绿（44.6s）；**gate 单命令未达 = 外部
+      工具链家族重建窗**（hello-world 判别=输入相关 + **pre-017
+      状态[6039a8a checkout]同败实勘**=非本批引入——见 F-R17-1）。
+    - AC-05 **pass**：全窗 diff 面清点（api.at/front/deps/gen 零
+      变化——零新契约/front 零改动/gen 生成物）+ probe 全族 13 件
+      （T-05 窗 12 RESULT 绿 + receipt 负结果与在册一致；复审窗
+      抽样 probe_dir_ops 现跑绿——目录级 casefold 拒未波及）+
+      冻结池/家族仓零接触。
+    - AC-06 **pass**：锚注实勘 SD-1701@ARCH:782（§5 链接域段——
+      四级序定文+裁决翻转注记+定谳并账）/SD-1702@ARCH:850+854（§6
+      头注+矩阵行+e2e 行）/SD-1703@README:182+410（Tests 头注+N
+      定谳）/SD-1704@README:455（ledger v20 指针——另第十五切片
+      条目@是什么节）；ledger v20 表头 bump + D-34 新行 + D-20③
+      行内校正注记 + 34 项计数核验。
+  - `findings`: **F-R17-1（low·非阻塞·观察项）** gate 单命令 ALL
+    GREEN 待家族工具链稳定窗复核——三段各自现跑绿 + 环境路由在册；
+    阻塞证明为外部（pre-017 同败 + hello-world 输入相关判别）；
+    unblock = 家族 exe 稳定后跑 `node scripts/gate.mjs`（PLAN-013
+    v16 先例；merge 窗 known-good checkpoint 若稳定可顺手闭合）。
+    无阻塞 finding。
+  - `evidence`: 计划 §8 各任务证据块（durable：commit 哈希 + probe
+    RESULT 行 + matrix/e2e 现跑记录 + ledger D-34/D-21 v20）；复审批
+    判基线 = 本记录（工件重建口径）。
+  - `next: merge`。
 
 ## 10. 待澄清事项
 
