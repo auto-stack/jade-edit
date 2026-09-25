@@ -1,11 +1,11 @@
 ---
 plan_id: PLAN-015
-status: execution_done
+status: reviewed
 feature_name: upstream-unlocks-slice
 author: [zhaopuming]
 created_at: 2026-09-25T10:26:10+08:00
-updated_at: 2026-09-25T11:35:00+08:00
-plan_revision: 1
+updated_at: 2026-09-25T12:05:00+08:00
+plan_revision: 2
 current_step: 6
 total_steps: 6
 supersedes_spec_components: []
@@ -282,6 +282,16 @@ pub fn daily_note_impl() str {
 - **AC-04（行:列）**：vm 事件链 → store 态 → StatusBar 显示断言；
   探针 E 定谳（vue 通 = e2e 断言；不通 = 降级注记 + D-12 口径）。
   验证：T-04/T-05。
+  **[r2 定谳增补（review 裁定 F-W15-1，2026-09-25）]**：探针 E 实勘
+  推翻字面子项前提——oncursor 在 code_editor 非本仓消费的
+  autodown_editor（组件错位）+ vue engine 无 cursor emit，**双轨
+  组件面均缺、字面接线断言上游不可达**。r2 契约面 = AC-04 交付物
+  定谳为「**负结果定谳 + D-12 处置维持 + 供料候选双件落位**」
+  （probe E 一手源证据在案：aura_view_builder.rs:3529 事件面/
+  :10766 code_editor 臂/EngineEditor.vue:366 emits；SD-1501④/
+  D-12/D-32/供料包四点落位）——字面接线债务**如实记账不弱化**
+  （上游解锁即恢复原 AC 面，PLAN-016 候选池首位）。r1 原文留档
+  不改写。
 - **AC-05（gate + 基线 v14）**：gate ALL GREEN（16/15/十五段口径
   不变）；基线 v14 零漂移（v13 留档）；N 定谳续记含 D-21 回执窗。
 - **AC-06（文档面）**：SD-1501..1504 落位锚注齐；**D-19/D-21/D-12/
@@ -392,6 +402,65 @@ pub fn daily_note_impl() str {
   - `blockers`: 无。
   - `next`: review（建议独立会话；工件重建口径 = probe 两件 + 矩阵
     双臂 + gate 单跑可复现，D-21 统计见 ledger v18）。
+- **2026-09-25 复审（auto-plan-review；实现会话内复审——独立性声明 +
+  工件重建口径，PLAN-011/014 先例）**：
+  - `stage: review`，PLAN-015，**revision 2**（r1→r2 契约修正随本
+    记录——AC-04 定谳增补，见上；实现零变化）。
+  - `outcome: pass`。
+  - `reviewed_commit`: 539bc1b（main tip）；`base_commit`: be92d44
+    （014 归档点；实现批 0afd8fb + 文档批 9bb1a3b 在链）。
+  - `dependency_revisions`: auto-lang release exe **v0.4.2-2125-g
+    63e14b045**（实现窗同一 exe——构建自 63e14b045；auto-lang main
+    已前移 c95f2a00e[PLAN-701 家族会话]，复审差如实记、证据基线不
+    随动）；auto-down fixture tmp/wiki-demo 未变。
+  - `spec_inputs`: ARCHITECTURE.md@539bc1b（§5 SD-1501 四段 + §6
+    SD-1502）+ README.md@539bc1b（SD-1503/1504）+ parity-ledger.md
+    v18@539bc1b + upstream/2026-09-jade-supply.md@539bc1b 回执块。
+  - `acceptance_results`（全项现跑重放/一手核验，非执行者转述）：
+    - **AC-01 pass**（含负结果合规面）：probe_receipt_d19 复放 =
+      g③④ PASS + g①② 负结果复现一致（byte-as-char 定谳复现）；
+      双臂化维持现状注记三面落位（SD-1501①/README/D-19 处置列）；
+      D-21 窗统计在 ledger v18 + §9 + README N 定谳。
+    - **AC-02 pass**：probe_daily n①..n④ 双臂复放全绿（幂等/连日/
+      模板逐字节）+ gate 复审跑 vm ⑰ 双臂 PASS + e2e 13 daily PASS。
+    - **AC-03 pass**：probe_daily u①..u④ 双臂复放全绿（Z 归一/零引
+      入/CRLF/顶层级卫）+ gate 复审跑 check 5 双臂 PASS（updated_at
+      2026-08-27T01:35:05 → 2026-09-25T11:37:43/11:38:29 + 其余键逐
+      字节）+ 断言盘点在册（canonical/D-14 行）。
+    - **AC-04 pass（r2 定谳面）**：字面接线子项 = 上游组件面缺失
+      不可达（一手源证据三件：convert_autodown_editor_native 事件
+      面仅 oninput/on_focus@aura_view_builder.rs:3529+ / on_cursor
+      在 convert_code_editor@:10766 / EngineEditor.vue:366 emits 无
+      cursor）——r2 契约面 = 负结果定谳 + D-12 处置维持 + 供料候选
+      双件（SD-1501④/D-12/D-32②/供料包落位核验齐）；债务如实记账
+      不弱化（上游解锁即恢复原 AC 面）。
+    - **AC-05 pass**：复审窗 gate 现跑 ALL GREEN（merged **16/16**
+      含基线 v14 零漂移 + split **15/15** + vue-build + vue-e2e
+      47.2s——`e2e/.runtime/gate-run-review.log`；实现窗 gate 第
+      3/4 跑同绿 + 独立矩阵 ALL GREEN——D-21 窗 4+1 跑 3 绿统计如
+      实记）；组数不变 16/15/十五段。
+    - **AC-06 pass**：SD-1501（ARCHITECTURE:665 段 + :156 supersede
+      注）/1502（:734 表头 + probe 清单 + 基线 v14 行）/1503（README
+      :156 + :339 N 定谳）/1504（:89 十三切片 + :377 ledger 指针）
+      锚注核验齐；ledger v18 四面处置（D-19/D-12/D-21 v18/D-14 +
+      D-32 新行）+ 供料包回执块在档；负向 grep 证（`.console =
+      console_lines` app.at **0**/split_once 代码 **0**[2 处均注记
+      行]/gen tracked 漂移 **0**/家族仓写入 **0**）。
+  - `findings`:
+    - **F-R15-1（已裁）**：AC-04 字面子项上游不可达——r2 契约修正
+      （定谳增补，实现零变化）；无 needs_fix 级。
+    - **F-R15-2（留观）**：依赖差 = auto-lang main 已前移
+      c95f2a00e（PLAN-701 家族会话供料批），复审/实现证据基线均为
+      63e14b045 构建 exe——下批立项时工具链窗口复核（README ≥2125
+      口径不变，PLAN-701 供料件随下游消费批复验）。
+  - `evidence`: `e2e/.runtime/gate-run-review.log`（复审 gate ALL
+    GREEN 全录）+ probe 两件复放输出（本记录 AC-01/02/03 摘录）+
+    canonical 落位行号（SD-1501@ARCHITECTURE:665/SD-1502@:734/
+    SD-1503@README:156/SD-1504@README:89/ledger v18 表头）+ 负向
+    grep 计数。durable 面：canonical 四件 + ledger + 基线
+    v14 + probe 两件入库源——worktree 即 main 检出，无清理失效面。
+  - `next`: merge（用户已授权全流程——work→review→merge 同会话
+    连跑；本记录即 merge 的 revision-bound 复审证据）。
 
 ## 10. 待澄清事项
 
