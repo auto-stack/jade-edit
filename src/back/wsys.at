@@ -744,25 +744,221 @@ pub fn rename_page_impl(old_path str, new_name str) str {
 // create_page 再建页接回——PLAN-005 弧线反向闭合）。两语义对照入
 // canonical，杜绝「删除即清理引用」的隐性期待。
 
-/// 页面删除本体（api.delete_page 实现；SD-701 back 半）——三步：
+/// 页面删除本体（api.delete_page 实现；SD-701 back 半 + **PLAN-016 改道
+/// 扩**——SD-1601）：契约签名/返回语义零变化（成功返回原 rel，"" = 拒）
+/// ——行为面由硬删扩为**移入回收站**（SD-701 悬空化语义逐字节等价：
+/// .trash 点前缀目录 walk 自动忽略，链接/标签/检索/树/快开全视不存在）。
+/// 四步：
 /// ①卫：.ad 后缀（非 .ad 一律拒——目录名/裸名/其他扩展，既有路径也
 ///   拒，卫语句先于 exists 防目录误删）+ exists（缺失拒）；
-/// ②File.delete——返回值忽略（D-24②：stdlib shim 恒返 0 吞错）；
-/// ③双复核：删后 exists 翻转 → 成功返回工作区根相对 path；仍存在 →
-///   ""（删除未生效）。
+/// ②trash_target——.trash/{orig_rel}（冲突 {stem}--{n}.ad 序号后缀；
+///   父目录 create_dir_all 递归[D-29①]）；
+/// ③组合迁移：read_text→write_text→File.delete（006/012 定文形态——
+///   字节整迁；File.delete 返值忽略 D-24②）；
+/// ④双复核：.trash 内新档在 && 原位档无——存在性翻转唯一可信判据。
+/// 副本保底：恢复通道 = trash_restore（悬空自愈反向闭环）。
 pub fn delete_page_impl(path str) str {
     if !path.ends_with(".ad") {
+        return ""
+    }
+    if path.starts_with(".trash/") {
         return ""
     }
     var full str = resolve(path)
     if !File.exists(full) {
         return ""
     }
+    var trel str = trash_target(path)
+    if trel == "" {
+        return ""
+    }
+    var tfull str = resolve(trel)
+    File.write_text(tfull, File.read_text(full))
     File.delete(full)
+    if !File.exists(tfull) {
+        return ""
+    }
     if File.exists(full) {
         return ""
     }
     return path
+}
+
+// ===== 回收站（PLAN-016 T-01；知识库第十四切片 back 半）——破坏性操作
+// 安全网（014 递归硬删风险清偿，SD-1601）：删除 = 移出工作区 + .trash
+// 副本保留（Obsidian「删除到 .trash 文件夹」同构）。语义零破坏论证：
+// fs_tree_skipped 点前缀逐名跳过（auto-lang native.rs:9944 一手源实勘
+// ——本批 T-01）⇒ 链接/标签/检索/树/快开五面视 .trash 不存在，SD-701
+// 悬空化与硬删逐字节等价。恢复 = 移回原位（前缀剥离 + --{n} 尾剥）——
+// PLAN-005 建页弧线的删除-恢复对偶。
+
+/// 回收站目标路径（delete 双改道共享单点）：`.trash/{orig_rel}`；冲突
+///（.trash 内已存在同名）→ `{stem}--{n}.ad` 序号后缀（while exists n+1
+/// ——n 从 1 起）；父目录 create_dir_all 递归幂等（D-29① 实勘定谳，
+/// 保结构迁移的目录面免费达成）。返回 .trash 内目标 rel（工作区相对，
+/// ".trash/" 前缀——trash_restore 越界卫的路径域）；"" = 空 stem 卫
+///（".ad" 病理名——walk 忽略面同族不涉常规语料）。
+fn trash_target(orig_rel str) str {
+    var pre str = dir_of(orig_rel)
+    var stem str = stem_of(orig_rel)
+    if stem == "" {
+        return ""
+    }
+    var parent str = dir_norm(".trash/" + pre)
+    File.create_dir(resolve(parent))
+    var cand str = ".trash/" + orig_rel
+    if File.exists(resolve(cand)) {
+        var n int = 1
+        cand = ".trash/" + pre + stem + "--1.ad"
+        while File.exists(resolve(cand)) {
+            n = n + 1
+            cand = ".trash/" + pre + stem + "--" + n.str() + ".ad"
+        }
+    }
+    return cand
+}
+
+/// 回收站清单（api.trash_list 实现；裸数组 [{path}]——D-20④ 顶层形状
+/// 裁定同族）。walk = fs.tree(resolve(".trash"), 8) 段标记法
+///（collect_ad_pages 同款；⚠ 子树查询 id = 相对查询根——auto-lang
+/// fs_tree_walk strip_prefix(root) 一手源实勘，rename_dir_impl「子树 id
+/// 相对性未证免依赖」注记本批定谳，装配期补 ".trash/" 前缀）。缺失
+/// 容错：.trash 不存在 → fs.tree "[]" → 裸数组 "[]"（无 .keep 占位——
+/// §10.4）。只收 .ad（清单面 = 可恢复页条目；目录条目由前缀隐含）。
+/// GET 无参契约——零 D-19 暴露面（CJK 条目在响应 body，UTF-8 直通）。
+pub fn trash_list_json() str {
+    var tree str = fs.tree(resolve(".trash"), 8)
+    var out str = ""
+    var segs = tree.split("{\"id\":")
+    var i int = 1
+    while i < segs.len() {
+        var seg str = segs[i]
+        if seg.contains("\"kind\":\"file\"") {
+            var head = seg.split_once(",\"label\":")
+            if head.len() == 2 {
+                var idq str = head[0]
+                var qparts = idq.split("\"")
+                if qparts.len() >= 2 {
+                    var rel str = qparts[1]
+                    if rel.ends_with(".ad") {
+                        if out != "" {
+                            out = out + ","
+                        }
+                        out = out + "{\"path\":\"" + json_esc(".trash/" + rel) + "\"}"
+                    }
+                }
+            }
+        }
+        i = i + 1
+    }
+    return "[" + out + "]"
+}
+
+/// `--{n}` 序号后缀尾剥（trash_restore 专用；split 标记法——D-20③ 禁
+/// length+slice）：base 以 "--" 切段、末段全数字（is_digits 在册件）
+/// → 去尾段重接（首现语义 = split_once 家族同源——末段定址用分段重接
+/// 规避 slice）。非尾缀形态零剥：无 "--"/末段非数字/"--1" 全剥空
+///（rebuild 空 → 拒，调用面卫）。**观测项 §10.3**：档名本体含 `--1`
+/// 形态的剥析误判 v1 记账（.trash/Pa--1.ad 恢复去尾 → Pa.ad——用户
+/// 重命名修正面）。
+fn trash_stem_strip(base str) str {
+    var pp = base.split("--")
+    if pp.len() < 2 {
+        return base
+    }
+    var last str = pp[pp.len() - 1]
+    if !is_digits(last) {
+        return base
+    }
+    var re str = ""
+    var q int = 0
+    var m int = pp.len() - 1
+    while q < m {
+        if q > 0 {
+            re = re + "--"
+        }
+        // ⚠ D-20②：列表元素先拷局部变量再拼接。
+        var seg str = pp[q]
+        re = re + seg
+        q = q + 1
+    }
+    return re
+}
+
+/// 回收站恢复本体（api.trash_restore 实现；SD-1601）——悬空自愈反向
+/// 闭环（删除→悬空→恢复→翻转回）。POST 单事务五步：
+/// ①越界卫：entry 以 ".trash/" 起否则拒（.trash 外路径拒——路径注入
+///   面封死）；**".." 段拒**（".trash/../" 前缀形亦逃逸工作区——contains
+///   ".." 双保险）；.ad 后缀卫（目录/裸名同判）；存在卫；
+/// ②原位解析：".trash/" 前缀剥离 + `--{n}` 尾剥（trash_stem_strip）
+///   ——{stem}--{n}.ad 恢复去后缀名回 {stem}.ad；
+/// ③目标冲突拒：原位已存在同名 → ""（front console 注记——用户先清
+///   位或改 Trash 内条目名，v1 无 UI 改名面 §10.2）；
+/// ④父目录 create_dir_all（目录删除后原位父链可能已消——递归重建
+///   [D-29①]）+ 反向组合迁移：read_text→write_text→File.delete
+///   （006/012 定文形态；D-24② 返值忽略）；
+/// ⑤双复核：原位档在 && .trash 内条目无 → 返回恢复后 rel；失败 ""。
+pub fn trash_restore_impl(entry str) str {
+    if !entry.starts_with(".trash/") {
+        return ""
+    }
+    if entry.contains("..") {
+        return ""
+    }
+    if !entry.ends_with(".ad") {
+        return ""
+    }
+    var ef str = resolve(entry)
+    if !File.exists(ef) {
+        return ""
+    }
+    var up = entry.split_once(".trash/")
+    if up.len() != 2 {
+        return ""
+    }
+    var under str = up[1]
+    var segs = under.split("/")
+    var fname str = segs[segs.len() - 1]
+    var parts = fname.split(".ad")
+    var base str = parts[0]
+    var stem str = trash_stem_strip(base)
+    if stem == "" {
+        return ""
+    }
+    var target str = dir_of(under) + stem + ".ad"
+    if File.exists(resolve(target)) {
+        return ""
+    }
+    var pd str = dir_of(target)
+    if pd != "" {
+        File.create_dir(resolve(dir_norm(pd)))
+    }
+    var tf str = resolve(target)
+    File.write_text(tf, File.read_text(ef))
+    File.delete(ef)
+    if !File.exists(tf) {
+        return ""
+    }
+    if File.exists(ef) {
+        return ""
+    }
+    return target
+}
+
+/// 清空回收站本体（api.trash_purge 实现；SD-1601）：remove_dir_all
+///（014 probe C 定谳可调；递归——保结构条目全清）+ 双复核（存在性
+/// 翻转）。幂等：.trash 不存在 → "ok" 视为已空（无 .keep 占位 §10.4
+///——trash_list 对缺失目录返 [] 同判）。失败 → ""。
+pub fn trash_purge_impl() str {
+    var t str = resolve(".trash")
+    if !File.exists(t) {
+        return "ok"
+    }
+    File.remove_dir_all(t)
+    if File.exists(t) {
+        return ""
+    }
+    return "ok"
 }
 
 // ===== 目录面（PLAN-012 T-01；知识库第十切片 back 半）——工作区组织二期：
@@ -874,24 +1070,103 @@ pub fn move_page_impl(path str, dir str) str {
 // 即 fatal[D-24① 同判面]）。返值忽略 D-24②——exists/is_dir 双复核
 // 内建同族纪律。
 
-/// 目录删除本体（api.delete_dir 实现；SD-1401）——三步：
+/// 目录删除本体（api.delete_dir 实现；SD-1401 + **PLAN-016 改道扩**
+/// ——SD-1601）：契约签名/返回语义零变化（成功返回归一 path，"" = 拒
+/// ）——行为面由 remove_dir_all 递归硬删扩为**逐文件移入回收站（保
+/// 结构）+ 空目录清理**。五步：
 /// ①卫：dir_norm 归一（"wiki/"// 尾斜杠容错）非空（根拒——resolve("")
 ///   即工作区根，绝不可删）+ `File.is_dir`（非目录拒——文件/缺失同判，
 ///   探针 B 定谳件）；
-/// ②`File.remove_dir_all`（**递归原语——probe C 定谳可调**；返值忽略
-///   ——D-24② 原语吞错族）；
-/// ③双复核 `!File.exists`（目录存在性翻转——删除成功唯一可信判据，
-///   D-24② 同族）→ 返回归一 path；失败 ""。
+/// ②子件清单收集（rename_dir_impl 同款——工作区根树段扫描 + 前缀
+///   过滤 + 段分类；**纯 .ad 卫**：任一非 .ad 子件拒，先于一切落盘）；
+/// ③逐文件移入 `.trash/{dir 相对结构}`（trash_target——保结构镜像 +
+///   冲突后缀；组合迁移 + 双复核——006 定文形态）；
+/// ④旧目录清理：嵌套旧子目录**逆序** `File.remove_dir`（walk 序父先
+///   子后 ⇒ 逆序即子先于父——空目录原语非递归口径；此时全空——内容
+///   已尽迁 .trash）+ 顶层 `File.remove_dir`；
+/// ⑤双复核 `!File.exists`（目录存在性翻转——删除成功唯一可信判据，
+///   D-24② 同族）→ 返回归一 path；失败 ""（部分迁移容忍注记——循环
+///   中段失败留双份，006 非原子窗口家族同判）。
 pub fn delete_dir_impl(path str) str {
     var p str = dir_norm(path)
     if p == "" {
+        return ""
+    }
+    if p == ".trash" {
+        return ""
+    }
+    if p.starts_with(".trash/") {
         return ""
     }
     var full str = resolve(p)
     if !File.is_dir(full) {
         return ""
     }
-    File.remove_dir_all(full)
+    // ②卫 + 清单：工作区根树段扫描 + 前缀过滤（⚠ D-20②：段元素先拷
+    // 局部变量再调方法——rename_dir_impl 同款段分类语义）。
+    var tree str = fs.tree(resolve(""), 8)
+    var segs = tree.split("{\"id\":")
+    var files List = []
+    var subdirs List = []
+    var i int = 1
+    while i < segs.len() {
+        var seg str = segs[i]
+        var head = seg.split_once(",\"label\":")
+        if head.len() == 2 {
+            var idq str = head[0]
+            var qparts = idq.split("\"")
+            if qparts.len() >= 2 {
+                var id str = qparts[1]
+                if id.starts_with(p + "/") {
+                    if seg.contains("\"kind\":\"file\"") {
+                        if !id.ends_with(".ad") {
+                            return ""
+                        }
+                        files.push(id)
+                    } else {
+                        if seg.contains("\"kind\":\"dir\"") {
+                            subdirs.push(id)
+                        } else {
+                            if seg.ends_with(",\"children\":[") {
+                                subdirs.push(id)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        i = i + 1
+    }
+    // ③逐文件移入回收站（保结构——trash_target 镜像父链）。
+    var j int = 0
+    while j < files.len() {
+        // ⚠ D-20②：列表元素先拷局部变量再调方法。
+        var rel str = files[j]
+        var trel str = trash_target(rel)
+        if trel == "" {
+            return ""
+        }
+        var old_file_full str = resolve(rel)
+        var tfull str = resolve(trel)
+        File.write_text(tfull, File.read_text(old_file_full))
+        File.delete(old_file_full)
+        if !File.exists(tfull) {
+            return ""
+        }
+        if File.exists(old_file_full) {
+            return ""
+        }
+        j = j + 1
+    }
+    // ④旧目录清理：嵌套逆序（子先于父）+ 顶层——内容已尽迁，纯空目录。
+    var k int = subdirs.len()
+    while k > 0 {
+        k = k - 1
+        var sd2 str = subdirs[k]
+        File.remove_dir(resolve(sd2))
+    }
+    File.remove_dir(full)
+    // ⑤双复核（存在性翻转）。
     if File.exists(full) {
         return ""
     }

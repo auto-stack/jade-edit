@@ -270,4 +270,39 @@ pub fn daily_note() str {
     return wsys.daily_note_impl()
 }
 
+/// 回收站清单（PLAN-016 第十四切片；SD-1601）：.trash 内 .ad 条目裸
+/// 数组 [{path}]（D-20④ 顶层形状裁定同族）——path = 工作区相对
+///（".trash/" 前缀，trash_restore 入参同域）。缺失目录 → "[]"（幂等
+/// 空态——无 .keep 占位）。**GET 无参契约**——零 D-19 暴露面（CJK 条目
+/// 在响应 body，UTF-8 直通；无 query 解码环节）。
+/// GET /api/trash_list
+#[api(method = "GET", path = "/api/trash_list")]
+pub fn trash_list() str {
+    return wsys.trash_list_json()
+}
+
+/// 回收站恢复（PLAN-016；SD-1601）：.trash 内条目移回原位——前缀剥离
+/// 去原路径 + `--{n}` 尾剥去后缀名；目标冲突/越界拒。卫语句序：
+/// ".trash/" 前缀卫（**越界卫**——.trash 外路径拒）+ ".." 段拒（
+/// ".trash/../" 前缀形逃逸面封死）+ .ad 卫 + 存在卫 + 目标冲突拒 +
+/// 反向组合迁移（read+write+delete——006 定文形态）+ 双复核。成功返回
+/// 恢复后工作区根相对 path（悬空自愈面——入链 exists 翻转回）；"" =
+/// 任一卫语句拒/迁移未生效。
+/// **POST 而非 GET**（D-19：条目路径 CJK 常态，body 传参）。
+/// POST /api/trash_restore
+#[api(method = "POST", path = "/api/trash_restore")]
+pub fn trash_restore(entry str) str {
+    return wsys.trash_restore_impl(entry)
+}
+
+/// 清空回收站（PLAN-016；SD-1601）：remove_dir_all(.trash) + 双复核；
+/// **幂等**——.trash 不存在 → "ok" 视为已空。返回 "ok"（成功/幂等）
+/// 或 ""（删除未生效）。
+/// **POST**（无参动作契约族——daily_note 同形）。
+/// POST /api/trash_purge
+#[api(method = "POST", path = "/api/trash_purge")]
+pub fn trash_purge() str {
+    return wsys.trash_purge_impl()
+}
+
 
