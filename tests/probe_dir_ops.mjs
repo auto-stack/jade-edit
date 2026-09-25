@@ -46,6 +46,7 @@ import { spawn, execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { pickPort } from './pick_port.mjs'
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const AUTO_EXE = process.env.AUTO_EXE ?? 'D:/autostack/auto-lang/target/debug/auto.exe'
@@ -57,7 +58,7 @@ const MERGED_PORT = 9362
 // 8251-8950 = WinNAT 排除区段（F-R8-1）；8222..8227 = 探针族在册口——
 // 本案 8231（8228 首跑撞临时源端口 CLOSE_WAIT 出站连接[10048]——非监听
 // 占用，顺延避让）。
-const SPLIT_PORT = 8231
+const SPLIT_PORT = await pickPort()
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 

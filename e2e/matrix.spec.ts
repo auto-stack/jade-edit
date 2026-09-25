@@ -484,6 +484,92 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await tabBtn('Hello World').click()
   await expect(visibleEditor(page)).toContainText('这是一段示例文本', { timeout: 15_000 })
   console.log('[11 find] PASS — alias 检索（PLAN-012）：内造 alias 档 → 搜「检别名」→ AliasTgt 命中行 → 拾取开档（双臂）')
+  // ⑥ trash 模式（PLAN-016；vm 矩阵 check 11 trash 子步 + file 组 ⑱
+  // 恢复弧同单——真 DOM）：素材 = write_wiki 内造 TrashSrc（[[TrashMe]]
+  // 出链源）→ ＋新建 TrashMe（NewGo 树新行双行齐）→ 菜单删除（弹层文
+  // 案「将移入回收站」——AC-03 + 改道磁盘面）→ TrashSrc 出链行悬空翻
+  // 转 → 文件→回收站（第四模式——无 input 行）→ 清单行 → **行恢复** →
+  // 空态 + 悬空翻转回（悬空自愈——三刷面）+ 磁盘回 + tab 重开 → 清空
+  // 回收站 → 强确认弹层（M 派生[e2e 位态 .trash 含 10m/alias 收尾素材
+  // ，计数断言取前缀面] + 取消留置 → 清空）→ 空态 + 磁盘 .trash 消
+  // （顺收 10m/alias 收尾素材条目——工作区终态洁净；**e2e 恢复素材自
+  // 带不入 14 已知答案域**——13 删除素材 Hello World 的 wanted/tags 已
+  // 知答案依赖其删除态，恢复弧不复用）。
+  const trashSrcRes = await request.post('/api/write_wiki', {
+    data: { path: 'TrashSrc.ad', body: '# S\n\n指向 [[TrashMe]]。\n' },
+  })
+  expect(trashSrcRes.ok(), 'write_wiki 造 TrashSrc POST ok').toBe(true)
+  const plus11 = page.locator('button:has(svg[class*="lucide-plus"])').first()
+  await plus11.click()
+  const newName11 = page.getByPlaceholder('页面名…')
+  await expect(newName11).toBeVisible({ timeout: 10_000 })
+  await newName11.fill('TrashMe')
+  await page.getByRole('button', { name: '创建', exact: true }).click()
+  await expect(page.getByText('新建页面')).toBeHidden({ timeout: 10_000 })
+  await expect(visibleEditor(page)).toContainText('TrashMe', { timeout: 15_000 })
+  await page.getByText('文件', { exact: true }).click()
+  await page.getByText('删除…', { exact: true }).click()
+  await expect(page.getByText('将移入回收站 TrashMe.ad', { exact: true })).toBeVisible({ timeout: 10_000 })
+  await page.getByRole('button', { name: '删除', exact: true }).click()
+  await expect(page.getByText('删除页面')).toBeHidden({ timeout: 10_000 })
+  const trashMeFile = path.join(WORKSPACE, 'TrashMe.ad')
+  await expect
+    .poll(() => !fs.existsSync(trashMeFile) && fs.existsSync(path.join(WORKSPACE, '.trash', 'TrashMe.ad')), { timeout: 10_000 })
+    .toBe(true)
+  // 悬空翻转（改道工作区面等价——TrashSrc 出链行 TrashMe（悬空））
+  await page.getByText('TrashSrc', { exact: true }).first().click()
+  await expect(visibleEditor(page)).toContainText('指向', { timeout: 15_000 })
+  await page.getByText('视图', { exact: true }).click()
+  await page.getByText('切换反链', { exact: true }).click()
+  await expect(page.getByText('TrashMe（悬空）', { exact: true })).toBeVisible({ timeout: 10_000 })
+  // 回收站模式 + 清单 + 行恢复（悬空自愈翻转回 + 磁盘回）
+  await page.getByText('文件', { exact: true }).click()
+  await page.getByText('回收站', { exact: true }).click()
+  await expect(page.getByText('.trash/TrashMe.ad', { exact: true })).toBeVisible({ timeout: 10_000 })
+  // 行域定位（.trash 含 10m/alias 收尾素材多行——行 div = 含目标路径文本
+  // 的最内层 div，恢复钮行内唯一）
+  await page.locator('div', { hasText: '.trash/TrashMe.ad' }).last().getByRole('button', { name: '恢复', exact: true }).click()
+  // 行消断言（e2e 位态 .trash 含 10m/alias 收尾素材余量——空态面在
+  // purge 后达成；vm ⑱ 同位空态 = 判绿跑 trash 仅单条目，两轨位态异位
+  // 既有口径）
+  await expect(page.getByText('.trash/TrashMe.ad', { exact: true })).toHaveCount(0, { timeout: 10_000 })
+  await expect(page.getByText('TrashMe（悬空）', { exact: true })).toHaveCount(0, { timeout: 10_000 })
+  await expect
+    .poll(() => fs.existsSync(trashMeFile) && fs.readFileSync(trashMeFile, 'utf8') === '# TrashMe\n\n', { timeout: 10_000 })
+    .toBe(true)
+  // tab 重开（树行回——恢复流 TreeRefresh 面真 DOM）
+  await page.getByText('TrashMe', { exact: true }).first().click()
+  await expect(visibleEditor(page)).toContainText('TrashMe', { timeout: 15_000 })
+  // 清空强确认（M 派生前缀 + 取消留置 → 清空 → 空态 + 磁盘消）。⚠ 面板
+  // 已在 trash 模式——模式标签「回收站」与菜单项同名 strict 冲突，先
+  // 收起再走菜单（FindOpen 重开幂等 + refetch 余量清单——TrashMe 已恢
+  // 复不在，余量 = 10m/alias 收尾素材条目）。
+  await page.getByRole('button', { name: '收起', exact: true }).first().click()
+  await page.getByText('文件', { exact: true }).click()
+  await page.getByText('回收站', { exact: true }).click()
+  await expect(page.getByText('.trash/AliasTgt.ad', { exact: true })).toBeVisible({ timeout: 10_000 })
+  await page.getByRole('button', { name: '清空回收站', exact: true }).click()
+  await expect(page.getByText(/将永久删除回收站内全部/)).toBeVisible({ timeout: 10_000 })
+  await page.getByRole('button', { name: '取消', exact: true }).last().click()
+  expect(fs.existsSync(path.join(WORKSPACE, '.trash')), '取消留置（.trash 未动——条目余量面）').toBe(true)
+  await page.getByRole('button', { name: '清空回收站', exact: true }).click()
+  await page.getByRole('button', { name: '清空', exact: true }).click()
+  await expect(page.getByText('（回收站为空）', { exact: true })).toBeVisible({ timeout: 10_000 })
+  await expect
+    .poll(() => fs.existsSync(path.join(WORKSPACE, '.trash')), { timeout: 10_000 })
+    .toBe(false)
+  // 收尾：关素材 tab（TrashMe/TrashSrc——还原段前 tab 位态：12① untitled
+  // 关闭后激活落点与既有段序一致——①b 追加面依赖该落点实例）+ 关反链
+  // 面板（悬空翻转步开启——还原段首「反链关」口径，14 meta 段首 toggle
+  // 语义不扰）+ 复原 Hello World 激活（12 段前置口径）。
+  await tabBtn('TrashMe').click()
+  await page.locator('button:has(svg.lucide-xicon)').first().click()
+  await tabBtn('TrashSrc').click()
+  await page.locator('button:has(svg.lucide-xicon)').first().click()
+  await page.getByText('视图', { exact: true }).click()
+  await page.getByText('切换反链', { exact: true }).click()
+  await tabBtn('Hello World').click()
+  console.log('[11 find] PASS — trash 模式（PLAN-016）：菜单删除 弹层文案「将移入回收站」+改道磁盘面→悬空翻转→回收站第四模式 清单行→行恢复[空态+翻转回+磁盘回+tab 重开]→清空强确认（M 派生+取消留置）→清空→空态+磁盘消')
 
   // 12 rename（PLAN-006 T-04；vm 矩阵 check 12 同单）：重命名+反链改写
   // 全弧线。素材 Projects.ad（ASCII——D-19 面无；入链 index/CAP 定理 两
@@ -654,7 +740,7 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await page.getByText('文件', { exact: true }).click()
   await page.getByText('删除…', { exact: true }).click()
   await expect(page.getByText('删除页面')).toBeVisible({ timeout: 10_000 })
-  await expect(page.getByText('将删除 wiki/Hello World.ad', { exact: true })).toBeVisible()
+  await expect(page.getByText('将移入回收站 wiki/Hello World.ad', { exact: true })).toBeVisible()
   await expect(page.getByText('3 处入链将变为悬空', { exact: true })).toBeVisible()
   await expect(page.getByText('1 个标签页将关闭，未保存修改将丢弃', { exact: true })).toBeVisible()
   await page.getByRole('button', { name: '取消', exact: true }).last().click()

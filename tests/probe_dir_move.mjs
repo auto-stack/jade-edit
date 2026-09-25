@@ -41,6 +41,7 @@ import { spawn, execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { pickPort } from './pick_port.mjs'
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const AUTO_EXE = process.env.AUTO_EXE ?? 'D:/autostack/auto-lang/target/debug/auto.exe'
@@ -51,7 +52,7 @@ const MERGED_WS = path.join(RUNTIME, 'probe-dir-move-workspace')
 const MERGED_PORT = 9361
 // 8251-8950 现为 Windows WinNAT 排除区段（netsh 实勘——PLAN-008 复审
 // findings 留档件）；8223 = probe_rename 在册口——本案用 8227。
-const SPLIT_PORT = 8227
+const SPLIT_PORT = await pickPort()
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 

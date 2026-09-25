@@ -43,6 +43,7 @@ import { spawn, execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { pickPort } from './pick_port.mjs'
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const AUTO_EXE = process.env.AUTO_EXE ?? 'D:/autostack/auto-lang/target/debug/auto.exe'
@@ -53,7 +54,7 @@ const MERGED_WS = path.join(RUNTIME, 'probe-rename-workspace')
 const MERGED_PORT = 9399
 // 8251-8950 现为 Windows WinNAT 排除区段（netsh 实勘——PLAN-008 复审
 // findings 留档件；G4 收口：8254 → 8223 区段外，6400f3b 同款适配）。
-const SPLIT_PORT = 8223
+const SPLIT_PORT = await pickPort()
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
@@ -111,8 +112,14 @@ function diskAsserts(ws, orig, tag, failures) {
     console.log(`  [${tag}] ${ok ? 'PASS' : 'FAIL'} — ${label}`)
     if (!ok) failures.push(`${tag}: ${label}`)
   }
+  // updated_at 行归一（**PLAN-016 T-04 执行期校正**——先在缺陷首触实录：
+  // PLAN-015 write_body 维护键[仅补已有键]使 rename 改写页的 updated_at
+  // 行值必变[fixture Z 形 → 当日本地形]，逐字节期望未吸收该语义面——
+  // b64794a 复现同败非本批引入。归一 = 双侧值域不判[维护键值 = 当日时刻
+  // 非改写语义面]，链替换/锚透传断言不变）。
+  const normUpd = (s) => (s === null ? null : s.replace(/^updated_at: .*$/m, 'updated_at: <norm>'))
   const read = (rel) => {
-    try { return fs.readFileSync(path.join(ws, rel), 'utf8') } catch { return null }
+    try { return normUpd(fs.readFileSync(path.join(ws, rel), 'utf8')) } catch { return null }
   }
   // ① 旧档消失 + 新档在 + 新档字节 = 原档字节（整迁等价）
   ck(read('wiki/CAP 定理.ad') === null, '① 旧档 wiki/CAP 定理.ad 消失')
@@ -335,7 +342,10 @@ async function runSplitArm() {
 
 // ---- 语料原字节捕获（改名前——期望值来源；init 时 wiki/ 下仍为原语料） ----
 function captureOriginals(ws) {
-  const read = (rel) => fs.readFileSync(path.join(ws, rel), 'utf8')
+  // normUpd 同 diskAsserts（updated_at 行归一——双侧同归一，逐字节判据
+  // 保持在链替换面）。
+  const normUpd = (s) => s.replace(/^updated_at: .*$/m, 'updated_at: <norm>')
+  const read = (rel) => normUpd(fs.readFileSync(path.join(ws, rel), 'utf8'))
   return {
     capTheoremSrc: read('wiki/CAP 定理.ad'),
     index: read('wiki/index.ad'),

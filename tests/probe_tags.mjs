@@ -40,6 +40,7 @@ import { spawn, execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { pickPort } from './pick_port.mjs'
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const AUTO_EXE = process.env.AUTO_EXE ?? 'D:/autostack/auto-lang/target/debug/auto.exe'
@@ -51,7 +52,7 @@ const MERGED_PORT = 9399
 // 8251-8950 现为 Windows WinNAT 排除区段（netsh interface ipv4
 // show excludedportrange——复审窗实勘，T-01 执行期 8254 尚可用）；
 // split 臂端口移至区段外（serve-back 默认 8211 同在区段外）。
-const SPLIT_PORT = 8221
+const SPLIT_PORT = await pickPort()
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 

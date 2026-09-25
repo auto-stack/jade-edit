@@ -43,6 +43,7 @@ import { spawn, execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { pickPort } from './pick_port.mjs'
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const AUTO_EXE = process.env.AUTO_EXE ?? 'D:/autostack/auto-lang/target/debug/auto.exe'
@@ -54,7 +55,7 @@ const MERGED_PORT = 9399
 // 8251-8950 现为 Windows WinNAT 排除区段（netsh interface ipv4
 // show excludedportrange——复审窗实勘）——split 臂端口取区段外
 //（probe_tags 8221 / G4 8222/8223 同款适配）。
-const SPLIT_PORT = 8224
+const SPLIT_PORT = await pickPort()
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 

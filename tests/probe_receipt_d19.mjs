@@ -16,8 +16,9 @@
 // 用法（仓根）：node tests/probe_receipt_d19.mjs
 
 import { serveBackend } from '../scripts/serve-back.mjs'
+import { pickPort } from './pick_port.mjs'
 
-const back = await serveBackend({ port: 8241 })
+const back = await serveBackend({ port: await pickPort() })
 const failures = []
 const ck = (ok, label, detail = '') => {
   console.log(`  ${ok ? 'PASS' : 'FAIL'} — ${label}${detail ? `（${detail}）` : ''}`)

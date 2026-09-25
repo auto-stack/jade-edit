@@ -29,7 +29,7 @@ use find_panel: FindPanel
 use tags_panel: TagsPanel
 use bps.navigation.filetree.tree_util: flatten_tree, toggle_id
 use bps.navigation.filetree.tree_icon: TreeIcon
-use back.api: tree, ws_root, link_index, search_wiki, create_page, rename_page, delete_page, tags_index, linkify_page, page_meta, set_page_meta, create_dir, move_page, delete_dir, rename_dir, daily_note
+use back.api: tree, ws_root, link_index, search_wiki, create_page, rename_page, delete_page, tags_index, linkify_page, page_meta, set_page_meta, create_dir, move_page, delete_dir, rename_dir, daily_note, trash_list, trash_restore, trash_purge
 
 style warn_label = "text-[12px] text-amber-400 mr-1"
 
@@ -625,8 +625,7 @@ fn dangling_impact(pages List, stem str) str {
 ///「M 个标签页将关闭，未保存修改将丢弃」/「无打开标签页」。未保存
 /// 修改丢弃警示 = 关闭面语义（RemoveAt 直接弃——CloseTab 确认弹层
 /// 不涉，删除场景档已消失无处可存）。
-fn tabs_impact_text(tabs List, path str) str {
-    var m int = 0
+fn tabs_impact_text(tabs List, path str) str {    var m int = 0
     var i int = 0
     while i < tabs.len() {
         // ⚠ D-20②：列表元素先拷局部变量再取字段。
@@ -709,6 +708,14 @@ fn wanted_rows_of(pages List) List {
     return out
 }
 
+/// 清空回收站强确认文案（PLAN-016 T-02；M 本地派生——trash_rows 现算
+/// 长度。⚠ 模块纯函数形态（computed 委托——deldir_files_preview 同族；
+/// T-02 实勘：computed 表达式内联 `+` 串接不发射——vm 快照描述节点缺
+/// 失，单函数调用为在册唯一形态）。
+fn trash_purge_desc_of(rows List) str {
+    return "将永久删除回收站内全部 " + rows.len().str() + " 项"
+}
+
 widget App {
     msg {
         Init, FtToggle(str), OpenFile(str), Reload,
@@ -733,6 +740,7 @@ widget App {
         ActMove, MoveEdit(str), MoveGo, MoveCancel,
         ActDelDir, DelDirEdit(str), DelDirGo, DelDirCancel,
         ActRenDir, RenDirTargetEdit(str), RenDirEdit(str), RenDirGo, RenDirCancel,
+        ActTrash, TrashRestore(str), TrashPurge, TrashPurgeGo, TrashPurgeCancel,
     }
 
     model {
@@ -809,6 +817,12 @@ widget App {
         // MentionsRefreshOf 共享口（backlinks_open 守卫——面板关零
         // POST，D-21 面纪律）。----
         var mention_rows List = []
+        // —— 回收站数据态（PLAN-016；基线 v15 面）：trash_list 行集
+        // [{path}]（单取形 fetch——ActTrash 入口 + restore/purge 成功后
+        // refetch）+ 清空强确认弹层开态（**App 模型**——store 零新面
+        // [计划 §2.3]，find/tags 数据态先例 D-20④ 同款裁定）。----
+        var trash_rows List = []
+        var trash_purge_open bool = false
     }
 
     computed {
@@ -835,6 +849,9 @@ widget App {
         deldir_files_preview => dir_del_files_text(.ft_nodes, .deldir_q)
         deldir_dangling_preview => dir_del_dangling_text(.link_pages, .deldir_q)
         rendir_preview => dir_ren_preview_text(.ft_nodes, .rendir_target)
+        // 清空回收站强确认文案（PLAN-016；M 本地派生——trash_purge_desc_
+        // of 模块纯函数委托，computed 不入 dump）。
+        trash_purge_desc => trash_purge_desc_of(.trash_rows)
     }
 
     // —— actions 声明块（Plan 451 三源绑定：shortcut / toolbar 占位合成 /
@@ -856,6 +873,10 @@ widget App {
         action (id: "file.move", handler: .ActMove, title: "移动到目录…", shortcut: "Ctrl+Shift+M")
         action (id: "file.delete", handler: .ActDelete, title: "删除…", shortcut: "Delete",
                 enabled_if: ".ft_sel != \"\"")
+        // 回收站（PLAN-016 T-02；G2 入口——Ctrl+Shift+T 新键位唯一增量
+        // [T 族：Ctrl+T=标签面板在册，Shift+T 空闲实核]；不挂 enabled
+        // ——无状态依赖可挂，D-24③ 同判）。
+        action (id: "file.trash", handler: .ActTrash, title: "回收站", icon: "trash-2", shortcut: "Ctrl+Shift+T")
         // 目录生命周期收口（PLAN-014 T-02；双入口与档 Delete/F2 分键——
         // Shift+Delete/Ctrl+Shift+R；不挂 enabled——D-24③ vm 轨 menubar
         // enabled 冻结缺口，目录目标经弹层 input 指定[ft_sel 不扩]故无
@@ -922,6 +943,8 @@ widget App {
                             menubar-item (title: "移动到目录…", shortcut: "Ctrl+Shift+M") { onclick: .ActMove }
                             menubar-item (title: "页面属性…", icon: "sliders-horizontal", shortcut: "Ctrl+I") { onclick: .ActMeta }
                             menubar-item (title: "删除…", shortcut: "Delete") { onclick: .ActDelete }
+                            // 回收站（PLAN-016——「删除…」后，§2.4 键位/菜单面）
+                            menubar-item (title: "回收站", icon: "trash-2", shortcut: "Ctrl+Shift+T") { onclick: .ActTrash }
                             menubar-item (title: "删除目录…", shortcut: "Shift+Delete") { onclick: .ActDelDir }
                             menubar-item (title: "重命名目录…", shortcut: "Ctrl+Shift+R") { onclick: .ActRenDir }
                             menubar-separator
@@ -1103,9 +1126,9 @@ widget App {
                         if .store.find_open {
                             FindPanel()
                             // 输入行：input + 检索钮（files/text 两模式
-                            // ——wanted 纯清单无 input 行/无触发钮，
-                            // PLAN-008 三分支）。
-                            if .store.find_mode != "wanted" {
+                            // ——wanted/trash 纯清单无 input 行/无触发钮，
+                            // PLAN-008 三分支 + PLAN-016 trash 第四模式）。
+                            if .store.find_mode == "files" || .store.find_mode == "text" {
                             row (style: "items-center gap-1 px-2 py-1 shrink-0") {
                                 if .store.find_mode == "files" {
                                     input {
@@ -1180,6 +1203,30 @@ widget App {
                                         onclick: .CreateClick(r.target)
                                         style: "w-full justify-start px-3 h-6 text-left text-[12px] text-muted-foreground"
                                     }
+                                }
+                            }
+                            // trash 模式（PLAN-016；第四模式——wanted 无
+                            // input 形态同构）：标题行下方行集（trash 内
+                            // 路径文本 + 行尾「恢复」小钮——**路径文本非
+                            // 点击面**：点行开档属非目标 §10.2，恢复唯一
+                            // 触点 = 恢复钮）+ 空态 + 底部「清空回收站」
+                            // 钮（TrashPurge 强确认弹层入口）。
+                            if .store.find_mode == "trash" {
+                                if .trash_rows.len() == 0 {
+                                    text "（回收站为空）" { style: "text-[11px] text-muted-foreground px-3" }
+                                }
+                                for r in .trash_rows {
+                                    row (style: "w-full items-center justify-between") {
+                                        text r.path { style: "flex-1 text-[12px] px-3 truncate text-muted-foreground" }
+                                        button (text: "恢复", variant: "text") {
+                                            onclick: .TrashRestore(r.path)
+                                            style: "text-[11px] h-5 px-2 text-muted-foreground shrink-0 mr-2"
+                                        }
+                                    }
+                                }
+                                button (text: "清空回收站", variant: "text") {
+                                    onclick: .TrashPurge
+                                    style: "text-[11px] h-6 px-2 text-muted-foreground shrink-0 mx-3 mt-1"
                                 }
                             }
                         }
@@ -1457,12 +1504,14 @@ widget App {
             // 纪律]、闭态恒渲染 D-23③ 同判——测试定位锚内容制。声明位在
             // rename 弹层前——vm 快照 input 序「弹层后声明者居末」锚纪律
             // （check 12 rename input 居末不漂移）。危险钮序：删除居末
-            //（D-29③ 弹层钮标题锚纪律——「删除目录」标题全树唯一）。——
+            //（D-29③ 弹层钮标题锚纪律——「删除目录」标题全树唯一）。
+            // **PLAN-016 文案改**（SD-1601/AC-03）：删除 = 移入回收站
+            //（014 双防线预览沿袭——计数/悬空警示两行不动）。——
             dialog (open: .store.deldir_open) {
                 dialog-content {
                     dialog-header {
                         dialog-title "删除目录"
-                        dialog-description "将递归删除目录及其中全部文件（不可恢复）"
+                        dialog-description "将移入回收站：目录及其中全部文件（可在回收站恢复）"
                     }
                     input {
                         value: .deldir_q
@@ -1545,18 +1594,40 @@ widget App {
             // 单事务删除——入链悬空化不改写源文 SD-701，「N 处入链将变
             // 为悬空」预告即防线）。声明位在 rename 弹层后——零 input
             // 故 input 序锚不受扰；「删除」钮全树唯一（文本定位无歧义
-            //），取消 = 其父行兄弟域。——
+            // ），取消 = 其父行兄弟域。**PLAN-016 文案改**（SD-1601/
+            // AC-03）：删除 = 移入回收站（back 改道行为面扩——工作区
+            // 行为等价，悬空化语义零变化；弹层描述同步语义）。
             dialog (open: .store.delete_open) {
                 dialog-content {
                     dialog-header {
                         dialog-title "删除页面"
-                        dialog-description "将删除 ${.ft_sel}"
+                        dialog-description "将移入回收站 ${.ft_sel}"
                     }
                     text .delete_dangling_preview { style: "text-[12px] text-muted-foreground px-1" }
                     text .delete_tabs_preview { style: "text-[12px] text-muted-foreground px-1" }
                     dialog-footer {
                         button (text: "取消", variant: "outline") { onclick: .DeleteCancel }
                         button (text: "删除", variant: "ghost") { onclick: .DeleteGo }
+                    }
+                }
+            }
+
+            // —— 清空回收站强确认（PLAN-016；alert-dialog 强确认二次钮
+            // ——014 双防线家族同形：清空不可逆。M 本地派生 = **裸
+            // computed text 节点**（deldir 预览行同款——T-02 双轨实勘：
+            // description 位 computed 插值 vm 不渲染节点/vue 发射字面量
+            // [生成器缺口在册 ledger v19]，裸 text 始终健康）。零 input
+            // 声明位（删除页面弹层后）——input 序锚不受扰）。——
+            alert-dialog (open: .trash_purge_open) {
+                alert-dialog-content {
+                    alert-dialog-header {
+                        alert-dialog-title "清空回收站"
+                        alert-dialog-description "清空后条目不可恢复"
+                    }
+                    text .trash_purge_desc { style: "text-[12px] text-muted-foreground px-1" }
+                    alert-dialog-footer {
+                        alert-dialog-cancel "取消" { onclick: .TrashPurgeCancel }
+                        alert-dialog-action "清空" { onclick: .TrashPurgeGo }
                     }
                 }
             }
@@ -2494,6 +2565,109 @@ widget App {
                             console_log("rename_dir: rejected (same-name/casefold/pure-.ad/missing)")
                         }
                     }
+                }
+            }
+        }
+
+        // —— 回收站流（PLAN-016 T-02/T-03；G2 双轨面）——
+        // 入口（action Ctrl+Shift+T/menubar 共口——无状态依赖，任意时刻
+        // 可开）：FindOpen("trash")（第四模式幂等重开——FindOpen 复用）
+        // + trash_list 单取形 fetch（GET 无参——零 D-19 面；json.to_value
+        // handler 体内直调纪律同族）。
+        .ActTrash -> {
+            store.FindOpen("trash")
+            var rows List = []
+            var ok bool = true
+            try {
+                rows = json.to_value(trash_list())
+            } catch (e) {
+                ok = false
+            }
+            if !ok {
+                console_log("trash: list failed")
+            }
+            .trash_rows = rows
+        }
+        // 行恢复流（§2.3）：①back 契约直调 trash_restore（POST body——
+        // CJK 条目 D-19 免疫；try/catch 落 console——backend-offline 不炸）
+        // ②成功 = 行消（trash_list refetch 单取形）+ 页回归三刷
+        //（LinksRefreshOf——bl/ol 行重算内联 active=.store.active_path
+        // + wanted/mentions 随产物 + **悬空自愈**：入链 exists 翻转回；
+        // TagsRefresh + TreeRefresh——树行回）③拒（""：越界/冲突/缺失）
+        // = console 注记（行留置——用户可重试）。
+        .TrashRestore(entry str) -> {
+            var r str = ""
+            var ok bool = true
+            try {
+                r = trash_restore(entry)
+            } catch (e) {
+                ok = false
+            }
+            if !ok {
+                console_log("trash: restore failed")
+            }
+            if r != "" {
+                console_log("trash: restored " + r)
+                var rows2 List = []
+                var ok2 bool = true
+                try {
+                    rows2 = json.to_value(trash_list())
+                } catch (e) {
+                    ok2 = false
+                }
+                if !ok2 {
+                    console_log("trash: list failed")
+                }
+                .trash_rows = rows2
+                .LinksRefreshOf(.store.active_path)
+                .TagsRefresh()
+                .TreeRefresh()
+            } else {
+                if ok {
+                    console_log("trash: restore rejected (out-of-scope/conflict/missing)")
+                }
+            }
+        }
+        // 清空入口：强确认弹层开（M 本地派生 = trash_purge_desc computed
+        // ——trash_rows 现算）。
+        .TrashPurge -> {
+            .trash_purge_open = true
+        }
+        .TrashPurgeCancel -> {
+            .trash_purge_open = false
+        }
+        // 清空流（§2.3）：①back 契约直调 trash_purge（无参 POST——
+        // daily_note 同族；幂等在 back）②"ok" = 关弹层 + trash_list
+        // refetch（空态达成）；**purge 零刷新**（工作区本无——.trash
+        // 不进链接/标签/树面，触发集纪律）③拒（""）= console 注记 +
+        // 弹层留置。
+        .TrashPurgeGo -> {
+            var r str = ""
+            var ok bool = true
+            try {
+                r = trash_purge()
+            } catch (e) {
+                ok = false
+            }
+            if !ok {
+                console_log("trash: purge failed")
+            }
+            if r == "ok" {
+                .trash_purge_open = false
+                var rows2 List = []
+                var ok2 bool = true
+                try {
+                    rows2 = json.to_value(trash_list())
+                } catch (e) {
+                    ok2 = false
+                }
+                if !ok2 {
+                    console_log("trash: list failed")
+                }
+                .trash_rows = rows2
+            } else {
+                if ok {
+                    console_log("trash: purge rejected")
                 }
             }
         }

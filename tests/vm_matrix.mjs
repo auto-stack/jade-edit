@@ -10,8 +10,11 @@
 //   5 save    保存落盘（toolbar 保存 → 脏标清 + 磁盘字节含标记 + frontmatter 保留
 //             + updated_at 自动维护——PLAN-015：已有键保存即更新值[当日形]）
 //   6 reload  重载可见（磁盘外改 → toolbar 重载 → 编辑器见新内容）
-//   B base    结构基线 v14 零漂移（仅 merged 臂；必须在 1-6 后、扩单前采集
-//             ——v14 锁的是六检查终态，扩单不漂移基线；v14=PLAN-015 每日
+//   B base    结构基线 v15 零漂移（仅 merged 臂；必须在 1-6 后、扩单前采集
+//             ——v15 锁的是六检查终态，扩单不漂移基线；v15=PLAN-016 回收站
+//             UI 面[App trash_rows/trash_purge_open 入 dump + action
+//             file.trash[Ctrl+Shift+T 键位] + menubar 文件项「回收站」+
+//             清空强确认弹层实例入 id 序列]；v14=PLAN-015 每日
 //             笔记 UI 面[action/menubar/工具栏三节点——store/App 零状态面
 //             ；行:列消费上游门控续——探针 E 定谳 D-12 处置维持]、v13=
 //             PLAN-014、v12=PLAN-013、v11=PLAN-012 等留档）
@@ -146,7 +149,7 @@ const argOf = (name) => {
   return i >= 0 ? args[i + 1] : undefined
 }
 const ARM = argOf('--arm') ?? 'all' // all | merged | split
-const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v14.txt')
+const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v15.txt')
 const SAVE_BASELINE = argOf('--save-baseline')
 
 const EDIT_MARKER = 'jade-edit 冒烟标记：编辑回写可见。'
@@ -609,9 +612,9 @@ async function runArm(arm, port) {
       } else if (fs.existsSync(BASELINE)) {
         const raw = fs.readFileSync(BASELINE, 'utf8')
         const ok = raw === headerFor(BASELINE) + baselineBodyOf()
-        check('B', 'baseline', ok, ok ? '结构基线 v14 零漂移（state 逐字节 + id 序列）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
+        check('B', 'baseline', ok, ok ? '结构基线 v15 零漂移（state 逐字节 + id 序列）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
       } else {
-        console.log('  [baseline] structure-v14 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v14.txt')
+        console.log('  [baseline] structure-v15 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v15.txt')
       }
     }
 
@@ -1396,6 +1399,148 @@ async function runArm(arm, port) {
     check('14', 'meta', metaTagsOk && metaSaveOk && metaInlineOk && metaInlineBaselineOk && wantedNoInput && wantedKnown && wantedRowOk && wantedCancelOk && wantedFlipOk && wantedGoneOk && wantedDiskOk && wantedEmptyOk && metaPrefillOk && metaTitlePrefillOk && metaCancelOk && metaSaveOk2 && metaAliasOk && metaDelDiskOk && metaInterOk && metaTitleDiskOk && metaTitleTreeOk && metaTitleClearDiskOk && metaTitleFallOk,
       `meta 组八子步 + inline 子步 + 属性子步（tags：面板开 7 tag 行[语料实勘全集]/展开导航 ASCII 双臂+CJK 仅 merged[D-19]/Save 刷新外造新行；inline：body #inline-meta 档保存后面板新行+语料基线零漂移回归[忽略面负向无 block-project-a]；wanted：模式入口无 input 行无检索钮/语料已知答案 页面名（1）+外造 Wanted Target（1）/取消零落盘/创建开档+消缺+exists 翻转+模板逐字节/空态闭环（无悬空链接）；属性[PLAN-011+013]：untitled no-op/预填回显[tags+title 位首]/title 编辑弧线[磁盘 title 行受控改写+树行显示即时刷新]+清空回落[删键回 stem 显示]/取消零落盘/tags 保存+面板即时刷/alias 帽烟别名 exists 翻转[links_json 双臂]/删值弧线[空空白=删键]/保存流互作[frontmatter 存续]——目标页双臂异位 merged=CAP 定理/split=Tasks[D-19]）`)
 
+    // —— 弹层/结构锚助手族（PLAN-012/014 纪律修订形态；**PLAN-016 前移
+    // **——check 11 trash 子步先用[＋新建/删除弹层]，声明位从 check 13
+    // 域上移至本位——同一 runArm 函数体 const TDZ 纪律）。
+    //   EXPLORER「＋」= EXPLORER 文本行首 button 子（结构锚，pressActiveTabClose
+    //   同族）；
+    //   新建 input = 「新建页面」标题上溯 dialog-content 内 input；
+    //   新建弹层「创建」= 快照序末创建钮（create_confirm 先声明居前
+    //   ——同名钮末者消歧）+ 取消 = 父行兄弟；
+    //   删除弹层「删除」= 全树唯一文本锚 + 取消 = 父行兄弟。
+    const pressExplorerPlus = async () => {
+      const t = await snapshot()
+      const label = findFirst(t, (n) => ownText(n) === 'EXPLORER')
+      if (!label) throw new Error('EXPLORER text not found')
+      const row = findParent(t, label)
+      const btn = row.children.find((c) => c !== label && c.head.startsWith('button ') && elementIdOf(c))
+      if (!btn) throw new Error('EXPLORER + button not found in header row')
+      const res = await callTool('autoui_action', { element_id: elementIdOf(btn), action: 'press' })
+      if (!/status: ok/.test(res)) throw new Error(`press EXPLORER + not ok: ${res}`)
+    }
+    const typeIntoNewInput = async (text) => {
+      const t = await snapshot()
+      const title = findFirst(t, (n) => ownText(n) === '新建页面')
+      if (!title) throw new Error('new-dialog title not found')
+      const header = findParent(t, title)
+      const content = findParent(t, header)
+      const inp = content ? findFirst(content, (n) => n.head.startsWith('input ') && elementIdOf(n)) : null
+      if (!inp) throw new Error('new-dialog input not found in snapshot')
+      const res = await callTool('autoui_action', { element_id: elementIdOf(inp), action: 'type_text', value: text })
+      if (!/status: ok/.test(res)) throw new Error(`new-input type_text not ok: ${res}`)
+    }
+    const pressInNewDialog = async (buttonText) => {
+      // 锚定「新建页面」标题上溯 dialog-content 子树（PLAN-012 纪律修订：
+      // 新建目录弹层「创建」钮后声明——全树末位钮序锚破，结构锚为唯一
+      // 消歧面；取消 = 目标钮父行兄弟）。
+      const dl = Date.now() + 8000
+      for (;;) {
+        const t = await snapshot()
+        const title = findFirst(t, (n) => ownText(n) === '新建页面')
+        if (title) {
+          const header = findParent(t, title)
+          const content = findParent(t, header)
+          const btn = content ? findFirst(content, (n) => n.head.startsWith('button ') && elementIdOf(n) && ownText(n) === buttonText) : null
+          if (btn) {
+            const res = await callTool('autoui_action', { element_id: elementIdOf(btn), action: 'press' })
+            if (!/status: ok/.test(res)) throw new Error(`press ${buttonText}(new) not ok: ${res}`)
+            return
+          }
+        }
+        if (Date.now() > dl) throw new Error(`button "${buttonText}" in new-dialog not found`)
+        await sleep(300)
+      }
+    }
+    const pressInDeleteDialog = async (buttonText) => {
+      // 标题锚 content 子树扫（PLAN-014 纪律修订——删除目录弹层「删除」
+      // 钮同名后全树唯一文本锚破[D-29③ 家族]，标题锚为唯一消歧面——
+      // meta/new/目录族同款）。
+      const dl = Date.now() + 8000
+      for (;;) {
+        const t = await snapshot()
+        const title = findFirst(t, (n) => ownText(n) === '删除页面')
+        if (title) {
+          const header = findParent(t, title)
+          const content = findParent(t, header)
+          const btn = content ? findFirst(content, (n) => n.head.startsWith('button ') && elementIdOf(n) && ownText(n) === buttonText) : null
+          if (btn) {
+            const res = await callTool('autoui_action', { element_id: elementIdOf(btn), action: 'press' })
+            if (!/status: ok/.test(res)) throw new Error(`press ${buttonText}(delete) not ok: ${res}`)
+            return
+          }
+        }
+        if (Date.now() > dl) throw new Error(`button "${buttonText}" in delete-dialog not found`)
+        await sleep(300)
+      }
+    }
+    // PLAN-012 弹层族通用锚（新建目录/移动到目录——标题上溯 content 子树
+    // 取 input/按钮：「创建」双弹层同名，末位序锚随第七实例声明破——
+    // 结构锚为唯一消歧面，pressInNewDialog 同款纪律修订）。
+    const typeIntoDialogInput = async (titleText, text) => {
+      const t = await snapshot()
+      const title = findFirst(t, (n) => ownText(n) === titleText)
+      if (!title) throw new Error(`dialog title "${titleText}" not found`)
+      const header = findParent(t, title)
+      const content = findParent(t, header)
+      const inp = content ? findFirst(content, (n) => n.head.startsWith('input ') && elementIdOf(n)) : null
+      if (!inp) throw new Error(`input in "${titleText}" dialog not found`)
+      const res = await callTool('autoui_action', { element_id: elementIdOf(inp), action: 'type_text', value: text })
+      if (!/status: ok/.test(res)) throw new Error(`type_text(${titleText}) not ok: ${res}`)
+    }
+    // 双 input 弹层第 idx 个 input（PLAN-014 重命名目录——目标[0]居首
+    // 新名[1]居次，视图序即快照序；D-29③ 标题锚 content 子树扫）。
+    const typeIntoDialogInputIdx = async (titleText, idx, text) => {
+      const t = await snapshot()
+      const title = findFirst(t, (n) => ownText(n) === titleText)
+      if (!title) throw new Error(`dialog title "${titleText}" not found`)
+      const header = findParent(t, title)
+      const content = findParent(t, header)
+      const inputs = []
+      const collectInputs = (n) => {
+        if (n.head.startsWith('input ') && elementIdOf(n)) inputs.push(n)
+        for (const c of n.children) collectInputs(c)
+      }
+      if (content) collectInputs(content)
+      const inp = inputs[idx]
+      if (!inp) throw new Error(`input[${idx}] in "${titleText}" dialog not found`)
+      const res = await callTool('autoui_action', { element_id: elementIdOf(inp), action: 'type_text', value: text })
+      if (!/status: ok/.test(res)) throw new Error(`type_text[${idx}](${titleText}) not ok: ${res}`)
+    }
+    const pressInDialogByTitle = async (titleText, buttonText) => {
+      const dl = Date.now() + 8000
+      for (;;) {
+        const t = await snapshot()
+        const title = findFirst(t, (n) => ownText(n) === titleText)
+        if (title) {
+          const header = findParent(t, title)
+          const content = findParent(t, header)
+          const btn = content ? findFirst(content, (n) => n.head.startsWith('button ') && elementIdOf(n) && ownText(n) === buttonText) : null
+          if (btn) {
+            const res = await callTool('autoui_action', { element_id: elementIdOf(btn), action: 'press' })
+            if (!/status: ok/.test(res)) throw new Error(`press ${buttonText}(${titleText}) not ok: ${res}`)
+            return
+          }
+        }
+        if (Date.now() > dl) throw new Error(`button "${buttonText}" in "${titleText}" not found`)
+        await sleep(300)
+      }
+    }
+    const pressExplorerFolderPlus = async () => {
+      // 「⊕」= EXPLORER 行第二 button（「＋」居首——序纪律在案，
+      // pressExplorerPlus 首 button 锚不扰）。
+      const t = await snapshot()
+      const label = findFirst(t, (n) => ownText(n) === 'EXPLORER')
+      const row = findParent(t, label)
+      const btns = row.children.filter((c) => c.head.startsWith('button ') && elementIdOf(c))
+      if (btns.length < 2) throw new Error('EXPLORER ⊕ button not found')
+      const res = await callTool('autoui_action', { element_id: elementIdOf(btns[1]), action: 'press' })
+      if (!/status: ok/.test(res)) throw new Error(`press EXPLORER ⊕ not ok: ${res}`)
+    }
+    const panelSliceOf = (txt) => {
+      const i = txt.indexOf('反链')
+      return i < 0 ? '' : txt.slice(i, i + 1200)
+    }
+
     // 11 find（PLAN-004 T-04）：查找面板双模式。执行序在 quit 前（quit
     // 恒为臂内最后一项）；先关反链面板（check 10 开着）——find 行断言免
     // 反链行 .ad 路径文本重叠。快开：input 锚 + 空 q 全量 5 行 + 过滤
@@ -1488,8 +1633,92 @@ async function runArm(arm, port) {
     await stateIs('find_open', 'true')
     await pressTab('Hello World')
     await stateIs('active_title', tabTitleOf(TARGET_LABEL))
-    check('11', 'find', allFive && proOk && cjkFilterOk && notRanOk && hitOk && emptyFindOk && aliasHitOk,
-      `快开（input 锚/空q全量5行/Pro→Projects 独行拾取即关/定理→CAP 独行${arm === 'merged' ? '+CJK 拾取开档' : '（CJK 拾取仅 merged 臂 D-19）'}）+ 检索（text 切换/未运行提示/CJK「任务列表」POST 双臂命中/行导航面板保持开/运行后空态）+ alias 检索（PLAN-012——fs 造档→搜「检别名」→AliasTgt.ad 行→拾取开档双臂）`)
+    // ⑥ trash 模式子步（PLAN-016 T-04；find 组——组数不变，fail 即臂败
+    // ，10m 同款）：素材 = ＋ 新建 TrashMe（NewGo 全弧——树新行 + ft_sel
+    // 置位 + tab 开）→ 菜单删除（**④ 弹层文案断言**「将移入回收站
+    // TrashMe.ad」——AC-03；改道磁盘面 .trash/TrashMe.ad）→ 文件→回收站
+    //（第四模式入口——Ctrl+Shift+T 键程 menubar 共口）→ 清单行 →
+    // 清空回收站 → 强确认弹层（M=1 派生 + 取消留置 → 清空）→ 空态闭环
+    // + 磁盘 .trash 消。⚠ 弹层锚助手（pressInDialogByTitle 族）声明位
+    // 在 check 13 域——本子步自带局部锚（标题 text 节点非 button——
+    // 「清空回收站」面板钮同名双现，D-29③ 家族消歧）。
+    const trashPressIn = async (titleText, buttonText) => {
+      const dl = Date.now() + 8000
+      for (;;) {
+        const t = await snapshot()
+        const title = findFirst(t, (n) => ownText(n) === titleText && !n.head.startsWith('button '))
+        if (title) {
+          const header = findParent(t, title)
+          const content = findParent(t, header)
+          const btn = content ? findFirst(content, (n) => n.head.startsWith('button ') && elementIdOf(n) && ownText(n) === buttonText) : null
+          if (btn) {
+            const res = await callTool('autoui_action', { element_id: elementIdOf(btn), action: 'press' })
+            if (!/status: ok/.test(res)) throw new Error(`press ${buttonText}(${titleText}) not ok: ${res}`)
+            return
+          }
+        }
+        if (Date.now() > dl) throw new Error(`button "${buttonText}" in "${titleText}" not found`)
+        await sleep(300)
+      }
+    }
+    await pressExplorerPlus()
+    await stateIs('new_open', 'true')
+    await typeIntoDialogInput('新建页面', 'TrashMe')
+    await pressInNewDialog('创建')
+    await stateIs('new_open', 'false')
+    await stateIs('ft_sel', 'TrashMe.ad')
+    await stateIs('active_title', 'TrashMe')
+    await pressButton('文件', { exact: true })
+    await pressButton('删除…', { exact: true })
+    await stateIs('delete_open', 'true')
+    let trashCopyOk = false
+    for (const dl = Date.now() + 8000; ; ) {
+      trashCopyOk = (await snapshotText()).includes('将移入回收站 TrashMe.ad')
+      if (trashCopyOk || Date.now() > dl) break
+      await sleep(300)
+    }
+    if (!trashCopyOk) throw new Error('删除弹层文案失守（将移入回收站 TrashMe.ad 未现——AC-03）')
+    await pressInDeleteDialog('删除')
+    await stateIs('delete_open', 'false')
+    const trashRerouteOk = !fs.existsSync(path.join(FIXTURE, 'TrashMe.ad'))
+      && fs.existsSync(path.join(FIXTURE, '.trash', 'TrashMe.ad'))
+    if (!trashRerouteOk) throw new Error('删除改道失守（.trash/TrashMe.ad 未现）')
+    await pressButton('文件', { exact: true })
+    await pressButton('回收站', { exact: true })
+    await stateIs('find_open', 'true')
+    await stateIs('find_mode', 'trash')
+    let trashRowOk = false
+    for (const dl = Date.now() + 8000; ; ) {
+      trashRowOk = (await snapshotText()).includes('.trash/TrashMe.ad')
+      if (trashRowOk || Date.now() > dl) break
+      await sleep(300)
+    }
+    if (!trashRowOk) throw new Error('trash 清单失守（.trash/TrashMe.ad 行未现）')
+    // 清空强确认弹层：M=1 派生 + 取消留置（零落盘）→ 复按 → 清空 →
+    // 空态闭环 + 磁盘消。
+    await pressButton('清空回收站', { exact: true })
+    let purgeCopyOk = false
+    for (const dl = Date.now() + 8000; ; ) {
+      purgeCopyOk = (await snapshotText()).includes('将永久删除回收站内全部 1 项')
+      if (purgeCopyOk || Date.now() > dl) break
+      await sleep(300)
+    }
+    if (!purgeCopyOk) throw new Error('清空强确认文案失守（M=1 派生未现）')
+    await trashPressIn('清空回收站', '取消')
+    const purgeCancelOk = fs.existsSync(path.join(FIXTURE, '.trash', 'TrashMe.ad'))
+    await pressButton('清空回收站', { exact: true })
+    await trashPressIn('清空回收站', '清空')
+    let trashEmptyOk = false
+    for (const dl = Date.now() + 8000; ; ) {
+      trashEmptyOk = (await snapshotText()).includes('（回收站为空）')
+      if (trashEmptyOk || Date.now() > dl) break
+      await sleep(300)
+    }
+    if (!trashEmptyOk) throw new Error('清空后空态失守（（回收站为空）未现）')
+    const purgeDiskOk = !fs.existsSync(path.join(FIXTURE, '.trash'))
+    if (!purgeDiskOk) throw new Error('purge 磁盘失守（.trash 未消）')
+    check('11', 'find', allFive && proOk && cjkFilterOk && notRanOk && hitOk && emptyFindOk && aliasHitOk && trashCopyOk && trashRerouteOk && trashRowOk && purgeCopyOk && purgeCancelOk && trashEmptyOk && purgeDiskOk,
+      `快开（input 锚/空q全量5行/Pro→Projects 独行拾取即关/定理→CAP 独行${arm === 'merged' ? '+CJK 拾取开档' : '（CJK 拾取仅 merged 臂 D-19）'}）+ 检索（text 切换/未运行提示/CJK「任务列表」POST 双臂命中/行导航面板保持开/运行后空态）+ alias 检索（PLAN-012——fs 造档→搜「检别名」→AliasTgt.ad 行→拾取开档双臂）+ trash 模式[PLAN-016 ⑥：＋新建 TrashMe→菜单删除 弹层文案「将移入回收站」+改道磁盘面→回收站第四模式 清单行→清空强确认[M=1 派生+取消留置零落盘]→清空→空态闭环+磁盘 .trash 消]`)
 
     // 12 rename（PLAN-006 T-04）：重命名+反链改写全弧线（七子步——组内
     // 子步不占检查位，fail 即臂败，10c 同款）。素材 Projects.ad（ASCII
@@ -1658,142 +1887,6 @@ async function runArm(arm, port) {
     // ——input 序[find?,新建,重命名]非首即新建，结构锚定位）：
     //   EXPLORER「＋」= text "EXPLORER" 父行内 icon 钮（ownText 空
     //   ——结构锚，pressActiveTabClose 同族）；
-    //   新建 input = 「新建页面」标题上溯 dialog-content 内 input；
-    //   新建弹层「创建」= 快照序末创建钮（create_confirm 先声明居前
-    //   ——同名钮末者消歧）+ 取消 = 父行兄弟；
-    //   删除弹层「删除」= 全树唯一文本锚 + 取消 = 父行兄弟。
-    const pressExplorerPlus = async () => {
-      const t = await snapshot()
-      const label = findFirst(t, (n) => ownText(n) === 'EXPLORER')
-      if (!label) throw new Error('EXPLORER text not found')
-      const row = findParent(t, label)
-      const btn = row.children.find((c) => c !== label && c.head.startsWith('button ') && elementIdOf(c))
-      if (!btn) throw new Error('EXPLORER + button not found in header row')
-      const res = await callTool('autoui_action', { element_id: elementIdOf(btn), action: 'press' })
-      if (!/status: ok/.test(res)) throw new Error(`press EXPLORER + not ok: ${res}`)
-    }
-    const typeIntoNewInput = async (text) => {
-      const t = await snapshot()
-      const title = findFirst(t, (n) => ownText(n) === '新建页面')
-      if (!title) throw new Error('new-dialog title not found')
-      const header = findParent(t, title)
-      const content = findParent(t, header)
-      const inp = content ? findFirst(content, (n) => n.head.startsWith('input ') && elementIdOf(n)) : null
-      if (!inp) throw new Error('new-dialog input not found in snapshot')
-      const res = await callTool('autoui_action', { element_id: elementIdOf(inp), action: 'type_text', value: text })
-      if (!/status: ok/.test(res)) throw new Error(`new-input type_text not ok: ${res}`)
-    }
-    const pressInNewDialog = async (buttonText) => {
-      // 锚定「新建页面」标题上溯 dialog-content 子树（PLAN-012 纪律修订：
-      // 新建目录弹层「创建」钮后声明——全树末位钮序锚破，结构锚为唯一
-      // 消歧面；取消 = 目标钮父行兄弟）。
-      const dl = Date.now() + 8000
-      for (;;) {
-        const t = await snapshot()
-        const title = findFirst(t, (n) => ownText(n) === '新建页面')
-        if (title) {
-          const header = findParent(t, title)
-          const content = findParent(t, header)
-          const btn = content ? findFirst(content, (n) => n.head.startsWith('button ') && elementIdOf(n) && ownText(n) === buttonText) : null
-          if (btn) {
-            const res = await callTool('autoui_action', { element_id: elementIdOf(btn), action: 'press' })
-            if (!/status: ok/.test(res)) throw new Error(`press ${buttonText}(new) not ok: ${res}`)
-            return
-          }
-        }
-        if (Date.now() > dl) throw new Error(`button "${buttonText}" in new-dialog not found`)
-        await sleep(300)
-      }
-    }
-    const pressInDeleteDialog = async (buttonText) => {
-      // 标题锚 content 子树扫（PLAN-014 纪律修订——删除目录弹层「删除」
-      // 钮同名后全树唯一文本锚破[D-29③ 家族]，标题锚为唯一消歧面——
-      // meta/new/目录族同款）。
-      const dl = Date.now() + 8000
-      for (;;) {
-        const t = await snapshot()
-        const title = findFirst(t, (n) => ownText(n) === '删除页面')
-        if (title) {
-          const header = findParent(t, title)
-          const content = findParent(t, header)
-          const btn = content ? findFirst(content, (n) => n.head.startsWith('button ') && elementIdOf(n) && ownText(n) === buttonText) : null
-          if (btn) {
-            const res = await callTool('autoui_action', { element_id: elementIdOf(btn), action: 'press' })
-            if (!/status: ok/.test(res)) throw new Error(`press ${buttonText}(delete) not ok: ${res}`)
-            return
-          }
-        }
-        if (Date.now() > dl) throw new Error(`button "${buttonText}" in delete-dialog not found`)
-        await sleep(300)
-      }
-    }
-    // PLAN-012 弹层族通用锚（新建目录/移动到目录——标题上溯 content 子树
-    // 取 input/按钮：「创建」双弹层同名，末位序锚随第七实例声明破——
-    // 结构锚为唯一消歧面，pressInNewDialog 同款纪律修订）。
-    const typeIntoDialogInput = async (titleText, text) => {
-      const t = await snapshot()
-      const title = findFirst(t, (n) => ownText(n) === titleText)
-      if (!title) throw new Error(`dialog title "${titleText}" not found`)
-      const header = findParent(t, title)
-      const content = findParent(t, header)
-      const inp = content ? findFirst(content, (n) => n.head.startsWith('input ') && elementIdOf(n)) : null
-      if (!inp) throw new Error(`input in "${titleText}" dialog not found`)
-      const res = await callTool('autoui_action', { element_id: elementIdOf(inp), action: 'type_text', value: text })
-      if (!/status: ok/.test(res)) throw new Error(`type_text(${titleText}) not ok: ${res}`)
-    }
-    // 双 input 弹层第 idx 个 input（PLAN-014 重命名目录——目标[0]居首
-    // 新名[1]居次，视图序即快照序；D-29③ 标题锚 content 子树扫）。
-    const typeIntoDialogInputIdx = async (titleText, idx, text) => {
-      const t = await snapshot()
-      const title = findFirst(t, (n) => ownText(n) === titleText)
-      if (!title) throw new Error(`dialog title "${titleText}" not found`)
-      const header = findParent(t, title)
-      const content = findParent(t, header)
-      const inputs = []
-      const collectInputs = (n) => {
-        if (n.head.startsWith('input ') && elementIdOf(n)) inputs.push(n)
-        for (const c of n.children) collectInputs(c)
-      }
-      if (content) collectInputs(content)
-      const inp = inputs[idx]
-      if (!inp) throw new Error(`input[${idx}] in "${titleText}" dialog not found`)
-      const res = await callTool('autoui_action', { element_id: elementIdOf(inp), action: 'type_text', value: text })
-      if (!/status: ok/.test(res)) throw new Error(`type_text[${idx}](${titleText}) not ok: ${res}`)
-    }
-    const pressInDialogByTitle = async (titleText, buttonText) => {
-      const dl = Date.now() + 8000
-      for (;;) {
-        const t = await snapshot()
-        const title = findFirst(t, (n) => ownText(n) === titleText)
-        if (title) {
-          const header = findParent(t, title)
-          const content = findParent(t, header)
-          const btn = content ? findFirst(content, (n) => n.head.startsWith('button ') && elementIdOf(n) && ownText(n) === buttonText) : null
-          if (btn) {
-            const res = await callTool('autoui_action', { element_id: elementIdOf(btn), action: 'press' })
-            if (!/status: ok/.test(res)) throw new Error(`press ${buttonText}(${titleText}) not ok: ${res}`)
-            return
-          }
-        }
-        if (Date.now() > dl) throw new Error(`button "${buttonText}" in "${titleText}" not found`)
-        await sleep(300)
-      }
-    }
-    const pressExplorerFolderPlus = async () => {
-      // 「⊕」= EXPLORER 行第二 button（「＋」居首——序纪律在案，
-      // pressExplorerPlus 首 button 锚不扰）。
-      const t = await snapshot()
-      const label = findFirst(t, (n) => ownText(n) === 'EXPLORER')
-      const row = findParent(t, label)
-      const btns = row.children.filter((c) => c.head.startsWith('button ') && elementIdOf(c))
-      if (btns.length < 2) throw new Error('EXPLORER ⊕ button not found')
-      const res = await callTool('autoui_action', { element_id: elementIdOf(btns[1]), action: 'press' })
-      if (!/status: ok/.test(res)) throw new Error(`press EXPLORER ⊕ not ok: ${res}`)
-    }
-    const panelSliceOf = (txt) => {
-      const i = txt.indexOf('反链')
-      return i < 0 ? '' : txt.slice(i, i + 1200)
-    }
     // ⑴ 新建 ASCII（index——根落位，wiki/index.ad 同名异位不冲突）
     const fileNewPageFile = path.join(FIXTURE, FILE_NEW_REL)
     const fileCjkPageFile = path.join(FIXTURE, FILE_CJK_REL)
@@ -1879,7 +1972,7 @@ async function runArm(arm, port) {
     let delDlgSnap = ''
     for (const dl = Date.now() + 8000; ; ) {
       delDlgSnap = await snapshotText()
-      delDlgOk = delDlgSnap.includes('删除页面') && delDlgSnap.includes(`将删除 ${FILE_DEL_REL}`)
+      delDlgOk = delDlgSnap.includes('删除页面') && delDlgSnap.includes(`将移入回收站 ${FILE_DEL_REL}`)
         && delDlgSnap.includes('3 处入链将变为悬空') && delDlgSnap.includes(delTabsLine)
       if (delDlgOk || Date.now() > dl) break
       await sleep(300)
@@ -1931,6 +2024,54 @@ async function runArm(arm, port) {
     await pressButton('删除…', { exact: true })
     const noopState = await callTool('autoui_state', { fields: ['delete_open'] })
     const noopOk = /delete_open:\s*false/.test(noopState)
+    await pressTab('Hello World')
+    await stateIs('active_title', tabTitleOf(TARGET_LABEL))
+    // ⑱ trash 改道面 + 恢复弧线（PLAN-016 T-04；file 组子步——组数不变
+    // ，fail 即臂败）：⑥ 删除弧线的 CAP 定理此刻在 .trash（改道——工作
+    // 区面 ⑦ 已证悬空化等价）。回收站模式入口（文件→回收站——action
+    // file.trash/menubar 共口）→ 清单见条目 → 行恢复钮 → 空态 + 树行回
+    // + exists 翻转回（悬空自愈——⑦ 反向闭环，links_json 双向态断言）+
+    // tab 可重开；收尾关 find 面板 + 复原 Hello World（⑨ 前置同口径）。
+    await pressButton('文件', { exact: true })
+    await pressButton('回收站', { exact: true })
+    await stateIs('find_open', 'true')
+    await stateIs('find_mode', 'trash')
+    let trashCapRowOk = false
+    for (const dl = Date.now() + 8000; ; ) {
+      trashCapRowOk = (await snapshotText()).includes('.trash/wiki/CAP 定理.ad')
+      if (trashCapRowOk || Date.now() > dl) break
+      await sleep(300)
+    }
+    if (!trashCapRowOk) throw new Error('trash 清单失守（.trash/wiki/CAP 定理.ad 未现）')
+    const trashCapDiskOk = fs.existsSync(path.join(FIXTURE, '.trash', 'wiki', 'CAP 定理.ad'))
+    await pressButton('恢复', { exact: true })
+    let trashRestoreEmptyOk = false
+    for (const dl = Date.now() + 8000; ; ) {
+      trashRestoreEmptyOk = (await snapshotText()).includes('（回收站为空）')
+      if (trashRestoreEmptyOk || Date.now() > dl) break
+      await sleep(300)
+    }
+    if (!trashRestoreEmptyOk) throw new Error('恢复后空态失守（（回收站为空）未现）')
+    const capBackDiskOk = fs.existsSync(path.join(FIXTURE, FILE_DEL_REL))
+      && !fs.existsSync(path.join(FIXTURE, '.trash', 'wiki', 'CAP 定理.ad'))
+    // exists 翻转回（双向态：exists:true 现 + exists:false 消——links_json
+    // state 面，⑦ 悬空行的反向闭环）
+    await stateHas('links_json', '{\\"target\\":\\"CAP 定理\\",\\"anchor\\":\\"\\",\\"exists\\":true')
+    const dump18 = await callTool('autoui_state', {})
+    const capFalseGoneOk = !dump18.includes('{\\"target\\":\\"CAP 定理\\",\\"anchor\\":\\"\\",\\"exists\\":false')
+    // 树行回（双臂——显示名行走 back walk 面）+ tab 可重开（**merged 臂
+    // **——pressTree CJK 开档 GET query D-19 口径，split 以 ft_sel/磁盘/
+    // links_json 翻转承载）
+    const t18 = await snapshot()
+    const exr18 = explorerRegion(t18)
+    const capTreeBackOk = !!exr18 && !!findFirst(exr18, (n) => n.head.startsWith('button ') && elementIdOf(n) && ownText(n) === 'CAP 定理')
+    if (arm === 'merged') {
+      await pressTree('CAP 定理')
+      await stateIs('active_title', 'wiki/CAP 定理')
+    }
+    // 收尾：关 find 面板 + 复原 Hello World（⑨ backlinks 面板语义前置）
+    await pressButton('收起', { exact: true })
+    await stateIs('find_open', 'false')
     await pressTab('Hello World')
     await stateIs('active_title', tabTitleOf(TARGET_LABEL))
     // ⑨ F-R9-4 案（PLAN-010 G3 收口断言；canonical §6 SD-1002 记载位
@@ -2226,8 +2367,11 @@ async function runArm(arm, port) {
     let delDirPrevOk = false
     for (const dl = Date.now() + 8000; ; ) {
       const dt = await snapshotText()
+      // ⚠ PLAN-016 起入链计数 = 2（index + CAP 定理——⑱ 恢复 CAP 后其
+      // 12 步改写的 [[Project X]] 出链回到链接面；恢复弧前置的连带已知
+      // 答案，014 双防线语义不变）。
       delDirPrevOk = dt.includes(`将删除目录 ${DIR_REN2} 及 1 个文件（1 个 .ad 页）`)
-        && dt.includes('1 处入链将变为悬空')
+        && dt.includes('2 处入链将变为悬空')
       if (delDirPrevOk || Date.now() > dl) break
       await sleep(300)
     }
@@ -2329,12 +2473,14 @@ async function runArm(arm, port) {
       rendirPrevOk, renDirDiskOk, panelZero2Ok, linkNet2Ok,
       renDirCancelOk, delDirPrevOk, delDirCancelOk, delDirOk, flip2Ok,
       dailyOk,
+      trashCapRowOk, trashCapDiskOk, trashRestoreEmptyOk, capBackDiskOk,
+      capFalseGoneOk, capTreeBackOk,
     }
     if (Object.values(fileParts).some((v) => !v)) {
       console.log(`  [13 dbg] ${JSON.stringify(fileParts)} tabPre=${JSON.stringify(tabCountPre)} tabPost=${JSON.stringify(tabCountPost)}`)
     }
     check('13', 'file', Object.values(fileParts).every((v) => v) && tabCountFinal >= 0,
-      `file 组八子步+F-R9-4 案+目录面四子步+目录二期三子步+今日笔记弧线[PLAN-015 ⑰ 开档+树新行+磁盘双时间戳+重入幂等]（新建 index 模板逐字节+树新行/同名幂等 tab+磁盘不变/取消零落盘/CJK 新页${arm === 'merged' ? '导航断言' : '磁盘断言[D-19]'}＋删除预览 3 处入链已知答案+tab 面「${delTabsLine}」+取消零落盘/删除弧线 磁盘消失+ft_sel 清空+激活${arm === 'merged' ? '落邻档首页[同位保持]' : '保持 index[CloseTabsOf 零关闭面，D-19]'}/悬空翻转 出链行 CAP 定理（悬空）/未选中 no-op/F-R9-4 删后提及刷新/PLAN-012：⊕新建目录[树新行+磁盘在]→Project X 移动[预填 wiki/tab 全量${DIR_BOX}/Project X/字节整迁/面板快照零变化/links_json 定向 diff 归一]→取消零落盘→冲突拒[弹层留置+磁盘零变化]；PLAN-014：重命名目录 弧线[双 input 弹层+预览 将移动 1 个 .ad 页+tab 全量路径变标题恒+磁盘整迁+面板零变化+links_json 归一 diff——三联对照目录级]/取消零落盘两形/删除目录[预览计数+悬空警示→tab 全关计数-1+树行消+悬空翻转 Project X（悬空）]——键程 menubar 共口）`)
+      `file 组八子步+F-R9-4 案+目录面四子步+目录二期三子步+今日笔记弧线[PLAN-015 ⑰ 开档+树新行+磁盘双时间戳+重入幂等]+trash 改道/恢复弧线[PLAN-016 ⑱ 清单见 .trash/wiki/CAP 定理.ad→行恢复→空态+磁盘回+exists 翻转回双向态+树行回+tab 重开]（新建 index 模板逐字节+树新行/同名幂等 tab+磁盘不变/取消零落盘/CJK 新页${arm === 'merged' ? '导航断言' : '磁盘断言[D-19]'}＋删除预览 3 处入链已知答案+tab 面「${delTabsLine}」+取消零落盘/删除弧线 磁盘消失+ft_sel 清空+激活${arm === 'merged' ? '落邻档首页[同位保持]' : '保持 index[CloseTabsOf 零关闭面，D-19]'}/悬空翻转 出链行 CAP 定理（悬空）/未选中 no-op/F-R9-4 删后提及刷新/PLAN-012：⊕新建目录[树新行+磁盘在]→Project X 移动[预填 wiki/tab 全量${DIR_BOX}/Project X/字节整迁/面板快照零变化/links_json 定向 diff 归一]→取消零落盘→冲突拒[弹层留置+磁盘零变化]；PLAN-014：重命名目录 弧线[双 input 弹层+预览 将移动 1 个 .ad 页+tab 全量路径变标题恒+磁盘整迁+面板零变化+links_json 归一 diff——三联对照目录级]/取消零落盘两形/删除目录[预览计数+悬空警示→tab 全关计数-1+树行消+悬空翻转 Project X（悬空）]——键程 menubar 共口）`)
 
     // 9 退出存盘：dirty → 文件菜单退出 → 确认弹层 → QuitSaveClose →
     // 磁盘三验 + 进程退出。恒为臂内最后一项（Process.exit 杀进程）。
