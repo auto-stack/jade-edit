@@ -1,5 +1,22 @@
 # jade-edit → 上游（auto-lang / auto-down engine）供料包（2026-09-21）
 
+> **2026-09-25 PLAN-015 回执更新**：① **Time/Date 原语已解锁兑现**——
+> `Date.now`/`Date.format` 宿主桥（PLAN-054 T5）back 侧可调定谳
+> （`tests/probe_daily.mjs` 双臂直证），每日笔记 + updated_at 维护已
+> 落地（SD-1501②③）——front 面（ts_adapter Date.* 发射）仍未证，
+> 供料候选维持；② **行:列/大纲门控精化（D-12 探针 E 定谳）**：上游
+> PLAN-413 Phase 2 的 `oncursor` 落在 `code_editor`，本仓消费的
+> `autodown_editor` 无 oncursor 转换臂（View::AutodownEditor 无
+> on_cursor 字段）、vue engine EngineEditor 无 cursor emit——**新供料
+> 候选双件：autodown_editor oncursor 面暴露 + anchor-reveal prop**
+> （行:列 + 大纲跳转双解锁面）；③ **D-19 缺口精化（回执负结果）**：
+> PLAN-699 Axum/Hyper 传输已含 percent-decode 管道（match_route 查询
+> 参数 `url_decode` + `+`→空格归一），但 `url_decode` = byte-as-char
+> 不组 UTF-8 序列（`%E5%AE%9A` → å®š）——**供料候选升级为单点修复**：
+> url_decode 换 UTF-8 序列组装（from_utf8 族），CJK GET 全族即解。
+> ④ 工具链窗口：本仓复验基线升级 ≥ v0.4.2-2125（g63e14b045，
+> PLAN-699 在册）。
+
 > **2026-09-22 状态更新**：上游 PLAN-682 全周期 delivered 合入 auto-lang
 > master（exe v0.4.2-1914），jade 侧回执完成——§2b/2c/2d/2e 清偿（补件
 > ③④退役）、§4 D-18 归档（F1 落地）；§1 D-16 预热、§2a R010、§2f

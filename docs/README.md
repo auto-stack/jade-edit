@@ -86,6 +86,22 @@
   零改写并表）；**面板行显示名化**（013 §10.1 留口兑现）——反链行/
   提及行 = dtitle_of 显示名（无 title 显 stem——back 缺省装配定值，
   回落 path 仅 stale 面），出链/wanted 恒链接文本（显示即语义定文）；
+  **第十三切片 = 上游解锁兑现批**（SD-1501，2026-09-25）：三原语同窗
+  解锁的集中收割——**HTTP 回执**（PLAN-699 Axum/Hyper 传输下 D-19
+  复核 = **负结果如实判**：percent-decode 在册但 url_decode byte-as-char
+  不组 UTF-8，CJK GET 仍败——缺口精化「解码不组 UTF-8」，矩阵 CJK
+  导航子步维持「仅 merged 臂」注记；D-21 新传输负载窗丢参/进程死亡
+  零复现——留观续）+ **每日笔记**（Time 解锁兑现——Ctrl+Alt+N/菜单
+  「今日笔记」/工具栏 calendar 钮 → daily_note POST[yyyy_MM_dd stem
+  幂等建档/模板 created_at+updated_at 双时间戳首写/`# yyyy-MM-dd` body
+  /旧日档不动——Date 原语 back 侧独占消费，front 零 Date 面]）+
+  **updated_at 自动维护**（D-14 受控面续：write_body 保存流对已有
+  updated_at 键的档自动更新值[语料同形 yyyy-MM-ddTHH:mm:ss，Z 形归一；
+  仅补已有键/无键零引入/新建档零涉/CRLF \r 继承/顶层级卫——系统维护
+  键不可经属性弹层编辑]）+ **行:列定谳**（探针 E 负结果：oncursor 在
+  code_editor 非本仓消费的 autodown_editor、vue EngineEditor 亦无
+  cursor emit——D-12「行:列降级」处置维持，供料候选扩面
+  [autodown_editor oncursor/anchor-reveal 双件]）；
   **第八切片 = 别名解析 + 提及转链接**（SD-1001，
   2026-09-23）：链接域二期——frontmatter `aliases:` block-list 只读解析（`page_fm_list`，解析序 stem 精确首现优先 → alias 精确首现，消费面 exists/target_path/反链/出链/wanted 全面对齐，检索/提及/改名不入面）+ `linkify_page` POST 契约（明区改写、frontmatter 逐字节保留、计数返回）+ 提及行「转为链接」钮（串联自派生刷新消除 vue 轨并发 fetch 竞态）+ F-R9-4 删除流提及刷新收口；图谱 tab 顺位后移——vm 轨组
   件面依赖上游），本仓零依赖其代码。
@@ -105,8 +121,9 @@
 ## 运行矩阵
 
 前置：`auto.exe` 在 PATH 或 `AUTO_EXE` env（须含上游 669 `#[api]` 实参
-装配修复 + 671 vue 生成器缺口批——补件链退役面；≥ v0.4.2-1652 构建，
-本仓复验版 g055808724）；`pnpm install`（仓根，playwright）。
+装配修复 + 671 vue 生成器缺口批——补件链退役面；**≥ v0.4.2-2125 构建**
+[PLAN-699 Axum/Hyper HTTP 传输 + PLAN-413 code_editor 事件族在册——
+本仓 PLAN-015 复验版 g63e14b045]）；`pnpm install`（仓根，playwright）。
 工作区根：`JADE_WORKSPACE` env（缺席 = AUTO_PROJECT_DIR = 工程目录）。
 
 ```sh
@@ -132,18 +149,18 @@ node tools/bench/bench.mjs proxy [--runs N]    # 测量 → results/<ts>.jsonl
 node tools/bench/bench.mjs assert              # 存量 measurements × budgets 重评
 
 # —— 单门 ——
-node tests/vm_matrix.mjs            # 双臂（merged+split）检查单 + 基线 v13 零漂移
+node tests/vm_matrix.mjs            # 双臂（merged+split）检查单 + 基线 v14 零漂移
 pnpm test:e2e                       # vue 检查单（同一检查单；serve-back 后端）
 ```
 
-## Tests（判绿口径，SD-204；SD-304/403 扩定；SD-503 再扩定；SD-603 再扩定；SD-703 再扩定；SD-803 再扩定；SD-903 再扩定；SD-1003 再扩定；SD-1103 再扩定；SD-1203 再扩定；SD-1303 再扩定；SD-1403 再扩定）
+## Tests（判绿口径，SD-204；SD-304/403 扩定；SD-503 再扩定；SD-603 再扩定；SD-703 再扩定；SD-803 再扩定；SD-903 再扩定；SD-1003 再扩定；SD-1103 再扩定；SD-1203 再扩定；SD-1303 再扩定；SD-1403 再扩定；SD-1503 再扩定）
 
 检查单（PLAN-002 T-01 扩定 + PLAN-003 T-04 link 扩单 + PLAN-004 T-04
 find 扩单 + PLAN-005 T-04 create 扩单 + PLAN-006 T-04 rename 扩单 +
 PLAN-007 T-04 file 扩单 + PLAN-008 T-04 meta 扩单 + PLAN-009 T-04 mentions 扩单 +
 PLAN-010 T-04 alias/linkify 扩单 + PLAN-011 T-04 meta 属性扩单 + PLAN-012
 T-04 目录面/alias 检索扩单 + PLAN-013 T-04 显示名扩单 + PLAN-014 T-04
-面板行名化/目录二期扩单）：
+面板行名化/目录二期扩单 + PLAN-015 T-05 daily/updated_at 扩单）：
 `boot / tree / open / edit / save / reload` 六检查 + **tab / editops /
 quit** 扩单三组 + **link / link-empty**（链接索引已知答案 + 反链面板双轨
 可用 + 空态——CJK 路径导航子步仅 vm merged 臂，D-19）+ **create**（建页
@@ -199,7 +216,17 @@ wanted label]；file 组 **目录二期三子步**[重命名目录弧线[双 inp
 行消[explorer 区锚]+悬空翻转 Project X（悬空）——SD-701 目录级]；
 键程 = menubar 共口先例；dir ops 双契约十三案 + 嵌套案 + 链接零扰动
 归一 diff = `tests/probe_dir_ops.mjs` 双臂直证覆盖（probe C 定谳件
-——remove_dir 族可调）] + **meta**（标签面板 + wanted 模式八子步[PLAN-008]：
+——remove_dir 族可调）] + **daily/updated_at [PLAN-015]**：check 5
+**updated_at 维护断言**[已有键保存即更新值——当日形 yyyy-MM-ddTHH:mm:ss
+正证 + title/status/summary 逐字节；受影响档盘点 = fixture 五档全带
+updated_at 键，其余磁盘断言均 presence 形不受扰]；file 组 **⑰ 今日笔记
+弧线**[工具栏/菜单共口 → 开档[active_title=yyyy_MM_dd + body # 当日]→
+树新行[explorer 区锚]→ 磁盘 created_at/updated_at 双时间戳[当日动态
+格式断言]→ 重入幂等[tab 数不变]；Date 原语 back 直证 + daily_note 四案
++ updated_at 四形态[Z 形归一/零引入/CRLF \r 继承/顶层级卫] =
+`tests/probe_daily.mjs` 双臂十四案直证；**D-19 回执 = 负结果**[新传输
+percent-decode 在册但 byte-as-char 不组 UTF-8——CJK 导航子步维持
+「仅 merged 臂」注记，`tests/probe_receipt_d19.mjs` 四案实录]] + **meta**（标签面板 + wanted 模式八子步[PLAN-008]：
 tags 面板开 7 tag 行[语料实勘全集——执行期校正：Hello World.ad 实
 有 demo]/展开导航 ASCII 双臂 + CJK 仅 merged 臂[D-19]/Save 刷新外
 造新行；wanted 模式入口无 input 行/无检索钮/取消零落盘/创建开档+
@@ -309,8 +336,25 @@ e2e 同单（断言域 = 结构/文本/磁盘字节，非像素）。
   前缀 split 等价通道，ledger D-31]后连绿）+ **gate ALL GREEN 首锁
   一次通过** + probe 全族九件 fresh 绿（back 改后首跑——013 教训
   兑现）。file/link 组零失败漂移，组数不变 16/15/十五段。
-- 结构基线 = `tests/baseline/structure-v13.txt`：state 段逐字节 +
-  snapshot vnode id 出现序列（v2 仪器延续；**v13 = PLAN-014 计划内重锁**
+- N 定谳（2026-09-25 PLAN-015 T-05，SD-1503）：vm 双臂 **ALL GREEN ×多轮**
+  （判绿跑 merged **16/16** + split **15/15** + 基线 **v14** 零漂移逐跑
+  ——v14 锁后独立跑 + gate 内矩阵段连过；check 5 updated_at 维护 +
+  file 组 ⑰ 今日笔记弧线双臂全通）+ e2e **十五段全绿**（daily 弧线
+  D-23② 渲染文断言口径执行期校正 1 轮——`# ` 标记符不落 DOM 非产品
+  bug；**新传输[D-21 观测窗]负载实录：HTTP 丢参/进程死亡零复现**——
+  e2e 全绿 2 轮 + gate 矩阵段连过 + probe 全族双臂；败点 = split menubar
+  popover 内容窗 1 例[v11③ UI 渲染节拍家族签名，重跑即绿] + vue-build
+  负载窗 gen-only exit 1 一例[0xC0000409 家族，独占重跑绿]）+ **gate
+  3 跑 1 绿**（第 1 跑 vm 段败[输出过滤失当败点未留痕，非判绿跑]、
+  第 2 跑 build 段 0xC0000409 家族、第 3 跑 ALL GREEN——如实记）+
+  probe 全族十一件 fresh 绿（back 改后首跑——013 教训兑现）。file 组
+  零失败漂移，组数不变 16/15/十五段。
+- 结构基线 = `tests/baseline/structure-v14.txt`：state 段逐字节 +
+  snapshot vnode id 出现序列（v2 仪器延续；**v14 = PLAN-015 计划内重锁**
+  [每日笔记 UI 面——action file.daily[Ctrl+Alt+N 键位] + menubar 文件项
+  「今日笔记」+ 工具栏 calendar 钮入 id 序列；store/App 模型零状态面
+  ——行:列消费未落地，探针 E 定谳 autodown_editor 无 oncursor 转换臂
+  （PLAN-413 在 code_editor——组件错位），D-12 处置维持]；v13 = PLAN-014
   [store deldir_open/rendir_open + App deldir_q/rendir_target/rendir_q
   入 dump + 删除目录/重命名目录弹层第十/十一实例闭态恒渲染节点 +
   menubar「删除目录…」/「重命名目录…」项 + Shift+Delete/Ctrl+Shift+R
@@ -330,7 +374,7 @@ e2e 同单（断言域 = 结构/文本/磁盘字节，非像素）。
 - [plans/attachments/081-t00-rulings.md](plans/attachments/081-t00-rulings.md) —
   T-00 三勘定决策档（auto-down PLAN-081 附件；双轨机制 / actions-vue
   现状 / 后端选型）
-- [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v17（SD-1404 指针；三十一项三分类；PLAN-011 增补 D-28[页面属性写面切片实勘集]+D-21 v14 扩记；PLAN-012 增补 D-29[create_dir 递归语义实勘/EXPLORER 双钮序纪律/placeholder 绑定首证]+探针 A/B 定谳；PLAN-013 增补 D-30[gen 模型名 .value 阴影面/dtitle stem 缺省口径定谳/WinNAT 排除区漂移面]+D-21 v16 扩记；PLAN-014 增补 D-31[split_once 无 ts_adapter 映射 vue 裸发射面]+D-21 v17 扩记）
+- [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v18（SD-1504 指针；三十一项三分类；PLAN-015 增补 D-32[上游解锁兑现批实勘集——D-19 负结果回执[url_decode byte-as-char 精化面]+探针 D Date 可调定谳+探针 E oncursor 组件错位定谳+无参 POST 契约族首证]+D-21 v18 扩记[新传输负载窗实录——丢参/死亡零复现]；D-19/D-12 处置更新随行）
 - [upstream/2026-09-jade-supply.md](upstream/2026-09-jade-supply.md) —
   上游供料包（D-16 预热 / D-15 残余 / D-17 键入发射 / D-18 投影双态，
   期望形态+复验条件+回执方式）
