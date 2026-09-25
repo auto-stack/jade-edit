@@ -1,10 +1,11 @@
 ---
 plan_id: PLAN-017
-status: reviewed
+status: archived
+completion_kind: delivered
 feature_name: casefold-boundary-slice
 author: [zhaopuming]
 created_at: 2026-09-25T17:50:50+08:00
-updated_at: 2026-09-25T22:10:00+08:00
+updated_at: 2026-09-25T22:35:00+08:00
 plan_revision: 1
 current_step: 5
 total_steps: 5
@@ -460,6 +461,29 @@ fn resolve_target(stems, aliases, rels, target) str {
     RESULT 行 + matrix/e2e 现跑记录 + ledger D-34/D-21 v20）；复审批
     判基线 = 本记录（工件重建口径）。
   - `next: merge`。
+- **2026-09-25 merge 收口（auto-plan-merge，PLAN-017:r1）**：
+  - `prepared` = 复审基线 r1（reviewed_commit=898a4e7 + 复审记录
+    1c18e65）+ canonical delta 落位核验（SD-1701@ARCH:782 / SD-1702
+    @ARCH:850+854 / SD-1703@README:182+410 / SD-1704@README:455——
+    复审窗实勘在案）+ **delivery_commit=1c18e65 docs-only 后代核验**
+    （898a4e7..1c18e65 全窗 diff = 计划文件 51 行，src/deps/tests/
+    e2e 零变化，实现/依赖零变化）。
+  - `landed` = main tip == 1c18e65 直接 main 线性约定（015/016 同款
+    ——无 dev 分支无 ff 步，tip 即 delivery）+ **known-good = merge
+    窗 vm 双臂矩阵现跑 ALL GREEN**（merged 16/16[基线 v15 零漂移] +
+    split 15/15）；gate 单命令维持 F-R17-1 观察项（家族重建窗 exe
+    未变——debug 11:00/release 17:58，稳定窗复核留观）。
+  - `ledger_refreshed` = parity-ledger **v20** tracked 在 main 读回
+    （表头 v20 bump + D-34 新行 + D-20③ 行内校正注记 + D-21 v20 扩记
+    + 34 项计数核验；无 live ledger 服务——PLAN-001 同判，tracked
+    文件即派生视图）。
+  - `archived` = git mv → docs/plans/archived/017-casefold-boundary-
+    slice.md + status archived + completion_kind delivered（本提交）。
+  - `cleaned` = 无 worktree/dev 分支（直接 main 约定——worktree 清单
+    仅 main，代码工作树零 WIP）；无依赖工作树。
+  - `outcome: pass`——五 checkpoint 闭环；PLAN-018 候选首位 = 大纲
+    （anchor-reveal 解锁——连续九片门控；gate 单命令复核随家族稳定
+    窗列入候选池观察项）。
 
 ## 10. 待澄清事项
 
