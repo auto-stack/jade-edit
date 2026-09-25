@@ -1,10 +1,10 @@
 ---
 plan_id: PLAN-014
-status: execution_done
+status: reviewed
 feature_name: dir-ops-panel-dtitle-slice
 author: [zhaopuming]
 created_at: 2026-09-24T16:51:21+08:00
-updated_at: 2026-09-24T20:10:00+08:00
+updated_at: 2026-09-25T10:00:00+08:00
 plan_revision: 1
 current_step: 5
 total_steps: 5
@@ -403,6 +403,60 @@ pub fn rename_dir_impl(path str, new_name str) str {
 
 ## 9. 复审记录
 
+- **2026-09-25 复审（auto-plan-review）**：
+  - `stage: review | plan_id: PLAN-014 | plan_revision: 1 | outcome:
+    pass | reviewed_commit: 156a0e2 | base_commit: a6bb9f9 |
+    dependency_revisions: 无依赖仓接触[冻结池/家族仓零接触；工具链 =
+    auto-lang debug exe 现行（schema drift 已随家族 exe 稳定解除）] |
+    spec_inputs: docs/ARCHITECTURE.md §5/§6 @156a0e2 + docs/README.md
+    Tests/是什么 @156a0e2 + docs/parity-ledger.md v17 @156a0e2 |
+    acceptance_results: AC-01..AC-06 全 PASS | findings: 无
+    needs_fix 级（复审窗瞬态 1 例如实记——非 blocker）| next: merge`
+  - **独立性声明**：本复审在实现会话内进行（011/013 先例）——独立性
+    不可声明，判决全部自工件重建（证据现跑重放，不采信执行摘要）。
+  - **基线**：reviewed_commit = 156a0e2 = HEAD；工作树零 WIP；diff 窗
+    a6bb9f9..156a0e2 = 12 文件全授权面（back×2/front×2/测试
+    vm+e2e+probe×2/基线 v13/文档×3+计划簿记）；直接 main 线性约定
+    （worktree 清单仅 main）。
+  - **AC→证据现跑重放**：
+    - **AC-01**（目录二期 back）：probe 全族九件 fresh 绿
+      （2026-09-25 复审窗重跑）——probe_dir_ops 双臂全案
+      [probe C 定谳 + delete_dir 六案 + rename_dir 六案 + 嵌套案 +
+      链接零扰动归一 diff] + probe_dir_move/probe_delete/probe_rename
+      邻域回归零漂移。
+    - **AC-02**（目录二期 UI 双轨）+ **AC-03**（面板名化）+ **AC-04**
+      （gate + 基线 v13）：复审窗 gate 重放 2 跑——第 1 跑 split 臂
+      check-10 **menubar popover 内容窗 1 例**[「切换反链」项 6s 未现
+      ——D-21 v11③ 家族签名（v12/v16 前例），fail-snap 转储实勘
+      [menubar 触发器在/popover 内容零] + split 单臂复跑 15/15 即绿
+      ——环境瞬态非回归]；第 2 跑 **ALL GREEN 全过**（merged 16/16
+      [含基线 v13 零漂移复审位] + split 15/15 + build + e2e 十五段
+      ——vm file 组 ⑭-⑯ 目录二期三子步 + link 组名化子步 + e2e 13
+      dir2 三子步全现跑）。
+    - **AC-05**（负向证）：grep 实勘——D-30① 七新纯函数参数
+      （dir/nodes/rows/path 族）零模型字段名碰撞；App 上下文
+      `.console` 零赋值；api.at diff **纯增量**（a6bb9f9..156a0e2
+      删除行空——delete_dir/rename_dir 追加、既有契约零变化）；
+      `gen/` git-ignore 在册（不入库）；冻结池/家族仓零接触（diff
+      窗文件清单全在本仓）。
+    - **AC-06**（文档面）：SD-1401..1404 锚注落位实勘（ARCHITECTURE
+      ×6 + README ×3）；canonical→source 对点核验——三联对照目录级
+      并表/出链 wanted 恒链接文本定文/强确认双防线/无 title 显 stem
+      执行期校正[ARCHITECTURE.md:570/:645/:627]全现文；ledger v17
+      表头 + D-31 四件行 + D-21 v17 扩记在册；基线 v13 指针三面一致
+      （README/ARCHITECTURE/vm_matrix:147）。
+  - **知识增量检视**：SD-1401（modify §5）before/after 与现行为一致
+    （back 三步/五步、目标 input 口径 v1 定案、刷新族 v6、名化两域
+    口径——源码/测试双面核验通过）；SD-1402（modify §6）组数不变
+    16/15 + 基线 v13 重锁面如实；SD-1403（modify README Tests）判绿
+    口径单一权威面延续 + N 定谳续记；SD-1404（modify README 是什么/
+    文档）第十二切片条目 + ledger v17 指针。supersedes_spec_components
+    = []、new_spec_components = SD-1401..1404 与落位一致、
+    touched_goals = []（本仓无 goals 文件族，历批同判）。delta 描述
+    现行为与持久决策，无执行日记面。
+  - **findings**：无 needs_fix 级。复审窗瞬态 1 例（D-21 v11③ 签名
+    popover 内容窗）入 D-21 v17 记账面（ledger 已载）——环境瞬态
+    非回归，重跑即绿，不影响判决。
 - **2026-09-24 work 收口（auto-plan-work）**：
   - `stage: work | plan_id: PLAN-014 | plan_revision: 1 | outcome: pass
     | code_commit: <T-05 收口提交> | task_ids: T-01..T-05 | evidence:
