@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// probe_alias_linkify.mjs — PLAN-010 T-01 别名解析 + 提及转链接十案直证（双臂）
-// + PLAN-013 T-01 dtitle 增量面五案扩（link_index 纯增量字段——SD-1301）。
+// probe_alias_linkify.mjs — PLAN-010 T-01 别名解析 + 提及转链接直证（双臂）
+// + PLAN-013 dtitle 五案 + PLAN-017 词边界五案扩。
 //
 //   merged 臂  临时探针工程（e2e/.runtime/probe-alias-linkify/，脚本生成——
 //              pac.at render vm + src/back 整树拷贝 + 探针 widget Init 内
@@ -131,6 +131,56 @@ title: Existing
 `,
     'utf8',
   )
+
+  // —— PLAN-017 T-03 词边界案（⑪..⑮——§6 ⑧..⑪ 映射；ASCII stem 双侧
+  // 边界 62 集，`_`/`-` 豁免不阻断[§10.2 r1]，CJK 恒子串）——
+  // ⑪（§6⑧）词内不误伤：CAPTURE 内 CAP 跳过 + 独立 CAP 包裹（计数 1）
+  fs.writeFileSync(
+    path.join(ws, 'wiki', 'LinkifyBoundary.ad'),
+    `---
+title: Boundary
+---
+
+正文 CAPTURE 与 CAP 并置
+`,
+    'utf8',
+  )
+  // ⑫（§6⑨）双侧邻接跳过：xCAP（左界）/CAPx（右界）跳过 + 独立包裹
+  fs.writeFileSync(
+    path.join(ws, 'wiki', 'LinkifySkip.ad'),
+    `---
+title: Skip
+---
+
+xCAP CAPx 与 CAP
+`,
+    'utf8',
+  )
+  // ⑬（§10.2 r1）`_`/`-` 豁免：my-CAP-x 与 CAP_ 均包裹（计数 2）
+  fs.writeFileSync(
+    path.join(ws, 'wiki', 'LinkifyUnderscore.ad'),
+    `---
+title: Underscore
+---
+
+my-CAP-x 与 CAP_ 尾
+`,
+    'utf8',
+  )
+  // ⑭（§6⑩）CJK 恒子串强化：A首页B 邻 ASCII 字母仍包裹（无词边界概念）
+  fs.writeFileSync(
+    path.join(ws, 'wiki', 'LinkifyCJKAdj.ad'),
+    `A首页B 独立
+`,
+    'utf8',
+  )
+  // ⑮（§6⑪）链接内豁免回归：[[CAPTURE]] 候选段内不误伤 + 明区边界共存
+  fs.writeFileSync(
+    path.join(ws, 'wiki', 'LinkifyInLink.ad'),
+    `[[CAPTURE]] 后 CAP
+`,
+    'utf8',
+  )
 }
 
 function verifyDisk(ws, tag, failures) {
@@ -154,6 +204,22 @@ function verifyDisk(ws, tag, failures) {
   // ⑨ CJK stem 改写
   const s9 = fs.readFileSync(path.join(ws, 'wiki', 'LinkifyCJK.ad'), 'utf8')
   ck(s9 === `欢迎来到 [[首页]] 这里\n`, '⑨ LinkifyCJK.ad CJK stem 替换')
+
+  // —— PLAN-017 词边界磁盘断言（⑪..⑮）——
+  const s11 = fs.readFileSync(path.join(ws, 'wiki', 'LinkifyBoundary.ad'), 'utf8')
+  ck(s11 === `---\ntitle: Boundary\n---\n\n正文 CAPTURE 与 [[CAP]] 并置\n`, '⑪ LinkifyBoundary.ad CAPTURE 词内不误伤 + 独立 CAP 包裹')
+
+  const s12 = fs.readFileSync(path.join(ws, 'wiki', 'LinkifySkip.ad'), 'utf8')
+  ck(s12 === `---\ntitle: Skip\n---\n\nxCAP CAPx 与 [[CAP]]\n`, '⑫ LinkifySkip.ad xCAP/CAPx 双侧邻接跳过 + 独立包裹')
+
+  const s13 = fs.readFileSync(path.join(ws, 'wiki', 'LinkifyUnderscore.ad'), 'utf8')
+  ck(s13 === `---\ntitle: Underscore\n---\n\nmy-[[CAP]]-x 与 [[CAP]]_ 尾\n`, '⑬ LinkifyUnderscore.ad `_-` 豁免不阻断（两侧均包裹）')
+
+  const s14 = fs.readFileSync(path.join(ws, 'wiki', 'LinkifyCJKAdj.ad'), 'utf8')
+  ck(s14 === `A[[首页]]B 独立\n`, '⑭ LinkifyCJKAdj.ad CJK stem 恒子串（邻 ASCII 字母仍包裹——无词边界概念）')
+
+  const s15 = fs.readFileSync(path.join(ws, 'wiki', 'LinkifyInLink.ad'), 'utf8')
+  ck(s15 === `[[CAPTURE]] 后 [[CAP]]\n`, '⑮ LinkifyInLink.ad 链接内豁免 + 明区边界共存')
 }
 
 function verifyLinkIndex(jsonStr, tag, failures) {
@@ -219,6 +285,11 @@ widget App {
         var r9 str = ""
         var r10a str = ""
         var r10b str = ""
+        var r11 str = ""
+        var r12 str = ""
+        var r13 str = ""
+        var r14 str = ""
+        var r15 str = ""
     }
     view {
         col (style: "h-full w-full items-center justify-center") {
@@ -234,6 +305,11 @@ widget App {
             r9 = linkify_page("wiki/LinkifyCJK.ad", "首页")
             r10a = linkify_page("wiki/nonexistent.ad", "CAP")
             r10b = linkify_page("wiki/LinkifySource.ad", "")
+            r11 = linkify_page("wiki/LinkifyBoundary.ad", "CAP")
+            r12 = linkify_page("wiki/LinkifySkip.ad", "CAP")
+            r13 = linkify_page("wiki/LinkifyUnderscore.ad", "CAP")
+            r14 = linkify_page("wiki/LinkifyCJKAdj.ad", "首页")
+            r15 = linkify_page("wiki/LinkifyInLink.ad", "CAP")
             done = true
         }
     }
@@ -329,6 +405,11 @@ async function runMergedArm() {
       r9: field('r9'),
       r10a: field('r10a'),
       r10b: field('r10b'),
+      r11: field('r11'),
+      r12: field('r12'),
+      r13: field('r13'),
+      r14: field('r14'),
+      r15: field('r15'),
       diskCheck: (failures) => verifyDisk(MERGED_WS, 'merged', failures),
     }
   } finally {
@@ -380,6 +461,11 @@ async function runSplitArm() {
     const r9 = await postLinkify('wiki/LinkifyCJK.ad', '首页')
     const r10a = await postLinkify('wiki/nonexistent.ad', 'CAP')
     const r10b = await postLinkify('wiki/LinkifySource.ad', '')
+    const r11 = await postLinkify('wiki/LinkifyBoundary.ad', 'CAP')
+    const r12 = await postLinkify('wiki/LinkifySkip.ad', 'CAP')
+    const r13 = await postLinkify('wiki/LinkifyUnderscore.ad', 'CAP')
+    const r14 = await postLinkify('wiki/LinkifyCJKAdj.ad', '首页')
+    const r15 = await postLinkify('wiki/LinkifyInLink.ad', 'CAP')
 
     return {
       links_raw,
@@ -389,6 +475,11 @@ async function runSplitArm() {
       r9,
       r10a,
       r10b,
+      r11,
+      r12,
+      r13,
+      r14,
+      r15,
       diskCheck: (failures) => verifyDisk(back.workspace, 'split', failures),
     }
   } finally {
@@ -421,6 +512,13 @@ ck(merged.r8 === '3' && split.r8 === '3', `⑧ r8 计数一致=3 (merged=${merge
 ck(merged.r9 === '1' && split.r9 === '1', `⑨ r9 计数一致=1 (merged=${merged.r9}, split=${split.r9})`)
 ck(merged.r10a === '' && split.r10a === '', `⑩ r10a 卫语句一致="" (merged=${merged.r10a}, split=${split.r10a})`)
 ck(merged.r10b === '' && split.r10b === '', `⑩ r10b 卫语句一致="" (merged=${merged.r10b}, split=${split.r10b})`)
+// PLAN-017 词边界计数一致（⑪=1 词内跳过/⑫=1 双侧跳过/⑬=2 _- 豁免/
+// ⑭=1 CJK 恒子串/⑮=1 链接内豁免）
+ck(merged.r11 === '1' && split.r11 === '1', `⑪ r11 计数一致=1 (merged=${merged.r11}, split=${split.r11})`)
+ck(merged.r12 === '1' && split.r12 === '1', `⑫ r12 计数一致=1 (merged=${merged.r12}, split=${split.r12})`)
+ck(merged.r13 === '2' && split.r13 === '2', `⑬ r13 计数一致=2 (merged=${merged.r13}, split=${split.r13})`)
+ck(merged.r14 === '1' && split.r14 === '1', `⑭ r14 计数一致=1 (merged=${merged.r14}, split=${split.r14})`)
+ck(merged.r15 === '1' && split.r15 === '1', `⑮ r15 计数一致=1 (merged=${merged.r15}, split=${split.r15})`)
 
 // 比较 link_index JSON 解析结果一致
 const mObj = JSON.parse(merged.links_raw)
@@ -431,4 +529,4 @@ if (failures.length > 0) {
   console.error(`\n[probe-alias-linkify] FAIL（${failures.length} 项）:\n  - ${failures.join('\n  - ')}`)
   process.exit(1)
 }
-console.log(`\n[probe-alias-linkify] RESULT: merged + split 全案通过（十案：别名解析五案 + 提及转链接五案双臂全绿）`)
+console.log(`\n[probe-alias-linkify] RESULT: merged + split 全案通过（别名解析五案 + 提及转链接五案 + dtitle 五案[013] + 词边界五案[PLAN-017 ⑪..⑮]双臂全绿）`)

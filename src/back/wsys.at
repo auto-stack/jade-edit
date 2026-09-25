@@ -1424,10 +1424,79 @@ pub fn daily_note_impl() str {
 
 // ===== 提及转链接（PLAN-010 T-01；知识库第八切片 back 半） =====
 
-/// 提及转链接本体（api.linkify_page 实现；SD-1001 back 半）：
+/// ASCII 字母数字码点判定（62 集 A-Za-z0-9——PLAN-017 §10.2 r1 裁定：
+/// `_`/`-` 归边界豁免字符不阻断；62 集外 ASCII[空格/标点] 与全部非 ASCII
+/// 恒不阻断）。char_at 码点语义：0 = 越界/非字符边界（恒不阻断）。
+fn ascii_alnum_cp(cp int) bool {
+    if cp >= 48 {
+        if cp <= 57 {
+            return true
+        }
+    }
+    if cp >= 65 {
+        if cp <= 90 {
+            return true
+        }
+    }
+    if cp >= 97 {
+        if cp <= 122 {
+            return true
+        }
+    }
+    return false
+}
+
+/// 纯 ASCII 判定（逐字节 char_at 码点扫描——PLAN-017 SD-1701 词边界
+/// 资格判：纯 ASCII stem 走双侧词边界径，含非 ASCII[CJK 等] stem 恒
+/// while-contains 旧径[子串语义——无词边界概念，定文防误期待]）。纯
+/// ASCII 串字节索引 == 字符边界（char_at 恒有效）；遇多字节字符即翻
+/// false（后续 mid-char 读 0 不影响判定）。
+fn is_pure_ascii(s str) bool {
+    var i int = 0
+    var ok bool = true
+    while i < s.length {
+        var c int = s.char_at(i)
+        if c < 1 {
+            ok = false
+        }
+        if c > 127 {
+            ok = false
+        }
+        i = i + 1
+    }
+    return ok
+}
+
+/// 出现处双侧词边界判定（PLAN-017 SD-1701）：left/right = split(stem)
+/// 段接缝两侧（出现处 k 在 left=parts[k] 与 right=parts[k+1] 之间）。
+/// 左邻 = left 尾字符[left.char_at(len-1)——ASCII 尾字节=码点、多字节
+/// 尾=非边界→0 不阻断——字节安全，与 ends_with 62 枚举同效通道，规避
+/// D-20③ length/slice 定长陷阱]；右邻 = right 首字符[char_at(0) 恒字符
+/// 起点，空段→0 不阻断]。任一侧 ∈ 62 集 → false（该出现处跳过不包裹）。
+fn boundary_ok(left str, right str) bool {
+    var lcp int = 0
+    if left.length > 0 {
+        lcp = left.char_at(left.length - 1)
+    }
+    if ascii_alnum_cp(lcp) {
+        return false
+    }
+    var rcp int = right.char_at(0)
+    if ascii_alnum_cp(rcp) {
+        return false
+    }
+    return true
+}
+
+/// 提及转链接本体（api.linkify_page 实现；SD-1001 back 半 + **PLAN-017
+/// SD-1701 词边界扩**）：
 /// path 档 body 明区（[[..]] 标记外）stem 纯文本出现处改写为 [[stem]]
 /// （frontmatter 经 write_body 保留）；返回改写处数（"0"=无，""=卫语句拒）。
-/// POST body 传参（D-19：path/stem CJK 常态）。
+/// POST body 传参（D-19：path/stem CJK 常态）。出现处改写资格双径：
+/// **纯 ASCII stem = 双侧词边界**（相邻字符 ∈ 62 集则跳过该出现处
+/// ——`CAP` 不再误中 `CAPTURE`；`_`/`-` 豁免不阻断——§10.2 r1）；
+/// **非纯 ASCII[CJK 等] stem = 恒子串旧径**（无词边界概念——语义零变化）。
+/// 明区判定不变（seg0 + 段内 ]] 后 rest——[[..]] 候选段内不替换）。
 pub fn linkify_page_impl(path str, stem str) str {
     if !File.exists(resolve(path)) {
         return ""
@@ -1436,17 +1505,28 @@ pub fn linkify_page_impl(path str, stem str) str {
         return ""
     }
     var body str = read_body(path)
+    var ascii bool = is_pure_ascii(stem)
     var segs = body.split("[[")
     var count int = 0
     var seg0 str = segs[0]
     var p0 = seg0.split(stem)
     var seg0_out str = p0[0]
     if p0.len() > 1 {
-        count = count + p0.len() - 1
         var k int = 1
         while k < p0.len() {
+            // ⚠ D-20②：列表元素先拷局部变量再调方法。
             var pk str = p0[k]
-            seg0_out = seg0_out + "[[" + stem + "]]" + pk
+            var prev str = p0[k - 1]
+            var wrap bool = true
+            if ascii {
+                wrap = boundary_ok(prev, pk)
+            }
+            if wrap {
+                count = count + 1
+                seg0_out = seg0_out + "[[" + stem + "]]" + pk
+            } else {
+                seg0_out = seg0_out + stem + pk
+            }
             k = k + 1
         }
     }
@@ -1462,11 +1542,21 @@ pub fn linkify_page_impl(path str, stem str) str {
             var rest_parts = rest.split(stem)
             var rest_out str = rest_parts[0]
             if rest_parts.len() > 1 {
-                count = count + rest_parts.len() - 1
                 var k2 int = 1
                 while k2 < rest_parts.len() {
+                    // ⚠ D-20②：列表元素先拷局部变量再调方法。
                     var rk str = rest_parts[k2]
-                    rest_out = rest_out + "[[" + stem + "]]" + rk
+                    var rprev str = rest_parts[k2 - 1]
+                    var wrap2 bool = true
+                    if ascii {
+                        wrap2 = boundary_ok(rprev, rk)
+                    }
+                    if wrap2 {
+                        count = count + 1
+                        rest_out = rest_out + "[[" + stem + "]]" + rk
+                    } else {
+                        rest_out = rest_out + stem + rk
+                    }
                     k2 = k2 + 1
                 }
             }
