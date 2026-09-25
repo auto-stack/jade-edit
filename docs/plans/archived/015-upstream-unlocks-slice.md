@@ -1,13 +1,14 @@
 ---
 plan_id: PLAN-015
-status: reviewed
+status: archived
 feature_name: upstream-unlocks-slice
 author: [zhaopuming]
 created_at: 2026-09-25T10:26:10+08:00
-updated_at: 2026-09-25T12:05:00+08:00
+updated_at: 2026-09-25T12:20:00+08:00
 plan_revision: 2
 current_step: 6
 total_steps: 6
+completion_kind: delivered
 supersedes_spec_components: []
 new_spec_components:
   - "docs/ARCHITECTURE.md#SD-1501"
@@ -461,6 +462,29 @@ pub fn daily_note_impl() str {
     v14 + probe 两件入库源——worktree 即 main 检出，无清理失效面。
   - `next`: merge（用户已授权全流程——work→review→merge 同会话
     连跑；本记录即 merge 的 revision-bound 复审证据）。
+- **2026-09-25 归档（auto-plan-merge）——PLAN-015:r2 五 checkpoint 闭环**：
+  - `prepared` = 复审基线 r2（reviewed_commit=539bc1b + 复审提交
+    bc3cce3）+ canonical delta 落位核验（SD-1501@ARCHITECTURE:665
+    [+156 supersede 注]/SD-1502@:734[+基线 v14 行+probe 两件清单]/
+    SD-1503@README:156[+:339 N 定谳]/SD-1504@README:89[+:377 ledger
+    指针]）+ **delivery_commit = bc3cce3**（docs-only 后代核验：diff
+    全窗口仅计划文件 +72/-3，实现/依赖零变化；canonical/ledger 落位
+    核验在案）。
+  - `landed` = main tip == bc3cce3 直接 main 线性约定（无 dev 分支
+    无 merge commit——本仓 009..014 同款）；known-good = 复审窗 gate
+    ALL GREEN 现跑（`gate-run-review.log`：merged 16/16 含基线 v14
+    零漂移 + split 15/15 + build + e2e 47.2s）。
+  - `ledger_refreshed` = parity-ledger **v18** tracked 在 main 读回
+    （D-32 新行 + D-19/D-12/D-21 v18/D-14 四面处置更新；无 live
+    ledger 服务——PLAN-001 同判）。
+  - `archived` = git mv → `docs/plans/archived/015-upstream-unlocks
+    -slice.md` + status: archived + completion_kind: delivered。
+  - `cleaned` = 无 worktree/dev 分支（直接 main 约定——worktree 清单
+    仅 main，代码工作树零 WIP；wt-guard 不适用面同 014 判例）。
+  - `outcome: pass`（archived/delivered）。PLAN-016 候选池首位 =
+    大纲（oncursor + anchor-reveal 供料双件解锁候——D-12 处置维持
+    面）；其余：casefold+词边界/目录移动合并/检索上量微批/Time front
+    面 probe 批/url_decode UTF-8 供料回执件（D-19 精化面）。
 
 ## 10. 待澄清事项
 
