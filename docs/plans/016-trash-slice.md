@@ -1,6 +1,6 @@
 ---
 plan_id: PLAN-016
-status: execution_done
+status: reviewed
 feature_name: trash-slice
 author: [zhaopuming]
 created_at: 2026-09-25T12:27:33+08:00
@@ -410,6 +410,39 @@ create_dir 递归/move 组合/remove_dir_all 全已证）。
 
 ## 9. 复审记录
 
+- **2026-09-25 复审（auto-plan-review，r1 pass）**：
+  - `stage: review` | PLAN-016 | plan_revision 1 | `outcome: pass` |
+    reviewed_commit de7da15 | base_commit b64794a |
+    dependency_revisions 无依赖工作树/分支（直接 main 线性约定）；
+    工具链 release exe v0.4.2-2125-g63e14b045（AUTO_EXE 显式指路）。
+  - **独立性声明**：复审与实现同会话——限制如实记，判定从工件重建
+    （现跑复放 + 锚注实勘），不采信执行摘要。
+  - acceptance_results（全部现跑复放）：AC-01 **pass**（probe_trash
+    十八案+十五布尔对双臂 RESULT 全案通过[本窗复放] + probe_dir_ops
+    十四案复放绿 + vm merged 16/16 基线零漂移——行为等价）；AC-02
+    **pass**（gate 现跑：vm find ⑥ + file ⑱ 双臂全过 + e2e 十五段
+    42.0s）；AC-03 **pass**（vm ⑸「将移入回收站 wiki/CAP 定理.ad」
+    + 双防线两行沿袭 + e2e 657 同断言——全绿）；AC-04 **pass**
+    （固定 82xx 常量 grep=0 + pickPort 13 处在册 + probe 全族复跑绿
+    ——11 件超计划七件口径，AC-04 清零判据所致，scope 扩有据）；
+    AC-05 **pass**（gate ALL GREEN 现跑：merged 16/16 + [B baseline]
+    v15 零漂移 + split 15/15 + build 8.98s + e2e 42.0s + README:370
+    N 定谳续记）；AC-06 **pass**（SD-1601@ARCH:729[四面表:733]/
+    SD-1602@ARCH:786+790/SD-1603@README:164+370/SD-1604@README:410
+    实勘落位 + ledger D-33@:44 + D-19 随行 + D-21 v19——H1 版本字面
+    stale 见 F-R16-1）。
+  - findings：**F-R16-1**（low，非阻塞）——ledger H1 版本字面 stale
+    （行 1「登记表 v18」未随链尾「表头版本 v18→v19（SD-1604 指针）」
+    bump；README 指针 v19/行数 33/链尾均一致）——随 merge ledger
+    refresh 校正（F-R9-1「随 merge 校正」先例）。观察项两条（非
+    findings，执行期校正已如实记录）：计划 §4.2 v15 变更面摘要未列
+    App trash_purge_open 字段（§2.3 强确认弹层设计自带开态——基线/
+    commit 如实记）；delete 面 `.trash` 自涉卫为计划未列卫面补强
+    （T-01 证据在册——语义收窄方向，无 AC 偏离）。
+  - evidence：本记录所引全部为本复审窗现跑实录（probe_trash/
+    probe_dir_ops RESULT 行 + gate 五段 PASS 行 + 锚注行号）；基线
+    记录 = 树零 WIP/worktree 仅 main/pickPort grep 证。
+  - `next: merge`。
 - **2026-09-25 work 收口（auto-plan-work）**：
   - `stage: work` | PLAN-016 | plan_revision 1 | `outcome: pass` |
     code_commit e83b205（T-01=0d69571）| task_ids T-01..T-05 全勾。
