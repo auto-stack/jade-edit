@@ -6,7 +6,8 @@
 //   2 tree    filetree 列出 fixture wiki 文件
 //   3 open    打开 .ad 进 AutoDownEditor（内容渲染可见）
 //   4 edit    编辑回写（追加输入 → ● unsaved）
-//   5 save    保存落盘（press 保存 → 脏标清 + 磁盘字节 + frontmatter 保留）
+//   5 save    保存落盘（press 保存 → 脏标清 + 磁盘字节 + frontmatter 保留
+//             + updated_at 自动维护——PLAN-015：已有键保存即更新值[当日形]）
 //   6 reload  重载可见（磁盘外改 → press 重载 → 编辑器见新内容）
 //   7 tab     tab 面：开两档 → 切换（active 断言 + 内容互换）→ dirty 档
 //             关闭确认两路（取消=档留；直接关闭=弃改落盘零写入）
@@ -77,7 +78,11 @@
 //             ⑮ 删除预览[计数行+无入链警示]+取消零落盘/⑯ 删除弧线[确
 //             认 → tab 全关 + 磁盘消；悬空翻转面 vm ⑯ 承载]（素材 =
 //             ⊕ 目录甲 + ＋ DirNote + 移动入——14 meta 已知答案免疫
-//             ：DirNote 无 tags 无链接）**
+//             ：DirNote 无 tags 无链接）** + **daily 弧线（PLAN-015；vm
+//             file 组 ⑰ 同单）：菜单「今日笔记」→ 开档（# 当日 body）→
+//             磁盘 created_at/updated_at 双时间戳 → 重入幂等（tab 不重复）
+//             ——日期面 back 单点[Date 原语独占消费]，已知答案免疫
+//             （今日档无 tags 无链接）**
 //   14 meta   标签面板+wanted 模式+inline tag 子步（PLAN-008+PLAN-009；vm 矩阵 check 14 同单
 //             ——段内最后）：tags 4 行已知答案[13 后位态]+展开导航+
 //             write_wiki 外造 Save 刷新；wanted 无 input 三行清单
@@ -150,14 +155,25 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   console.log('[4 edit] PASS — 追加输入 → StatusBar 未保存（blur 冲刷后 store 落定，规避保存点击 blur-flush 与 Save 竞态）')
 
   // 5 save（原文+标记+frontmatter 三验，磁盘真值；vue toolbar 按钮 =
-  // 图标 + title 属性——:has-text 落空，按 title 锚）
+  // 图标 + title 属性——:has-text 落空，按 title 锚）+ **updated_at 自动
+  // 维护**（PLAN-015 T-03；SD-1501——已有键保存即更新值，语料 Z 形归一
+  // 无 Z；六检查磁盘断言盘点——受影响档 = 带 updated_at 键的语料档[五档
+  // 全带]，本位 = 更新面正证位，其余磁盘断言 presence 形不受扰；
+  // probe_daily u① 直证同源）
   await page.locator('button[title="保存"]').click()
   await expect(page.getByText('未保存', { exact: true })).toHaveCount(0, { timeout: 10_000 })
   const disk = fs.readFileSync(TARGET_FILE, 'utf8')
   expect(disk, '磁盘含标记').toContain(EDIT_MARKER)
   expect(disk, '原文未被整文替换丢失').toContain('这是一段示例文本')
   expect(disk, 'frontmatter 保留').toContain('title: Hello World')
-  console.log('[5 save] PASS — 落盘三验（原文/标记/frontmatter）')
+  const fmLineOf = (txt: string, key: string) => txt.split('\n').find((l) => l.startsWith(key + ':')) ?? ''
+  const today5 = new Date()
+  const pad25 = (n: number) => String(n).padStart(2, '0')
+  const todayDate5 = `${today5.getFullYear()}-${pad25(today5.getMonth() + 1)}-${pad25(today5.getDate())}`
+  expect(fmLineOf(disk, 'updated_at'), 'updated_at 当日形（维护面——Z 形语料归一无 Z）').toMatch(
+    new RegExp(`^updated_at: ${todayDate5}T\\d{2}:\\d{2}:\\d{2}$`),
+  )
+  console.log('[5 save] PASS — 落盘三验（原文/标记/frontmatter）+ updated_at 维护（当日形）')
 
   // 6 reload
   fs.appendFileSync(TARGET_FILE, `\n${RELOAD_MARKER}\n`)
@@ -809,6 +825,42 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
     .poll(() => fs.existsSync(path.join(WORKSPACE, '目录乙')), { timeout: 10_000 })
     .toBe(false)
   console.log('[13 dir2] PASS — 删除目录弧线（强确认→tab 全关+磁盘消；悬空翻转面 vm ⑯ 承载[DirNote 零入链素材]）')
+
+  // PLAN-015 daily 弧线（vm file 组 ⑰ 同单——菜单入口 → 开档 → 磁盘双
+  // 时间戳 → 重入幂等；日期面 back 单点，动态值 = 当日格式断言；stem 全
+  // ASCII 无 D-19 面。已知答案免疫：今日档无 tags 无链接——14 meta 面零扰）。
+  {
+    const d = new Date()
+    const p2 = (n: number) => String(n).padStart(2, '0')
+    const dailyStem = `${d.getFullYear()}_${p2(d.getMonth() + 1)}_${p2(d.getDate())}`
+    const dailyDay = dailyStem.split('_').join('-')
+    await page.getByText('文件', { exact: true }).click()
+    await page.getByText('今日笔记', { exact: true }).click()
+    await expect(tabBtn(dailyStem)).toHaveCount(1, { timeout: 15_000 })
+    // D-23②：vue 编辑器 markdown 渲染标记符不落 DOM（`# x` → 标题文本
+    // x）——DOM 断言用渲染文，逐字节断言走磁盘（10c 同款口径）。
+    await expect(visibleEditor(page)).toContainText(dailyDay, { timeout: 15_000 })
+    const dailyFile = path.join(WORKSPACE, `${dailyStem}.ad`)
+    await expect
+      .poll(async () => {
+        try {
+          const t = fs.readFileSync(dailyFile, 'utf8')
+          return t.includes(`created_at: ${dailyDay}T`) && t.includes(`updated_at: ${dailyDay}T`)
+        } catch {
+          return false
+        }
+      }, { timeout: 10_000 })
+      .toBe(true)
+    console.log('[13 daily] PASS — 今日笔记开档（# 当日 body + 磁盘 created_at/updated_at 双时间戳）')
+    // 重入幂等：再调 → 同档（tab 计数不变——已开即激活语义）
+    await page.getByText('文件', { exact: true }).click()
+    await page.getByText('今日笔记', { exact: true }).click()
+    await expect(tabBtn(dailyStem)).toHaveCount(1, { timeout: 15_000 })
+    // 收尾：关今日笔记 tab（洁净直接关——先激活再 x）
+    await tabBtn(dailyStem).click()
+    await page.locator('button:has(svg.lucide-xicon)').first().click()
+    console.log('[13 daily] PASS — 重入幂等（tab 不重复）+ 收尾关档')
+  }
 
   // 14 meta（PLAN-008 T-04；vm 矩阵 check 14 同单——段内最后）：tags
   // 面板 + wanted 模式。执行序在 13 后（此位已知答案——e2e 13 删的是

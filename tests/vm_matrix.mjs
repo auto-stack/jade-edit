@@ -7,12 +7,14 @@
 //   2 tree    filetree 列出 fixture wiki 文件（.ad 按钮锚）
 //   3 open    打开 .ad 进 autodown_editor（textarea 面 + 播种内容可见）
 //   4 edit    编辑回写（type_text → INPUT_TEXT → 脏标）
-//   5 save    保存落盘（toolbar 保存 → 脏标清 + 磁盘字节含标记 + frontmatter 保留）
+//   5 save    保存落盘（toolbar 保存 → 脏标清 + 磁盘字节含标记 + frontmatter 保留
+//             + updated_at 自动维护——PLAN-015：已有键保存即更新值[当日形]）
 //   6 reload  重载可见（磁盘外改 → toolbar 重载 → 编辑器见新内容）
-//   B base    结构基线 v11 零漂移（仅 merged 臂；必须在 1-6 后、扩单前采集
-//             ——v11 锁的是六检查终态，扩单不漂移基线；v11=PLAN-012 store
-//             增 dir_open/move_open + App 增 dir_q/move_q + 弹层第七/八
-//             实例，v10=PLAN-011、v3=PLAN-003 等留档）
+//   B base    结构基线 v14 零漂移（仅 merged 臂；必须在 1-6 后、扩单前采集
+//             ——v14 锁的是六检查终态，扩单不漂移基线；v14=PLAN-015 每日
+//             笔记 UI 面[action/menubar/工具栏三节点——store/App 零状态面
+//             ；行:列消费上游门控续——探针 E 定谳 D-12 处置维持]、v13=
+//             PLAN-014、v12=PLAN-013、v11=PLAN-012 等留档）
 //   7 tab     tab 面：开两档 → 切换（active 断言 + 内容互换）→ dirty 档
 //             关闭走确认弹层两路（取消=档留；直接关闭=弃改落盘零写入）
 //   8 editops 编辑操作族：段中回车/退格（C-5 整文构造——回车分段可见 +
@@ -144,7 +146,7 @@ const argOf = (name) => {
   return i >= 0 ? args[i + 1] : undefined
 }
 const ARM = argOf('--arm') ?? 'all' // all | merged | split
-const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v13.txt')
+const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v14.txt')
 const SAVE_BASELINE = argOf('--save-baseline')
 
 const EDIT_MARKER = 'jade-edit 冒烟标记：编辑回写可见。'
@@ -519,6 +521,11 @@ async function runArm(arm, port) {
     check('4', 'edit', /status: ok/.test(typeRes), 'type_text（整文+标记）→ INPUT_TEXT → active_dirty=true')
 
     // 5 save：toolbar 保存 → 脏标清 + 磁盘含标记 + frontmatter 保留
+    // + **updated_at 自动维护**（PLAN-015 T-03；SD-1501——已有键保存即
+    // 更新值，语料 Z 形归一无 Z；其余 fm 键行逐字节 = 界符段受控 diff 面，
+    // probe_daily u① 直证同源；六检查磁盘断言盘点——受影响档 = 所有带
+    // updated_at 键的语料档[五档全带]，本检查为更新面正证位，其余磁盘
+    // 断言均为 presence 形不受扰）。
     await pressButton('保存')
     await stateIs('active_dirty', 'false')
     let diskAfter = ''
@@ -530,7 +537,18 @@ async function runArm(arm, port) {
     }
     const diskOk = diskAfter.includes(EDIT_MARKER) && diskAfter.includes('这是一段示例文本')
     const fmOk = diskAfter.includes('title: Hello World')
-    check('5', 'save', diskOk && fmOk, `磁盘含原文+标记=${diskOk} frontmatter 保留=${fmOk}`)
+    const fmLineOf = (txt, key) => txt.split('\n').find((l) => l.startsWith(key + ':')) ?? ''
+    const todayD = new Date()
+    const pad2 = (n) => String(n).padStart(2, '0')
+    const todayDate = `${todayD.getFullYear()}-${pad2(todayD.getMonth() + 1)}-${pad2(todayD.getDate())}`
+    const updBefore = fmLineOf(diskBefore, 'updated_at')
+    const updAfter = fmLineOf(diskAfter, 'updated_at')
+    const updOk = updAfter !== updBefore
+      && new RegExp(`^updated_at: ${todayDate}T\\d{2}:\\d{2}:\\d{2}$`).test(updAfter)
+      && fmLineOf(diskAfter, 'title') === fmLineOf(diskBefore, 'title')
+      && fmLineOf(diskAfter, 'status') === fmLineOf(diskBefore, 'status')
+      && fmLineOf(diskAfter, 'summary') === fmLineOf(diskBefore, 'summary')
+    check('5', 'save', diskOk && fmOk && updOk, `磁盘含原文+标记=${diskOk} frontmatter 保留=${fmOk} updated_at 维护=${updOk}（${updBefore || '<none>'} -> ${updAfter || '<none>'}）`)
 
     // 6 reload：磁盘外改 → toolbar 重载 → active_body 含新内容
     fs.appendFileSync(targetFile, `\n${RELOAD_MARKER}\n`)
@@ -554,7 +572,7 @@ async function runArm(arm, port) {
       const stateDump = (await callTool('autoui_state', {})).trim()
       const snapIds = JSON.stringify([...(await snapshotText()).matchAll(/#(vnode_\d+)/g)].map((m) => m[1]))
       const headerFor = (file) =>
-        `// jade-edit vm 结构基线 v13（PLAN-014 T-04 重锁；v12=PLAN-013 T-04、v11=PLAN-012 T-04、
+        `// jade-edit vm 结构基线 v14（PLAN-015 T-04 重锁；v13=PLAN-014 T-04、v12=PLAN-013 T-04、v11=PLAN-012 T-04、
 ` +
         `// v10=PLAN-011 T-04、v9=PLAN-009 T-04、v8=PLAN-008 T-04、v7=PLAN-007 T-04、v6=PLAN-006
 ` +
@@ -562,17 +580,17 @@ async function runArm(arm, port) {
 ` +
         `// v1=PLAN-001 T-04 换基、v0=PLAN-081 T-05 均留档）。
 ` +
-        `// 重锁因由：store 新增 deldir_open/rendir_open 弹层开态 + App 模型新增 deldir_q/
+        `// 重锁因由：每日笔记 UI 面（PLAN-015 上游解锁兑现批）——action file.daily（Ctrl+Alt+N 键位）
 ` +
-        `// rendir_target/rendir_q 三 input 数据态（PLAN-014 目录面二期——§2.3 修正设计目标
+        `// + menubar 文件项「今日笔记」+ 工具栏 calendar 钮进 snapshot vnode id 序列。store/App 模型
 ` +
-        `// input 双弹层实取）进 autoui_state 全量 dump；删除目录/重命名目录弹层（dialog
+        `// 零状态面变更（ActDaily 直调无新字段）；行:列消费未落地——探针 E 定谳：autodown_editor 无
 ` +
-        `// 第十/十一实例，闭态恒渲染 D-23③）节点 + menubar「删除目录…」/「重命名目录…」项
+        `// oncursor 转换臂（PLAN-413 oncursor 在 code_editor——组件错位），vue EngineEditor 无 cursor
 ` +
-        `// + 键位 Shift+Delete/Ctrl+Shift+R 进 snapshot vnode id 序列。
+        `// emit——D-12「行:列降级」处置维持，供料候选扩面（autodown_editor oncursor/anchor-reveal）。
 ` +
-        `// 仪器同 v2..v12：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态
+        `// 仪器同 v2..v13：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态
 ` +
         `//（chrome 全套 + Hello World.ad 开；查找面板/建页弹层/新建弹层/属性弹层/新建目录
 ` +
@@ -591,9 +609,9 @@ async function runArm(arm, port) {
       } else if (fs.existsSync(BASELINE)) {
         const raw = fs.readFileSync(BASELINE, 'utf8')
         const ok = raw === headerFor(BASELINE) + baselineBodyOf()
-        check('B', 'baseline', ok, ok ? '结构基线 v13 零漂移（state 逐字节 + id 序列）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
+        check('B', 'baseline', ok, ok ? '结构基线 v14 零漂移（state 逐字节 + id 序列）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
       } else {
-        console.log('  [baseline] structure-v13 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v13.txt')
+        console.log('  [baseline] structure-v14 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v14.txt')
       }
     }
 
@@ -2252,6 +2270,48 @@ async function runArm(arm, port) {
       await sleep(300)
     }
     await stateHas('links_json', '{\\"target\\":\\"Project X\\",\\"anchor\\":\\"\\",\\"exists\\":false')
+    // ⑰ 今日笔记弧线（PLAN-015 T-04 vm 面；SD-1501——直调 daily_note →
+    // 开档 → 树新行 → 重入幂等。日期面 back 单点——stem/body 动态值 =
+    // 当日格式断言；stem 全 ASCII 无 D-19 面。入口 pressButton('今日笔记')
+    // ：菜单闭态 menubar 项不在树——命中工具栏 calendar 钮[endsWith 形]
+    // ；menubar 文件项与工具栏钮同 handler .ActDaily 共口，菜单面存在性
+    // = 基线 v14 节点承载）。
+    const dailyStem = (() => {
+      const d = new Date()
+      const p2 = (n) => String(n).padStart(2, '0')
+      return `${d.getFullYear()}_${p2(d.getMonth() + 1)}_${p2(d.getDate())}`
+    })()
+    const dailyDay = dailyStem.split('_').join('-')
+    await pressButton('今日笔记')
+    await stateIs('active_title', dailyStem)
+    await stateHas('active_body', `# ${dailyDay}`)
+    const dailyFile = path.join(FIXTURE, `${dailyStem}.ad`)
+    let dailyDiskOk = false
+    for (const dl = Date.now() + 8000; ; ) {
+      try {
+        const dtxt = fs.readFileSync(dailyFile, 'utf8')
+        dailyDiskOk = dtxt.includes(`created_at: ${dailyDay}T`) && dtxt.includes(`updated_at: ${dailyDay}T`)
+      } catch {}
+      if (dailyDiskOk || Date.now() > dl) break
+      await sleep(300)
+    }
+    let dailyTreeOk = false
+    for (const dl = Date.now() + 8000; ; ) {
+      const t = await snapshot()
+      const exr = explorerRegion(t)
+      dailyTreeOk = !!exr && !!findFirst(exr, (n) => n.head.startsWith('button ') && elementIdOf(n) && ownText(n) === dailyStem)
+      if (dailyTreeOk || Date.now() > dl) break
+      await sleep(300)
+    }
+    // 重入幂等：再调 → 同档激活（已开即激活语义——tab 数不变）
+    const tcDailyA = parseInt((await stateText('tab_count')).match(/tab_count:\s*(\d+)/)?.[1] ?? '-1', 10)
+    await pressButton('今日笔记')
+    await stateIs('active_title', dailyStem)
+    const tcDailyB = parseInt((await stateText('tab_count')).match(/tab_count:\s*(\d+)/)?.[1] ?? '-1', 10)
+    const dailyIdemOk = tcDailyA > 0 && tcDailyB === tcDailyA
+    // 收尾：关今日笔记 tab（洁净直接关——激活态 x 钮在册口）
+    await pressActiveTabClose(dailyStem)
+    const dailyOk = dailyDiskOk && dailyTreeOk && dailyIdemOk
     // 收尾：面板关 + Hello World 复原（quit 前置口径——13 收尾同款）。
     if (/backlinks_open:\s*true/.test(await stateText('backlinks_open'))) {
       await pressButton('视图', { exact: true })
@@ -2268,12 +2328,13 @@ async function runArm(arm, port) {
       moveCancelOk, conflictHoldOk, conflictDiskOk,
       rendirPrevOk, renDirDiskOk, panelZero2Ok, linkNet2Ok,
       renDirCancelOk, delDirPrevOk, delDirCancelOk, delDirOk, flip2Ok,
+      dailyOk,
     }
     if (Object.values(fileParts).some((v) => !v)) {
       console.log(`  [13 dbg] ${JSON.stringify(fileParts)} tabPre=${JSON.stringify(tabCountPre)} tabPost=${JSON.stringify(tabCountPost)}`)
     }
     check('13', 'file', Object.values(fileParts).every((v) => v) && tabCountFinal >= 0,
-      `file 组八子步+F-R9-4 案+目录面四子步+目录二期三子步（新建 index 模板逐字节+树新行/同名幂等 tab+磁盘不变/取消零落盘/CJK 新页${arm === 'merged' ? '导航断言' : '磁盘断言[D-19]'}＋删除预览 3 处入链已知答案+tab 面「${delTabsLine}」+取消零落盘/删除弧线 磁盘消失+ft_sel 清空+激活${arm === 'merged' ? '落邻档首页[同位保持]' : '保持 index[CloseTabsOf 零关闭面，D-19]'}/悬空翻转 出链行 CAP 定理（悬空）/未选中 no-op/F-R9-4 删后提及刷新/PLAN-012：⊕新建目录[树新行+磁盘在]→Project X 移动[预填 wiki/tab 全量${DIR_BOX}/Project X/字节整迁/面板快照零变化/links_json 定向 diff 归一]→取消零落盘→冲突拒[弹层留置+磁盘零变化]；PLAN-014：重命名目录 弧线[双 input 弹层+预览 将移动 1 个 .ad 页+tab 全量路径变标题恒+磁盘整迁+面板零变化+links_json 归一 diff——三联对照目录级]/取消零落盘两形/删除目录[预览计数+悬空警示→tab 全关计数-1+树行消+悬空翻转 Project X（悬空）]——键程 menubar 共口）`)
+      `file 组八子步+F-R9-4 案+目录面四子步+目录二期三子步+今日笔记弧线[PLAN-015 ⑰ 开档+树新行+磁盘双时间戳+重入幂等]（新建 index 模板逐字节+树新行/同名幂等 tab+磁盘不变/取消零落盘/CJK 新页${arm === 'merged' ? '导航断言' : '磁盘断言[D-19]'}＋删除预览 3 处入链已知答案+tab 面「${delTabsLine}」+取消零落盘/删除弧线 磁盘消失+ft_sel 清空+激活${arm === 'merged' ? '落邻档首页[同位保持]' : '保持 index[CloseTabsOf 零关闭面，D-19]'}/悬空翻转 出链行 CAP 定理（悬空）/未选中 no-op/F-R9-4 删后提及刷新/PLAN-012：⊕新建目录[树新行+磁盘在]→Project X 移动[预填 wiki/tab 全量${DIR_BOX}/Project X/字节整迁/面板快照零变化/links_json 定向 diff 归一]→取消零落盘→冲突拒[弹层留置+磁盘零变化]；PLAN-014：重命名目录 弧线[双 input 弹层+预览 将移动 1 个 .ad 页+tab 全量路径变标题恒+磁盘整迁+面板零变化+links_json 归一 diff——三联对照目录级]/取消零落盘两形/删除目录[预览计数+悬空警示→tab 全关计数-1+树行消+悬空翻转 Project X（悬空）]——键程 menubar 共口）`)
 
     // 9 退出存盘：dirty → 文件菜单退出 → 确认弹层 → QuitSaveClose →
     // 磁盘三验 + 进程退出。恒为臂内最后一项（Process.exit 杀进程）。

@@ -29,7 +29,7 @@ use find_panel: FindPanel
 use tags_panel: TagsPanel
 use bps.navigation.filetree.tree_util: flatten_tree, toggle_id
 use bps.navigation.filetree.tree_icon: TreeIcon
-use back.api: tree, ws_root, link_index, search_wiki, create_page, rename_page, delete_page, tags_index, linkify_page, page_meta, set_page_meta, create_dir, move_page, delete_dir, rename_dir
+use back.api: tree, ws_root, link_index, search_wiki, create_page, rename_page, delete_page, tags_index, linkify_page, page_meta, set_page_meta, create_dir, move_page, delete_dir, rename_dir, daily_note
 
 style warn_label = "text-[12px] text-amber-400 mr-1"
 
@@ -842,6 +842,10 @@ widget App {
     actions {
         action (id: "file.new",    handler: .ActNew,    title: "新建",  icon: "file-plus",   shortcut: "Ctrl+N")
         action (id: "file.open",   handler: .ActOpen,   title: "打开…", icon: "folder-open", shortcut: "Ctrl+O")
+        // 今日笔记（PLAN-015 T-03 front 半；Obsidian 线高频工作流——
+        // Ctrl+Alt+N 空闲实核[Ctrl+N 新建在册，N 族避让；Alt 族仅 Alt+F4
+        // 在册]，用户可改 §10.4）。
+        action (id: "file.daily",  handler: .ActDaily,  title: "今日笔记", icon: "calendar", shortcut: "Ctrl+Alt+N")
         action (id: "file.save",   handler: .ActSave,   title: "保存",  icon: "save",        shortcut: "Ctrl+S",
                 enabled_if: ".store.tab_count > 0")
         action (id: "file.rename", handler: .RenameOpen, title: "重命名…", shortcut: "F2",
@@ -885,6 +889,7 @@ widget App {
             item (action: "file.new")
             item (action: "file.open")
             item (action: "file.save")
+            item (action: "file.daily")
             item (action: "view.reload")
             sep
             item (action: "edit.undo")
@@ -903,6 +908,9 @@ widget App {
                         menubar-content {
                             menubar-item (title: "新建", icon: "file-plus", shortcut: "Ctrl+N") { onclick: .ActNew }
                             menubar-item (title: "打开…", icon: "folder-open", shortcut: "Ctrl+O") { onclick: .ActOpen }
+                            // 今日笔记（PLAN-015——直接动作零弹层；日期面在
+                            // back 单点，幂等重入 = 打开同档）
+                            menubar-item (title: "今日笔记", icon: "calendar", shortcut: "Ctrl+Alt+N") { onclick: .ActDaily }
                             menubar-item (title: "保存", icon: "save", shortcut: "Ctrl+S", enabled: .store.tab_count > 0) { onclick: .ActSave }
                             // 重命名/删除项不挂 enabled——vm 轨 menubar-item
                             // 状态相关 enabled boot 冻结（T-02 实勘：boot
@@ -1613,6 +1621,38 @@ widget App {
             .MentionsRefreshOf("")
         }
         .ActOpen -> { store.ActOpen() }
+        // —— 今日笔记流（PLAN-015 T-03；§2.3——NewGo「建页成功」口直承
+        // 同构，零弹层直接动作）：①back 契约直调 daily_note（try/catch
+        // 落 console——backend-offline 不炸；日期面 back 单点——幂等守卫/
+        // 模板/双时间戳/根落位全套在 back；今日重入 = 打开同档）②非空 =
+        // store.Open（直口——已开即激活/新开播种）+ LinksRefreshOf(r)
+        //（「建页成功」口直承——bl/ol 行重算内联 active=r + titles/wanted
+        // 随产物）+ TagsRefresh + TreeRefresh（树新行/快开 ft_nodes 新鲜）
+        // + ft_sel 置位 ③空（Date 桥不可达/落盘复核失败）= console 注记
+        //（无弹层——直接动作留置面不适用）。
+        .ActDaily -> {
+            var r str = ""
+            var ok bool = true
+            try {
+                r = daily_note()
+            } catch (e) {
+                ok = false
+            }
+            if !ok {
+                console_log("daily: failed")
+            }
+            if r != "" {
+                store.Open({ path: r })
+                .LinksRefreshOf(r)
+                .TagsRefresh()
+                .TreeRefresh()
+                .ft_sel = r
+            } else {
+                if ok {
+                    console_log("daily: rejected (date-unreachable/verify-failed)")
+                }
+            }
+        }
         .ActSave -> {
             store.Save()
             // 保存改变出链面 → 链接索引重取（触发集：Save 成功）+ **树重取

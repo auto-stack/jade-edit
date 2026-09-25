@@ -257,4 +257,17 @@ pub fn rename_dir(path str, new_name str) str {
     return wsys.rename_dir_impl(path, new_name)
 }
 
+/// 今日笔记（PLAN-015 第一切片；上游 Time 解锁兑现——back 侧 Date 独占
+/// 消费，front 零 Date 面——vue 轨 ts_adapter Date.* 发射未证，设计性
+/// 规避）：`Date.format(Date.now(), "yyyy_MM_dd")` stem 建档/幂等打开
+/// （已存在 → 返回现路径零变化——create_page 幂等口同构；新建 → 模板
+/// frontmatter `created_at`/`updated_at` 双时间戳 + `# yyyy-MM-dd\n\n`）。
+/// 成功返回工作区根相对 path；"" = Date 原语不可达（stem 空）/落盘复核
+/// 失败。**POST**（无参动作契约族——create_dir 同形）。
+/// POST /api/daily_note
+#[api(method = "POST", path = "/api/daily_note")]
+pub fn daily_note() str {
+    return wsys.daily_note_impl()
+}
+
 
