@@ -1,13 +1,14 @@
 ---
 plan_id: PLAN-014
-status: reviewed
+status: archived
 feature_name: dir-ops-panel-dtitle-slice
 author: [zhaopuming]
 created_at: 2026-09-24T16:51:21+08:00
-updated_at: 2026-09-25T10:00:00+08:00
+updated_at: 2026-09-25T10:30:00+08:00
 plan_revision: 1
 current_step: 5
 total_steps: 5
+completion_kind: delivered
 supersedes_spec_components: []
 new_spec_components:
   - "docs/ARCHITECTURE.md#SD-1401"
@@ -403,6 +404,30 @@ pub fn rename_dir_impl(path str, new_name str) str {
 
 ## 9. 复审记录
 
+- **2026-09-25 merge（auto-plan-merge）**：
+  - `stage: merge | plan_id: PLAN-014:r1 | outcome: pass |
+    delivery_commit: 8453536 | archive: docs/plans/archived/
+    014-dir-ops-panel-dtitle-slice.md`
+  - 五 checkpoint 闭环（直接 main 线性约定，012/013 同判）：
+    - `prepared` = 复审基线 156a0e2（AC 全 PASS + delta 检视）+
+      canonical delta 落位核验[SD-1401..1404 在实现窗随批落位——
+      ARCHITECTURE §5/§6 + README Tests/是什么 + ledger v17，对点核验
+      ARCHITECTURE:570/645/627] + **delivery_commit = 8453536 复审
+      docs-only 后代核验**[diff 全窗口仅计划文件 +56/-2，实现/依赖
+      零变化——复审记录+status reviewed 唯二变更面]。
+    - `landed` = main tip == 8453536 直接 main 线性（无 worktree/dev
+      分支——worktree 清单仅 main，无 ff-merge 环节）；known-good =
+      复审窗 gate ALL GREEN 现跑（同代码面 156a0e2：merged 16/16 含
+      基线 v13 零漂移 + split 15/15 + build + e2e）。
+    - `ledger_refreshed` = parity-ledger **v17** tracked 在 main 读回
+      [表头 v16→v17（SD-1404 指针）+ D-31 四件新行 + D-21 v17 扩记
+      grep 实勘在档]；无 live ledger 服务（PLAN-001 同判）——canonical
+      = docs/ 三件随实现窗落位，ledger 即 tracked 文件本尊。
+    - `archived` = `git mv` → docs/plans/archived/014-dir-ops-panel-
+      dtitle-slice.md + status: archived + completion_kind: delivered
+      （本条 receipt 随归档提交）。
+    - `cleaned` = 无 worktree/dev 分支可清[直接 main 约定——`git
+      worktree list` 仅 main 检出，代码工作树零 WIP]。
 - **2026-09-25 复审（auto-plan-review）**：
   - `stage: review | plan_id: PLAN-014 | plan_revision: 1 | outcome:
     pass | reviewed_commit: 156a0e2 | base_commit: a6bb9f9 |
