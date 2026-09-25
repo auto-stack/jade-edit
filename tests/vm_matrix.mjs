@@ -612,7 +612,7 @@ async function runArm(arm, port) {
       } else if (fs.existsSync(BASELINE)) {
         const raw = fs.readFileSync(BASELINE, 'utf8')
         const ok = raw === headerFor(BASELINE) + baselineBodyOf()
-        check('B', 'baseline', ok, ok ? '结构基线 v15 零漂移（state 逐字节 + id 序列）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
+        check('B', 'baseline', ok, ok ? '结构基线 v15 零漂移（state 逐字节 + id 序列）——PLAN-017 零重锁第二例实录（纯 back 语义扩容：store/App 零新字段，dump 零新字段断言随零漂移现跑兑现）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
       } else {
         console.log('  [baseline] structure-v15 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v15.txt')
       }
@@ -942,7 +942,96 @@ async function runArm(arm, port) {
     await pressTab('Hello World')
     await stateIs('active_title', tabTitleOf(TARGET_LABEL))
 
-    console.log(`  [10m mentions] PASS — 六子步+aliases+linkify（三段标题/提及行已知答案+snippet+已链源排重/行点击 OpenLink/空态[无提及档]/激活变更刷新/面板关零 fetch[行为等价]；linkify 行转链+段间迁移+磁盘逐字节；alias 解析+出链翻转+反链归并+wanted 排除；素材 ASCII 双臂[search_wiki POST 面无]；收尾 tab 复原）`)
+    // —— PLAN-017 T-04 link 组子步（四级解析 + 词边界——组数不变，fail 即
+    // 臂败；素材 ASCII 双臂——hello world 纯 ASCII 走 HTTP GET 无 D-19 面）——
+    // ⑦ 四级解析导航：外造 CF Navigate.ad（[[hello world]] 小写变体链——
+    // ③级 stem casefold 命中）→ 反链段新行 → 行点击开档 → 出链行
+    // hello world 非悬空（SD-1401 恒 target 文本）→ 点击导航落
+    // Hello World.ad + links_json target_path 直证。
+    const cfNavFile = path.join(FIXTURE, 'CF Navigate.ad')
+    fs.writeFileSync(cfNavFile, '见 [[hello world]] 一处。\n', 'utf8')
+    await pressButton('视图', { exact: true })
+    await pressButton('切换反链', { exact: true })
+    await stateIs('backlinks_open', 'false')
+    await pressButton('视图', { exact: true })
+    await pressButton('切换反链', { exact: true })
+    await stateIs('backlinks_open', 'true')
+    await waitButtonIn(panelRegion, 'CF Navigate')
+    await pressPanelRow('CF Navigate')
+    await stateIs('active_title', 'CF Navigate')
+    {
+      const dl = Date.now() + 8000
+      for (;;) {
+        const t = await snapshotText()
+        const iOl = t.indexOf('出链')
+        const iMn = t.indexOf('未链接提及')
+        const olPart = iMn >= 0 ? t.slice(iOl, iMn) : t.slice(iOl)
+        if (olPart.includes('hello world') && !olPart.includes('hello world（悬空）')) break
+        if (Date.now() > dl) throw new Error(`⑦ 四级解析出链失守（hello world 行未现或悬空）:\n${t.slice(0, 400)}`)
+        await sleep(300)
+      }
+    }
+    await pressPanelRow('hello world')
+    await stateIs('active_title', tabTitleOf(TARGET_LABEL))
+    await stateHas('active_body', PARA_ANCHOR)
+    await stateHas('links_json', '{\\"target\\":\\"hello world\\",\\"anchor\\":\\"\\",\\"exists\\":true,\\"target_path\\":\\"wiki/Hello World.ad\\"}')
+    await pressTab('CF Navigate')
+    await pressActiveTabClose('CF Navigate')
+    await pressTab('Hello World')
+    await stateIs('active_title', tabTitleOf(TARGET_LABEL))
+    fs.rmSync(cfNavFile, { force: true })
+    // ⑧ 提及转链词边界（CAPTURE 弧）：Mention D 三态体（右界 X 跳过/左界
+    // x 跳过/独立位包裹）→ 转为链接 → **磁盘逐字节仅独立位包裹** + D 行
+    // 消（页级已链源排重——PLAN-009 定文面：含链即整页除名入反链段）。
+    const mnDFile = path.join(FIXTURE, 'Mention D.ad')
+    fs.writeFileSync(mnDFile, '边界三态：Hello WorldX 与 xHello World 与 Hello World 并置。\n', 'utf8')
+    await pressButton('视图', { exact: true })
+    await pressButton('切换反链', { exact: true })
+    await stateIs('backlinks_open', 'false')
+    await pressButton('视图', { exact: true })
+    await pressButton('切换反链', { exact: true })
+    await stateIs('backlinks_open', 'true')
+    {
+      const dl = Date.now() + 8000
+      for (;;) {
+        const t = await snapshotText()
+        const iMn = t.indexOf('未链接提及')
+        const mnPart = iMn >= 0 ? t.slice(iMn) : ''
+        if (mnPart.includes('Mention D')) break
+        if (Date.now() > dl) throw new Error(`⑧ 词边界提及行失守（Mention D 行未现）:\n${mnPart.slice(0, 400)}`)
+        await sleep(300)
+      }
+    }
+    await pressButton('转为链接', { exact: true })
+    {
+      const dl = Date.now() + 8000
+      for (;;) {
+        const t = await snapshotText()
+        const iLinks = t.indexOf('LINKS')
+        const iOl = t.indexOf('出链')
+        const iMn = t.indexOf('未链接提及')
+        const blPart = iOl >= 0 ? t.slice(iLinks, iOl) : t.slice(iLinks)
+        const mnPart = iMn >= 0 ? t.slice(iMn) : ''
+        if (blPart.includes('Mention D') && !mnPart.includes('Mention D')) break
+        if (Date.now() > dl) throw new Error(`⑧ 词边界转链失守（D 未入反链段或提及行未消）:\n${t.slice(0, 500)}`)
+        await sleep(300)
+      }
+    }
+    const mnDBodyAfter = fs.readFileSync(mnDFile, 'utf8')
+    if (mnDBodyAfter !== '边界三态：Hello WorldX 与 xHello World 与 [[Hello World]] 并置。\n') {
+      throw new Error(`⑧ 词边界磁盘逐字节失守（双侧邻接位应透传、独立位应包裹）: ${mnDBodyAfter}`)
+    }
+    fs.rmSync(mnDFile, { force: true })
+    await pressButton('视图', { exact: true })
+    await pressButton('切换反链', { exact: true })
+    await stateIs('backlinks_open', 'false')
+    await pressButton('视图', { exact: true })
+    await pressButton('切换反链', { exact: true })
+    await stateIs('backlinks_open', 'true')
+    await pressTab('Hello World')
+    await stateIs('active_title', tabTitleOf(TARGET_LABEL))
+
+    console.log(`  [10m mentions] PASS — 六子步+aliases+linkify（三段标题/提及行已知答案+snippet+已链源排重/行点击 OpenLink/空态[无提及档]/激活变更刷新/面板关零 fetch[行为等价]；linkify 行转链+段间迁移+磁盘逐字节；alias 解析+出链翻转+反链归并+wanted 排除；素材 ASCII 双臂[search_wiki POST 面无]；**PLAN-017：⑦四级解析导航[hello world 变体出链非悬空→导航落 Hello World+target_path 直证]+⑧提及转链词边界[三态体磁盘逐字节——双侧邻接透传/独立包裹]**；收尾 tab 复原）`)
 
     // 10c 建页弧线（PLAN-005 T-04；子步不占检查位——组数不变 12）：悬空行
     // 点击 → 确认弹层（create_confirm_open/create_target 态）→ 取消零落盘

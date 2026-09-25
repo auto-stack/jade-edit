@@ -1467,17 +1467,47 @@ fn is_pure_ascii(s str) bool {
     return ok
 }
 
+/// 串末字符码点（前向码点步进扫描——PLAN-017 T-04 执行期实勘定谳：
+/// str `.length` = **字符数**而 char_at 索引 = **字节**["X 与 x" 冒烟
+/// 实录 .length=5 / char_at(4)=0[mid-char] / char_at(6)=120——两原语
+/// 语义不一致，D-20③「.length 字节语义」按现工具链实测不成立，ledger
+/// 记账]→ `char_at(length-1)` 在 CJK 混串落多字节中段恒 0 不阻断——
+/// 词边界左界首版即此败形。本件零 .length 依赖：逐字符前向步进[步长 =
+/// UTF-8 字节宽：码点 <128→1、<2048→2、<65536→3、else 4——char_at
+/// 恒返码点故步进恒落字符边界]，末次非零码点即末字符；空串 → 0。
+fn last_char_cp(s str) int {
+    var i int = 0
+    var last int = 0
+    var c int = s.char_at(0)
+    while c != 0 {
+        last = c
+        if c < 128 {
+            i = i + 1
+        } else {
+            if c < 2048 {
+                i = i + 2
+            } else {
+                if c < 65536 {
+                    i = i + 3
+                } else {
+                    i = i + 4
+                }
+            }
+        }
+        c = s.char_at(i)
+    }
+    return last
+}
+
 /// 出现处双侧词边界判定（PLAN-017 SD-1701）：left/right = split(stem)
 /// 段接缝两侧（出现处 k 在 left=parts[k] 与 right=parts[k+1] 之间）。
-/// 左邻 = left 尾字符[left.char_at(len-1)——ASCII 尾字节=码点、多字节
-/// 尾=非边界→0 不阻断——字节安全，与 ends_with 62 枚举同效通道，规避
-/// D-20③ length/slice 定长陷阱]；右邻 = right 首字符[char_at(0) 恒字符
-/// 起点，空段→0 不阻断]。任一侧 ∈ 62 集 → false（该出现处跳过不包裹）。
+/// 左邻 = left 末字符码点[last_char_cp——零 .length 依赖，ASCII 尾=
+/// 码点、多字节尾=其码点>127 恒不阻断；字节安全，与计划 §2.2 ends_with
+/// 62 枚举同效、规避 length/slice 陷阱]；右邻 = right 首字符
+/// [char_at(0) 恒字符起点，空段→0 不阻断]。任一侧 ∈ 62 集 → false
+///（该出现处跳过不包裹）。
 fn boundary_ok(left str, right str) bool {
-    var lcp int = 0
-    if left.length > 0 {
-        lcp = left.char_at(left.length - 1)
-    }
+    var lcp int = last_char_cp(left)
     if ascii_alnum_cp(lcp) {
         return false
     }

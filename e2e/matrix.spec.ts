@@ -411,7 +411,59 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
     expect(dRes.ok(), `delete_page ${p} ok`).toBe(true)
   }
 
-  console.log('[10m mentions] PASS — 三段标题 + 提及行 + snippet + linkify + aliases（全臂）')
+  // —— PLAN-017 T-04（vm 矩阵 link 组 ⑦⑧ 同单）——
+  // ⑦ 四级解析导航：[[hello world]] 小写变体链（③级 stem casefold 命中）
+  // → Hello World 反链段新行 → 开档 → 出链行 hello world 非悬空 → 点击
+  // 导航落 Hello World（四级解析 vue 轨 UI 直证）。
+  const cfRes = await request.post('/api/write_wiki', {
+    data: { path: 'CF Navigate.ad', body: 'see [[hello world]] here.\n' },
+  })
+  expect(cfRes.ok(), 'write_wiki 造 CF Navigate POST ok').toBe(true)
+  await tabBtn('Hello World').click()
+  await expect(visibleEditor(page)).toContainText('这是一段示例文本', { timeout: 15_000 })
+  // 关开反链面板刷新（外造档入 link_index）
+  await page.getByText('视图', { exact: true }).click()
+  await page.getByText('切换反链', { exact: true }).click()
+  await page.getByText('视图', { exact: true }).click()
+  await page.getByText('切换反链', { exact: true }).click()
+  await expect(page.getByRole('button', { name: 'CF Navigate', exact: true }).last()).toBeVisible({ timeout: 10_000 })
+  await page.getByRole('button', { name: 'CF Navigate', exact: true }).last().click()
+  // 编辑器渲染文断言（D-23③ 口径——`[[…]]` 渲染为链接不落括号原文；
+  // 逐字节原文面由 ⑧ read_wiki 通道承载）
+  await expect(visibleEditor(page)).toContainText('see hello world here.', { timeout: 15_000 })
+  // 出链行 hello world 非悬空（③级解析 exists=true——SD-1401 恒 target 文本）
+  await expect(page.getByRole('button', { name: 'hello world', exact: true })).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByText('hello world（悬空）')).toHaveCount(0)
+  await page.getByRole('button', { name: 'hello world', exact: true }).click()
+  await expect(visibleEditor(page)).toContainText('这是一段示例文本', { timeout: 15_000 })
+
+  // ⑧ 提及转链词边界：Mention D 三态体（右界 X/左界 x/独立）→ 转链 →
+  // 磁盘逐字节仅独立位包裹（双侧邻接透传）+ D 行消（页级已链源排重）。
+  const dRes1 = await request.post('/api/write_wiki', {
+    data: { path: 'Mention D.ad', body: 'three states: Hello WorldX and xHello World and Hello World here.\n' },
+  })
+  expect(dRes1.ok(), 'write_wiki 造 Mention D POST ok').toBe(true)
+  await page.getByText('视图', { exact: true }).click()
+  await page.getByText('切换反链', { exact: true }).click()
+  await page.getByText('视图', { exact: true }).click()
+  await page.getByText('切换反链', { exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Mention D', exact: true }).last()).toBeVisible({ timeout: 10_000 })
+  await page.getByRole('button', { name: '转为链接', exact: true }).first().click()
+  await expect(page.getByText('（无未链接提及）', { exact: true })).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByRole('button', { name: 'Mention D', exact: true }).last()).toBeVisible({ timeout: 10_000 })
+  const dRead = await request.get('/api/read_wiki?path=Mention D.ad')
+  expect(dRead.ok()).toBe(true)
+  // read_wiki 响应 = JSON 字符串壳——json() 解析后逐字节比对
+  expect(await dRead.json(), '⑧ 词边界磁盘逐字节（仅独立位包裹）').toBe(
+    'three states: Hello WorldX and xHello World and [[Hello World]] here.\n',
+  )
+  // 删测试档（后收尾 goto 重载复原——同 Mention Source 口径）
+  for (const p of ['CF Navigate.ad', 'Mention D.ad']) {
+    const dRes = await request.post('/api/delete_page', { data: { path: p } })
+    expect(dRes.ok(), `delete_page ${p} ok`).toBe(true)
+  }
+
+  console.log('[10m mentions] PASS — 三段标题 + 提及行 + snippet + linkify + aliases（全臂）+ PLAN-017 四级解析导航 + 提及转链词边界')
   // 收尾：删素材 + 重载复原（防 13 后 wanted 计数漂移）
   for (const p of ['Mention Source.ad', 'Mention Linked.ad']) {
     const dRes = await request.post('/api/delete_page', { data: { path: p } })
