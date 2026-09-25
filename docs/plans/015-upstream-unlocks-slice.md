@@ -370,9 +370,11 @@ pub fn daily_note_impl() str {
     + probe 两件 + 基线 v14 + vm/e2e 扩单）+ 文档批随收口提交。
   - `task_ids`: T-01..T-06 全完成（execution_done，next: review）。
   - `evidence`: 判绿跑 = 独立矩阵 ALL GREEN（merged 16/16 含基线 v14
-    零漂移 + split 15/15）+ gate 第 3 跑 ALL GREEN（vm 双臂 + build
-    + e2e 47.0s——**新 exe 全窗一致配置**[工具链顺延 release 重建，
-    debug 被家族进程锁]）+ probe_daily 双臂十四案全绿 + probe_receipt
+    零漂移 + split 15/15）+ **gate 终验 ALL GREEN**（第 4 跑 docs-only
+    后代现跑——vm 双臂 + build + e2e 40.3s；第 3 跑同绿 47.0s——**新
+    exe 全窗一致配置**[工具链顺延 release 重建，debug 被家族进程锁]；
+    gate 4 跑 2 绿如实记，败点第 1 跑 vm 段[败点未留痕]/第 2 跑 build
+    0xC0000409 家族）+ probe_daily 双臂十四案全绿 + probe_receipt
     _d19 四案实录（含负结果）+ probe 全族十一件 fresh 绿。
   - `findings`（复审请重点裁定两件）：
     - **F-W15-1（AC-04 负结果定谳）**：探针 E 实勘推翻立项前提——
