@@ -232,8 +232,15 @@ fn json_esc(s str) str {
     return r
 }
 
-/// stem/alias 集内解析 target → rel（①stem 精确首现优先；②alias 集精确首现
-/// ——walk 序，同名 alias 冲突取首现；未命中 = ""；SD-302/SD-1001）。
+/// stem/alias 集内解析 target → rel（**四级解析序**——PLAN-017 SD-1701：
+/// ①stem 精确首现 → ②alias 精确首现 → ③stem casefold 首现 → ④alias
+/// casefold 首现；级间严格有序——exact 全集扫完才进 casefold 级[精确优先
+/// 于 walk 序：大小写变体档并存时确定性裁决]，级内 walk 序 first-hit
+///（010 同名 alias 冲突取首现口径随行）；未命中 = ""；SD-302/SD-1001）。
+/// casefold = 两侧 to_lower（D-22① 双轨在册）——CJK 恒等 → 三四级对
+/// 中文 stem/alias 天然 no-op（中文知识库行为逐字节不变）。消费面经
+/// links_json → extract_links_json 单点全量生效（exists/反链/出链/
+/// wanted/提及）。⚠ D-20②：页元素先拷局部变量再调方法。
 fn resolve_target(stems List, aliases List, rels List, target str) str {
     var hit str = ""
     var i int = 0
@@ -265,6 +272,40 @@ fn resolve_target(stems List, aliases List, rels List, target str) str {
             }
         }
         p = p + 1
+    }
+    if hit != "" {
+        return hit
+    }
+    var tl str = target.to_lower()
+    var i2 int = 0
+    while i2 < stems.len() {
+        if hit == "" {
+            var s2 str = stems[i2]
+            if s2.to_lower() == tl {
+                hit = rels[i2]
+            }
+        }
+        i2 = i2 + 1
+    }
+    if hit != "" {
+        return hit
+    }
+    var p2 int = 0
+    while p2 < aliases.len() {
+        if hit == "" {
+            var page_als2 List = aliases[p2]
+            var a2 int = 0
+            while a2 < page_als2.len() {
+                if hit == "" {
+                    var al2 str = page_als2[a2]
+                    if al2.to_lower() == tl {
+                        hit = rels[p2]
+                    }
+                }
+                a2 = a2 + 1
+            }
+        }
+        p2 = p2 + 1
     }
     return hit
 }
