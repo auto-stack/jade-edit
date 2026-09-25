@@ -101,7 +101,15 @@
   键不可经属性弹层编辑]）+ **行:列定谳**（探针 E 负结果：oncursor 在
   code_editor 非本仓消费的 autodown_editor、vue EngineEditor 亦无
   cursor emit——D-12「行:列降级」处置维持，供料候选扩面
-  [autodown_editor oncursor/anchor-reveal 双件]）；
+  [autodown_editor oncursor/anchor-reveal 双件]）；**第十四切片 = 回收站**
+  （SD-1601，2026-09-25）：`.trash/` 工作区回收站——delete_page/
+  delete_dir **改道移入**（保结构镜像 + 冲突 `--{n}` 后缀；**删除语义
+  四面表并表**：悬空化/改写/零改写不变 + 删除=移出工作区+副本保留——
+  点前缀目录 walk 自动忽略[一手源实勘]，工作区行为与硬删逐字节等价）
+  + trash_list/trash_restore/trash_purge 三契约（恢复 = 悬空自愈反向
+  闭环——删除→悬空→恢复→翻转回）+ find·trash 第四模式（Ctrl+Shift+T
+  ——清单/行恢复/清空强确认/空态）+ **probe 端口自动避让**（pick_port
+  ——WinNAT 漂移三笔环境账收口，固定常量清零）；
   **第八切片 = 别名解析 + 提及转链接**（SD-1001，
   2026-09-23）：链接域二期——frontmatter `aliases:` block-list 只读解析（`page_fm_list`，解析序 stem 精确首现优先 → alias 精确首现，消费面 exists/target_path/反链/出链/wanted 全面对齐，检索/提及/改名不入面）+ `linkify_page` POST 契约（明区改写、frontmatter 逐字节保留、计数返回）+ 提及行「转为链接」钮（串联自派生刷新消除 vue 轨并发 fetch 竞态）+ F-R9-4 删除流提及刷新收口；图谱 tab 顺位后移——vm 轨组
   件面依赖上游），本仓零依赖其代码。
@@ -149,18 +157,18 @@ node tools/bench/bench.mjs proxy [--runs N]    # 测量 → results/<ts>.jsonl
 node tools/bench/bench.mjs assert              # 存量 measurements × budgets 重评
 
 # —— 单门 ——
-node tests/vm_matrix.mjs            # 双臂（merged+split）检查单 + 基线 v14 零漂移
+node tests/vm_matrix.mjs            # 双臂（merged+split）检查单 + 基线 v15 零漂移
 pnpm test:e2e                       # vue 检查单（同一检查单；serve-back 后端）
 ```
 
-## Tests（判绿口径，SD-204；SD-304/403 扩定；SD-503 再扩定；SD-603 再扩定；SD-703 再扩定；SD-803 再扩定；SD-903 再扩定；SD-1003 再扩定；SD-1103 再扩定；SD-1203 再扩定；SD-1303 再扩定；SD-1403 再扩定；SD-1503 再扩定）
+## Tests（判绿口径，SD-204；SD-304/403 扩定；SD-503 再扩定；SD-603 再扩定；SD-703 再扩定；SD-803 再扩定；SD-903 再扩定；SD-1003 再扩定；SD-1103 再扩定；SD-1203 再扩定；SD-1303 再扩定；SD-1403 再扩定；SD-1503 再扩定；SD-1603 再扩定）
 
 检查单（PLAN-002 T-01 扩定 + PLAN-003 T-04 link 扩单 + PLAN-004 T-04
 find 扩单 + PLAN-005 T-04 create 扩单 + PLAN-006 T-04 rename 扩单 +
 PLAN-007 T-04 file 扩单 + PLAN-008 T-04 meta 扩单 + PLAN-009 T-04 mentions 扩单 +
 PLAN-010 T-04 alias/linkify 扩单 + PLAN-011 T-04 meta 属性扩单 + PLAN-012
 T-04 目录面/alias 检索扩单 + PLAN-013 T-04 显示名扩单 + PLAN-014 T-04
-面板行名化/目录二期扩单 + PLAN-015 T-05 daily/updated_at 扩单）：
+面板行名化/目录二期扩单 + PLAN-015 T-05 daily/updated_at 扩单 + PLAN-016 T-04 trash 模式/改道恢复扩单）：
 `boot / tree / open / edit / save / reload` 六检查 + **tab / editops /
 quit** 扩单三组 + **link / link-empty**（链接索引已知答案 + 反链面板双轨
 可用 + 空态——CJK 路径导航子步仅 vm merged 臂，D-19）+ **create**（建页
@@ -234,7 +242,17 @@ tags 面板开 7 tag 行[语料实勘全集——执行期校正：Hello World.a
 空余量 页面名（1）+ 外造 Wanted Target（1）]、e2e 位态 = 13 后[两行
 已知答案 Hello World（3）+ 页面名（1）——两轨素材异位既有口径]；
 wanted back 面零增量纯派生，tags_index 契约六案 = `tests/probe_tags
-.mjs` 双臂直证覆盖[含 CRLF 形态 + depth 传递]）——vm 矩阵与 vue
+.mjs` 双臂直证覆盖[含 CRLF 形态 + depth 传递]）+ **trash 模式/改道
+恢复弧线子步 [PLAN-016]**：find 组 ⑥[＋新建 TrashMe→菜单删除[删除
+弹层文案「将移入回收站」断言——AC-03 + 改道磁盘面 .trash/TrashMe
+.ad]→文件→回收站[第四模式——Ctrl+Shift+T/menubar 共口]→清单行→
+清空回收站→强确认弹层[M=1 派生+取消留置零落盘]→清空→空态闭环+
+磁盘 .trash 消——双臂同跑]；file 组 ⑱[⑥ 删除弧线的 CAP 定理在
+.trash→回收站模式→清单见条目→行恢复→空态+磁盘回+exists 翻转回
+双向态[悬空自愈——SD-1601]→树行回→merged tab 重开[CJK 树行开档
+D-19 口径 split 以 ft_sel/磁盘/links_json 承载]]；⑮ 入链已知答案
+1→2[⑱ 恢复 CAP 连带——其 12 步改写 [[Project X]] 回归链接面——
+014 双防线语义不变]）——vm 矩阵与 vue
 e2e 同单（断言域 = 结构/文本/磁盘字节，非像素）。
 
 - **完成态 = RESULT 行出现且两臂全数通过**：vm 矩阵 `merged 16/16 +
@@ -349,8 +367,23 @@ e2e 同单（断言域 = 结构/文本/磁盘字节，非像素）。
   第 2 跑 build 段 0xC0000409 家族、第 3 跑 ALL GREEN——如实记）+
   probe 全族十一件 fresh 绿（back 改后首跑——013 教训兑现）。file 组
   零失败漂移，组数不变 16/15/十五段。
-- 结构基线 = `tests/baseline/structure-v14.txt`：state 段逐字节 +
-  snapshot vnode id 出现序列（v2 仪器延续；**v14 = PLAN-015 计划内重锁**
+- N 定谳（2026-09-25 PLAN-016 T-04，SD-1603）：vm 双臂 **ALL GREEN ×多轮**
+  （判绿跑 merged **16/16** + split **15/15** + 基线 **v15** 零漂移逐跑
+  ——v15 锁后独立跑 + gate 内矩阵段连过；find 组 ⑥ trash 模式子步 +
+  file 组 ⑱ 改道/恢复弧线双臂全通；⑮ 入链已知答案 1→2 连带如实记）
+  + e2e 十五段全绿（41.4s；trash 全弧+恢复弧自育素材 TrashSrc/TrashMe
+  [14 已知答案域不复用 13 删除素材——执行期口径]；败点 = 子步实勘期
+  真窗迭代[树行 stem 定位/多行恢复钮行域/同名收起 strict/tab 位态三
+  还原——测试面非产品 bug]）+ **gate ALL GREEN**（vm 双臂 + build +
+  e2e）+ probe 全族 11 件 fresh 绿 + D-19 回执负结果复现一致[g①=0/
+  g② len=0——SD-1501 定谳面] + probe_rename 先在缺陷归一修复实录
+  （b64794a 复现同败非本批引入——updated_at 维护键语义面）。file/find
+  组零失败漂移，组数不变 16/15/十五段。
+- 结构基线 = `tests/baseline/structure-v15.txt`：state 段逐字节 +
+  snapshot vnode id 出现序列（v2 仪器延续；**v15 = PLAN-016 计划内重锁**
+  [App trash_rows/trash_purge_open 入 dump + action file.trash[Ctrl+Shift+T
+  键位] + menubar 文件项「回收站」+ 清空强确认弹层实例入 id 序列；
+  **v14 = PLAN-015 计划内重锁**
   [每日笔记 UI 面——action file.daily[Ctrl+Alt+N 键位] + menubar 文件项
   「今日笔记」+ 工具栏 calendar 钮入 id 序列；store/App 模型零状态面
   ——行:列消费未落地，探针 E 定谳 autodown_editor 无 oncursor 转换臂
@@ -374,7 +407,7 @@ e2e 同单（断言域 = 结构/文本/磁盘字节，非像素）。
 - [plans/attachments/081-t00-rulings.md](plans/attachments/081-t00-rulings.md) —
   T-00 三勘定决策档（auto-down PLAN-081 附件；双轨机制 / actions-vue
   现状 / 后端选型）
-- [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v18（SD-1504 指针；三十一项三分类；PLAN-015 增补 D-32[上游解锁兑现批实勘集——D-19 负结果回执[url_decode byte-as-char 精化面]+探针 D Date 可调定谳+探针 E oncursor 组件错位定谳+无参 POST 契约族首证]+D-21 v18 扩记[新传输负载窗实录——丢参/死亡零复现]；D-19/D-12 处置更新随行）
+- [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v19（SD-1604 指针；三十三项三分类；PLAN-016 增补 D-33[回收站切片实勘集——fs.tree 子树 id 相对性/点前缀忽略面一手源定谳+computed 内联串接与 description 位插值不发射双面+probe_rename updated_at 先在缺陷归一]+D-21 v19 扩记[执行窗实录——D-21 零复现]；D-19 处置随行[负结果维持+trash_list 无参 GET 零暴露]）
 - [upstream/2026-09-jade-supply.md](upstream/2026-09-jade-supply.md) —
   上游供料包（D-16 预热 / D-15 残余 / D-17 键入发射 / D-18 投影双态，
   期望形态+复验条件+回执方式）
