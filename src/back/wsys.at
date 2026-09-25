@@ -670,22 +670,26 @@ fn casefold_eq(a str, b str) bool {
     return a.to_lower() == b.to_lower()
 }
 
-/// body 内 [[Old]] / [[Old#anchor]] 精确 stem 匹配改写为 [[New]]/…：
+/// body 内 [[Old]] / [[Old#anchor]] stem 匹配改写为 [[New]]/…：
 /// split("[[") 分段 + 段内 split_once("]]") 取候选（与 extract_links_json
 /// 同一忽略面：无闭合 / 跨行 / trim 空候选不涉改写）；target = trim 后
-/// "#" 前段，== old **精确相等**（G3：casefold 不采用）才改写。改写 =
-/// 候选 split_once(old) 首现拆分重组 before+new+after（候选内——old 非
-/// 空白串、target 又位于候选头部（前导只可能是空白），首现即 target 位
-/// ：anchor 段与前后空白逐字节透传（含 `[[ Old ]]` 空白保真、`[[Old#Old]]`
-/// 锚内同名不误伤——split_once 只取首现））**+ "]]"+rest 段尾回接**
-///（T-01 实勘：漏回接 = 改写档自 "]]" 起截断——八案首跑实录）。段间
-/// "[[" 重接：split→join 同族 O(n) 通道（VM 无 str.join）。返回改写后
-/// body（无匹配 = 原文等价返回——调用面以「改写 ≠ 原文」门控 write_body
-/// 回写）。
+/// "#" 前段，**casefold 相等**（target.to_lower() == old.to_lower()
+/// ——PLAN-017 SD-1701 改写器四级匹配面：精确态是 casefold 态子集，
+/// 统一判 single condition；[[old]] 变体随改名改写[防悬空+规范化新精确
+/// 档]，006 精确改写行为为子集零变化）才改写。改写 =
+/// 候选 split_once(target) 首现拆分重组 before+new+after（候选内——
+/// target 非空白串、又位于候选头部（前导只可能是空白），首现即 target
+/// 位；anchor 段与前后空白逐字节透传（含 `[[ Old ]]` 空白保真、
+/// `[[Old#Old]]` 锚内同名不误伤——split_once 只取首现））
+/// **+ "]]"+rest 段尾回接**（T-01 实勘：漏回接 = 改写档自 "]]" 起截断
+/// ——八案首跑实录）。段间 "[[" 重接：split→join 同族 O(n) 通道（VM 无
+/// str.join）。返回改写后 body（无匹配 = 原文等价返回——调用面以
+/// 「改写 ≠ 原文」门控 write_body 回写）。
 fn rewrite_links(body str, old str, new str) str {
     if old == "" {
         return body
     }
+    var old_l str = old.to_lower()
     var segs = body.split("[[")
     var out str = segs[0]
     var i int = 1
@@ -706,8 +710,8 @@ fn rewrite_links(body str, old str, new str) str {
                     if hp.len() == 2 {
                         target = hp[0]
                     }
-                    if target == old {
-                        var rp = cand.split_once(old)
+                    if target.to_lower() == old_l {
+                        var rp = cand.split_once(target)
                         if rp.len() == 2 {
                             seg_out = rp[0] + new + rp[1] + "]]" + rest
                         }
@@ -721,18 +725,38 @@ fn rewrite_links(body str, old str, new str) str {
     return out
 }
 
-/// 页面重命名本体（api.rename_page 实现；SD-601）——POST 单事务五步：
-/// ①校验（old 在盘；new_name 清洗非空）②同目录路径合成 ③冲突/case-only
-/// 卫语句（**casefold 相等同拒**——G3：Windows 实盘同档 copy 后对自身
-/// 复制未定义，且裁决维持精确匹配口径）④改名——**read_text+write_text
-/// +delete 组合**（探针 A 定谳 2026-09-23：`File.copy` 别名双表在册
-/// [native_catalog 1007/2602] 但 `copy` 为 Auto 硬关键字[Plan 122 弃用
-/// 参数模式]，dot 访问解析器拒绝 → 模块 boot 即 fatal——**解析层不可调
-/// ，比 D-20① 链接层缺口更深一层**；fallback① 字节整迁等价；⚠ File.
-/// delete 恒返 0 吞错[stdlib shim 忽略 remove_file 结果] → exists 双复
-/// 核必须）⑤反链源文改写（collect_ad_pages walk 全页面——含被改名档新
-/// 路径[自链改写]；read_body → rewrite_links → 有变更才 write_body 回写
-/// ——frontmatter 保留）。返回工作区根相对新 path；"" = 任一卫语句拒。
+/// 字节整迁组合（read_text+write_text+File.delete + 目标在/源消失双复核
+/// ——File.delete 恒返 0 吞错[stdlib shim 忽略 remove_file 结果] → exists
+/// 翻转唯一可信判据；006/012 定文形态，PLAN-017 SD-1701 提取单点——
+/// rename 正常径与 case-only 两步迁移共用）。
+fn move_file(from_rel str, to_rel str) bool {
+    var from_full str = resolve(from_rel)
+    var to_full str = resolve(to_rel)
+    var text str = File.read_text(from_full)
+    File.write_text(to_full, text)
+    File.delete(from_full)
+    if !File.exists(to_full) {
+        return false
+    }
+    if File.exists(from_full) {
+        return false
+    }
+    return true
+}
+
+/// 页面重命名本体（api.rename_page 实现；SD-601 + **PLAN-017 SD-1701
+/// case-only 解锁**）——POST 单事务：①校验（old 在盘；new_name 清洗非空）
+/// ②同目录路径合成 ③卫语句（**全等拒**[new_rel == old_path——原名 no-op]；
+/// **casefold 相等非全等 = case-only 形态不再拒**——006 G3 裁决翻转：
+/// 四级解析序下改 casing 即改精确档命中，从无意义变有意义操作；走两步
+/// 临时名迁移 old → {stem}--cftmp-{n}.ad[唯一序号 while exists；`--cftmp-`
+/// 可辨识标记——迁移段失败残留档据此辨识，ledger 观测项] → new，move
+/// 组合 ×2 + 双复核 ×2；非 case-only 冲突卫 exists 拒[case-only 免——
+/// 同档物理同件，Windows exists 大小写不敏感恒真]）④改名（move_file
+/// 字节整迁）⑤反链源文改写（collect_ad_pages walk 全页面——含被改名
+/// 档新路径[自链改写]；read_body → rewrite_links[casefold 匹配面——
+/// [[old]] 变体随改名改写] → 有变更才 write_body 回写——frontmatter
+/// 保留）。返回工作区根相对新 path；"" = 任一卫语句拒/迁移失败。
 pub fn rename_page_impl(old_path str, new_name str) str {
     if !File.exists(resolve(old_path)) {
         return ""
@@ -742,21 +766,28 @@ pub fn rename_page_impl(old_path str, new_name str) str {
         return ""
     }
     var new_rel str = dir_of(old_path) + safe + ".ad"
-    if File.exists(resolve(new_rel)) {
+    if new_rel == old_path {
         return ""
     }
+    var src_rel str = old_path
     if casefold_eq(new_rel, old_path) {
-        return ""
+        var tmp_base str = dir_of(old_path) + stem_of(old_path) + "--cftmp-"
+        var n int = 1
+        var tmp_rel str = tmp_base + "1.ad"
+        while File.exists(resolve(tmp_rel)) {
+            n = n + 1
+            tmp_rel = tmp_base + n.str() + ".ad"
+        }
+        if !move_file(old_path, tmp_rel) {
+            return ""
+        }
+        src_rel = tmp_rel
+    } else {
+        if File.exists(resolve(new_rel)) {
+            return ""
+        }
     }
-    var old_full str = resolve(old_path)
-    var new_full str = resolve(new_rel)
-    var text str = File.read_text(old_full)
-    File.write_text(new_full, text)
-    File.delete(old_full)
-    if !File.exists(new_full) {
-        return ""
-    }
-    if File.exists(old_full) {
+    if !move_file(src_rel, new_rel) {
         return ""
     }
     var old_stem str = stem_of(old_path)

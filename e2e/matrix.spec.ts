@@ -40,7 +40,7 @@
 //   12 rename 重命名+反链改写全弧线（PLAN-006；vm 矩阵 check 12 同单，
 //             七子步——禁用态 untitled+脏档[handler 守卫，弹层不开]/
 //             弹层锚[预填+影响面预览]/取消零落盘/改名弧线[active/tab
-//             更新+磁盘改写 index·CAP 定理]/面板+树新 stem/case-only 拒
+//             更新+磁盘改写 index·CAP 定理]/面板+树新 stem/case-only 弧线
 //             [弹层留置+casefold 计数]/状态复原。素材 Projects.ad ASCII
 //             ——D-19 面无；vue Dialog 闭态=卸载（radix-vue——vm 恒渲染
 //             的轨内差异，断言以 visible/hidden 表达））。执行序在 11 后
@@ -654,21 +654,29 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await page.getByText('视图', { exact: true }).click()
   await page.getByText('切换反链', { exact: true }).click()
   console.log('[12 rename] 跨页改写可见 — 出链新 stem + 点击导航到新档 + 树新行')
-  // ⑥ case-only 拒（G3）：project x → 弹层留置 + 磁盘零变化（目录清单
-  // casefold 计数——Windows 大小写不敏感 FS exists 对同档恒真）→ 取消
+  // ⑥ case-only 弧线（PLAN-017 SD-1701——006 G3 裁决翻转：拒→解锁）：
+  // project x → **成功**（弹层关 + readdir 实名 project x.ad）→ 回翻
+  // Project X（case-only 双向 + check 13 移动弧线素材复位）+ 无 cftmp 残留
   await page.getByText('文件', { exact: true }).click()
   await page.getByText('重命名…', { exact: true }).click()
   await expect(page.getByText('重命名页面')).toBeVisible({ timeout: 10_000 })
   await renameInput.fill('project x')
   await page.getByRole('button', { name: '重命名', exact: true }).click()
-  await expect(page.getByText('重命名页面')).toBeVisible({ timeout: 10_000 })
-  const pxCount = fs
-    .readdirSync(path.join(WORKSPACE, 'wiki'))
-    .filter((f) => f.endsWith('.ad') && f.toLowerCase() === 'project x.ad').length
-  expect(pxCount, 'case-only 拒磁盘零变化（无第二档）').toBe(1)
-  await page.getByRole('button', { name: '取消', exact: true }).last().click()
   await expect(page.getByText('重命名页面')).toBeHidden({ timeout: 10_000 })
-  console.log('[12 rename] PASS — case-only 拒（弹层留置 + 磁盘零变化）')
+  const wdirCf = fs.readdirSync(path.join(WORKSPACE, 'wiki')).filter((f) => f.endsWith('.ad'))
+  expect(wdirCf.includes('project x.ad'), 'case-only 成功 casing 翻转（readdir 实名）').toBe(true)
+  expect(wdirCf.includes('Project X.ad'), '旧 casing 名消失').toBe(false)
+  await page.getByText('文件', { exact: true }).click()
+  await page.getByText('重命名…', { exact: true }).click()
+  await expect(page.getByText('重命名页面')).toBeVisible({ timeout: 10_000 })
+  await renameInput.fill('Project X')
+  await page.getByRole('button', { name: '重命名', exact: true }).click()
+  await expect(page.getByText('重命名页面')).toBeHidden({ timeout: 10_000 })
+  const wdirBack = fs.readdirSync(path.join(WORKSPACE, 'wiki')).filter((f) => f.endsWith('.ad'))
+  expect(wdirBack.includes('Project X.ad'), '回翻 Project X.ad（素材复位——check 13 移动弧线）').toBe(true)
+  expect(wdirBack.includes('project x.ad'), '小写名消失').toBe(false)
+  expect(wdirBack.every((f) => !f.includes('--cftmp-')), '无 --cftmp- 残留').toBe(true)
+  console.log('[12 rename] PASS — case-only 弧线（翻转+回翻——PLAN-017 解锁）')
   // ⑦ 状态复原：回 Hello World tab（quit 检查前置）
   await tabBtn('Hello World').click()
   await expect(visibleEditor(page)).toContainText('这是一段示例文本', { timeout: 15_000 })

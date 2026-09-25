@@ -60,7 +60,7 @@
 //             [ASCII]）**。执行序在 10b 后 9 前
 //   12 rename 重命名+反链改写全弧线（PLAN-006；七子步——禁用态 untitled
 //             +脏档/弹层锚[预填+影响面预览]/取消零落盘/改名弧线[active
-//             投影+磁盘改写 index·CAP 定理]/面板+树新 stem/case-only 拒
+//             投影+磁盘改写 index·CAP 定理]/面板+树新 stem/case-only 弧线
 //             [弹层留置]/状态复原。素材 Projects.ad ASCII 双臂——D-19
 //             面无；CJK 改名/自链/清洗/冲突/缺失案由 tests/probe_rename
 //             .mjs 八案双臂直证覆盖）。执行序在 11 后 9 前
@@ -1855,30 +1855,39 @@ async function runArm(arm, port) {
     await pressButton('视图', { exact: true })
     await pressButton('切换反链', { exact: true })
     await stateIs('backlinks_open', 'false')
-    // ⑥ case-only 拒（G3）：Project X → project x → ""（弹层留置 + 磁
-    // 盘零变化——无第二个 project x.ad）→ 取消复原。
+    // ⑥ case-only 弧线（PLAN-017 SD-1701——006 G3 裁决翻转：拒→解锁）：
+    // Project X → project x（**成功**——两步迁移 casing 翻转：弹层关 +
+    // active 路径小写 + readdir 实名 project x.ad）→ **回翻** project x →
+    // Project X（case-only 双向 + check 13 移动弧线素材复位）+ 无
+    // --cftmp- 残留。
     await pressButton('文件', { exact: true })
     await pressButton('重命名…', { exact: true })
     await stateIs('rename_open', 'true')
     await typeIntoRenameInput('project x')
     await pressInRenameDialog('重命名')
-    await sleep(500)
-    const rejState = await callTool('autoui_state', { fields: ['rename_open', 'rename_q'] })
-    // Windows 大小写不敏感 FS——exists(lower) 对同档恒真，第二档判定 =
-    // 目录清单 casefold 计数（probe_rename ⑧ 同款）。
-    const wikiDirNow = fs.readdirSync(path.join(FIXTURE, 'wiki')).filter((f) => f.endsWith('.ad'))
-    const pxCount = wikiDirNow.filter((f) => f.toLowerCase() === 'project x.ad').length
-    const rejOk = /rename_open:\s*true/.test(rejState) && fs.existsSync(renamedFile) && pxCount === 1
-    await pressInRenameDialog('取消')
     await stateIs('rename_open', 'false')
-    if (!rejOk) throw new Error(`case-only 拒断言失守（弹层应留置 + 磁盘零变化）state=[${rejState.replace(/\n/g, ' | ').trim()}] pxCount=${pxCount} wiki=${JSON.stringify(wikiDirNow)}`)
+    await stateIs('active_title', 'wiki/project x')
+    const wikiDirCf = fs.readdirSync(path.join(FIXTURE, 'wiki')).filter((f) => f.endsWith('.ad'))
+    const cfFlipOk = wikiDirCf.includes('project x.ad') && !wikiDirCf.includes('Project X.ad')
+    await pressButton('文件', { exact: true })
+    await pressButton('重命名…', { exact: true })
+    await stateIs('rename_open', 'true')
+    await typeIntoRenameInput('Project X')
+    await pressInRenameDialog('重命名')
+    await stateIs('rename_open', 'false')
+    await stateIs('active_title', RENAME_NEW_TITLE)
+    const wikiDirBack = fs.readdirSync(path.join(FIXTURE, 'wiki')).filter((f) => f.endsWith('.ad'))
+    const cfBackOk = wikiDirBack.includes('Project X.ad') && !wikiDirBack.includes('project x.ad')
+    const cfNoTmpOk = wikiDirBack.every((f) => !f.includes('--cftmp-'))
+    const rejOk = cfFlipOk && cfBackOk && cfNoTmpOk
+    if (!rejOk) throw new Error(`case-only 弧线断言失守（flip=${cfFlipOk} back=${cfBackOk} noCftmp=${cfNoTmpOk} wiki=${JSON.stringify(wikiDirBack)}`)
     // ⑦ 状态复原：回 Hello World tab（quit 检查前置——typeWholeDoc 目
     // 标档）。CJK 改名导航子步不设——probe_rename 八案已直证 CJK 面，
     // 本组素材 ASCII 双臂（D-19 口径注记同 10c）。
     await pressTab('Hello World')
     await stateIs('active_title', tabTitleOf(TARGET_LABEL))
     check('12', 'rename', dlgOk && renameCancelOk && renamedExists && oldGone && rewriteOk && renamePanelOk && renameTreeOk && rejOk,
-      `rename 组七子步（禁用态 untitled+脏档/弹层锚 预填+预览 2页2处/取消零落盘/改名弧线 active+磁盘+双页改写/面板+树新 stem/case-only 拒弹层留置/状态复原）`)
+      `rename 组七子步（禁用态 untitled+脏档/弹层锚 预填+预览 2页2处/取消零落盘/改名弧线 active+磁盘+双页改写/面板+树新 stem/case-only 弧线[PLAN-017 翻转+回翻——casing 翻转/active 路径/无 cftmp 残留]/状态复原）`)
 
     // 13 file（PLAN-007 T-04）：树文件管理全弧线八子步（组内子步不占
     // 检查位，fail 即臂败，10c/12 同款）。执行序在 quit 前（quit 恒为

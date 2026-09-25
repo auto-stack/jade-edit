@@ -31,8 +31,16 @@
 //   ⑥ 目标冲突拒          "a-b-c-d" → "自链页二"（既有档 stem）→ "" + 磁盘
 //                        零变化（双档均原样）
 //   ⑦ old 缺失拒          "不存在.ad" → ""（零落盘）
-//   ⑧ case-only 拒        "wiki/Tasks" → "tasks" → ""（G3 裁决：精确匹配，
-//                        case-only 拒）+ 磁盘零变化（无第二个 tasks.ad）
+//   ⑧ case-only 解锁      "wiki/Tasks" → "TASKS" → "wiki/TASKS.ad"（PLAN-017
+//                        SD-1701——006 G3 裁决翻转：四级解析序下 case-only
+//                        从拒变有意义操作）：磁盘 casing 翻转[readdir 实名
+//                        TASKS.ad] + 字节整迁[frontmatter+① 改写态原样过
+//                        两步迁移] + 变体链接全改写[cf-src.ad 三态
+//                        [[tasks]]/[[Tasks]]/[[TASKS]] → [[TASKS]]——SD-1701
+//                        改写器四级匹配面；他页精确链接[对照 [[CAP Theorem]]
+//                        ]零重写——副作用圈定] + 无 --cftmp- 残留
+//   ⑧b 全等拒             "wiki/TASKS" → "TASKS"（new_rel == old_path 原名
+//                        no-op）→ ""（原 casefold_eq 拒面收窄为全等拒）
 //
 // 双臂一致 = 两臂返回值逐案相等（G2）。D-21 负载窗 flake：无-RESULT 早崩
 // 按 README 口径重跑即绿。
@@ -75,6 +83,10 @@ const CJK_SRC_FINAL = '见 [[a-b-c-d]] 一次。\n'
 const CJK_CLEAN_STEM = 'a/b:c*d'
 const CJK_CLEAN_REL = 'a-b-c-d.ad'
 const TEMPLATE_BODY = '# 任务清单\n\n' // create_page 模板（SD-501 定文）
+// PLAN-017 ⑧ 变体改写源（case-only 改名弧线素材——对照链接随 ① 改写）
+const CF_SRC_REL = 'wiki/cf-src.ad'
+const CF_SRC_OLD = '变体三态：[[tasks]] 与 [[Tasks]] 与 [[TASKS]]；对照：[[CAP 定理]]。\n'
+const CF_SRC_FINAL = '变体三态：[[TASKS]] 与 [[TASKS]] 与 [[TASKS]]；对照：[[CAP Theorem]]。\n'
 
 // ---- 八案（双臂共享；expect = 新 rel / ""）----
 const CASES = [
@@ -85,11 +97,13 @@ const CASES = [
   { id: '5-clean', old_path: '每日任务.ad', new_name: CJK_CLEAN_STEM, expect: CJK_CLEAN_REL },
   { id: '6-conflict', old_path: 'a-b-c-d.ad', new_name: '自链页二', expect: '' },
   { id: '7-missing', old_path: '不存在.ad', new_name: '随便', expect: '' },
-  { id: '8-case-only', old_path: 'wiki/Tasks.ad', new_name: 'tasks', expect: '' },
+  { id: '8-case-only', old_path: 'wiki/Tasks.ad', new_name: 'TASKS', expect: 'wiki/TASKS.ad' },
+  { id: '8b-same-name', old_path: 'wiki/TASKS.ad', new_name: 'TASKS', expect: '' },
 ]
 const RET_FIELD = {
   '1-basic': 'c1', '2-anchor': 'c1', '3-self': 'c2', '4-cjk': 'c3',
   '5-clean': 'c4', '6-conflict': 'c5', '7-missing': 'c6', '8-case-only': 'c7',
+  '8b-same-name': 'c9',
 }
 
 // ---- setup（双臂同构：merged=直调 / split=POST）----
@@ -99,6 +113,7 @@ const SETUP = [
   { kind: 'write', path: LINKPAGE_REL, body: LINKPAGE_BODY },
   { kind: 'create', title: '任务清单' },
   { kind: 'write', path: CJK_SRC_REL, body: CJK_SRC_OLD },
+  { kind: 'write', path: CF_SRC_REL, body: CF_SRC_OLD },
 ]
 
 function prepareWorkspace(ws) {
@@ -148,10 +163,19 @@ function diskAsserts(ws, orig, tag, failures) {
   ck(read(CJK_CLEAN_REL) === TEMPLATE_BODY && read('自链页二.ad') === SELF_BODY_NEW, '⑥ 冲突拒零变化（双档原样）')
   // ⑦ 缺失拒：零落盘
   ck(read('随便.ad') === null, '⑦ old 缺失拒零落盘（无 随便.ad）')
-  // ⑧ case-only 拒：Tasks.ad 原样 + 无第二档
+  // ⑧ case-only 解锁（PLAN-017 SD-1701）：casing 翻转 + 字节整迁
+  //（① 改写态原样过两步迁移）+ 变体三态全改写 + 他页精确链接零重写
+  //（副作用圈定）+ 无 --cftmp- 残留。⚠ Windows 路径大小写不敏感——
+  // readFileSync('wiki/Tasks.ad') 恒命中 TASKS.ad，casing 断言以
+  // readdir 实名为唯一判据。
   const wikiFiles = fs.readdirSync(path.join(ws, 'wiki')).filter((f) => f.endsWith('.ad'))
-  ck(read('wiki/Tasks.ad') === all(orig.tasks, '[[CAP 定理#block-consistency]]', '[[CAP Theorem#block-consistency]]'), '⑧ wiki/Tasks.ad 字节原样（改写态）')
-  ck(wikiFiles.filter((f) => f.toLowerCase() === 'tasks.ad').length === 1, `⑧ 无第二个 tasks.ad（wiki .ad 共 ${wikiFiles.length} 档）`)
+  ck(wikiFiles.includes('TASKS.ad') && !wikiFiles.includes('Tasks.ad'), '⑧ 磁盘 casing 翻转（readdir 实名 TASKS.ad，无 Tasks.ad 名）')
+  ck(read('wiki/TASKS.ad') === all(orig.tasks, '[[CAP 定理#block-consistency]]', '[[CAP Theorem#block-consistency]]'), '⑧ 新档 wiki/TASKS.ad 字节 = ① 改写态原档字节（两步迁移整迁等价）')
+  ck(read(CF_SRC_REL) === CF_SRC_FINAL, '⑧ cf-src.ad 变体三态 [[tasks]]/[[Tasks]]/[[TASKS]] → [[TASKS]] 全改写（改写器四级匹配面）+ 对照精确链接仅随 ① 改写')
+  ck(wikiFiles.every((f) => !f.includes('--cftmp-')), '⑧ 无 --cftmp- 临时档残留（两步迁移第二步收尾）')
+  ck(wikiFiles.filter((f) => f.toLowerCase() === 'tasks.ad').length === 1, `⑧ 唯一 tasks 档（wiki .ad 共 ${wikiFiles.length} 档）`)
+  // ⑧b 全等拒：原名 no-op（原 casefold_eq 拒面收窄）——档原样（同 read 复用）
+  ck(read('wiki/TASKS.ad') !== null, '⑧b 全等拒零变化（wiki/TASKS.ad 原样在盘）')
 }
 
 // ---------------- merged 臂：探针工程 + 进程内直调 ----------------
@@ -170,6 +194,7 @@ widget App {
         var w2 bool = false
         var s2 str = ""
         var w3 bool = false
+        var w4 bool = false
         var c1 str = ""
         var c2 str = ""
         var c3 str = ""
@@ -178,6 +203,7 @@ widget App {
         var c6 str = ""
         var c7 str = ""
         var c8 str = ""
+        var c9 str = ""
     }
     view {
         col (style: "h-full w-full items-center justify-center") {
@@ -191,14 +217,16 @@ widget App {
             w2 = write_wiki("wiki/链主.ad", "三态指向：[[CAP 定理]] 与 [[CAP 定理#block-consistency]] 与 [[ CAP 定理 ]] 止。\\n")
             s2 = create_page("任务清单")
             w3 = write_wiki("wiki/cjk-src.ad", "见 [[任务清单]] 一次。\\n")
+            w4 = write_wiki("wiki/cf-src.ad", "变体三态：[[tasks]] 与 [[Tasks]] 与 [[TASKS]]；对照：[[CAP 定理]]。\\n")
             c1 = rename_page("wiki/CAP 定理.ad", "CAP Theorem")
             c2 = rename_page("自链页.ad", "自链页二")
             c3 = rename_page("任务清单.ad", "每日任务")
             c4 = rename_page("每日任务.ad", "a/b:c*d")
             c5 = rename_page("a-b-c-d.ad", "自链页二")
             c6 = rename_page("不存在.ad", "随便")
-            c7 = rename_page("wiki/Tasks.ad", "tasks")
+            c7 = rename_page("wiki/Tasks.ad", "TASKS")
             c8 = rename_page("wiki/CAP Theorem.ad", "")
+            c9 = rename_page("wiki/TASKS.ad", "TASKS")
             done = true
         }
     }
@@ -284,7 +312,8 @@ async function runMergedArm() {
     const boolField = (name) => field(name, '(true|1|false|0)')
     const setupOk = strField('s1') === '自链页.ad' && boolField('w1') !== null && boolField('w1') !== '0' && boolField('w1') !== 'false' && boolField('w2') !== null && boolField('w2') !== '0' && boolField('w2') !== 'false'
       && strField('s2') === '任务清单.ad' && boolField('w3') !== null && boolField('w3') !== '0' && boolField('w3') !== 'false'
-    if (!setupOk) throw new Error(`probe setup failed (s1=${strField('s1')} w1=${boolField('w1')} w2=${boolField('w2')} s2=${strField('s2')} w3=${boolField('w3')})`)
+      && boolField('w4') !== null && boolField('w4') !== '0' && boolField('w4') !== 'false'
+    if (!setupOk) throw new Error(`probe setup failed (s1=${strField('s1')} w1=${boolField('w1')} w2=${boolField('w2')} s2=${strField('s2')} w3=${boolField('w3')} w4=${boolField('w4')})`)
     const returns = {}
     for (const c of CASES) {
       returns[c.id] = strField(RET_FIELD[c.id])
@@ -391,4 +420,4 @@ if (failures.length > 0) {
   console.error(`\n[probe-rename] FAIL（${failures.length} 项）:\n  - ${failures.join('\n  - ')}`)
   process.exit(1)
 }
-console.log(`\n[probe-rename] RESULT: merged + split 全案通过（八案 + 空名守卫附带案 + 改写逐字节/锚透传/自链/CJK/清洗/三拒磁盘复核 + 副作用圈定）+ 双臂一致=${agree}`)
+console.log(`\n[probe-rename] RESULT: merged + split 全案通过（八案 + 空名守卫附带案 + 全等拒 ⑧b + 改写逐字节/锚透传/自链/CJK/清洗/三拒磁盘复核 + case-only 两步迁移[casing 翻转/字节整迁/变体三态全改写/无 --cftmp- 残留] + 副作用圈定）+ 双臂一致=${agree}`)
