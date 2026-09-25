@@ -110,6 +110,20 @@
   闭环——删除→悬空→恢复→翻转回）+ find·trash 第四模式（Ctrl+Shift+T
   ——清单/行恢复/清空强确认/空态）+ **probe 端口自动避让**（pick_port
   ——WinNAT 漂移三笔环境账收口，固定常量清零）；
+  **第十五切片 = casefold+词边界**（SD-1701，2026-09-25）：链接解析
+  三期收口——**精确[003]→别名[010]→casefold[本批]**：①**解析四级
+  序**（stem 精确→alias 精确→stem casefold→alias casefold；级间严格
+  有序=精确优先于 walk 序；CJK 恒等零影响——中文知识库逐字节不变；
+  消费面单点全量生效——`[[hello world]]` → Hello World.ad 语料现成
+  答案）+ ②**case-only 改名解锁**（006 G3 裁决翻转——四级序下改
+  casing 即改精确档命中；两步临时名迁移 `{stem}--cftmp-{n}` 绕行
+  Windows 同档 casing 翻转 + 改写器四级匹配面——`[[old]]` 变体随
+  改名改写）+ ③**linkify 词边界**（纯 ASCII stem 双侧 62 集
+  A-Za-z0-9 判定——`CAP` 不再误中 `CAPTURE`；`_`/`-` 豁免不阻断；
+  CJK 恒子串定文）+ ④**Windows 同档边界定谳并账**（005/006/012 三处
+  挂账——create 幂等 exists 卫天然正确/检索已 casefold 零变化）；
+  零新契约/零新 UI 形态/**零重锁第二例**（基线 v15 不动——纯 back
+  语义扩容）；
   **第八切片 = 别名解析 + 提及转链接**（SD-1001，
   2026-09-23）：链接域二期——frontmatter `aliases:` block-list 只读解析（`page_fm_list`，解析序 stem 精确首现优先 → alias 精确首现，消费面 exists/target_path/反链/出链/wanted 全面对齐，检索/提及/改名不入面）+ `linkify_page` POST 契约（明区改写、frontmatter 逐字节保留、计数返回）+ 提及行「转为链接」钮（串联自派生刷新消除 vue 轨并发 fetch 竞态）+ F-R9-4 删除流提及刷新收口；图谱 tab 顺位后移——vm 轨组
   件面依赖上游），本仓零依赖其代码。
@@ -131,7 +145,11 @@
 前置：`auto.exe` 在 PATH 或 `AUTO_EXE` env（须含上游 669 `#[api]` 实参
 装配修复 + 671 vue 生成器缺口批——补件链退役面；**≥ v0.4.2-2125 构建**
 [PLAN-699 Axum/Hyper HTTP 传输 + PLAN-413 code_editor 事件族在册——
-本仓 PLAN-015 复验版 g63e14b045]）；`pnpm install`（仓根，playwright）。
+本仓 PLAN-015 复验版 g63e14b045]）；**2026-09-25 家族重建窗注记**：
+auto-lang 双 exe 中间态（debug 全量 vue gen 自旋 / 新 release deps
+select prop schema drift + vm 矩阵不稳）——分段路由判绿口径见
+parity-ledger D-21 v20（build 段 `SCHEMA_DRIFT_GENERATE_AT=1` 生成
+通道）；`pnpm install`（仓根，playwright）。
 工作区根：`JADE_WORKSPACE` env（缺席 = AUTO_PROJECT_DIR = 工程目录）。
 
 ```sh
@@ -161,14 +179,14 @@ node tests/vm_matrix.mjs            # 双臂（merged+split）检查单 + 基线
 pnpm test:e2e                       # vue 检查单（同一检查单；serve-back 后端）
 ```
 
-## Tests（判绿口径，SD-204；SD-304/403 扩定；SD-503 再扩定；SD-603 再扩定；SD-703 再扩定；SD-803 再扩定；SD-903 再扩定；SD-1003 再扩定；SD-1103 再扩定；SD-1203 再扩定；SD-1303 再扩定；SD-1403 再扩定；SD-1503 再扩定；SD-1603 再扩定）
+## Tests（判绿口径，SD-204；SD-304/403 扩定；SD-503 再扩定；SD-603 再扩定；SD-703 再扩定；SD-803 再扩定；SD-903 再扩定；SD-1003 再扩定；SD-1103 再扩定；SD-1203 再扩定；SD-1303 再扩定；SD-1403 再扩定；SD-1503 再扩定；SD-1603 再扩定；SD-1703 再扩定）
 
 检查单（PLAN-002 T-01 扩定 + PLAN-003 T-04 link 扩单 + PLAN-004 T-04
 find 扩单 + PLAN-005 T-04 create 扩单 + PLAN-006 T-04 rename 扩单 +
 PLAN-007 T-04 file 扩单 + PLAN-008 T-04 meta 扩单 + PLAN-009 T-04 mentions 扩单 +
 PLAN-010 T-04 alias/linkify 扩单 + PLAN-011 T-04 meta 属性扩单 + PLAN-012
 T-04 目录面/alias 检索扩单 + PLAN-013 T-04 显示名扩单 + PLAN-014 T-04
-面板行名化/目录二期扩单 + PLAN-015 T-05 daily/updated_at 扩单 + PLAN-016 T-04 trash 模式/改道恢复扩单）：
+面板行名化/目录二期扩单 + PLAN-015 T-05 daily/updated_at 扩单 + PLAN-016 T-04 trash 模式/改道恢复扩单 + PLAN-017 T-04 四级解析/词边界/case-only 弧线扩单）：
 `boot / tree / open / edit / save / reload` 六检查 + **tab / editops /
 quit** 扩单三组 + **link / link-empty**（链接索引已知答案 + 反链面板双轨
 可用 + 空态——CJK 路径导航子步仅 vm merged 臂，D-19）+ **create**（建页
@@ -184,7 +202,7 @@ e2e 弧线 = ASCII 悬空源档测试内造零语料改动）+ **find**（查找
 名七子步：入口禁用态[untitled+脏档——handler 守卫，D-24③]/弹层锚[预填
 stem + 影响面预览 N 页 M 处]/取消零落盘/改名弧线[active 投影 + tab 更新
 + 磁盘改名 + 双页源文改写]/跨页改写可见[出链行新 stem + 点击导航新档 +
-树新行]/case-only 拒[弹层留置 + casefold 计数断言]/状态复原——素材
+树新行]/case-only 弧线[PLAN-017 裁决翻转：Project X → project x **成功**——casing 翻转 readdir 实名 + 回翻双向 + 无 --cftmp- 残留——006「case-only 拒」子步随 SD-1701 改弧线]/状态复原——素材
 Projects.ad ASCII 双臂[D-19 面无]；CJK 改名/自链/锚透传/清洗/冲突/
 缺失案 = `tests/probe_rename.mjs` 八案双臂直证覆盖）+ **file**（树
 文件管理八子步[PLAN-007]：新建 index[根落位——ASCII 双臂，模板逐字
@@ -252,7 +270,17 @@ wanted back 面零增量纯派生，tags_index 契约六案 = `tests/probe_tags
 双向态[悬空自愈——SD-1601]→树行回→merged tab 重开[CJK 树行开档
 D-19 口径 split 以 ft_sel/磁盘/links_json 承载]]；⑮ 入链已知答案
 1→2[⑱ 恢复 CAP 连带——其 12 步改写 [[Project X]] 回归链接面——
-014 双防线语义不变]）——vm 矩阵与 vue
+014 双防线语义不变]）+ **四级解析/词边界子步 [PLAN-017]**：link 组
+10m ⑦[外造 CF Navigate.ad 含 `[[hello world]]` 小写变体链——③级
+stem casefold 命中 → 反链段新行 → 行点击开档 → 出链行 hello world
+非悬空[SD-1401 恒 target 文本]→ 点击导航落 Hello World.ad +
+links_json target_path 直证——ASCII 双臂]；⑧[外造 Mention D 三态体
+Hello WorldX/xHello World/Hello World 并置 → 转为链接 → **磁盘逐字节
+仅独立位包裹**[双侧邻接透传——词边界直证]+ D 行消[页级已链源排重]
+——ASCII 双臂]；解析四级序七案/级间序两证/pristine 基线零漂移 =
+`tests/probe_casefold.mjs` 双臂直证；case-only 两步迁移 + 变体改写
++ 全等拒 = `tests/probe_rename.mjs` ⑧/⑧b；词边界五案 = `tests/
+probe_alias_linkify.mjs` ⑪..⑮——vm 矩阵与 vue
 e2e 同单（断言域 = 结构/文本/磁盘字节，非像素）。
 
 - **完成态 = RESULT 行出现且两臂全数通过**：vm 矩阵 `merged 16/16 +
@@ -379,6 +407,23 @@ e2e 同单（断言域 = 结构/文本/磁盘字节，非像素）。
   g② len=0——SD-1501 定谳面] + probe_rename 先在缺陷归一修复实录
   （b64794a 复现同败非本批引入——updated_at 维护键语义面）。file/find
   组零失败漂移，组数不变 16/15/十五段。
+- N 定谳（2026-09-25 PLAN-017 T-04，SD-1703）：vm 双臂 **ALL GREEN ×多轮**
+  （判绿跑 merged **16/16** + split **15/15** + 基线 **v15** 零漂移逐跑——
+  **零重锁第二例实录**[纯 back 语义扩容：store/App 零新字段，dump 零新
+  字段断言随零漂移现跑兑现]；link 组 ⑦ 四级解析导航 + ⑧ 提及转链词
+  边界 + rename 组 case-only 弧线双臂全通；⑧ 三态体首跑实录 T-03 首版
+  左界败形[D-34①——str .length=字符数 vs char_at=字节索引实测定谳，
+  last_char_cp 修复]）+ e2e 十五段全绿 **5 连绿**（43.8-44.2s；前 2 跑
+  = 断言口径迭代[DOM 渲染文/read_wiki JSON 壳——D-23③ 家族]非产品
+  败形）+ vue build 绿[**工具链家族重建窗环境路由**：AUTO_EXE=release
+  [17:58 家族重建]+SCHEMA_DRIFT_GENERATE_AT=1——debug exe 对全量输入
+  gen 满核自旋、release 对 deps select prop 打 schema drift 且 vm 矩阵
+  split 臂不稳——唯一全过的旧 release g63e14b045 已被覆盖；**单命令
+  gate 待家族工具链稳定窗复核**（PLAN-013 v16 先例原样——分段判绿
+  在案：矩阵[debug]多轮 + build[release+drift] + e2e[debug] 5 连绿，
+  ledger D-21 v20 扩记）] + probe 全族 13 件复跑：12 件 RESULT 全绿
+  （含 probe_casefold 新增）+ probe_receipt_d19 负结果复现一致（D-19
+  维持原样）。link/rename 组零失败漂移，组数不变 16/15/十五段。
 - 结构基线 = `tests/baseline/structure-v15.txt`：state 段逐字节 +
   snapshot vnode id 出现序列（v2 仪器延续；**v15 = PLAN-016 计划内重锁**
   [App trash_rows/trash_purge_open 入 dump + action file.trash[Ctrl+Shift+T
@@ -407,7 +452,7 @@ e2e 同单（断言域 = 结构/文本/磁盘字节，非像素）。
 - [plans/attachments/081-t00-rulings.md](plans/attachments/081-t00-rulings.md) —
   T-00 三勘定决策档（auto-down PLAN-081 附件；双轨机制 / actions-vue
   现状 / 后端选型）
-- [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v19（SD-1604 指针；三十三项三分类；PLAN-016 增补 D-33[回收站切片实勘集——fs.tree 子树 id 相对性/点前缀忽略面一手源定谳+computed 内联串接与 description 位插值不发射双面+probe_rename updated_at 先在缺陷归一]+D-21 v19 扩记[执行窗实录——D-21 零复现]；D-19 处置随行[负结果维持+trash_list 无参 GET 零暴露]）
+- [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v20（SD-1704 指针；三十四项三分类；PLAN-017 增补 D-34[casefold+词边界切片实勘集——str .length=字符数 vs char_at=字节索引语义不一致实测定谳[D-20③ 翻案——词边界左界首版败形+last_char_cp 修复]/char_at 原语语义定谳[back 新消费首例]/case-only --cftmp- 残留观测项/probe_casefold pristine 期望表漏链校正]+D-21 v20 扩记[执行窗实录]；D-19/D-33 处置随行）
 - [upstream/2026-09-jade-supply.md](upstream/2026-09-jade-supply.md) —
   上游供料包（D-16 预热 / D-15 残余 / D-17 键入发射 / D-18 投影双态，
   期望形态+复验条件+回执方式）
