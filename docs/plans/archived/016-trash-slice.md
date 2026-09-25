@@ -1,6 +1,6 @@
 ---
 plan_id: PLAN-016
-status: reviewed
+status: archived
 feature_name: trash-slice
 author: [zhaopuming]
 created_at: 2026-09-25T12:27:33+08:00
@@ -443,6 +443,26 @@ create_dir 递归/move 组合/remove_dir_all 全已证）。
     probe_dir_ops RESULT 行 + gate 五段 PASS 行 + 锚注行号）；基线
     记录 = 树零 WIP/worktree 仅 main/pickPort grep 证。
   - `next: merge`。
+- **2026-09-25 归档（auto-plan-merge）**：
+  - `stage: merge` | PLAN-016:r1 | `outcome: pass`（五 checkpoint 闭环）。
+  - `prepared` = 复审基线 r1（de7da15 review 窗 + 512e1ea 复审记录）
+    + canonical delta 落位核验[SD-1601@ARCH:729（四面表:733）/
+    SD-1602@:786+:790/SD-1603@README:164+370/SD-1604@:410/D-33@ledger:44
+    实勘] + 投影目标 = ARCHITECTURE §5/§6 + README Tests/是什么/文档 +
+    ledger v19（tracked 文件——本仓在册知识库形态，docs/specs/ 结构化
+    目录本仓无先例[PLAN-001..015 同判]）+ delivery_commit = **baa3a07**
+    （de7da15 docs-only 后代核验：全窗 diff = 计划文件 + ledger H1 版本
+    字面一行——实现/依赖零变化；F-R16-1 随 merge 校正）。
+  - `landed` = main tip == baa3a07 直接 main 线性约定（无 dev 分支，
+    零 merge commit）+ known-good = merge 窗 vm merged 16/16 现跑
+    [基线 v15 零漂移；复审窗 gate ALL GREEN 五段在案]。
+  - `ledger_refreshed` = parity-ledger v19 tracked 在 main 读回[H1
+    v19 + 链尾 v18→v19 + D-33 新行 + D-19 随行 + D-21 v19 + 33 项
+    行数核验；无 live ledger 服务——PLAN-001 同判]。
+  - `archived` = git mv → docs/plans/archived/016-trash-slice.md +
+    status: archived + completion_kind: delivered。
+  - `cleaned` = 无 worktree/dev 分支（直接 main 线性约定——worktree
+    清单仅 main；代码工作树零 WIP）。
 - **2026-09-25 work 收口（auto-plan-work）**：
   - `stage: work` | PLAN-016 | plan_revision 1 | `outcome: pass` |
     code_commit e83b205（T-01=0d69571）| task_ids T-01..T-05 全勾。
