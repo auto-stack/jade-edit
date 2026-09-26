@@ -1,6 +1,6 @@
 ---
 plan_id: PLAN-019
-status: execution_done
+status: reviewed
 feature_name: dir-merge-trash-plus-slice
 author: [zhaopuming]
 created_at: 2026-09-26T23:58:21+08:00
@@ -394,6 +394,67 @@ fallback 双钮变体在案）。
     仓零接触[上游仓只读实勘——auto-lang/stdlib.rs/serde 源检]；
     probe 端口 pick_port 通道维持；`.runtime` 一次性件
     [diag-movedir/d35-retest/pre19-check]居 ignored 不入库。
+
+- **2026-09-27 复审 r1（auto-plan-review）：pass**
+  - `stage: review` | PLAN-019 | revision 1 | **outcome: pass** |
+    reviewed_commit: 33bc7b6（全窗四提交[base=8894a16]直接 main
+    线性祖谱：3b7a85a→773934a→b820bda→33bc7b6；工作树零 WIP；
+    worktree 仅 main[直接 main 线性约定 001..018 在档惯例]）|
+    dependency_revisions: auto-lang debug exe 09-26 10:43[127,
+    419,904B] + release exe 09-25 17:58[家族重建窗第三例窗内——
+    D-21 v23 在册] | spec_inputs: ledger v23[36 行 tracked]@
+    33bc7b6 + ARCHITECTURE@33bc7b6 + README@33bc7b6。
+  - **独立性声明**：同会话复审[用户单指令链授权全流程；实施会话
+    局限如实记——全部验收证据以工件重建现跑复放为准，不采信执行
+    者摘要；018 fce14bf 同款口径]。
+  - **acceptance_results（全现跑复放，复审窗 fresh）**：
+    - **AC-01 pass**：probe_dir_ops 双臂全案现跑[151 PASS/0 FAIL
+      ——merge 九案 mb①..mb⑨ 全绿[合并基础并入/冲突后缀保双份
+      [靶原档逐字节不变+`MgC--1.ad` 字节整迁]/merge=false 拒径回
+      归/循环卫先于合并/文件占位仍拒/**.trash 域卫双面直证——
+      F-R18-1 闭账**/CJK/无冲突链接零扰动归一 diff] + 既有 29 案
+      三参化零漂移 + 双臂一致=true]。
+    - **AC-02 pass**：vm_matrix merged 现跑 **16/16 ALL GREEN**
+      [㉓合并弧线+②拒径回归双臂面全通] + e2e 现跑 1 passed
+      53.0s[dir4 合并弧线真 DOM 含]。
+    - **AC-03 pass**：vm ⑦ trash 增强[行点击预览/树不可见/保存落
+      回 .trash 原位/恢复全部]merged 现跑全通 + probe mb⑥⑦ 域卫
+      直证[G3 闭账] + e2e trash 增强行为面现跑。
+    - **AC-04 pass**：F-R17-1 gate 单命令第三批实录**维持留观**
+      [证据复用——明示理由：exe 复审窗实测未变[时间戳同 T-04 窗]
+      + 败形确定性[split boot FAIL 先于 build 段]+两跑实录在册，
+      复跑仅重复已知败径——018 fce14bf 证据复用先例同款]；
+      **D-35② 复测复审窗复现**[split N=500 → HTTP 200 整数 500
+      字面量 len=3——018「空串/整数 0」同域形态变体，负结果维持
+      如实录]。
+    - **AC-05 pass[环境 caveat 如实录]**：merged ALL GREEN 现跑
+      [16/16 含**基线 v17 零漂移**] + 组数口径不变 16/15/十五段 +
+      N 定谳续记在案[SD-1903]；**gate 单命令 fresh-green = 外部家
+      族窗未至**[D-21 v23——split 臂败形经 8894a16 git-archive+
+      deps 物料同 exe 同签名复现判别链定谳外部性，非本批引入；
+      分段判绿路由 = 017 v20/018 v22 在册先例原样；unblock =
+      家族 exe 稳定后双臂矩阵复跑，与 F-R17-1 合流同载体——非
+      验收面缺失，环境阻塞如实记]。
+    - **AC-06 pass**：SD-1901@ARCH:902/SD-1902@ARCH:946/
+      SD-1903@README:206+:478/SD-1904@README:139+:538 锚点实勘齐
+      + 规范增量表四 delta 与落地一一对应[move_dir bool 参数/
+      movedir_conflict·TrashRestoreAll·合并移动 front 面/ledger
+      v23 grep 实证] + SD-1901 三项定文面[并入径定文+冲突后缀档
+      悬空换指口径+.trash 可编辑语义注记]全在案 + ledger v23
+      [D-36 五项+D-21 v23+D-35 复测注记]。
+  - **findings**：
+    - **F-R19-1 low 非阻塞**：合并冲突后缀档的**已开 tab remap
+      面**——MoveDirExec 的 TabsRenamed 循环按旧树 paths_under 将
+      冲突源档已开 tab 映至 `r + "/" + rest`[靶侧同名保留档 rel]
+      ——Reload 后该 tab 显**靶档内容**而非后缀新档内容；源码注记
+      在案[app.at MoveDirExec「合并冲突面 v1 记账」]且 SD-1901
+      换指口径覆盖链接域语义面，无数据丢失面[后缀新档磁盘在册，
+      重开即达]；unblock = r3 口[tab 映后缀路径或关闭——需求首现
+      时]。验收面外加护记录，非缺陷（G1/G2 断言域全不涉）。
+    - **留观续**：split fresh-green[F-R17-1 合流载体——D-21 v23
+      unblock 条件在册]；索引单趟合并后移[D-35② 复测维持]。
+  - **next: merge**（status reviewed；复审窗证据全部可解析——
+    probe/matrix/e2e/d35 均为入库脚本可复跑，文档锚点位在册）。
 
 ## 10. 待澄清事项
 
