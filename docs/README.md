@@ -436,8 +436,30 @@ e2e 同单（断言域 = 结构/文本/磁盘字节，非像素）。
   ledger D-21 v20 扩记）] + probe 全族 13 件复跑：12 件 RESULT 全绿
   （含 probe_casefold 新增）+ probe_receipt_d19 负结果复现一致（D-19
   维持原样）。link/rename 组零失败漂移，组数不变 16/15/十五段。
-- 结构基线 = `tests/baseline/structure-v15.txt`：state 段逐字节 +
-  snapshot vnode id 出现序列（v2 仪器延续；**v15 = PLAN-016 计划内重锁**
+- N 定谳（2026-09-26 PLAN-018 T-04，SD-1803）：vm 双臂 **ALL GREEN**
+  （判绿跑 merged **16/16** + split **15/15** + 基线 **v16** 零漂移——
+  计划内重锁后即跑全绿；file 组目录移动四子步双臂全通[移动弧线/
+  取消/循环卫拒/5 层深档快开命中——depth 8 收口]；deep 案首跑实录
+  断言口径迭代[行标签 dtitle 优先于 path fallback——测试面 1 轮非产品
+  败形]）+ e2e 十五段全绿 **5 连绿**（46.9-48.9s；13 dir3 同弧线三子步
+  含）+ vue build 绿 ×2[release 路由——家族重建窗延续口径同 017] +
+  **F-R17-1 gate 单命令复核实录 = 维持留观**（裸 `node scripts/gate.mjs`
+  build 段 debug exe gen 满核自旋[717 CPU 秒/12min 墙钟实锚]——exe
+  时间戳 09-25 未变即家族稳定窗未至，D-21 v21 扩记；分段路由判绿在案）
+  + probe 全族 13 件复跑：12 件 RESULT 全绿 + probe_receipt_d19 负结果
+  一致（D-19 维持）+ **probe_dir_ops 扩案全绿**（move_dir 六案+merged
+  域两形+depth 8+url_decode 重勘 p⑩[GET bool 裸 1/0 定谳——断言口径
+  随校]）；**StringBuilder 装配逐字节零漂移主证** = 标准语料前后采
+  9/9 相等 + probe 全族；500 档 VM 池值损坏实勘 → ledger **D-35** 新立
+  （上游域，稳定域 P ≤ 200）。file 组零失败漂移，组数不变 16/15/十五段。
+- 结构基线 = `tests/baseline/structure-v16.txt`：state 段逐字节 +
+  snapshot vnode id 出现序列（v2 仪器延续；**v16 = PLAN-018 计划内重锁**
+  [store movedir_open + App movedir_src/movedir_dst 入 dump + action
+  file.movedir 无快捷键 + menubar 文件项「移动目录…」+ 移动目录弹层
+  第十二实例双 input 闭态恒渲染入 id 序列——G5 实勘落定非零重锁第三例
+  ；v15 锁文件头注字面 v14 系重锁窗漏改——016 教训同款，v16 随锁校正]
+  ；**PLAN-017 = 零重锁第二例**[v15 维持——纯 back 语义扩容片]；**v15
+  = PLAN-016 计划内重锁**
   [App trash_rows/trash_purge_open 入 dump + action file.trash[Ctrl+Shift+T
   键位] + menubar 文件项「回收站」+ 清空强确认弹层实例入 id 序列；
   **v14 = PLAN-015 计划内重锁**
@@ -464,7 +486,7 @@ e2e 同单（断言域 = 结构/文本/磁盘字节，非像素）。
 - [plans/attachments/081-t00-rulings.md](plans/attachments/081-t00-rulings.md) —
   T-00 三勘定决策档（auto-down PLAN-081 附件；双轨机制 / actions-vue
   现状 / 后端选型）
-- [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v20（SD-1704 指针；三十四项三分类；PLAN-017 增补 D-34[casefold+词边界切片实勘集——str .length=字符数 vs char_at=字节索引语义不一致实测定谳[D-20③ 翻案——词边界左界首版败形+last_char_cp 修复]/char_at 原语语义定谳[back 新消费首例]/case-only --cftmp- 残留观测项/probe_casefold pristine 期望表漏链校正]+D-21 v20 扩记[执行窗实录]；D-19/D-33 处置随行）
+- [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v21（SD-1804 指针；三十五项三分类；PLAN-018 增补 D-35[目录移动+上量微批切片实勘集——探针 F StringBuilder natives 160-167 族可调定谳[平帧安全]/**500 档 VM 字符串池值损坏实勘——上游域 Plan 419/510 家族，稳定域 P ≤ 200**/GET bool 序列化裸 1/0 定谳/D-19 url_decode 重勘维持]+D-21 v21 扩记[执行窗实录含 F-R17-1 gate 单命令复核]+D-22 双观测项收口注记[O(P²) 装配 StringBuilder 兑现/depth 4→8 统一]；D-19/D-33/D-34 处置随行）
 - [upstream/2026-09-jade-supply.md](upstream/2026-09-jade-supply.md) —
   上游供料包（D-16 预热 / D-15 残余 / D-17 键入发射 / D-18 投影双态，
   期望形态+复验条件+回执方式）

@@ -1,12 +1,12 @@
 ---
 plan_id: PLAN-018
-status: executing
+status: execution_done
 feature_name: dir-move-upscale-slice
 author: [zhaopuming]
 created_at: 2026-09-25T23:04:36+08:00
 updated_at: 2026-09-25T23:04:36+08:00
 plan_revision: 1
-current_step: 4
+current_step: 5
 total_steps: 5
 supersedes_spec_components: []
 new_spec_components:
@@ -355,9 +355,24 @@ pub fn move_dir_impl(path str, new_parent str) str {
     [debug] + build[release+drift] + e2e[debug]），杀进程清面（0
     auto.exe 复核）。
 - **T-05 文档 + ledger v21 + 收口**（AC-06/负向）
-  - SD-1801..1804 落位；ledger v20→v21；负向证（probe 十代回归
+  - [x] SD-1801..1804 落位；ledger v20→v21；负向证（probe 十代回归
     主证）；§9 work 记录。
   - 验证：文档 diff 检视 + gate 复跑绿。
+  - **[2026-09-26 执行实录]**：ARCHITECTURE SD-1801[§5 三段：move_dir
+    五卫契约+弹层口径/StringBuilder 装配定文+规模上限实勘/depth 8
+    统一] + SD-1802[§6 头注+矩阵行 file 组子步+基线 v16+e2e 行 13
+    dir3+probe_dir_ops 扩注记]；README SD-1803[Tests 头注+检查单
+    PLAN-018+N 定谳条目+结构基线 v16 条目] + SD-1804[第十六切片条目
+    +ledger v21 指针]；ledger **v21**[表头 bump+**D-35 新行**（探针
+    F 定谳/500 档 VM 池值损坏——稳定域 P ≤ 200/GET bool 裸 1/0/D-19
+    重勘维持）+D-21 v21 扩记（执行窗+F-R17-1 复核维持）+D-22 双观测
+    项收口注记]。负向证：api.at 纯增量 20 行零删除[契约面只增]/
+    front `.console` 写面零违例[D-25①]/split_once front 活用零[D-31①
+    ——两处均在注释]/gen·dist ignored 零手改/冻结池与家族仓零接触
+    [上游仓只读实勘]/probe 全族 13 件[T-01 复跑 12 绿+receipt 负结果
+    一致]。gate 复跑：分段路由面已在 T-04 判绿（矩阵+build+e2e 分段
+    全绿 + e2e 5 连绿）；单命令 gate 维持 F-R17-1 留观（自旋实锚——
+    非本批引入，017 在册同判）。
 
 依赖序：T-01 → T-02 → T-03 → T-04 → T-05（线性；探针 F 为副件
 首闸——不可调仅缩副件范围，主件不阻塞）。
@@ -370,22 +385,62 @@ pub fn move_dir_impl(path str, new_parent str) str {
   - `next: work`（T-01 起；探针 F 副件闸、主件零闸）。
   - 目录合并 v1 不做（§4.1——r2 口）；基线 v16/零重锁第三例按
     弹层 dump 实勘落定（T-04）。
+- **2026-09-26 work 收口（auto-plan-work）**：
+  - `stage: work`，PLAN-018，revision 1，`outcome: pass`。
+  - `code_commit`: 3b7c108（T-01）→ cc1b6f0（T-02+T-03 边界适配
+    ——MoveDirGo 流与弹层同 handler 单元一体落地）→ T-04 → T-05
+    （五提交线性，main 直接约定）。
+  - `task_ids`: T-01..T-05 全勾。
+  - `evidence`: ①move_dir 七案双臂绿（probe_dir_ops m①..m⑦+m2b/m3b
+    merged 域——循环卫/合并拒/幂等/链接零扰动归一 diff 逐案可证）；
+    ②StringBuilder 装配逐字节零漂移（标准语料前后采 9/9 相等 + probe
+    全族 13 件[12 绿+receipt 负结果一致]）；③depth 8 直证（p⑨ 三深度
+    采+5 层深档 d8 含/d4 不含+search 8 walk+vm deep 案快开命中）；
+    ④url_decode 重勘 D-19 维持（p⑩——GET bool 裸 1/0 定谳随校）；
+    ⑤vm_matrix ALL GREEN 16/16+15/15（基线 **v16 重锁**——G5 实勘
+    非零重锁第三例）+ vue build 绿 ×2（release 路由）+ e2e **5 连绿**
+    （46.9-48.9s）；⑥文档面 SD-1801..1804 + ledger v21（D-35 新行）；
+    ⑦负向证全组（api.at 纯增量/front 纪律 grep/gen ignored/冻结池
+    零接触）。
+  - `blockers`: F-R17-1 gate 单命令复核**维持留观**（build 段 debug
+    exe gen 满核自旋 717 CPU 秒实锚——家族稳定窗未至[exe 09-25 未变]
+    ；分段路由判绿在案——非本批引入，017 在册同判，unblock = 家族
+    exe 稳定后 `node scripts/gate.mjs`）。**D-35 观察项**：500 档 VM
+    字符串池值损坏（上游域 Plan 419/510——稳定域 P ≤ 200 口径在册，
+    unlock = 上游池收口）。
+  - `next: review`（execution_done——复审建议独立会话或同会话独立
+    性声明+工件重建口径，017 先例）。
+  - 执行期实勘七件在册：①bulk 500 档旧 `+` 装配 P≈512 值损坏→
+    builder 后仍坏（上游池域——D-35 新立+阈值口径收窄 P ≤ 200）；
+    ②GET bool 序列化裸 1/0（p⑩ 断言口径随校）③merged N=300 handler
+    静默中止（240s 预算排除慢——D-35②）④探针 F 可调定谳（上游
+    C2 递归帧面不涉）⑤G5 弹层入 dump 实勘 → v16 重锁落定 ⑥deep 案
+    行标签 dtitle 优先于 path fallback（断言口径 1 轮迭代）⑦T-02/
+    T-03 边界适配（MoveDirGo 流一体落地）。
 
 ## 10. 待澄清事项
 
-1. **探针 F（StringBuilder .at 面）**：natives 160-165 在册——
-   调用语法/别名/handle 语义待定谳；不可调 → 副件缩为 depth 8
-   统一 + ledger 供料候选（主件不受影响）。
+1. **探针 F（StringBuilder .at 面）**：~~natives 160-165 在册——调用
+   语法/别名/handle 语义待定谳~~ **已定谳（T-01）**：可调——natives
+   160-167 族全原语 + CJK 大装配（上游 014-019 同款语法；平帧安全
+   ——C2 递归帧面不涉）；装配切换六处落位（SD-1801②）。
 2. **目录合并**（v1 拒）：目标同名目录拒 + §10 留口——合并语义
-   （文件并入 + 逐档冲突裁决/跳过策略）r2 裁决。
+   （文件并入 + 逐档冲突裁决/跳过策略）r2 裁决（PLAN-019 候选）。
 3. **索引单趟合并**（watch 批联动，明确不做）：links+tags+dtitle
    三 walk 一趟化需契约/缓存层重设——与文件系统 watch 批同议
    （届时刷新触发集本身重构）。
-4. **计时对照口径**（非断言）：500 档合成语料 Builder 前后计时
-   实录进 T-01 证据块——bench 预算面不新增（L0 现状）。
-5. **D-21 POST 波及**（观测项）：move_dir 单 POST（多文件 back
-   内联）；负载窗按 README 重跑口径。
-6. **PLAN-019 候选池**（本批后更新）：大纲（anchor-reveal 解锁
-   ——首位顺延候）、目录合并（r2）、索引单趟合并（watch 联动）、
-   Time front 面 probe 批、trash 预览/批量恢复、Unicode NFKC 批、
-   url_decode 供料回执件。
+4. **计时对照口径**（非断）：已实录（T-01 证据块）——500 档 split
+   link_index 2744ms[前]/2726ms[后]（文件 IO 主导，装配收益在 ADD
+   计数）；**500 档 VM 池值损坏实勘升级为 D-35 条目**（稳定域
+   P ≤ 200——上量批的真实边界如实记）。
+5. **D-21 POST 波及**（观测项）：move_dir 单 POST（多文件 back 内联）
+   ——执行窗零 D-21 签名（e2e 5 连绿无 400/ECONNREFUSED）。
+6. **PLAN-019 候选池**（本批后更新）：大纲（anchor-reveal 解锁——
+   十片门控）、目录合并（r2——本批 §10.2 留口）、索引单趟合并
+   （watch 联动）、Time front 面 probe 批、trash 预览/批量恢复、
+   Unicode NFKC 批、url_decode 供料回执件（D-19 维持——p⑩ 复测
+   口径在册）、**上游字符串池收口回执件（D-35——家族稳定窗同判）**。
+7. **F-R17-1（017 遗留观察项）**：本批复核实录维持留观——build 段
+   debug exe gen 满核自旋实锚（717 CPU 秒/12min）；unblock = 家族
+   exe 稳定后裸跑 `node scripts/gate.mjs`（PLAN-019 随批复核载体
+   续）。
