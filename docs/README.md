@@ -136,6 +136,18 @@
   池值损坏→上游域 ledger D-35，稳定域 P ≤ 200**）；③**depth 8 统一**
   （五面调用点 4→8——深目录覆盖收窄收口，语料 flat 零漂移）；基线
   **v16 重锁**（movedir 弹层/开态/双字段入 dump）；
+  **第十七切片 = 目录合并 + trash 增强**（SD-1901，2026-09-27）：
+  **工作区收尾批**——018/016 两处 r2 留口同批清账：①**目录合并**（
+  `move_dir` 扩参 merge[013 签名扩参先例二]——目标同名目录并入，冲突
+  档 `--{n}` 后缀保双份[零数据丢失默认]；循环卫先于合并/文件占位仍拒
+  /`.trash` 域卫双面直证[F-R18-1 闭账]；front 弹层预览行+「合并移动」
+  条件钮[探针 G 定谳双钮变体——checkbox 生成器双写缺陷降级]；无冲突
+  merge=true=纯移动语义）+ ②**trash 增强**（「恢复全部」front 循环
+  restore+末次三刷 + 行点击预览开档[.trash 路径 read_wiki 直读不入
+  索引——可编辑口径：保存落回 .trash 原位]）；**F-R17-1 gate 第三批
+  维持留观**+**D-35② 复测负结果维持**[新 exe split N=500 仍坏——
+  整数 500 形态变体]；基线 **v17 重锁**（合并弹层扩面/trash 行按钮
+  化入 dump+id 序列）；
   **第八切片 = 别名解析 + 提及转链接**（SD-1001，
   2026-09-23）：链接域二期——frontmatter `aliases:` block-list 只读解析（`page_fm_list`，解析序 stem 精确首现优先 → alias 精确首现，消费面 exists/target_path/反链/出链/wanted 全面对齐，检索/提及/改名不入面）+ `linkify_page` POST 契约（明区改写、frontmatter 逐字节保留、计数返回）+ 提及行「转为链接」钮（串联自派生刷新消除 vue 轨并发 fetch 竞态）+ F-R9-4 删除流提及刷新收口；图谱 tab 顺位后移——vm 轨组
   件面依赖上游），本仓零依赖其代码。
@@ -187,18 +199,18 @@ node tools/bench/bench.mjs proxy [--runs N]    # 测量 → results/<ts>.jsonl
 node tools/bench/bench.mjs assert              # 存量 measurements × budgets 重评
 
 # —— 单门 ——
-node tests/vm_matrix.mjs            # 双臂（merged+split）检查单 + 基线 v15 零漂移
+node tests/vm_matrix.mjs            # 双臂（merged+split）检查单 + 基线 v17 零漂移
 pnpm test:e2e                       # vue 检查单（同一检查单；serve-back 后端）
 ```
 
-## Tests（判绿口径，SD-204；SD-304/403 扩定；SD-503 再扩定；SD-603 再扩定；SD-703 再扩定；SD-803 再扩定；SD-903 再扩定；SD-1003 再扩定；SD-1103 再扩定；SD-1203 再扩定；SD-1303 再扩定；SD-1403 再扩定；SD-1503 再扩定；SD-1603 再扩定；SD-1703 再扩定；SD-1803 再扩定）
+## Tests（判绿口径，SD-204；SD-304/403 扩定；SD-503 再扩定；SD-603 再扩定；SD-703 再扩定；SD-803 再扩定；SD-903 再扩定；SD-1003 再扩定；SD-1103 再扩定；SD-1203 再扩定；SD-1303 再扩定；SD-1403 再扩定；SD-1503 再扩定；SD-1603 再扩定；SD-1703 再扩定；SD-1803 再扩定；SD-1903 再扩定）
 
 检查单（PLAN-002 T-01 扩定 + PLAN-003 T-04 link 扩单 + PLAN-004 T-04
 find 扩单 + PLAN-005 T-04 create 扩单 + PLAN-006 T-04 rename 扩单 +
 PLAN-007 T-04 file 扩单 + PLAN-008 T-04 meta 扩单 + PLAN-009 T-04 mentions 扩单 +
 PLAN-010 T-04 alias/linkify 扩单 + PLAN-011 T-04 meta 属性扩单 + PLAN-012
 T-04 目录面/alias 检索扩单 + PLAN-013 T-04 显示名扩单 + PLAN-014 T-04
-面板行名化/目录二期扩单 + PLAN-015 T-05 daily/updated_at 扩单 + PLAN-016 T-04 trash 模式/改道恢复扩单 + PLAN-017 T-04 四级解析/词边界/case-only 弧线扩单 + PLAN-018 T-04 目录移动/depth 8 扩单）：
+面板行名化/目录二期扩单 + PLAN-015 T-05 daily/updated_at 扩单 + PLAN-016 T-04 trash 模式/改道恢复扩单 + PLAN-017 T-04 四级解析/词边界/case-only 弧线扩单 + PLAN-018 T-04 目录移动/depth 8 扩单 + PLAN-019 T-04 目录合并/trash 增强扩单）：
 `boot / tree / open / edit / save / reload` 六检查 + **tab / editops /
 quit** 扩单三组 + **link / link-empty**（链接索引已知答案 + 反链面板双轨
 可用 + 空态——CJK 路径导航子步仅 vm merged 臂，D-19）+ **create**（建页
@@ -282,7 +294,18 @@ wanted back 面零增量纯派生，tags_index 契约六案 = `tests/probe_tags
 双向态[悬空自愈——SD-1601]→树行回→merged tab 重开[CJK 树行开档
 D-19 口径 split 以 ft_sel/磁盘/links_json 承载]]；⑮ 入链已知答案
 1→2[⑱ 恢复 CAP 连带——其 12 步改写 [[Project X]] 回归链接面——
-014 双防线语义不变]）+ **四级解析/词边界子步 [PLAN-017]**：link 组
+014 双防线语义不变]）+ **trash 增强/目录合并子步 [PLAN-019]**：
+find 组 ⑦[双条目清单→行点击预览[.trash 路径 tab 开 active_title=
+.trash/TrashR1+树不可见——EXPLORER 区子树扫描]→保存落回 .trash
+原位[磁盘标记直证——可编辑口径 SD-1901]→恢复全部[循环 restore→
+清单空态+磁盘双档回根字节保真——建一删一双弧线]]；file 组 ㉓[
+MgA→MgB 同名对 弹层双 input→预览行现文+「合并移动」钮显[探针 G
+定谳双钮变体]→磁盘并入 靶原档逐字节不变+源档字节整迁+源目录消+
+tab 全量+links_json 归一 diff/不合并拒径回归[「移动」钮→弹层留置
++磁盘零变化]——e2e 素材 API 前置 daily 前[⑰ 树新鲜度承载]交互
+后置]；merge back 九案[含 F-R18-1 .trash 域卫双面直证闭账/冲突
+后缀保双份/无冲突链接零扰动] = `tests/probe_dir_ops.mjs` 双臂
+直证覆盖（mb①..mb⑨）+ **四级解析/词边界子步 [PLAN-017]**：link 组
 10m ⑦[外造 CF Navigate.ad 含 `[[hello world]]` 小写变体链——③级
 stem casefold 命中 → 反链段新行 → 行点击开档 → 出链行 hello world
 非悬空[SD-1401 恒 target 文本]→ 点击导航落 Hello World.ad +
@@ -452,8 +475,34 @@ e2e 同单（断言域 = 结构/文本/磁盘字节，非像素）。
   随校]）；**StringBuilder 装配逐字节零漂移主证** = 标准语料前后采
   9/9 相等 + probe 全族；500 档 VM 池值损坏实勘 → ledger **D-35** 新立
   （上游域，稳定域 P ≤ 200）。file 组零失败漂移，组数不变 16/15/十五段。
-- 结构基线 = `tests/baseline/structure-v16.txt`：state 段逐字节 +
-  snapshot vnode id 出现序列（v2 仪器延续；**v16 = PLAN-018 计划内重锁**
+- N 定谳（2026-09-27 PLAN-019 T-04，SD-1903）：vm **merged 臂 ALL
+  GREEN ×4**（16/16 含基线 **v17** 零漂移——计划内重锁[App
+  dirmerge_on+弹层预览行/合并移动条件钮/trash 行按钮化入 dump/id
+  序列——非零重锁第四例]锁前 ×3[15/15 基线未锁窗] + gate 内锁后
+  零漂移 PASS 实录；file 组 ㉓合并弧线 + find 组 ⑦ trash 增强
+  双臂面全通）+ **split 臂 = 外部家族窗延续[分段判绿，018 v22
+  先例]**：三跑 + **本批前代码[8894a16 git-archive+deps 物料]同
+  exe 同签名复现**[boot FAIL+wiki 树行不现——判别链外部性定谳，
+  D-21 v23 扩记]；merged/probe 双臂/e2e 全绿承载本批载体）+
+  e2e 十五段全绿 **5 连绿**（50.1-53.5s；13 dir4 合并弧线+trash
+  增强含；首跑败于 ft_nodes 陈旧预览落空——素材前置 daily 校正，
+  测试面非产品败形）+ vue build 绿[release 路由——家族重建窗延续
+  口径同 017/018] + **F-R17-1 gate 单命令第三批复核 = 维持留观**
+  （裸 `node scripts/gate.mjs` 两跑实录：merged 段过[含基线 v17
+  PASS]→split 段 boot FAIL 短路——build 段未达，exe 家族稳定窗
+  未至，D-21 v23 扩记；分段路由判绿在案）+ probe 全族 13 件
+  fresh：12 件 RESULT 全绿[含 probe_dir_ops 扩 merge 九案双臂——
+  mb⑥⑦ F-R18-1 域卫闭账]+probe_receipt_d19 负结果一致（D-19
+  维持）+ **D-35② 复测负结果维持**[新 exe 下 split N=500 仍损坏
+  ——HTTP 200 body=整数 500 字面量 len=3，018「空串/整数 0」同
+  域形态变体，P≤200 稳定域口径不变]。file/find 组零失败漂移，
+  组数不变 16/15/十五段。
+- 结构基线 = `tests/baseline/structure-v17.txt`：state 段逐字节 +
+  snapshot vnode id 出现序列（v2 仪器延续；**v17 = PLAN-019 计划内重锁**
+  [App dirmerge_on 旗标入 dump + 移动目录弹层预览行 text 节点 +「合并
+  移动」条件钮[探针 G 定谳双钮变体——bool computed 条件] + trash 行
+  路径 ghost button 化入 id 序列——非零重锁第四例；恢复全部钮零新
+  state——trash_rows 复用]；**v16 = PLAN-018 计划内重锁**
   [store movedir_open + App movedir_src/movedir_dst 入 dump + action
   file.movedir 无快捷键 + menubar 文件项「移动目录…」+ 移动目录弹层
   第十二实例双 input 闭态恒渲染入 id 序列——G5 实勘落定非零重锁第三例
@@ -486,7 +535,7 @@ e2e 同单（断言域 = 结构/文本/磁盘字节，非像素）。
 - [plans/attachments/081-t00-rulings.md](plans/attachments/081-t00-rulings.md) —
   T-00 三勘定决策档（auto-down PLAN-081 附件；双轨机制 / actions-vue
   现状 / 后端选型）
-- [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v21（SD-1804 指针；三十五项三分类；PLAN-018 增补 D-35[目录移动+上量微批切片实勘集——探针 F StringBuilder natives 160-167 族可调定谳[平帧安全]/**500 档 VM 字符串池值损坏实勘——上游域 Plan 419/510 家族，稳定域 P ≤ 200**/GET bool 序列化裸 1/0 定谳/D-19 url_decode 重勘维持]+D-21 v21 扩记[执行窗实录含 F-R17-1 gate 单命令复核]+D-22 双观测项收口注记[O(P²) 装配 StringBuilder 兑现/depth 4→8 统一]；D-19/D-33/D-34 处置随行）
+- [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v23（SD-1904 指针；三十六项三分类；PLAN-019 增补 D-36[目录合并+trash 增强切片实勘集——**探针 G 定谳双钮变体**[dialog 内嵌 checkbox 生成器 v-model/onchange 双写缺陷/vm 视图条件表达式 computed 字符串字面比较整子树丢弃——bool computed 引用健康/dialog-footer 内 if 条件节点不现三面一手实勘]+split 臂 D-21 v23 扩记[家族重建窗第三例——本批前代码同 exe 同签名判别链外部性定谳]+D-35② 复测负结果维持[整数 500 形态变体]+D-19/D-22 注记随行]；D-19/D-21/D-35 处置随行）
 - [upstream/2026-09-jade-supply.md](upstream/2026-09-jade-supply.md) —
   上游供料包（D-16 预热 / D-15 残余 / D-17 键入发射 / D-18 投影双态，
   期望形态+复验条件+回执方式）
