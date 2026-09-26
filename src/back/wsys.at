@@ -1405,32 +1405,41 @@ pub fn rename_dir_impl(path str, new_name str) str {
 //（create_dir/is_dir/remove_dir）；返值忽略 D-24②——exists/is_dir 双
 // 复核内建同族纪律。
 
-/// 目录移动本体（api.move_dir 实现；SD-1801）——POST 单事务五步：
-/// ①五卫：dir_norm(path) 非空（根拒）+ **.trash 域卫**（path / new_parent
-///   任一为 .trash 本体或 ".trash/" 前缀拒——回收站条目唯一合法通道 =
-///   trash_restore；delete_dir_impl/delete_page_impl 同族域卫）+
+/// 目录移动本体（api.move_dir 实现；SD-1801 + **PLAN-019 扩参 merge**
+/// ——SD-1901，013 set_page_meta 签名扩参先例二：唯一消费者 front 同批
+/// 改）——POST 单事务五步：
+/// ①六卫：dir_norm(path) 非空（根拒）+ **.trash 域卫双面**（path /
+///   new_parent 任一为 .trash 本体或 ".trash/" 前缀拒——回收站条目唯一
+///   合法通道 = trash_restore；delete_dir_impl/delete_page_impl 同族域卫
+///   ；F-R18-1 直证面——018 执行期加护，本批 probe 直证闭账）+
 ///   is_dir(path)（非目录/缺失拒）+ is_dir(new_parent)（目标父非目录/
 ///   缺失拒——根 "" 合法：resolve("") = 工作区根，移入根为合法弧线）
 ///   + **循环卫**（new_parent == path 或 new_parent 以 `path + "/"` 起
-///   → 拒——移入自身/后代结构性非法）+ **同父幂等**（new_parent ==
-///   dir_of(path) → 返回归一 path 零变化）+ **合并拒**（目标父下
-///   `{dirname}` exists → ""——同名目录/同名文件同判；**目录合并不做**
-///   [目标同名即拒]——文件并入 + 逐档冲突裁决 v1 排除，§10.2 r2 留口）；
-/// ②子件清单收集（rename_dir_impl 同款——工作区根树段扫描 + 前缀过滤
-///   + 段分类；**纯 .ad 卫**：任一 file 子件非 .ad 尾 → 拒，先于一切
+///   → 拒——移入自身/后代结构性非法；**先于合并分支**——merge=true 不
+///   绕循环卫）+ **同父幂等**（new_parent == dir_of(path) → 返回归一
+///   path 零变化）+ **目标冲突卫分支**（目标父下 `{dirname}` exists：
+///   merge=false → 现拒径零变化；merge=true → **并入径**——目标同名
+///   **文件**占位仍拒[并入面是目录]，同名**目录** → 文件并入）+
+///   **纯 .ad 卫**（根树段扫描——任一 file 子件非 .ad 尾拒，先于一切
 ///   落盘）；
-/// ③新目录建（File.create_dir——create_dir_all 递归幂等，探针 A 定谳）
-///   + 嵌套镜像目录逐个建 + **逐文件迁移循环**（新 rel = new_rel + 余段
-///   [rel.split_once(path + "/") 首现即前缀位——D-20③ 禁 length+slice
-///   安全通道]；move_file 组合迁移 + 双复核——006/012/017 定文形态单点）；
+/// ②子件清单收集（rename_dir_impl 同款——工作区根树段扫描 + 前缀过滤
+///   + 段分类）；
+/// ③新目录建（非合并径 File.create_dir——create_dir_all 递归幂等，探针
+///   A 定谳；合并径目标已存免建）+ 嵌套镜像目录逐个建（create_dir 幂等
+///   ——合并径目标内既有同名子目录免建直入）+ **逐文件迁移循环**（新
+///   rel = new_rel + 余段[rel.split_once(path + "/") 首现即前缀位——
+///   D-20③ 禁 length+slice 安全通道]；**合并径冲突档 `{stem}--{n}.ad`
+///   后缀 while exists**[trash_target 同族规则——n 从 1 起；**冲突后缀
+///   档 = 新档**，stem 变链接零改写语义下如实悬空/换指口径 SD-1901 注
+///   记]；move_file 组合迁移 + 双复核——006/012/017 定文形态单点）；
 /// ④旧目录清理：嵌套旧子目录**逆序** File.remove_dir（walk 序父先子后
 ///   ⇒ 逆序即子先于父——空目录原语非递归口径）+ 顶层 remove_dir +
 ///   复核（旧无 && 新 is_dir）；
 /// ⑤返回新工作区根相对目录路径（**dirname 段原样——移动不改名**，
-///   清洗属 rename_dir 面）；"" = 任一卫拒/迁移未生效。**部分迁移容忍
-///   注记**：循环中段失败留双份（rename_dir_impl 同判，006 非原子窗口
-///   家族；File.rename 别名供料解锁后可整体原子化）。
-pub fn move_dir_impl(path str, new_parent str) str {
+///   清洗属 rename_dir 面；合并径同返回目标 rel）；"" = 任一卫拒/迁移
+///   未生效。**部分迁移容忍注记**：循环中段失败留双份（rename_dir_impl
+///   同判，006 非原子窗口家族；File.rename 别名供料解锁后可整体原子化）。
+pub fn move_dir_impl(path str, new_parent str, merge bool) str {
     var p str = dir_norm(path)
     if p == "" {
         return ""
@@ -1470,8 +1479,18 @@ pub fn move_dir_impl(path str, new_parent str) str {
     if np != "" {
         new_rel = np + "/" + dname
     }
+    // 目标冲突卫分支（SD-1901——018「合并拒」r2 兑现）：merge=false 现
+    // 拒径零变化；merge=true 并入径（目标同名**文件**占位仍拒——并入面
+    // 是目录；同名**目录** → 文件并入）。
+    var merging bool = false
     if File.exists(resolve(new_rel)) {
-        return ""
+        if !merge {
+            return ""
+        }
+        if !File.is_dir(resolve(new_rel)) {
+            return ""
+        }
+        merging = true
     }
     // ②卫 + 清单：工作区根树段扫描 + 前缀过滤（⚠ D-20②：段元素先拷
     // 局部变量再调方法——rename_dir_impl 同款段分类语义）。
@@ -1508,9 +1527,12 @@ pub fn move_dir_impl(path str, new_parent str) str {
         }
         i = i + 1
     }
-    // ③新目录 + 嵌套镜像目录（create_dir_all 语义幂等）。
+    // ③新目录 + 嵌套镜像目录（create_dir_all 语义幂等；合并径目标已存
+    // 免建——镜像 subdir 幂等直入）。
     var new_full str = resolve(new_rel)
-    File.create_dir(new_full)
+    if !merging {
+        File.create_dir(new_full)
+    }
     var d int = 0
     while d < subdirs.len() {
         var sd str = subdirs[d]
@@ -1522,7 +1544,9 @@ pub fn move_dir_impl(path str, new_parent str) str {
         File.create_dir(resolve(dir_norm(new_rel + "/" + sd_rest)))
         d = d + 1
     }
-    // 逐文件迁移（move_file 组合单点——读+写+删+双复核）。
+    // 逐文件迁移（move_file 组合单点——读+写+删+双复核）；合并径冲突档
+    // `{stem}--{n}.ad` 后缀 while exists（trash_target 同族规则——新档
+    // 保双份零数据丢失默认）。
     var j int = 0
     while j < files.len() {
         // ⚠ D-20②：列表元素先拷局部变量再调方法。
@@ -1532,7 +1556,24 @@ pub fn move_dir_impl(path str, new_parent str) str {
         if rp.len() == 2 {
             rest = rp[1]
         }
-        if !move_file(rel, new_rel + "/" + rest) {
+        var to_rel str = new_rel + "/" + rest
+        if merging {
+            if File.exists(resolve(to_rel)) {
+                var drest str = dir_of(rest)
+                var fstem str = stem_of(rest)
+                if fstem == "" {
+                    return ""
+                }
+                var n int = 1
+                var cand str = drest + fstem + "--1.ad"
+                while File.exists(resolve(new_rel + "/" + cand)) {
+                    n = n + 1
+                    cand = drest + fstem + "--" + n.str() + ".ad"
+                }
+                to_rel = new_rel + "/" + cand
+            }
+        }
+        if !move_file(rel, to_rel) {
             return ""
         }
         j = j + 1

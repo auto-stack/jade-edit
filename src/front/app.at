@@ -2655,7 +2655,9 @@ widget App {
                 var r str = ""
                 var ok bool = true
                 try {
-                    r = move_dir(src, dir_trim(.movedir_dst))
+                    // PLAN-019 三参扩（SD-1901 契约扩参先例二——T-01 调用
+                    // 点适配，merge=false 拒径零变化；checkbox 态接线 T-02）。
+                    r = move_dir(src, dir_trim(.movedir_dst), false)
                 } catch (e) {
                     ok = false
                 }

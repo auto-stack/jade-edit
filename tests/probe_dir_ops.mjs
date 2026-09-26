@@ -61,6 +61,30 @@
 //                     in-register 期望 false（D-19 维持则绿；翻 true =
 //                     上游已修——fail 即信号，probe+ledger 随改）
 //
+// **PLAN-019 T-01 扩**（SD-1901——move_dir 扩参 merge 九案；双臂）：
+//   mb① 合并基础       DirMg（MgA.ad）→ MgTgt/DirMg（MgB.ad 已在）merge=true
+//                      → "MgTgt/DirMg"；并入 + 源目录消 + 双档并存
+//   mb② 冲突后缀保双份 DirMg2（MgC.ad=SrcC）→ 靶 MgC.ad=TgtC 在 →
+//                      merge=true → MgC--1.ad 后缀新档字节整迁 + 靶原档
+//                      不变（零数据丢失默认——trash_target 同族规则）
+//   mb③ merge=false 拒 DirMg3 → 靶同名在 → "" 拒径回归（018 案零变化）
+//   mb④ merge 循环卫   → 自身 merge=true → ""（循环卫先于合并分支）
+//   mb⑤ merge 文件占位 → Tgt2/DirMove（**文件**）merge=true → ""（并入
+//                      面是目录——同名文件占位仍拒）
+//   mb⑥ 域卫·源        ".trash/NoDir" → ""（**F-R18-1 直证闭账案**——
+//                      018 执行期加护无直证面，本批双面补证）
+//   mb⑦ 域卫·目标      → ".trash" merge=true → ""（域卫先于合并分支）
+//   mb⑧ CJK 合并       目录合并甲（档甲.ad）→ 合并靶/目录合并甲（靶档
+//                      .ad 在）→ "合并靶/目录合并甲"；双档并存
+//   mb⑨ 链接零扰动     DirMgLink（MgLink.ad 含 [[MoveA]]）→ MgTgt2
+//                      （无冲突）merge=true → link_index 前后归一 diff
+//                      相等（无冲突全入径=纯移动语义；冲突后缀档=新档
+//                      零改写口径 SD-1901 注记随 mb② 磁盘案承载）
+//
+// 嵌套目标目录造档通道（双臂同构零 ws_join 依赖——write_text 不建父目
+// 录，create_dir 清洗层不含分隔符）：MgBoot 根目录 + 档 → move_dir 入
+// MgTgt → rename_dir 改名靶名——全部已证 back 通道五连。
+//
 // 双臂一致 = 返回值逐案相等 + link JSON 归一相等。D-21 负载窗 flake：
 // 无-RESULT 早崩按 README 口径重跑即绿。
 //
@@ -108,6 +132,16 @@ const CASES = [
   { id: 'm4-pur-ad', expect: '' },
   { id: 'm5-idem', expect: 'DirMove2' },
   { id: 'm6-cjk', expect: 'Tgt/目录丙' },
+  // PLAN-019 move_dir merge 九案（SD-1901——共享面；嵌套靶 back 通道建成）
+  { id: 'mb1-merge-basic', expect: 'MgTgt/DirMg' },
+  { id: 'mb2-conflict-suffix', expect: 'MgTgt/DirMg2' },
+  { id: 'mb3-merge-false', expect: '' },
+  { id: 'mb4-merge-cycle', expect: '' },
+  { id: 'mb5-merge-file-block', expect: '' },
+  { id: 'mb6-trash-src', expect: '' },
+  { id: 'mb7-trash-dst', expect: '' },
+  { id: 'mb8-cjk-merge', expect: '合并靶/目录合并甲' },
+  { id: 'mb9-link-merge', expect: 'MgTgt2/DirMgLink' },
 ]
 const RET_FIELD = {
   'd1-root': 'd1', 'd2-not-dir': 'd2', 'd3-recursive': 'd3', 'd4-empty': 'd4',
@@ -116,6 +150,9 @@ const RET_FIELD = {
   'r5-cjk': 'r6', 'r6-missing': 'r7',
   'm1-basic': 'm1', 'm2-cycle': 'm2', 'm3-merge-file': 'm3', 'm4-pur-ad': 'm4',
   'm5-idem': 'm5', 'm6-cjk': 'm6',
+  'mb1-merge-basic': 'mb1', 'mb2-conflict-suffix': 'mb2', 'mb3-merge-false': 'mb3',
+  'mb4-merge-cycle': 'mb4', 'mb5-merge-file-block': 'mb5', 'mb6-trash-src': 'mb6',
+  'mb7-trash-dst': 'mb7', 'mb8-cjk-merge': 'mb8', 'mb9-link-merge': 'mb9',
 }
 // r⑦ 嵌套（merged 探针域）+ r⑧ 链接面（link_index 前后采 dual field）
 // + PLAN-018 m2b（循环卫后代形——ws_join 域）/m3b（合并拒同名目录形）
@@ -226,6 +263,36 @@ function diskAsserts(ws, tag, failures, opts = {}) {
     ck(isDir('Tgt/DirMove/sub'), 'm2b Tgt/DirMove/sub/ 占位原样（后代循环拒零落盘）')
     ck(isDir('Tgt3/DirMove'), 'm3b Tgt3/DirMove/ 同名目录占位原样（合并拒）')
   }
+  // —— PLAN-019 merge 面（SD-1901）——
+  // mb① 合并基础：并入 + 源消 + 双档并存
+  ck(read('MgTgt/DirMg/MgA.ad') === '# MgA\n\n', 'mb① MgTgt/DirMg/MgA.ad 并入逐字节')
+  ck(read('MgTgt/DirMg/MgB.ad') === '# MgB\n\n', 'mb① MgTgt/DirMg/MgB.ad 靶原档不变')
+  ck(!isDir('DirMg'), 'mb① DirMg/ 源目录已消')
+  // mb② 冲突后缀保双份：靶原档不变 + 后缀新档字节整迁
+  ck(read('MgTgt/DirMg2/MgC.ad') === '# TgtC\n\n', 'mb② MgC.ad 靶原档不变')
+  ck(read('MgTgt/DirMg2/MgC--1.ad') === '# SrcC\n\n', 'mb② MgC--1.ad 后缀新档字节整迁')
+  ck(!isDir('DirMg2'), 'mb② DirMg2/ 源目录已消')
+  // mb③ merge=false 拒径回归：零变化
+  ck(isDir('DirMg3'), 'mb③ DirMg3/ 原样（拒径零落盘）')
+  ck(read('DirMg3/MgD.ad') === '# MgD\n\n', 'mb③ DirMg3/MgD.ad 原样')
+  ck(read('MgTgt/DirMg3/MgE.ad') === '# MgE\n\n', 'mb③ 靶 MgE.ad 原样')
+  ck(read('MgTgt/DirMg3/MgD.ad') === null, 'mb③ 靶无 MgD（未并入）')
+  // mb④⑤ merge=true 循环卫/文件占位：零变化
+  ck(isDir('Tgt/DirMove'), 'mb④⑤ Tgt/DirMove/ 原样（循环卫先于合并分支）')
+  ck(read('Tgt/DirMove/MoveA.ad') === '# MoveA\n\n', 'mb④ MoveA.ad 原样')
+  ck(read('Tgt2/DirMove') === 'x\n', 'mb⑤ Tgt2/DirMove 文件占位原样（并入面是目录）')
+  // mb⑥⑦ .trash 域卫双面：拒绝操作零残留（.trash 本体 = d②/d④ delete
+  // 改道案合法副产物——在册态；域卫直证 = 被拒操作在 .trash 内零落点。
+  // F-R18-1 闭账案）
+  ck(!isDir('.trash/NoDir'), 'mb⑥ .trash/NoDir 零创建（源域卫拒——零落盘）')
+  ck(!isDir('.trash/DirMove'), 'mb⑦ .trash/DirMove 零创建（目标域卫拒 merge=true 亦不绕——零落盘）')
+  ck(read('.trash/DirDel/DelPageA.ad') === '# DelPageA\n\n', '域卫在册态：.trash 改道档原样（d② 副产物非本案面）')
+  // mb⑧ CJK 合并：双档并存
+  ck(read('合并靶/目录合并甲/档甲.ad') === '# 档甲\n\n', 'mb⑧ 档甲.ad 并入逐字节')
+  ck(read('合并靶/目录合并甲/靶档.ad') === '# 靶档\n\n', 'mb⑧ 靶档.ad 靶原档不变')
+  ck(!isDir('目录合并甲'), 'mb⑧ 目录合并甲/ 源目录已消')
+  // mb⑨ 链接案源迁移逐字节
+  ck(read('MgTgt2/DirMgLink/MgLink.ad') === '# MgLink\n\n见 [[MoveA]] 一处。\n', 'mb⑨ MgLink.ad 迁移逐字节')
   // 副作用圈定：根 .ad 集合恰为四档（+LinkSrc2——PLAN-018 素材）；语料 json 不动
   const rootAds = rootEntries.filter((f) => f.endsWith('.ad')).sort()
   ck(rootAds.join(',') === 'Blocker.ad,DelFile.ad,LinkSrc.ad,LinkSrc2.ad', `根 .ad 集合恰为四档（实际：${rootAds.join(', ')}）`)
@@ -306,6 +373,23 @@ widget App {
         var m5 str = ""
         var m6 str = ""
         var l7 str = ""
+        // —— PLAN-019 扩（SD-1901——move_dir merge 面）——
+        var s29 str = ""
+        var s30 str = ""
+        var s31 str = ""
+        var s32 str = ""
+        var s33 str = ""
+        var mb1 str = ""
+        var mb2 str = ""
+        var mb3 str = ""
+        var mb4 str = ""
+        var mb5 str = ""
+        var mb6 str = ""
+        var mb7 str = ""
+        var mb8 str = ""
+        var mb9 str = ""
+        var l8 str = ""
+        var l9 str = ""
     }
     view {
         col (style: "h-full w-full items-center justify-center") {
@@ -380,20 +464,76 @@ widget App {
             l4 = link_index("", 8)
             l5 = link_index("", 4)
             m8 = search_wiki("Deep5", 5)
-            // move_dir 六案 + 前后链接采
+            // move_dir 六案 + 前后链接采（**PLAN-019：全案三参化**——merge
+            //=false 承载 018 拒径零变化）
             l6 = link_index("", 4)
-            m1 = move_dir("DirMove", "Tgt")
-            m2 = move_dir("Tgt/DirMove", "Tgt/DirMove")
+            m1 = move_dir("DirMove", "Tgt", false)
+            m2 = move_dir("Tgt/DirMove", "Tgt/DirMove", false)
             s28 = ws_join("Tgt/DirMove/sub")
-            m2b = move_dir("Tgt/DirMove", "Tgt/DirMove/sub")
-            m3 = move_dir("Tgt/DirMove", "Tgt2")
+            m2b = move_dir("Tgt/DirMove", "Tgt/DirMove/sub", false)
+            m3 = move_dir("Tgt/DirMove", "Tgt2", false)
             s28 = ws_join("Tgt3/DirMove")
-            m3b = move_dir("Tgt/DirMove", "Tgt3")
+            m3b = move_dir("Tgt/DirMove", "Tgt3", false)
             w2 = write_wiki("Tgt/DirMove/notes.txt", "x\\n")
-            m4 = move_dir("Tgt/DirMove", "Tgt4")
-            m5 = move_dir("DirMove2", "")
-            m6 = move_dir("目录丙", "Tgt")
+            m4 = move_dir("Tgt/DirMove", "Tgt4", false)
+            m5 = move_dir("DirMove2", "", false)
+            m6 = move_dir("目录丙", "Tgt", false)
             l7 = link_index("", 4)
+            // —— PLAN-019 merge 面（SD-1901）——setup：嵌套靶目录 back
+            // 通道建成（MgBoot 根建+档 → move_dir 入 MgTgt → rename_dir
+            // 改靶名——双臂同构零 ws_join 依赖）+ merge 九案。
+            s29 = create_dir("MgTgt")
+            s29 = create_dir("MgBoot")
+            s29 = create_page("MgB")
+            s29 = move_page("MgB.ad", "MgBoot")
+            s29 = move_dir("MgBoot", "MgTgt", false)
+            s29 = rename_dir("MgTgt/MgBoot", "DirMg")
+            s29 = create_dir("DirMg")
+            s29 = create_page("MgA")
+            s29 = move_page("MgA.ad", "DirMg")
+            mb1 = move_dir("DirMg", "MgTgt", true)
+            s30 = create_dir("MgBoot2")
+            s30 = create_page("MgC")
+            s30 = move_page("MgC.ad", "MgBoot2")
+            s30 = write_wiki("MgBoot2/MgC.ad", "# TgtC\\n\\n")
+            s30 = move_dir("MgBoot2", "MgTgt", false)
+            s30 = rename_dir("MgTgt/MgBoot2", "DirMg2")
+            s30 = create_dir("DirMg2")
+            s30 = create_page("MgC")
+            s30 = write_wiki("MgC.ad", "# SrcC\\n\\n")
+            s30 = move_page("MgC.ad", "DirMg2")
+            mb2 = move_dir("DirMg2", "MgTgt", true)
+            s31 = create_dir("MgBoot3")
+            s31 = create_page("MgE")
+            s31 = move_page("MgE.ad", "MgBoot3")
+            s31 = move_dir("MgBoot3", "MgTgt", false)
+            s31 = rename_dir("MgTgt/MgBoot3", "DirMg3")
+            s31 = create_dir("DirMg3")
+            s31 = create_page("MgD")
+            s31 = move_page("MgD.ad", "DirMg3")
+            mb3 = move_dir("DirMg3", "MgTgt", false)
+            mb4 = move_dir("Tgt/DirMove", "Tgt/DirMove", true)
+            mb5 = move_dir("Tgt/DirMove", "Tgt2", true)
+            mb6 = move_dir(".trash/NoDir", "Tgt", false)
+            mb7 = move_dir("Tgt/DirMove", ".trash", true)
+            s32 = create_dir("合并靶")
+            s32 = create_dir("MgCjkBoot")
+            s32 = create_page("靶档")
+            s32 = move_page("靶档.ad", "MgCjkBoot")
+            s32 = move_dir("MgCjkBoot", "合并靶", false)
+            s32 = rename_dir("合并靶/MgCjkBoot", "目录合并甲")
+            s32 = create_dir("目录合并甲")
+            s32 = create_page("档甲")
+            s32 = move_page("档甲.ad", "目录合并甲")
+            mb8 = move_dir("目录合并甲", "合并靶", true)
+            s33 = create_dir("MgTgt2")
+            s33 = create_dir("DirMgLink")
+            s33 = create_page("MgLink")
+            s33 = write_wiki("MgLink.ad", "# MgLink\\n\\n见 [[MoveA]] 一处。\\n")
+            s33 = move_page("MgLink.ad", "DirMgLink")
+            l8 = link_index("", 4)
+            mb9 = move_dir("DirMgLink", "MgTgt2", true)
+            l9 = link_index("", 4)
             done = true
         }
     }
@@ -526,6 +666,11 @@ async function runMergedArm() {
       && strField(dump, 's26') === '目录丙/档丙.ad' && truthy(boolField(dump, 's27'))
       && strField(dump, 's28') === 'Tgt3/DirMove'
     if (!setupOk2) throw new Error(`probe setup (PLAN-018) failed:\n${dump.slice(0, 1200)}`)
+    // PLAN-019 setup 自证（s29..s33——嵌套靶 back 通道 + 源目录就位）
+    const setupOk3 = strField(dump, 's29') === 'DirMg/MgA.ad' && strField(dump, 's30') === 'DirMg2/MgC.ad'
+      && strField(dump, 's31') === 'DirMg3/MgD.ad' && strField(dump, 's32') === '目录合并甲/档甲.ad'
+      && strField(dump, 's33') === 'DirMgLink/MgLink.ad'
+    if (!setupOk3) throw new Error(`probe setup (PLAN-019) failed:\n${dump.slice(0, 1200)}`)
     const returns = {}
     for (const c of CASES) {
       returns[c.id] = strField(dump, RET_FIELD[c.id])
@@ -544,8 +689,13 @@ async function runMergedArm() {
     if (!depth.d1 || !depth.d8 || !depth.d4 || deepSearch === null || !linksM.before || !linksM.after) {
       throw new Error('probe state missing l3..l7/m8')
     }
+    // PLAN-019 面：mb⑨ 合并（无冲突全入径）前后链接采
+    const linksMb = { before: strField(dump, 'l8'), after: strField(dump, 'l9') }
+    if (!linksMb.before || !linksMb.after) {
+      throw new Error('probe state missing l8/l9')
+    }
     return {
-      returns, links, nested: true, depth, deepSearch, linksM,
+      returns, links, nested: true, depth, deepSearch, linksM, linksMb,
       diskCheck: (failures) => diskAsserts(MERGED_WS, 'merged', failures, { nested: true }),
     }
   } finally {
@@ -648,22 +798,77 @@ async function runSplitArm() {
       d4: await get('link_index', { path: '', depth: '4' }),
     }
     const deepSearch = await post('search_wiki', { query: 'Deep5', limit: 5 })
-    // move_dir 六案 + 前后链接采（m2b/m3b 跳过——同 r⑦ 口径）
+    // move_dir 六案 + 前后链接采（m2b/m3b 跳过——同 r⑦ 口径；**PLAN-019
+    // ：全案 payload 三参化**——merge 缺参 = 400 missing param）
     const linksM = { before: await get('link_index', { path: '', depth: '4' }) }
-    await exec('m1-basic', 'move_dir', { path: 'DirMove', new_parent: 'Tgt' })
-    await exec('m2-cycle', 'move_dir', { path: 'Tgt/DirMove', new_parent: 'Tgt/DirMove' })
-    await exec('m3-merge-file', 'move_dir', { path: 'Tgt/DirMove', new_parent: 'Tgt2' })
+    await exec('m1-basic', 'move_dir', { path: 'DirMove', new_parent: 'Tgt', merge: false })
+    await exec('m2-cycle', 'move_dir', { path: 'Tgt/DirMove', new_parent: 'Tgt/DirMove', merge: false })
+    await exec('m3-merge-file', 'move_dir', { path: 'Tgt/DirMove', new_parent: 'Tgt2', merge: false })
     if (!(await post('write_wiki', { path: 'Tgt/DirMove/notes.txt', body: 'x\n' }))) throw new Error('setup move notes.txt failed')
-    await exec('m4-pur-ad', 'move_dir', { path: 'Tgt/DirMove', new_parent: 'Tgt4' })
-    await exec('m5-idem', 'move_dir', { path: 'DirMove2', new_parent: '' })
-    await exec('m6-cjk', 'move_dir', { path: '目录丙', new_parent: 'Tgt' })
+    await exec('m4-pur-ad', 'move_dir', { path: 'Tgt/DirMove', new_parent: 'Tgt4', merge: false })
+    await exec('m5-idem', 'move_dir', { path: 'DirMove2', new_parent: '', merge: false })
+    await exec('m6-cjk', 'move_dir', { path: '目录丙', new_parent: 'Tgt', merge: false })
     linksM.after = await get('link_index', { path: '', depth: '4' })
+    // —— PLAN-019（SD-1901）：merge setup（嵌套靶 back 通道——create_dir
+    // + write_wiki + move_dir + rename_dir 全已证通道，双臂同构）——
+    if (await post('create_dir', { name: 'MgTgt' }) !== 'MgTgt') throw new Error('setup MgTgt failed')
+    if (await post('create_dir', { name: 'MgBoot' }) !== 'MgBoot') throw new Error('setup MgBoot failed')
+    if (await post('create_page', { title: 'MgB' }) !== 'MgB.ad') throw new Error('setup MgB failed')
+    if (await post('move_page', { path: 'MgB.ad', dir: 'MgBoot' }) !== 'MgBoot/MgB.ad') throw new Error('setup move MgB failed')
+    if (await post('move_dir', { path: 'MgBoot', new_parent: 'MgTgt', merge: false }) !== 'MgTgt/MgBoot') throw new Error('setup move MgBoot failed')
+    if (await post('rename_dir', { path: 'MgTgt/MgBoot', new_name: 'DirMg' }) !== 'MgTgt/DirMg') throw new Error('setup rename DirMg failed')
+    if (await post('create_dir', { name: 'DirMg' }) !== 'DirMg') throw new Error('setup DirMg failed')
+    if (await post('create_page', { title: 'MgA' }) !== 'MgA.ad') throw new Error('setup MgA failed')
+    if (await post('move_page', { path: 'MgA.ad', dir: 'DirMg' }) !== 'DirMg/MgA.ad') throw new Error('setup move MgA failed')
+    await exec('mb1-merge-basic', 'move_dir', { path: 'DirMg', new_parent: 'MgTgt', merge: true })
+    if (await post('create_dir', { name: 'MgBoot2' }) !== 'MgBoot2') throw new Error('setup MgBoot2 failed')
+    if (await post('create_page', { title: 'MgC' }) !== 'MgC.ad') throw new Error('setup MgC failed')
+    if (await post('move_page', { path: 'MgC.ad', dir: 'MgBoot2' }) !== 'MgBoot2/MgC.ad') throw new Error('setup move MgC failed')
+    if (!(await post('write_wiki', { path: 'MgBoot2/MgC.ad', body: '# TgtC\n\n' }))) throw new Error('setup TgtC body failed')
+    if (await post('move_dir', { path: 'MgBoot2', new_parent: 'MgTgt', merge: false }) !== 'MgTgt/MgBoot2') throw new Error('setup move MgBoot2 failed')
+    if (await post('rename_dir', { path: 'MgTgt/MgBoot2', new_name: 'DirMg2' }) !== 'MgTgt/DirMg2') throw new Error('setup rename DirMg2 failed')
+    if (await post('create_dir', { name: 'DirMg2' }) !== 'DirMg2') throw new Error('setup DirMg2 failed')
+    if (await post('create_page', { title: 'MgC' }) !== 'MgC.ad') throw new Error('setup MgC(2) failed')
+    if (!(await post('write_wiki', { path: 'MgC.ad', body: '# SrcC\n\n' }))) throw new Error('setup SrcC body failed')
+    if (await post('move_page', { path: 'MgC.ad', dir: 'DirMg2' }) !== 'DirMg2/MgC.ad') throw new Error('setup move MgC(2) failed')
+    await exec('mb2-conflict-suffix', 'move_dir', { path: 'DirMg2', new_parent: 'MgTgt', merge: true })
+    if (await post('create_dir', { name: 'MgBoot3' }) !== 'MgBoot3') throw new Error('setup MgBoot3 failed')
+    if (await post('create_page', { title: 'MgE' }) !== 'MgE.ad') throw new Error('setup MgE failed')
+    if (await post('move_page', { path: 'MgE.ad', dir: 'MgBoot3' }) !== 'MgBoot3/MgE.ad') throw new Error('setup move MgE failed')
+    if (await post('move_dir', { path: 'MgBoot3', new_parent: 'MgTgt', merge: false }) !== 'MgTgt/MgBoot3') throw new Error('setup move MgBoot3 failed')
+    if (await post('rename_dir', { path: 'MgTgt/MgBoot3', new_name: 'DirMg3' }) !== 'MgTgt/DirMg3') throw new Error('setup rename DirMg3 failed')
+    if (await post('create_dir', { name: 'DirMg3' }) !== 'DirMg3') throw new Error('setup DirMg3 failed')
+    if (await post('create_page', { title: 'MgD' }) !== 'MgD.ad') throw new Error('setup MgD failed')
+    if (await post('move_page', { path: 'MgD.ad', dir: 'DirMg3' }) !== 'DirMg3/MgD.ad') throw new Error('setup move MgD failed')
+    await exec('mb3-merge-false', 'move_dir', { path: 'DirMg3', new_parent: 'MgTgt', merge: false })
+    await exec('mb4-merge-cycle', 'move_dir', { path: 'Tgt/DirMove', new_parent: 'Tgt/DirMove', merge: true })
+    await exec('mb5-merge-file-block', 'move_dir', { path: 'Tgt/DirMove', new_parent: 'Tgt2', merge: true })
+    await exec('mb6-trash-src', 'move_dir', { path: '.trash/NoDir', new_parent: 'Tgt', merge: false })
+    await exec('mb7-trash-dst', 'move_dir', { path: 'Tgt/DirMove', new_parent: '.trash', merge: true })
+    if (await post('create_dir', { name: '合并靶' }) !== '合并靶') throw new Error('setup 合并靶 failed')
+    if (await post('create_dir', { name: 'MgCjkBoot' }) !== 'MgCjkBoot') throw new Error('setup MgCjkBoot failed')
+    if (await post('create_page', { title: '靶档' }) !== '靶档.ad') throw new Error('setup 靶档 failed')
+    if (await post('move_page', { path: '靶档.ad', dir: 'MgCjkBoot' }) !== 'MgCjkBoot/靶档.ad') throw new Error('setup move 靶档 failed')
+    if (await post('move_dir', { path: 'MgCjkBoot', new_parent: '合并靶', merge: false }) !== '合并靶/MgCjkBoot') throw new Error('setup move MgCjkBoot failed')
+    if (await post('rename_dir', { path: '合并靶/MgCjkBoot', new_name: '目录合并甲' }) !== '合并靶/目录合并甲') throw new Error('setup rename 目录合并甲 failed')
+    if (await post('create_dir', { name: '目录合并甲' }) !== '目录合并甲') throw new Error('setup 目录合并甲 failed')
+    if (await post('create_page', { title: '档甲' }) !== '档甲.ad') throw new Error('setup 档甲 failed')
+    if (await post('move_page', { path: '档甲.ad', dir: '目录合并甲' }) !== '目录合并甲/档甲.ad') throw new Error('setup move 档甲 failed')
+    await exec('mb8-cjk-merge', 'move_dir', { path: '目录合并甲', new_parent: '合并靶', merge: true })
+    if (await post('create_dir', { name: 'MgTgt2' }) !== 'MgTgt2') throw new Error('setup MgTgt2 failed')
+    if (await post('create_dir', { name: 'DirMgLink' }) !== 'DirMgLink') throw new Error('setup DirMgLink failed')
+    if (await post('create_page', { title: 'MgLink' }) !== 'MgLink.ad') throw new Error('setup MgLink failed')
+    if (!(await post('write_wiki', { path: 'MgLink.ad', body: '# MgLink\n\n见 [[MoveA]] 一处。\n' }))) throw new Error('setup MgLink body failed')
+    if (await post('move_page', { path: 'MgLink.ad', dir: 'DirMgLink' }) !== 'DirMgLink/MgLink.ad') throw new Error('setup move MgLink failed')
+    const linksMb = { before: await get('link_index', { path: '', depth: '4' }) }
+    await exec('mb9-link-merge', 'move_dir', { path: 'DirMgLink', new_parent: 'MgTgt2', merge: true })
+    linksMb.after = await get('link_index', { path: '', depth: '4' })
     // p⑩ url_decode 重勘（017 §10.6——家族重建窗后复测一次；in-register
     // 期望 false[D-19：GET query 百分号序列不解码]。翻 true = 上游已修
     // ——fail 即信号，probe+ledger 随改）。
     const urlDecode = await get('exists', { path: '归档夹/中文乙.ad' })
     return {
-      returns, links, nested: false, depth, deepSearch, linksM, urlDecode,
+      returns, links, nested: false, depth, deepSearch, linksM, linksMb, urlDecode,
       diskCheck: (failures) => diskAsserts(back.workspace, 'split', failures, { nested: false }),
     }
   } finally {
@@ -725,6 +930,16 @@ const mMoveOk = !ljNorm(merged.linksM.before, movedMBoth).includes('<unparsable>
 console.log(`  [m7-link-net] ${mMoveOk ? 'PASS' : 'FAIL'} — move 前后 link_index 归一 diff 双臂零扰动（stem 不变零改写——三联对照移动级）`)
 if (!mMoveOk) failures.push('m7-link-net: move 前后 link_index 归一 diff 失守')
 
+// mb⑨ 合并（无冲突全入径）链接零扰动归一 diff（PLAN-019——merge=true
+// 无冲突 = 纯移动语义直证；双臂 + 一致）
+const movedMb = new Set(['DirMgLink/MgLink.ad', 'MgTgt2/DirMgLink/MgLink.ad'])
+const mbLinkOk = !ljNorm(merged.linksMb.before, movedMb).includes('<unparsable>')
+  && !ljNorm(split.linksMb.before, movedMb).includes('<unparsable>')
+  && ljNorm(merged.linksMb.before, movedMb) === ljNorm(merged.linksMb.after, movedMb)
+  && ljNorm(split.linksMb.before, movedMb) === ljNorm(split.linksMb.after, movedMb)
+console.log(`  [mb9-link-net] ${mbLinkOk ? 'PASS' : 'FAIL'} — merge（无冲突全入径）前后 link_index 归一 diff 双臂零扰动（merge=true 无冲突 = 纯移动语义）`)
+if (!mbLinkOk) failures.push('mb9-link-net: merge 前后 link_index 归一 diff 失守')
+
 // p⑨ depth 8 统一（PLAN-018——fs.tree depth 语义面）：depth 1 不含 wiki/
 // 深度档、depth 8 全含（双臂语料现成结构）；merged 域深档（5 层）depth 8
 // 含 / depth 4 不含——**4→8 覆盖收窄收口直证** + search 内部 8 walk 命中。
@@ -755,4 +970,4 @@ if (failures.length > 0) {
   console.error(`\n[probe-dir-ops] FAIL（${failures.length} 项）:\n  - ${failures.join('\n  - ')}`)
   process.exit(1)
 }
-console.log(`\n[probe-dir-ops] RESULT: merged + split 全案通过（probe C 定谳[remove_dir 族可调]+delete_dir 六案+rename_dir 六案+嵌套案[merged]+链接零扰动归一 diff[r⑧+m⑦]+磁盘逐字节/双复核/副作用圈定+双臂一致=${agree}；**PLAN-018：move_dir 六案+循环卫后代形/合并拒同名目录形[merged]+depth 8 统一[三深度采+5 层深档收口直证+search 8 walk]+url_decode 重勘[D-19 维持]**）`)
+console.log(`\n[probe-dir-ops] RESULT: merged + split 全案通过（probe C 定谳[remove_dir 族可调]+delete_dir 六案+rename_dir 六案+嵌套案[merged]+链接零扰动归一 diff[r⑧+m⑦+mb⑨]+磁盘逐字节/双复核/副作用圈定+双臂一致=${agree}；**PLAN-018：move_dir 六案+循环卫后代形/合并拒同名目录形[merged]+depth 8 统一[三深度采+5 层深档收口直证+search 8 walk]+url_decode 重勘[D-19 维持]；PLAN-019：move_dir merge 九案[合并基础/冲突后缀保双份/merge=false 拒径回归/循环卫先于合并/文件占位仍拒/.trash 域卫双面直证——F-R18-1 闭账/CJK 合并/无冲突链接零扰动]+mb② 冲突档=新档磁盘承载**）`)
