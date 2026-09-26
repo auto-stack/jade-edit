@@ -716,6 +716,52 @@ fn trash_purge_desc_of(rows List) str {
     return "将永久删除回收站内全部 " + rows.len().str() + " 项"
 }
 
+/// 移动目录弹层·目标同名预览行（PLAN-019 T-02；SD-1901 front 半——
+/// G1 预览行）：源目录名（trim 后末段）+ 目标父目录（trim）→ 目标同名
+/// 目录判定（dirs_of 本地派生零 fetch——D-28② 规避在册形态；仅显示，
+/// 权威在 back 单事务合并）。命中 = 提示行文本（checkbox 语义引导）；
+/// 未命中/源空 = ""（行恒渲染空文本——deldir 预览行同款）。⚠ D-30①：
+/// 参数名避开模型字段名（ft_nodes/movedir_src/movedir_dst——vue codegen
+/// 阴影面）；D-33②：computed 单函数调用形态。
+fn movedir_preview_text(nodes List, src str, dst str) str {
+    var s str = dir_trim(src)
+    if s == "" {
+        return ""
+    }
+    var segs = s.split("/")
+    var dname str = segs[segs.len() - 1]
+    var np str = dir_trim(dst)
+    var target str = dname
+    if np != "" {
+        target = np + "/" + dname
+    }
+    var ds List = dirs_of(nodes)
+    var i int = 0
+    while i < ds.len() {
+        // ⚠ D-20②：列表元素先拷局部变量再比较。
+        var d str = ds[i]
+        if d == target {
+            return "目标已有同名目录：" + target + "（可用「合并移动」并入）"
+        }
+        i = i + 1
+    }
+    return ""
+}
+
+/// 回收站条目路径抽取（PLAN-019 T-02；恢复全部循环的元素安全通道——
+/// handler 内模型 List 直索引未证，call-arg 形过桥[.ft_nodes →
+/// paths_under 同款已证形态]；D-20② 元素先拷局部变量再取字段）。
+fn trash_paths_of(rows List) List {
+    var out List = []
+    var i int = 0
+    while i < rows.len() {
+        var r = rows[i]
+        out.push(r.path)
+        i = i + 1
+    }
+    return out
+}
+
 widget App {
     msg {
         Init, FtToggle(str), OpenFile(str), Reload,
@@ -740,8 +786,8 @@ widget App {
         ActMove, MoveEdit(str), MoveGo, MoveCancel,
         ActDelDir, DelDirEdit(str), DelDirGo, DelDirCancel,
         ActRenDir, RenDirTargetEdit(str), RenDirEdit(str), RenDirGo, RenDirCancel,
-        ActMoveDir, MoveDirSrc(str), MoveDirDst(str), MoveDirGo, MoveDirCancel,
-        ActTrash, TrashRestore(str), TrashPurge, TrashPurgeGo, TrashPurgeCancel,
+        ActMoveDir, MoveDirSrc(str), MoveDirDst(str), MoveDirGo, MoveDirGoMerge, MoveDirCancel,
+        ActTrash, TrashRestore(str), TrashRestoreAll, TrashPurge, TrashPurgeGo, TrashPurgeCancel,
     }
 
     model {
@@ -803,8 +849,15 @@ widget App {
         // —— 移动目录弹层数据态（PLAN-018；基线 v16 面）：源目录 input +
         // 目标父目录 input（ActMoveDir 置空——双空 + placeholder 引导；
         // 低频操作直填口径，014 目录弹层族同构不入 store D-20④）。----
+        // **PLAN-019 扩**（SD-1901；基线 v17 变更面）：`dirmerge_on` bool
+        // ——合并意向旗标（**探针 G 定谳 = 双钮变体**：dialog 内嵌
+        // checkbox 双写缺陷[v-model 隐式写 + onchange 显式 @update 双翻转
+        // 净零——生成器组件路径 checked=状态引用 v-model 化一手源实勘，
+        // ledger 记账]→ fallback「移动」/「合并移动」双钮——目标同名时
+        // 合并钮显；旗标由双钮 handler 显式置位，MoveDirExec 统一消费）。
         var movedir_src str = ""
         var movedir_dst str = ""
+        var dirmerge_on bool = false
         // —— 标签面板数据态（PLAN-008）：聚合行 {tag,label,paths}
         //（label 派生期拼接——双段 ${} 插值 avoidance，PLAN-003 先例）+
         // 单选展开态（"" = 全收，手风琴 v1）——find_q 同构不入 store
@@ -858,6 +911,9 @@ widget App {
         // 清空回收站强确认文案（PLAN-016；M 本地派生——trash_purge_desc_
         // of 模块纯函数委托，computed 不入 dump）。
         trash_purge_desc => trash_purge_desc_of(.trash_rows)
+        // 移动目录弹层·目标同名预览行（PLAN-019 T-02；本地派生零 fetch
+        // ——movedir_preview_text 纯函数委托；D-28② 规避在册形态）。
+        movedir_preview => movedir_preview_text(.ft_nodes, .movedir_src, .movedir_dst)
     }
 
     // —— actions 声明块（Plan 451 三源绑定：shortcut / toolbar 占位合成 /
@@ -1219,27 +1275,43 @@ widget App {
                                 }
                             }
                             // trash 模式（PLAN-016；第四模式——wanted 无
-                            // input 形态同构）：标题行下方行集（trash 内
-                            // 路径文本 + 行尾「恢复」小钮——**路径文本非
-                            // 点击面**：点行开档属非目标 §10.2，恢复唯一
-                            // 触点 = 恢复钮）+ 空态 + 底部「清空回收站」
-                            // 钮（TrashPurge 强确认弹层入口）。
+                            // input 形态同构）：标题行下方行集 + 空态 +
+                            // 底部「恢复全部」/「清空回收站」双钮。
+                            // **PLAN-019 扩**（SD-1901 front 半——016 §10.2
+                            // 「路径文本非点击面」裁决翻转）：行点击 =
+                            // 预览开档（`.OpenLink(entry)`——.trash 路径
+                            // read_wiki 直读[不入索引/dot 忽略不进树]，tab
+                            // 标题 = stem；可编辑口径——保存落回 .trash 原
+                            // 位，回收站档编辑无破坏面 SD-1901 注记）；
+                            // 恢复唯一触点仍 = 「恢复」钮。「恢复全部」=
+                            // front 逐条循环 restore（v0 条目量接受——back
+                            // 批量契约 §10.3 量级触发），完成 refetch 清单
+                            // + 末次三刷。
                             if .store.find_mode == "trash" {
                                 if .trash_rows.len() == 0 {
                                     text "（回收站为空）" { style: "text-[11px] text-muted-foreground px-3" }
                                 }
                                 for r in .trash_rows {
                                     row (style: "w-full items-center justify-between") {
-                                        text r.path { style: "flex-1 text-[12px] px-3 truncate text-muted-foreground" }
+                                        button (text: r.path, variant: "ghost") {
+                                            onclick: .OpenLink(r.path)
+                                            style: "flex-1 justify-start px-3 h-6 text-left text-[12px] text-muted-foreground truncate"
+                                        }
                                         button (text: "恢复", variant: "text") {
                                             onclick: .TrashRestore(r.path)
                                             style: "text-[11px] h-5 px-2 text-muted-foreground shrink-0 mr-2"
                                         }
                                     }
                                 }
-                                button (text: "清空回收站", variant: "text") {
-                                    onclick: .TrashPurge
-                                    style: "text-[11px] h-6 px-2 text-muted-foreground shrink-0 mx-3 mt-1"
+                                row (style: "w-full items-center justify-between shrink-0 mx-3 mt-1") {
+                                    button (text: "恢复全部", variant: "text") {
+                                        onclick: .TrashRestoreAll
+                                        style: "text-[11px] h-6 px-2 text-muted-foreground"
+                                    }
+                                    button (text: "清空回收站", variant: "text") {
+                                        onclick: .TrashPurge
+                                        style: "text-[11px] h-6 px-2 text-muted-foreground"
+                                    }
                                 }
                             }
                         }
@@ -1581,6 +1653,12 @@ widget App {
             // 引导[dirs_first 纯函数，D-28② 零 fetch]）。声明位在 rename
             // 弹层前——input 序锚纪律同上。⚠ 测试锚 = 「移动目录」标题
             // content 子树扫（D-29③ 标题锚纪律——全树唯一）。——
+            // **PLAN-019 扩**（SD-1901 front 半）：预览行（目标同名检测
+            // ——movedir_preview 本地派生，目标同名时提示行现文）+
+            // **探针 G 定谳 = fallback 双钮变体**：「合并移动」钮目标同名
+            // 时显（dialog 内嵌 checkbox 生成器双写缺陷[v-model 隐式写 +
+            // onchange 显式翻转双执行净零]——ledger 记账；bps form 语法
+            // 在册但 dialog 组件路径 v-model 化无单写形态）。
             dialog (open: .store.movedir_open) {
                 dialog-content {
                     dialog-header {
@@ -1599,9 +1677,13 @@ widget App {
                         placeholder: "目标父目录（空 = 工作区根）"
                         style: "w-full h-7 px-2 text-[12px] border rounded bg-background"
                     }
+                    text .movedir_preview { style: "text-[12px] text-muted-foreground px-1" }
                     dialog-footer {
                         button (text: "取消", variant: "outline") { onclick: .MoveDirCancel }
                         button (text: "移动", variant: "ghost") { onclick: .MoveDirGo }
+                        if .movedir_preview != "" {
+                            button (text: "合并移动", variant: "ghost") { onclick: .MoveDirGoMerge }
+                        }
                     }
                 }
             }
@@ -2636,6 +2718,9 @@ widget App {
         .ActMoveDir -> {
             .movedir_src = ""
             .movedir_dst = ""
+            // PLAN-019：合并旗标复位（弹层每次开即默认不合并——拒径
+            // 缺省语义，G1）。
+            .dirmerge_on = false
             store.MoveDirOpen()
         }
         .MoveDirSrc(v) -> {
@@ -2647,7 +2732,18 @@ widget App {
         .MoveDirCancel -> {
             store.MoveDirClose()
         }
+        // 双钮入口（PLAN-019；探针 G 定谳 fallback 形态——旗标显式置位
+        // + MoveDirExec 统一消费；handler 间调用直发在册[.Init →
+        // .TreeRefresh() 先例]）。
         .MoveDirGo -> {
+            .dirmerge_on = false
+            .MoveDirExec()
+        }
+        .MoveDirGoMerge -> {
+            .dirmerge_on = true
+            .MoveDirExec()
+        }
+        .MoveDirExec -> {
             var src str = dir_trim(.movedir_src)
             if src == "" {
                 console_log("move_dir: empty source")
@@ -2655,9 +2751,9 @@ widget App {
                 var r str = ""
                 var ok bool = true
                 try {
-                    // PLAN-019 三参扩（SD-1901 契约扩参先例二——T-01 调用
-                    // 点适配，merge=false 拒径零变化；checkbox 态接线 T-02）。
-                    r = move_dir(src, dir_trim(.movedir_dst), false)
+                    // PLAN-019 三参接线（SD-1901——merge = 合并旗标；
+                    // 卫语句/幂等/冲突裁决全在 back）。
+                    r = move_dir(src, dir_trim(.movedir_dst), .dirmerge_on)
                 } catch (e) {
                     ok = false
                 }
@@ -2668,6 +2764,11 @@ widget App {
                     store.MoveDirClose()
                     // 迁移前清单派生 + tab 全量更新（014 TabsRenamed 循环
                     // 同构——.ft_nodes 尚为旧树：paths_under 旧路径集）。
+                    // ⚠ 合并冲突后缀档 = 新档（stem 变）：tabs 循环按旧
+                    // 树 paths_under 仍覆盖（源档全部迁移——后缀档 rel 已
+                    // 变，store.TabsRenamed 以 r + "/" + rest 落新 rel 会
+                    // 错后缀档——合并冲突面 v1 记账：后缀档 tab 以新 rel
+                    // 重开承载，SD-1901 注记）。
                     var files List = paths_under(.ft_nodes, src)
                     var i int = 0
                     while i < files.len() {
@@ -2761,6 +2862,59 @@ widget App {
                 if ok {
                     console_log("trash: restore rejected (out-of-scope/conflict/missing)")
                 }
+            }
+        }
+        // 恢复全部流（PLAN-019；§2.3——016 §10.2 兑现）：front 逐条循环
+        // trash_restore（v0 条目量接受——back 批量契约 trash_restore_all
+        // §10.3 量级触发[单次 >50 条首现时升级]）；**末次三刷**（循环外
+        // 单次 Links/Tags/Tree——恢复流三刷同款，非逐条刷）；循环毕
+        // refetch 清单（空态达成/冲突残留可见）；逐条失败 = console 注记
+        // 循环继续（冲突条目留置——用户清理后重试）。零恢复成功 = 零
+        // refetch 零刷（清单/树/链接面零变化——触发集纪律）。⚠ 条目路径
+        // 经 trash_paths_of 过桥（call-arg 形——handler 内模型 List 直
+        // 索引未证，D-20② 家族安全通道）。
+        .TrashRestoreAll -> {
+            var paths List = trash_paths_of(.trash_rows)
+            var restored int = 0
+            var i int = 0
+            while i < paths.len() {
+                // ⚠ D-20②：列表元素先拷局部变量再使用。
+                var entry str = paths[i]
+                var rr str = ""
+                var ok bool = true
+                try {
+                    rr = trash_restore(entry)
+                } catch (e) {
+                    ok = false
+                }
+                if !ok {
+                    console_log("trash: restore failed")
+                }
+                if rr != "" {
+                    restored = restored + 1
+                } else {
+                    if ok {
+                        console_log("trash: restore rejected (out-of-scope/conflict/missing)")
+                    }
+                }
+                i = i + 1
+            }
+            if restored > 0 {
+                console_log("trash: restored all (" + restored.str() + ")")
+                var rows2 List = []
+                var ok2 bool = true
+                try {
+                    rows2 = json.to_value(trash_list())
+                } catch (e) {
+                    ok2 = false
+                }
+                if !ok2 {
+                    console_log("trash: list failed")
+                }
+                .trash_rows = rows2
+                .LinksRefreshOf(.store.active_path)
+                .TagsRefresh()
+                .TreeRefresh()
             }
         }
         // 清空入口：强确认弹层开（M 本地派生 = trash_purge_desc computed
