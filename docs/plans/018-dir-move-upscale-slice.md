@@ -6,7 +6,7 @@ author: [zhaopuming]
 created_at: 2026-09-25T23:04:36+08:00
 updated_at: 2026-09-25T23:04:36+08:00
 plan_revision: 1
-current_step: 1
+current_step: 3
 total_steps: 5
 supersedes_spec_components: []
 new_spec_components:
@@ -307,12 +307,30 @@ pub fn move_dir_impl(path str, new_parent str) str {
     计数不在墙钟。复跑：vm_matrix merged 16/16[基线 v15 零漂移]/
     split 15/15 ALL GREEN。
 - **T-02 front 弹层 + 入口**（AC-02 前半）
-  - store 开态 + menubar 项 + 弹层双 input（本地派生 placeholder）。
+  - [x] store 开态 + menubar 项 + 弹层双 input（本地派生 placeholder）。
   - 验证：merged 冒烟（弹层/取消/拒）+ `pnpm build` PASS。
+  - **[2026-09-26 执行实录]**：store movedir_open + MoveDirOpen/Close；
+    app.at msg 五口 + model 双字段 + action file.movedir（**无快捷键**
+    ——§2.4 M 族避让）+ menubar「移动目录…」（重命名目录…后）+ 弹层
+    第十二实例（双 input 源居首/目标父居次——014 双 input 序纪律；
+    placeholder 复用 dir_ph computed——零新 computed 面 D-33②；标题锚
+    「移动目录」D-29③）。冒烟三子步绿（menubar 开/取消关/空源拒弹层
+    留置）+ `pnpm build` PASS（release 路由——新弹层/actions 转译无阻）
+    + vm_matrix merged 15/16（唯 B 基线漂移——**弹层入 dump 实勘成立
+    → v16 重锁落 T-04**，其余检查全绿）。
 - **T-03 移动流收口**（AC-02 后半）
-  - `.MoveDirGo` 流（迁移前清单 + TabsRenamed 循环 + 刷新族）+
-  三联对照冒烟（面板快照比对）。
+  - [x] `.MoveDirGo` 流（迁移前清单 + TabsRenamed 循环 + 刷新族）+
+    三联对照冒烟（面板快照比对）。
   - 验证：merged 冒烟全弧线 + file 组回归 + e2e 子步冒烟。
+  - **[2026-09-26 执行实录——边界适配]**：MoveDirGo 流与弹层同笔一体
+    落地（同一 handler 单元，拆提交=人工倒退 churn）；流 = RenDirGo
+    同构（move_dir 直调[目标父空=合法弧线——空拒面只及源] + **迁移前**
+    ft_nodes 派生 paths_under → TabsRenamed 循环[stem 不变标题恒等] +
+    active/ft_sel 属目录 remap 显式计算 + Reload + 刷新族四口）。
+    三联对照冒烟绿：外造 目录甲（档甲.ad）→ 弹层双 input → 确认 →
+    磁盘新位字节整迁 + 旧目录消 + 树新位 + **面板快照零变化**（既有
+    页 links_json 归一 diff 相等 + 新页零链）。file 组回归/e2e 段随
+    T-04 扩单承载（本步以 vm_matrix 15/16 + 冒烟弧线为证）。
 - **T-04 测试扩单 + 基线按实取 + 判绿 + F-R17-1 复核**（AC-02/
   03/04/05）
   - file 组子步 + deep 案 + 基线落定 + gate（单命令复核实录）。

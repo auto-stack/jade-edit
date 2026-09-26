@@ -93,6 +93,9 @@ store EditorStore {
         // store——D-20④ 同款裁定：dir_q/move_q 先例）。
         var deldir_open bool = false
         var rendir_open bool = false
+        // —— 移动目录弹层开态（PLAN-018；基线 v16 面）：目录移动 = 低频
+        // 组织操作，双 input 数据态在 App 模型（014 目录弹层族同裁定）。
+        var movedir_open bool = false
     }
 
     // msg 载荷单类型（编译器约束）：Open 单 map、Edit 单 str。
@@ -112,6 +115,7 @@ store EditorStore {
         MetaOpen, MetaClose,
         DirOpen, DirClose, MoveOpen, MoveClose,
         DelDirOpen, DelDirClose, RenDirOpen, RenDirClose,
+        MoveDirOpen, MoveDirClose,
     }
 
     on {
@@ -535,6 +539,18 @@ store EditorStore {
         }
         .RenDirClose -> {
             .rendir_open = false
+            .console = console_lines()
+        }
+
+        // ---- 移动目录弹层（PLAN-018）：Open/Close 只翻开态（双 input
+        // 置空在 App 侧 .ActMoveDir——弹层面分野同 RenDirOpen/RenDirClose
+        //；取消零落盘——无 back 调用）。----
+        .MoveDirOpen -> {
+            .movedir_open = true
+            .console = console_lines()
+        }
+        .MoveDirClose -> {
+            .movedir_open = false
             .console = console_lines()
         }
 

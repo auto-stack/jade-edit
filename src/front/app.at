@@ -29,7 +29,7 @@ use find_panel: FindPanel
 use tags_panel: TagsPanel
 use bps.navigation.filetree.tree_util: flatten_tree, toggle_id
 use bps.navigation.filetree.tree_icon: TreeIcon
-use back.api: tree, ws_root, link_index, search_wiki, create_page, rename_page, delete_page, tags_index, linkify_page, page_meta, set_page_meta, create_dir, move_page, delete_dir, rename_dir, daily_note, trash_list, trash_restore, trash_purge
+use back.api: tree, ws_root, link_index, search_wiki, create_page, rename_page, delete_page, tags_index, linkify_page, page_meta, set_page_meta, create_dir, move_page, delete_dir, rename_dir, move_dir, daily_note, trash_list, trash_restore, trash_purge
 
 style warn_label = "text-[12px] text-amber-400 mr-1"
 
@@ -740,6 +740,7 @@ widget App {
         ActMove, MoveEdit(str), MoveGo, MoveCancel,
         ActDelDir, DelDirEdit(str), DelDirGo, DelDirCancel,
         ActRenDir, RenDirTargetEdit(str), RenDirEdit(str), RenDirGo, RenDirCancel,
+        ActMoveDir, MoveDirSrc(str), MoveDirDst(str), MoveDirGo, MoveDirCancel,
         ActTrash, TrashRestore(str), TrashPurge, TrashPurgeGo, TrashPurgeCancel,
     }
 
@@ -799,6 +800,11 @@ widget App {
         var deldir_q str = ""
         var rendir_target str = ""
         var rendir_q str = ""
+        // —— 移动目录弹层数据态（PLAN-018；基线 v16 面）：源目录 input +
+        // 目标父目录 input（ActMoveDir 置空——双空 + placeholder 引导；
+        // 低频操作直填口径，014 目录弹层族同构不入 store D-20④）。----
+        var movedir_src str = ""
+        var movedir_dst str = ""
         // —— 标签面板数据态（PLAN-008）：聚合行 {tag,label,paths}
         //（label 派生期拼接——双段 ${} 插值 avoidance，PLAN-003 先例）+
         // 单选展开态（"" = 全收，手风琴 v1）——find_q 同构不入 store
@@ -883,6 +889,10 @@ widget App {
         // 状态依赖可挂）。
         action (id: "file.deldir", handler: .ActDelDir, title: "删除目录…", shortcut: "Shift+Delete")
         action (id: "file.rendir", handler: .ActRenDir, title: "重命名目录…", shortcut: "Ctrl+Shift+R")
+        // 移动目录（PLAN-018 T-02；**无快捷键**——低频组织操作 + M 族已满
+        // [Ctrl+Shift+M=档移动在册]；不挂 enabled——目录目标经弹层 input
+        // 指定，D-24③ 同判）。
+        action (id: "file.movedir", handler: .ActMoveDir, title: "移动目录…")
         action (id: "file.quit",   handler: .ActQuit,   title: "退出",  shortcut: "Alt+F4")
         action (id: "edit.undo",   handler: .ActUndo,   title: "撤销",  icon: "undo-2",      shortcut: "Ctrl+Z")
         action (id: "edit.redo",   handler: .ActRedo,   title: "重做",  icon: "redo-2",      shortcut: "Ctrl+Y")
@@ -947,6 +957,9 @@ widget App {
                             menubar-item (title: "回收站", icon: "trash-2", shortcut: "Ctrl+Shift+T") { onclick: .ActTrash }
                             menubar-item (title: "删除目录…", shortcut: "Shift+Delete") { onclick: .ActDelDir }
                             menubar-item (title: "重命名目录…", shortcut: "Ctrl+Shift+R") { onclick: .ActRenDir }
+                            // 移动目录（PLAN-018——「重命名目录…」后；无
+                            // 快捷键 §2.4——M 族避让）
+                            menubar-item (title: "移动目录…") { onclick: .ActMoveDir }
                             menubar-separator
                             menubar-item (title: "退出", icon: "log-out", shortcut: "Alt+F4") { onclick: .ActQuit }
                         }
@@ -1557,6 +1570,38 @@ widget App {
                     dialog-footer {
                         button (text: "取消", variant: "outline") { onclick: .RenDirCancel }
                         button (text: "重命名", variant: "ghost") { onclick: .RenDirGo }
+                    }
+                }
+            }
+
+            // —— 移动目录弹层（PLAN-018 第十六切片；dialog 第十二实例
+            // ——双 input「源目录」+「目标父目录」，重命名目录弹层双
+            // input 同构形态（源居首目标父居次——语义序同源 014 口径）；
+            // 预填 = 双空（低频操作直填——placeholder = dir_ph 本地派生
+            // 引导[dirs_first 纯函数，D-28② 零 fetch]）。声明位在 rename
+            // 弹层前——input 序锚纪律同上。⚠ 测试锚 = 「移动目录」标题
+            // content 子树扫（D-29③ 标题锚纪律——全树唯一）。——
+            dialog (open: .store.movedir_open) {
+                dialog-content {
+                    dialog-header {
+                        dialog-title "移动目录"
+                        dialog-description "移动整个目录到目标父目录（stem 不变——链接零改写）"
+                    }
+                    input {
+                        value: .movedir_src
+                        oninput: .MoveDirSrc
+                        placeholder: .dir_ph
+                        style: "w-full h-7 px-2 text-[12px] border rounded bg-background"
+                    }
+                    input {
+                        value: .movedir_dst
+                        oninput: .MoveDirDst
+                        placeholder: "目标父目录（空 = 工作区根）"
+                        style: "w-full h-7 px-2 text-[12px] border rounded bg-background"
+                    }
+                    dialog-footer {
+                        button (text: "取消", variant: "outline") { onclick: .MoveDirCancel }
+                        button (text: "移动", variant: "ghost") { onclick: .MoveDirGo }
                     }
                 }
             }
@@ -2566,6 +2611,92 @@ widget App {
                         if ok {
                             console_log("rename_dir: rejected (same-name/casefold/pure-.ad/missing)")
                         }
+                    }
+                }
+            }
+        }
+
+        // —— 移动目录流（PLAN-018 T-02/T-03；RenDirGo 同构守卫面 +
+        // TabsRenamed 循环复用）：入口（menubar 共口——无快捷键 §2.4）
+        // 无状态守卫（源/目标父 input 口径同 014 目录弹层族——目标经
+        // 弹层 input 指定，ft_sel 不扩）；双 input 置空 + 开弹层。
+        // MoveDirGo 流：①back 契约直调 move_dir（POST 单事务五步——
+        //   循环卫/合并拒/纯 .ad 卫/幂等全在 back；源/目标父空拒——输入
+        //   未落定弹层留置；**目标父空 = 合法弧线**[移入根]，空拒面只及
+        //   源）
+        // ②成功 = 关弹层 + tab 全量更新循环（**迁移前** ft_nodes 派生
+        //   paths_under——新旧路径对；余段 rel_under → 新路径逐 store.
+        //   TabsRenamed——stem 不变标题恒等）+ store.Reload（body 不变
+        //   ——重挂载播种链一致性，MoveGo/RenDirGo 同判）+ 刷新族：
+        //   LinksRefreshOf(new_active) + TagsRefresh + MentionsRefreshOf
+        //   (new_active) + TreeRefresh（树新位）+ ft_sel/active 属目录
+        //   remap（显式计算规避 handler 内 .store 陈旧投影）
+        // ③拒（""：循环卫/合并/纯 .ad/缺失）= console 注记 + 弹层留置
+        //   （006 v1 口径同判）。
+        .ActMoveDir -> {
+            .movedir_src = ""
+            .movedir_dst = ""
+            store.MoveDirOpen()
+        }
+        .MoveDirSrc(v) -> {
+            .movedir_src = v
+        }
+        .MoveDirDst(v) -> {
+            .movedir_dst = v
+        }
+        .MoveDirCancel -> {
+            store.MoveDirClose()
+        }
+        .MoveDirGo -> {
+            var src str = dir_trim(.movedir_src)
+            if src == "" {
+                console_log("move_dir: empty source")
+            } else {
+                var r str = ""
+                var ok bool = true
+                try {
+                    r = move_dir(src, dir_trim(.movedir_dst))
+                } catch (e) {
+                    ok = false
+                }
+                if !ok {
+                    console_log("move_dir: failed")
+                }
+                if r != "" {
+                    store.MoveDirClose()
+                    // 迁移前清单派生 + tab 全量更新（014 TabsRenamed 循环
+                    // 同构——.ft_nodes 尚为旧树：paths_under 旧路径集）。
+                    var files List = paths_under(.ft_nodes, src)
+                    var i int = 0
+                    while i < files.len() {
+                        // ⚠ D-20②：列表元素先拷局部变量再调方法。
+                        var f str = files[i]
+                        if f.ends_with(".ad") {
+                            var rest str = rel_under(f, src)
+                            store.TabsRenamed(f, r + "/" + rest)
+                        }
+                        i = i + 1
+                    }
+                    // active/ft_sel 属目录 remap（显式计算——.store 读
+                    // 陈旧投影规避，RenDirGo 同款）。
+                    var new_active str = .store.active_path
+                    var act_rest str = rel_under(new_active, src)
+                    if act_rest != "" {
+                        new_active = r + "/" + act_rest
+                    }
+                    store.Reload()
+                    .LinksRefreshOf(new_active)
+                    .TagsRefresh()
+                    .MentionsRefreshOf(new_active)
+                    .TreeRefresh()
+                    var sel str = .ft_sel
+                    var sel_rest str = rel_under(sel, src)
+                    if sel_rest != "" {
+                        .ft_sel = r + "/" + sel_rest
+                    }
+                } else {
+                    if ok {
+                        console_log("move_dir: rejected (cycle/merge/pure-.ad/missing)")
                     }
                 }
             }
