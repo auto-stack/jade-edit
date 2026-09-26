@@ -1,6 +1,7 @@
 ---
 plan_id: PLAN-019
-status: reviewed
+status: archived
+completion_kind: delivered
 feature_name: dir-merge-trash-plus-slice
 author: [zhaopuming]
 created_at: 2026-09-26T23:58:21+08:00
@@ -455,6 +456,36 @@ fallback 双钮变体在案）。
       unblock 条件在册]；索引单趟合并后移[D-35② 复测维持]。
   - **next: merge**（status reviewed；复审窗证据全部可解析——
     probe/matrix/e2e/d35 均为入库脚本可复跑，文档锚点位在册）。
+- **2026-09-27 归档合流（auto-plan-merge）：archived/delivered**
+  - `stage: merge` | PLAN-019:r1 | **outcome: pass** | delivery_commit:
+    32e5400[reviewed_commit=33bc7b6 的 docs-only 后代——diff 核验仅
+    计划复审记录一件，src/deps/tests/e2e 零变化]。
+  - **prepared**：复审基线 r1[32e5400] + canonical delta 已随实现落
+    main[SD-1901@ARCH:902/SD-1902@ARCH:946/SD-1903@README:206+:478/
+    SD-1904@README:139+:538——33bc7b6 窗内落位，复审锚点实勘在册] +
+    直接 main 线性约定[001..018 在档惯例——本仓 canonical 知识面 =
+    ARCHITECTURE/README/parity-ledger 三件，docs/specs/ 结构化面未
+    建在册先例]。
+  - **landed**：main tip==32e5400[直接 main 线性——无 worktree/dev
+    分支可合，landing=祖谱核验：8894a16←3b7a85a→773934a→b820bda→
+    33bc7b6→32e5400 五提交线性，git merge-base --is-ancestor 实证]。
+  - **ledger_refreshed**：v23 tracked 读回核验[表头 v23+36 行+D-36
+    新行+D-21 v23+D-35 复测注记；无 live ledger 服务——PLAN-001
+    同判，tracked 文件即派生面]。
+  - **archived**：git mv→docs/plans/archived/019-dir-merge-trash-
+    plus-slice.md + status archived + completion_kind delivered。
+  - **cleaned**：无 worktree/dev 分支[直接 main 约定 worktree 仅
+    main——worktree list 实证 1 项+branch 仅 main] + 代码工作树零
+    WIP + 泄漏 auto.exe 清杀 0 复核 + 一次性件居 ignored .runtime
+    [diag-movedir/d35-retest/pre19-check 不入库]。
+  - **merge 窗 fresh**：probe_dir_ops 双臂全弧绿[delivery 树实跑
+    RESULT——merge 九案+F-R18-1 闭账+双臂一致=true 承载]。
+  - **留观交接**：split 臂矩阵 fresh-green[F-R17-1 合流载体——
+    D-21 v23，unblock=家族 exe 稳定后 `node tests/vm_matrix.mjs`
+    双臂复跑]；索引单趟合并[D-35② 复测维持——watch 批联动]；
+    F-R19-1 low[r3 口]；PLAN-020 候选首位=大纲[anchor-reveal
+    解锁——十一片门控]。→ PLAN-019 delivered 收口。
+
 
 ## 10. 待澄清事项
 
