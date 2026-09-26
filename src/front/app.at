@@ -762,6 +762,12 @@ fn trash_paths_of(rows List) List {
     return out
 }
 
+/// 移动目录弹层·目标同名 bool（PLAN-019 T-03；movedir_preview_text 同源
+/// 判定——bool computed 判别面：vm 弹层 content 流条件节点实勘载体）。
+fn dir_conflict_of(nodes List, src str, dst str) bool {
+    return movedir_preview_text(nodes, src, dst) != ""
+}
+
 widget App {
     msg {
         Init, FtToggle(str), OpenFile(str), Reload,
@@ -914,6 +920,9 @@ widget App {
         // 移动目录弹层·目标同名预览行（PLAN-019 T-02；本地派生零 fetch
         // ——movedir_preview_text 纯函数委托；D-28② 规避在册形态）。
         movedir_preview => movedir_preview_text(.ft_nodes, .movedir_src, .movedir_dst)
+        // 合并钮条件 bool（同源派生——T-03 实勘：vm 弹层 content 流
+        // `if <computed str> != ""` 整子树丢弃首例；bool computed 判别面）。
+        movedir_conflict => dir_conflict_of(.ft_nodes, .movedir_src, .movedir_dst)
     }
 
     // —— actions 声明块（Plan 451 三源绑定：shortcut / toolbar 占位合成 /
@@ -1678,12 +1687,21 @@ widget App {
                         style: "w-full h-7 px-2 text-[12px] border rounded bg-background"
                     }
                     text .movedir_preview { style: "text-[12px] text-muted-foreground px-1" }
+                    // 条件合并钮（探针 G 定谳双钮变体——⚠ 置于内容流而非
+                    // dialog-footer 内：footer 内 `if` 条件节点 vm 臂首跑
+                    // 未现（T-03 实勘——在册 dialog-footer 无条件节点先例
+                    // ，内容流 if 为大量在册形态）；行右对齐 ghost 钮。
+                    if .movedir_conflict {
+                        row (style: "w-full items-center justify-end px-1") {
+                            button (text: "合并移动", variant: "ghost") {
+                                onclick: .MoveDirGoMerge
+                                style: "h-7 px-3 text-[12px]"
+                            }
+                        }
+                    }
                     dialog-footer {
                         button (text: "取消", variant: "outline") { onclick: .MoveDirCancel }
                         button (text: "移动", variant: "ghost") { onclick: .MoveDirGo }
-                        if .movedir_preview != "" {
-                            button (text: "合并移动", variant: "ghost") { onclick: .MoveDirGoMerge }
-                        }
                     }
                 }
             }

@@ -84,7 +84,15 @@
 //             → 移动目录弧线[双 input 弹层 源/目标父→tab 题恒+磁盘整迁
 //             目录丁/目录丙——三联对照移动级三部曲收官]/取消零落盘/
 //             循环卫拒弹层留置[源==目标父自身形]（deep 案 = vm 承载
-//             ——e2e 断言域外）** + **daily 弧线（PLAN-015；vm
+//             ——e2e 断言域外）** + **目录合并弧线（PLAN-019 T-04；vm
+//             file 组 dir4 同单——真 DOM + CJK POST body 素材 API 建）：
+//             合并弧线[双 input 弹层 → 预览行现文+「合并移动」钮显
+//             [探针 G 定谳双钮变体] → 磁盘并入 靶原档不变+源目录消]/
+//             不合并拒径回归[「移动」钮→弹层留置+磁盘零变化]** + **trash
+//             增强（PLAN-019；vm ⑦ 同单）：双条目清单→行点击预览[.trash
+//             路径 tab 开+树不可见]→恢复全部[清单空态+磁盘双档回根；
+//             保存落回 .trash 原位磁盘直证 = vm 承载——e2e 断言域 =
+//             行为面]** + **daily 弧线（PLAN-015；vm
 //             file 组 ⑰ 同单）：菜单「今日笔记」→ 开档（# 当日 body）→
 //             磁盘 created_at/updated_at 双时间戳 → 重入幂等（tab 不重复）
 //             ——日期面 back 单点[Date 原语独占消费]，已知答案免疫
@@ -616,6 +624,35 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await expect
     .poll(() => fs.existsSync(path.join(WORKSPACE, '.trash')), { timeout: 10_000 })
     .toBe(false)
+  // ⑦ trash 增强（PLAN-019；vm ⑦ 同单——真 DOM）：素材 = write_wiki
+  // TrashR1/TrashR2 → delete_page API 双改道（.trash 双条目）→ 收起重开
+  // 回收站（refetch）→ 双行 → **行点击预览**（路径 ghost button →
+  // OpenLink——.trash 路径 tab 开[题 = .trash/TrashR1]+树不可见[全页
+  // 该路径文本恰 1 处 = 清单行——树行若在必 +1]）→ 关预览 tab →
+  // **恢复全部** → 清单空态 + 磁盘双档回根（保存落回 .trash 原位磁盘
+  // 直证 = vm ⑦ 承载——e2e 断言域 = 行为面）。
+  await request.post('/api/write_wiki', { data: { path: 'TrashR1.ad', body: '# TrashR1\n\n' } })
+  await request.post('/api/write_wiki', { data: { path: 'TrashR2.ad', body: '# TrashR2\n\n' } })
+  await request.post('/api/delete_page', { data: { path: 'TrashR1.ad' } })
+  await request.post('/api/delete_page', { data: { path: 'TrashR2.ad' } })
+  await expect
+    .poll(() => fs.existsSync(path.join(WORKSPACE, '.trash', 'TrashR1.ad')) && fs.existsSync(path.join(WORKSPACE, '.trash', 'TrashR2.ad')), { timeout: 10_000 })
+    .toBe(true)
+  await page.getByRole('button', { name: '收起', exact: true }).first().click()
+  await page.getByText('文件', { exact: true }).click()
+  await page.getByText('回收站', { exact: true }).click()
+  await expect(page.getByText('.trash/TrashR1.ad', { exact: true })).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByText('.trash/TrashR2.ad', { exact: true })).toBeVisible({ timeout: 10_000 })
+  await page.getByRole('button', { name: '.trash/TrashR1.ad', exact: true }).click()
+  await expect(tabBtn('.trash/TrashR1')).toHaveCount(1, { timeout: 15_000 })
+  await expect(page.getByText('.trash/TrashR1.ad', { exact: true })).toHaveCount(1, { timeout: 10_000 })
+  await tabBtn('.trash/TrashR1').click()
+  await page.locator('button:has(svg.lucide-xicon)').first().click()
+  await page.getByRole('button', { name: '恢复全部', exact: true }).click()
+  await expect(page.getByText('（回收站为空）', { exact: true })).toBeVisible({ timeout: 10_000 })
+  await expect
+    .poll(() => fs.existsSync(path.join(WORKSPACE, 'TrashR1.ad')) && fs.existsSync(path.join(WORKSPACE, 'TrashR2.ad')) && !fs.existsSync(path.join(WORKSPACE, '.trash', 'TrashR1.ad')) && !fs.existsSync(path.join(WORKSPACE, '.trash', 'TrashR2.ad')), { timeout: 10_000 })
+    .toBe(true)
   // 收尾：关素材 tab（TrashMe/TrashSrc——还原段前 tab 位态：12① untitled
   // 关闭后激活落点与既有段序一致——①b 追加面依赖该落点实例）+ 关反链
   // 面板（悬空翻转步开启——还原段首「反链关」口径，14 meta 段首 toggle
@@ -1050,6 +1087,22 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await expect(page.getByRole('heading', { name: '移动目录' })).toBeHidden({ timeout: 10_000 })
   console.log('[13 dir3] PASS — 循环卫拒弹层留置（源==目标父自身形）')
 
+  // —— PLAN-019 目录合并素材（vm file 组 dir4 同单；API 建——嵌套靶
+  // back 管线五连 create_dir/write_wiki/move_dir/rename_dir，与 probe
+  // 双臂同构零 UI 造档依赖）：合并靶/目录己[靶原档 靶档乙.ad] + 根
+  // 目录己[源档 合并页.ad]。⚠ 素材前置——树新鲜度由其后 ⑰
+  // ActDaily→TreeRefresh 承载（vm 素材前置 ⑰ 同款口径；预览判定 =
+  // dirs_of(ft_nodes) 本地派生，树陈旧则预览落空）；交互弧线在 daily
+  // 后（见下 [13 dir4] 段）。——
+  await request.post('/api/create_dir', { data: { name: '合并靶' } })
+  await request.post('/api/create_dir', { data: { name: 'MgBootE' } })
+  await request.post('/api/write_wiki', { data: { path: 'MgBootE/靶档乙.ad', body: '# 靶档乙\n\n' } })
+  await request.post('/api/move_dir', { data: { path: 'MgBootE', new_parent: '合并靶', merge: false } })
+  await request.post('/api/rename_dir', { data: { path: '合并靶/MgBootE', new_name: '目录己' } })
+  await request.post('/api/create_dir', { data: { name: '目录己' } })
+  await request.post('/api/create_page', { data: { title: '合并页' } })
+  await request.post('/api/move_page', { data: { path: '合并页.ad', dir: '目录己' } })
+
   // PLAN-015 daily 弧线（vm file 组 ⑰ 同单——菜单入口 → 开档 → 磁盘双
   // 时间戳 → 重入幂等；日期面 back 单点，动态值 = 当日格式断言；stem 全
   // ASCII 无 D-19 面。已知答案免疫：今日档无 tags 无链接——14 meta 面零扰）。
@@ -1085,6 +1138,47 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
     await page.locator('button:has(svg.lucide-xicon)').first().click()
     console.log('[13 daily] PASS — 重入幂等（tab 不重复）+ 收尾关档')
   }
+
+  // —— PLAN-019 目录合并交互弧线（素材已前置 daily 前——树新鲜度已由
+  // ⑰ 承载）：弹层双 input → 预览行现文 + 合并移动钮显[探针 G 定谳
+  // 双钮变体] → 磁盘并入（靶原档不变+源档字节整迁+源目录消）。——
+  await page.getByText('文件', { exact: true }).click()
+  await page.getByText('移动目录…', { exact: true }).click()
+  await expect(dir3Dialog).toBeVisible({ timeout: 10_000 })
+  await dir3Boxes.nth(0).fill('目录己')
+  await dir3Boxes.nth(1).fill('合并靶')
+  await expect(page.getByText('目标已有同名目录：合并靶/目录己（可用「合并移动」并入）', { exact: true })).toBeVisible({ timeout: 10_000 })
+  await expect(dir3Dialog.getByRole('button', { name: '合并移动', exact: true })).toBeVisible()
+  await dir3Dialog.getByRole('button', { name: '合并移动', exact: true }).click()
+  await expect(page.getByRole('heading', { name: '移动目录' })).toBeHidden({ timeout: 10_000 })
+  await expect
+    .poll(() => fs.existsSync(path.join(WORKSPACE, '合并靶', '目录己', '合并页.ad'))
+      && fs.readFileSync(path.join(WORKSPACE, '合并靶', '目录己', '合并页.ad'), 'utf8') === '# 合并页\n\n'
+      && fs.existsSync(path.join(WORKSPACE, '合并靶', '目录己', '靶档乙.ad'))
+      && !fs.existsSync(path.join(WORKSPACE, '目录己')), { timeout: 10_000 })
+    .toBe(true)
+  console.log('[13 dir4] PASS — 目录合并弧线（预览行现文+合并移动钮显→磁盘并入 靶原档不变+源目录消——探针 G 定谳双钮变体真 DOM）')
+  // 拒径对素材 + 不合并拒径回归（「移动」钮 → 目标冲突卫拒）。
+  await request.post('/api/create_dir', { data: { name: 'MgBootF' } })
+  await request.post('/api/write_wiki', { data: { path: 'MgBootF/靶档丙.ad', body: '# 靶档丙\n\n' } })
+  await request.post('/api/move_dir', { data: { path: 'MgBootF', new_parent: '合并靶', merge: false } })
+  await request.post('/api/rename_dir', { data: { path: '合并靶/MgBootF', new_name: '目录庚' } })
+  await request.post('/api/create_dir', { data: { name: '目录庚' } })
+  await request.post('/api/create_page', { data: { title: '源档丙' } })
+  await request.post('/api/move_page', { data: { path: '源档丙.ad', dir: '目录庚' } })
+  await page.getByText('文件', { exact: true }).click()
+  await page.getByText('移动目录…', { exact: true }).click()
+  await expect(dir3Dialog).toBeVisible({ timeout: 10_000 })
+  await dir3Boxes.nth(0).fill('目录庚')
+  await dir3Boxes.nth(1).fill('合并靶')
+  await dir3Dialog.getByRole('button', { name: '移动', exact: true }).click()
+  await expect(page.getByRole('heading', { name: '移动目录' })).toBeVisible({ timeout: 10_000 })
+  expect(fs.existsSync(path.join(WORKSPACE, '目录庚', '源档丙.ad')), '拒径零变化').toBe(true)
+  expect(fs.existsSync(path.join(WORKSPACE, '合并靶', '目录庚', '靶档丙.ad')), '靶原档不变').toBe(true)
+  expect(fs.existsSync(path.join(WORKSPACE, '合并靶', '目录庚', '源档丙.ad')), '未并入').toBe(false)
+  await page.getByRole('button', { name: '取消', exact: true }).last().click()
+  await expect(page.getByRole('heading', { name: '移动目录' })).toBeHidden({ timeout: 10_000 })
+  console.log('[13 dir4] PASS — 不合并拒径回归（「移动」钮→弹层留置+磁盘零变化）')
 
   // 14 meta（PLAN-008 T-04；vm 矩阵 check 14 同单——段内最后）：tags
   // 面板 + wanted 模式。执行序在 13 后（此位已知答案——e2e 13 删的是
