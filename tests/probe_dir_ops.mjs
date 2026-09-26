@@ -37,6 +37,30 @@
 //                     target_path 字段变化——moved 集合归一 <MOVED> 后
 //                     逐字节相等；三联对照目录级固化）双臂
 //
+// **PLAN-018 T-01 扩**（SD-1801——move_dir 七案 + depth 8 + url_decode
+// 重勘；双臂）：
+//   m① 基础           DirMove（MoveA+MoveB）→ Tgt → "Tgt/DirMove"；逐文件
+//                     新位 + 字节整迁 + 旧目录消
+//   m② 循环卫         → 自身（"DirMove"）→ ""；→ 后代（"DirMove/sub"
+//                     ——merged 域）→ ""；零落盘
+//   m③ 合并拒         Tgt2/DirMove 同名**文件**占位 → ""（双臂）；Tgt3/
+//                     DirMove 同名**目录**（merged 域 ws_join）→ ""——
+//                     目录合并 v1 不做（§10.2 r2 留口）
+//   m④ 纯 .ad 卫      DirMove2 混入 notes.txt → ""；零变化
+//   m⑤ 同父幂等       DirMove2（根）→ ""（new_parent=根=现父）→
+//                     "DirMove2" 零变化
+//   m⑥ CJK            目录丙（档丙.ad）→ Tgt → "Tgt/目录丙"；字节整迁
+//   m⑦ 链接零扰动     link_index 前后定向 diff 归一相等（三联对照移动级
+//                     ——与 r⑧/012 档移动同判）双臂
+//   p⑨ depth 8 统一   link_index("",1) 不含 wiki/ 深度档而 ("",8) 全含
+//                     （fs.tree depth 钳制语义双臂）；merged 域另造 5 层
+//                     深档（L1/L2/L3/L4/Deep5.ad——ws_join）→ depth 8 含/
+//                     depth 4 不含（**4→8 覆盖收窄收口直证**）+ search
+//                     内部 8 walk 命中
+//   p⑩ url_decode     split 臂 GET exists?path=<CJK 百分号序列> →
+//                     in-register 期望 false（D-19 维持则绿；翻 true =
+//                     上游已修——fail 即信号，probe+ledger 随改）
+//
 // 双臂一致 = 返回值逐案相等 + link JSON 归一相等。D-21 负载窗 flake：
 // 无-RESULT 早崩按 README 口径重跑即绿。
 //
@@ -77,15 +101,29 @@ const CASES = [
   { id: 'r4-casefold', expect: '' },
   { id: 'r5-cjk', expect: '归档夹' },
   { id: 'r6-missing', expect: '' },
+  // PLAN-018 move_dir 六案（共享面——m2b/m3b 后代/同名目录形 merged 域）
+  { id: 'm1-basic', expect: 'Tgt/DirMove' },
+  { id: 'm2-cycle', expect: '' },
+  { id: 'm3-merge-file', expect: '' },
+  { id: 'm4-pur-ad', expect: '' },
+  { id: 'm5-idem', expect: 'DirMove2' },
+  { id: 'm6-cjk', expect: 'Tgt/目录丙' },
 ]
 const RET_FIELD = {
   'd1-root': 'd1', 'd2-not-dir': 'd2', 'd3-recursive': 'd3', 'd4-empty': 'd4',
   'd5-cjk': 'd5', 'd6-missing': 'd6', 'r1-basic': 'r1', 'r2-pur-ad': 'r2',
   'r3a-same-dir': 'r3', 'r3b-same-file': 'r4', 'r4-casefold': 'r5',
   'r5-cjk': 'r6', 'r6-missing': 'r7',
+  'm1-basic': 'm1', 'm2-cycle': 'm2', 'm3-merge-file': 'm3', 'm4-pur-ad': 'm4',
+  'm5-idem': 'm5', 'm6-cjk': 'm6',
 }
 // r⑦ 嵌套（merged 探针域）+ r⑧ 链接面（link_index 前后采 dual field）
-const MERGED_ONLY_CASES = [{ id: 'r7-nested', expect: 'DirNest2', field: 'r8' }]
+// + PLAN-018 m2b（循环卫后代形——ws_join 域）/m3b（合并拒同名目录形）
+const MERGED_ONLY_CASES = [
+  { id: 'r7-nested', expect: 'DirNest2', field: 'r8' },
+  { id: 'm2b-cycle-desc', expect: '', field: 'm2b' },
+  { id: 'm3b-merge-dir', expect: '', field: 'm3b' },
+]
 
 function prepareWorkspace(ws) {
   fs.rmSync(ws, { recursive: true, force: true })
@@ -165,9 +203,32 @@ function diskAsserts(ws, tag, failures, opts = {}) {
     ck(isDir('DirNest2/sub'), 'r⑦ DirNest2/sub/ 镜像嵌套目录在')
     ck(read('DirNest2/sub/Deep.ad') === '# Deep\n\n', 'r⑦ DirNest2/sub/Deep.ad 余段迁移逐字节')
   }
-  // 副作用圈定：根 .ad 集合恰为三档；语料 json 不动
+  // —— PLAN-018 move_dir 面（SD-1801）——
+  // m① 基础：旧无新有 + 字节整迁
+  ck(!isDir('DirMove'), 'm① DirMove/ 旧目录已消')
+  ck(read('Tgt/DirMove/MoveA.ad') === '# MoveA\n\n', 'm① Tgt/DirMove/MoveA.ad 模板逐字节')
+  ck(read('Tgt/DirMove/MoveB.ad') === '# MoveB\n\n正文乙。\n', 'm① Tgt/DirMove/MoveB.ad 字节整迁逐字节')
+  // m②③ 循环/合并拒：目标零变化（目录留置 + 占位原样）
+  ck(isDir('Tgt/DirMove'), 'm②③ Tgt/DirMove/ 原样（循环卫/合并拒零落盘）')
+  ck(read('Tgt2/DirMove') === 'x\n', 'm③a Tgt2/DirMove 文件占位原样')
+  ck(read('Tgt/DirMove/MoveA.ad') === '# MoveA\n\n', 'm②③ MoveA.ad 原样（拒后未动）')
+  // m④ 纯 .ad 卫：notes.txt 原样 + 不迁移
+  ck(read('Tgt/DirMove/notes.txt') === 'x\n', 'm④ notes.txt 原样（卫拒零落盘）')
+  ck(!isDir('Tgt4/DirMove'), 'm④ Tgt4/DirMove 不应在')
+  // m⑤ 同父幂等：零变化
+  ck(isDir('DirMove2'), 'm⑤ DirMove2/ 原样（同父幂等零变化）')
+  ck(read('DirMove2/MoveC.ad') === '# MoveC\n\n', 'm⑤ DirMove2/MoveC.ad 原样')
+  // m⑥ CJK
+  ck(!isDir('目录丙'), 'm⑥ 目录丙/ 旧目录已消')
+  ck(read('Tgt/目录丙/档丙.ad') === '# 档丙\n\n', 'm⑥ Tgt/目录丙/档丙.ad 模板逐字节')
+  // merged 域形（m2b 后代占位 sub 目录 / m3b 同名目录占位——拒后留置）
+  if (nested) {
+    ck(isDir('Tgt/DirMove/sub'), 'm2b Tgt/DirMove/sub/ 占位原样（后代循环拒零落盘）')
+    ck(isDir('Tgt3/DirMove'), 'm3b Tgt3/DirMove/ 同名目录占位原样（合并拒）')
+  }
+  // 副作用圈定：根 .ad 集合恰为四档（+LinkSrc2——PLAN-018 素材）；语料 json 不动
   const rootAds = rootEntries.filter((f) => f.endsWith('.ad')).sort()
-  ck(rootAds.join(',') === 'Blocker.ad,DelFile.ad,LinkSrc.ad', `根 .ad 集合恰为三档（实际：${rootAds.join(', ')}）`)
+  ck(rootAds.join(',') === 'Blocker.ad,DelFile.ad,LinkSrc.ad,LinkSrc2.ad', `根 .ad 集合恰为四档（实际：${rootAds.join(', ')}）`)
   ck(read('jade-garden-index.json') !== null, '语料 jade-garden-index.json 在盘（非 .ad 零涉）')
 }
 
@@ -177,7 +238,7 @@ const PROBE_AT = `// 探针 widget（tests/probe_dir_ops.mjs 生成件——直�
 // 非入库源）。Init 内进程内直调 setup + delete_dir 六案 + rename_dir 六案
 // + 嵌套案 + link_index 前后采，返回值落 model 字段供 autoui_state dump。
 // 入口文件名固定 app.at（auto 前端入口约定）。
-use back.api: create_dir, move_page, create_page, write_wiki, delete_dir, rename_dir, link_index
+use back.api: create_dir, move_page, create_page, write_wiki, delete_dir, rename_dir, move_dir, link_index, search_wiki
 use back.probe_support: ws_join
 
 widget App {
@@ -216,10 +277,39 @@ widget App {
         var r8 str = ""
         var w1 bool = false
         var l2 str = ""
+        // —— PLAN-018 扩（SD-1801——move_dir/depth/search 面）——
+        var s16 str = ""
+        var s17 str = ""
+        var s18 bool = false
+        var s19 str = ""
+        var s20 str = ""
+        var s21 str = ""
+        var s22 bool = false
+        var s23 str = ""
+        var s24 bool = false
+        var s25 str = ""
+        var s26 str = ""
+        var s27 bool = false
+        var s28 str = ""
+        var l3 str = ""
+        var l4 str = ""
+        var l5 str = ""
+        var m8 str = ""
+        var l6 str = ""
+        var m1 str = ""
+        var m2 str = ""
+        var m2b str = ""
+        var m3 str = ""
+        var m3b str = ""
+        var w2 bool = false
+        var m4 str = ""
+        var m5 str = ""
+        var m6 str = ""
+        var l7 str = ""
     }
     view {
         col (style: "h-full w-full items-center justify-center") {
-            text "probe: dir ops (delete/rename)" { style: "text-[13px] text-muted-foreground" }
+            text "probe: dir ops (delete/rename/move)" { style: "text-[13px] text-muted-foreground" }
         }
     }
     on {
@@ -267,6 +357,43 @@ widget App {
             r7 = rename_dir("no-such-dir", "xx")
             r8 = rename_dir("DirNest", "DirNest2")
             l2 = link_index("", 4)
+            // —— PLAN-018 setup（自证 s16..s28）：move 素材 + depth 深档 ——
+            s16 = create_dir("Tgt")
+            s17 = create_dir("Tgt2")
+            s18 = write_wiki("Tgt2/DirMove", "x\\n")
+            s19 = create_dir("Tgt4")
+            s20 = create_dir("DirMove")
+            s21 = create_page("MoveA")
+            s21 = move_page("MoveA.ad", "DirMove")
+            s22 = write_wiki("DirMove/MoveB.ad", "# MoveB\\n\\n正文乙。\\n")
+            s23 = create_dir("DirMove2")
+            s24 = write_wiki("DirMove2/MoveC.ad", "# MoveC\\n\\n")
+            s25 = create_dir("目录丙")
+            s26 = create_page("档丙")
+            s26 = move_page("档丙.ad", "目录丙")
+            s27 = create_page("LinkSrc2")
+            s27 = write_wiki("LinkSrc2.ad", "# LS2\\n\\n[[MoveA]] 与 [[MoveB]] 与 [[档丙]]。\\n")
+            // p⑨ depth 案（深档 5 层——ws_join 域）+ 三深度采（移动前）
+            s28 = ws_join("L1/L2/L3/L4")
+            s28 = write_wiki("L1/L2/L3/L4/Deep5.ad", "# Deep5\\n\\n")
+            l3 = link_index("", 1)
+            l4 = link_index("", 8)
+            l5 = link_index("", 4)
+            m8 = search_wiki("Deep5", 5)
+            // move_dir 六案 + 前后链接采
+            l6 = link_index("", 4)
+            m1 = move_dir("DirMove", "Tgt")
+            m2 = move_dir("Tgt/DirMove", "Tgt/DirMove")
+            s28 = ws_join("Tgt/DirMove/sub")
+            m2b = move_dir("Tgt/DirMove", "Tgt/DirMove/sub")
+            m3 = move_dir("Tgt/DirMove", "Tgt2")
+            s28 = ws_join("Tgt3/DirMove")
+            m3b = move_dir("Tgt/DirMove", "Tgt3")
+            w2 = write_wiki("Tgt/DirMove/notes.txt", "x\\n")
+            m4 = move_dir("Tgt/DirMove", "Tgt4")
+            m5 = move_dir("DirMove2", "")
+            m6 = move_dir("目录丙", "Tgt")
+            l7 = link_index("", 4)
             done = true
         }
     }
@@ -390,6 +517,15 @@ async function runMergedArm() {
       && truthy(boolField(dump, 's13')) && strField(dump, 's14') === 'Blocker.ad'
       && truthy(boolField(dump, 's15'))
     if (!setupOk) throw new Error(`probe setup failed:\n${dump.slice(0, 1200)}`)
+    // PLAN-018 setup 自证（s16..s28）
+    const setupOk2 = strField(dump, 's16') === 'Tgt' && strField(dump, 's17') === 'Tgt2'
+      && truthy(boolField(dump, 's18')) && strField(dump, 's19') === 'Tgt4'
+      && strField(dump, 's20') === 'DirMove' && strField(dump, 's21') === 'DirMove/MoveA.ad'
+      && truthy(boolField(dump, 's22')) && strField(dump, 's23') === 'DirMove2'
+      && truthy(boolField(dump, 's24')) && strField(dump, 's25') === '目录丙'
+      && strField(dump, 's26') === '目录丙/档丙.ad' && truthy(boolField(dump, 's27'))
+      && strField(dump, 's28') === 'Tgt3/DirMove'
+    if (!setupOk2) throw new Error(`probe setup (PLAN-018) failed:\n${dump.slice(0, 1200)}`)
     const returns = {}
     for (const c of CASES) {
       returns[c.id] = strField(dump, RET_FIELD[c.id])
@@ -401,8 +537,15 @@ async function runMergedArm() {
     }
     const links = { before: strField(dump, 'l1'), after: strField(dump, 'l2') }
     if (links.before === null || links.after === null) throw new Error('probe state missing l1/l2')
+    // PLAN-018 面：depth 三采 + 深档检索 + 移动前后链接采
+    const depth = { d1: strField(dump, 'l3'), d8: strField(dump, 'l4'), d4: strField(dump, 'l5') }
+    const deepSearch = strField(dump, 'm8')
+    const linksM = { before: strField(dump, 'l6'), after: strField(dump, 'l7') }
+    if (!depth.d1 || !depth.d8 || !depth.d4 || deepSearch === null || !linksM.before || !linksM.after) {
+      throw new Error('probe state missing l3..l7/m8')
+    }
     return {
-      returns, links, nested: true,
+      returns, links, nested: true, depth, deepSearch, linksM,
       diskCheck: (failures) => diskAsserts(MERGED_WS, 'merged', failures, { nested: true }),
     }
   } finally {
@@ -480,8 +623,47 @@ async function runSplitArm() {
     await exec('r5-cjk', 'rename_dir', { path: '资料夹', new_name: '归档夹' })
     await exec('r6-missing', 'rename_dir', { path: 'no-such-dir', new_name: 'xx' })
     links.after = await get('link_index', { path: '', depth: '4' })
+    // —— PLAN-018（SD-1801）：move setup（m2b/m3b 后代/同名目录形与深档
+    // 均 ws_join 域——split 臂无造档通道，跳过；depth 案以语料 wiki/ 现成
+    // 深度结构承载语义面）——
+    if (await post('create_dir', { name: 'Tgt' }) !== 'Tgt') throw new Error('setup Tgt failed')
+    if (await post('create_dir', { name: 'Tgt2' }) !== 'Tgt2') throw new Error('setup Tgt2 failed')
+    if (!(await post('write_wiki', { path: 'Tgt2/DirMove', body: 'x\n' }))) throw new Error('setup Tgt2/DirMove blocker failed')
+    if (await post('create_dir', { name: 'Tgt4' }) !== 'Tgt4') throw new Error('setup Tgt4 failed')
+    if (await post('create_dir', { name: 'DirMove' }) !== 'DirMove') throw new Error('setup DirMove failed')
+    if (await post('create_page', { title: 'MoveA' }) !== 'MoveA.ad') throw new Error('setup MoveA failed')
+    if (await post('move_page', { path: 'MoveA.ad', dir: 'DirMove' }) !== 'DirMove/MoveA.ad') throw new Error('setup move MoveA failed')
+    if (!(await post('write_wiki', { path: 'DirMove/MoveB.ad', body: '# MoveB\n\n正文乙。\n' }))) throw new Error('setup MoveB failed')
+    if (await post('create_dir', { name: 'DirMove2' }) !== 'DirMove2') throw new Error('setup DirMove2 failed')
+    if (!(await post('write_wiki', { path: 'DirMove2/MoveC.ad', body: '# MoveC\n\n' }))) throw new Error('setup MoveC failed')
+    if (await post('create_dir', { name: '目录丙' }) !== '目录丙') throw new Error('setup 目录丙 failed')
+    if (await post('create_page', { title: '档丙' }) !== '档丙.ad') throw new Error('setup 档丙 failed')
+    if (await post('move_page', { path: '档丙.ad', dir: '目录丙' }) !== '目录丙/档丙.ad') throw new Error('setup move 档丙 failed')
+    if (await post('create_page', { title: 'LinkSrc2' }) !== 'LinkSrc2.ad') throw new Error('setup LinkSrc2 failed')
+    if (!(await post('write_wiki', { path: 'LinkSrc2.ad', body: '# LS2\n\n[[MoveA]] 与 [[MoveB]] 与 [[档丙]]。\n' }))) throw new Error('setup LinkSrc2 body failed')
+    // p⑨ depth 三采（split 域无深档——d1/d8 语料语义面）
+    const depth = {
+      d1: await get('link_index', { path: '', depth: '1' }),
+      d8: await get('link_index', { path: '', depth: '8' }),
+      d4: await get('link_index', { path: '', depth: '4' }),
+    }
+    const deepSearch = await post('search_wiki', { query: 'Deep5', limit: 5 })
+    // move_dir 六案 + 前后链接采（m2b/m3b 跳过——同 r⑦ 口径）
+    const linksM = { before: await get('link_index', { path: '', depth: '4' }) }
+    await exec('m1-basic', 'move_dir', { path: 'DirMove', new_parent: 'Tgt' })
+    await exec('m2-cycle', 'move_dir', { path: 'Tgt/DirMove', new_parent: 'Tgt/DirMove' })
+    await exec('m3-merge-file', 'move_dir', { path: 'Tgt/DirMove', new_parent: 'Tgt2' })
+    if (!(await post('write_wiki', { path: 'Tgt/DirMove/notes.txt', body: 'x\n' }))) throw new Error('setup move notes.txt failed')
+    await exec('m4-pur-ad', 'move_dir', { path: 'Tgt/DirMove', new_parent: 'Tgt4' })
+    await exec('m5-idem', 'move_dir', { path: 'DirMove2', new_parent: '' })
+    await exec('m6-cjk', 'move_dir', { path: '目录丙', new_parent: 'Tgt' })
+    linksM.after = await get('link_index', { path: '', depth: '4' })
+    // p⑩ url_decode 重勘（017 §10.6——家族重建窗后复测一次；in-register
+    // 期望 false[D-19：GET query 百分号序列不解码]。翻 true = 上游已修
+    // ——fail 即信号，probe+ledger 随改）。
+    const urlDecode = await get('exists', { path: '归档夹/中文乙.ad' })
     return {
-      returns, links, nested: false,
+      returns, links, nested: false, depth, deepSearch, linksM, urlDecode,
       diskCheck: (failures) => diskAsserts(back.workspace, 'split', failures, { nested: false }),
     }
   } finally {
@@ -531,8 +713,46 @@ const linkOk = !mNorm.includes('<unparsable>') && !sNorm.includes('<unparsable>'
 console.log(`  [r8-link-net] ${linkOk ? 'PASS' : 'FAIL'} — link_index 归一 diff 双臂零扰动（仅 path/target_path 变化）`)
 if (!linkOk) failures.push('r8-link-net: link_index 归一 diff 失守')
 
+// m⑦ 移动链接零扰动归一 diff（PLAN-018——三联对照移动级；双臂 + 一致）
+const movedMBoth = new Set([
+  'DirMove/MoveA.ad', 'Tgt/DirMove/MoveA.ad', 'DirMove/MoveB.ad', 'Tgt/DirMove/MoveB.ad',
+  '目录丙/档丙.ad', 'Tgt/目录丙/档丙.ad',
+])
+const mMoveOk = !ljNorm(merged.linksM.before, movedMBoth).includes('<unparsable>')
+  && !ljNorm(split.linksM.before, movedMBoth).includes('<unparsable>')
+  && ljNorm(merged.linksM.before, movedMBoth) === ljNorm(merged.linksM.after, movedMBoth)
+  && ljNorm(split.linksM.before, movedMBoth) === ljNorm(split.linksM.after, movedMBoth)
+console.log(`  [m7-link-net] ${mMoveOk ? 'PASS' : 'FAIL'} — move 前后 link_index 归一 diff 双臂零扰动（stem 不变零改写——三联对照移动级）`)
+if (!mMoveOk) failures.push('m7-link-net: move 前后 link_index 归一 diff 失守')
+
+// p⑨ depth 8 统一（PLAN-018——fs.tree depth 语义面）：depth 1 不含 wiki/
+// 深度档、depth 8 全含（双臂语料现成结构）；merged 域深档（5 层）depth 8
+// 含 / depth 4 不含——**4→8 覆盖收窄收口直证** + search 内部 8 walk 命中。
+{
+  const deepRel = 'L1/L2/L3/L4/Deep5.ad'
+  const shallowMiss = !merged.depth.d1.includes('wiki/Hello World.ad') && !split.depth.d1.includes('wiki/Hello World.ad')
+  const fullHit = merged.depth.d8.includes('wiki/Hello World.ad') && split.depth.d8.includes('wiki/Hello World.ad')
+  // 语料 flat 零漂移：split 域无深档——depth 4 与 8 逐字节相等
+  const flatZeroDrift = split.depth.d4 === split.depth.d8
+  // merged 域深档（5 层）：depth 8 含 / depth 4 不含——4→8 覆盖收窄收口直证
+  const deepGap = merged.depth.d8.includes(deepRel) && !merged.depth.d4.includes(deepRel)
+  const searchDeep = merged.deepSearch.includes(deepRel)
+  const deepOk = shallowMiss && fullHit && flatZeroDrift && deepGap && searchDeep && split.deepSearch === '[]'
+  console.log(`  [p9-depth8] ${deepOk ? 'PASS' : 'FAIL'} — depth1 不含/depth8 全含 wiki 档（双臂）+ 语料 flat d4==d8 零漂移（split）+ 5 层深档 d8 含/d4 不含（merged——覆盖收窄收口）+ search 内部 8 walk 命中=${searchDeep}`)
+  if (!deepOk) failures.push('p9-depth8: depth 8 统一断言失守')
+}
+
+// p⑩ url_decode 重勘（split 臂——in-register D-19 期望 0[GET bool 序列化
+// 裸 1/0——实勘：ASCII 路径 exists → 1]；百分号序列不解码 → CJK 路径
+// exists → 0。翻 1 = 上游已修——fail 即信号，probe+ledger 随改）。
+{
+  const udOk = split.urlDecode === '0'
+  console.log(`  [p10-url-decode] ${udOk ? 'PASS' : 'FAIL'} — GET exists?path=归档夹/中文乙.ad → ${split.urlDecode}（D-19 维持 = 0——GET query 百分号序列不解码；翻 1 = 上游已修，probe+ledger 随改）`)
+  if (!udOk) failures.push(`p10-url-decode: 期望 0（D-19 在册——GET bool 序列化裸 1/0），实际 ${split.urlDecode}——上游 GET query 解码面疑似已修，probe+ledger 需随改`)
+}
+
 if (failures.length > 0) {
   console.error(`\n[probe-dir-ops] FAIL（${failures.length} 项）:\n  - ${failures.join('\n  - ')}`)
   process.exit(1)
 }
-console.log(`\n[probe-dir-ops] RESULT: merged + split 全案通过（probe C 定谳[remove_dir 族可调]+delete_dir 六案+rename_dir 六案+嵌套案[merged]+链接零扰动归一 diff+磁盘逐字节/双复核/副作用圈定+双臂一致=${agree}）`)
+console.log(`\n[probe-dir-ops] RESULT: merged + split 全案通过（probe C 定谳[remove_dir 族可调]+delete_dir 六案+rename_dir 六案+嵌套案[merged]+链接零扰动归一 diff[r⑧+m⑦]+磁盘逐字节/双复核/副作用圈定+双臂一致=${agree}；**PLAN-018：move_dir 六案+循环卫后代形/合并拒同名目录形[merged]+depth 8 统一[三深度采+5 层深档收口直证+search 8 walk]+url_decode 重勘[D-19 维持]**）`)

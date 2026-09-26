@@ -1777,7 +1777,9 @@ widget App {
             var nodes List = []
             try {
                 root = ws_root()
-                nodes = json.to_value(tree(root, 4))
+                // PLAN-018 depth 8 统一（SD-1801）：tree/link/tags 前台
+                // 取数 4→8——fs.tree 钳制上限内，深目录覆盖收窄收口。
+                nodes = json.to_value(tree(root, 8))
                 .ft_nodes = nodes
                 .ws_name = file_basename(root)
                 .status = "ready"
@@ -1804,9 +1806,9 @@ widget App {
             var lp List = []
             var lok bool = true
             try {
-                lj = link_index("", 4)
+                lj = link_index("", 8)
                 .links_json = lj
-                lp = json.to_value(link_index("", 4))
+                lp = json.to_value(link_index("", 8))
             } catch (e) {
                 lok = false
             }
@@ -1918,7 +1920,7 @@ widget App {
             var rows List = []
             var ok bool = true
             try {
-                rows = json.to_value(tags_index("", 4))
+                rows = json.to_value(tags_index("", 8))
             } catch (e) {
                 ok = false
             }

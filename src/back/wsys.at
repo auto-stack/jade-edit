@@ -311,17 +311,21 @@ fn resolve_target(stems List, aliases List, rels List, target str) str {
 }
 
 /// body 内 [[Target]] / [[Target#anchor]] 标记法提取（read_body 根修同
-/// 族的 split/split_once 标记法——AutoVM 无正则面，VM 无 str.join 故
+/// 家族的 split/split_once 标记法——AutoVM 无正则面，VM 无 str.join 故
 /// 此为已证 O(n) 通道族）→ link 对象 JSON 数组（逗号前置连接）。忽略
 /// 面：无闭合 ]]（不完整对）/ 候选含换行（跨行链接 v1 不做，语料无此
 /// 形态）/ trim 后空候选（旧园 links_gen 空标题同忽略）/ # 后空 target。
 /// # 首现拆分：前段 target 参与 stem 匹配，后段 anchor 透传（D-12：无
 /// 定位事件面，仅显示）。exists 判定 = resolve_target 命中。
+/// **PLAN-018 装配切换**（SD-1801——StringBuilder natives 160 族探针 F
+/// 定谳可调）：逐段 `+` 重接 → builder 追加（O(L²)→O(n)——links_json
+/// 装配链内件；零语义变化：逗号前置判定 `out != ""` → `sb.len() > 0`
+/// 等价，段内小片段 `+` 保留[有界])。
 /// ⚠ VM 纪律（T-02 实勘）：列表元素上的链式方法调用错乱（heap 接收者
 /// CALL_SPEC 错位——`segs[i].split_once(..)` 返回垃圾长度），元素必须
 /// 先拷局部变量再调方法（links_json 节点收集循环同款已证形态）。
 fn extract_links_json(body str, stems List, aliases List, rels List) str {
-    var out str = ""
+    var sb StringBuilder = StringBuilder.new(1024)
     var segs = body.split("[[")
     var i int = 1
     while i < segs.len() {
@@ -344,15 +348,15 @@ fn extract_links_json(body str, stems List, aliases List, rels List) str {
                     }
                     if target.length > 0 {
                         var tp str = resolve_target(stems, aliases, rels, target)
-                        if out != "" {
-                            out = out + ","
+                        if sb.len() > 0 {
+                            sb.append(",")
                         }
-                        out = out + "{\"target\":\"" + json_esc(target) + "\",\"anchor\":\"" + json_esc(anchor)
-                        out = out + "\",\"exists\":"
+                        sb.append("{\"target\":\"" + json_esc(target) + "\",\"anchor\":\"" + json_esc(anchor))
+                        sb.append("\",\"exists\":")
                         if tp != "" {
-                            out = out + "true,\"target_path\":\"" + json_esc(tp) + "\"}"
+                            sb.append("true,\"target_path\":\"" + json_esc(tp) + "\"}")
                         } else {
-                            out = out + "false,\"target_path\":\"\"}"
+                            sb.append("false,\"target_path\":\"\"}")
                         }
                     }
                 }
@@ -360,7 +364,7 @@ fn extract_links_json(body str, stems List, aliases List, rels List) str {
         }
         i = i + 1
     }
-    return out
+    return sb.build()
 }
 
 /// 文件树 .ad 页面收集（links_json / search_json 共享——PLAN-004 T-01
@@ -419,9 +423,13 @@ pub fn collect_ad_pages(path str, depth int) List {
 /// 零感知——backlink/outlink/wanted/mentions 派生面不读）。
 /// 三步：①walk = collect_ad_pages（本切片 T-01 提取共享——链接/检索两面
 /// 覆盖一致）②逐档 read_body 后 extract_links_json 标记法提取 ③stem 解析
-/// 装配。装配逐页 `+` 重接：v0 规模 O(P²) 前缀复制可接受（对照 read_body
-/// 78s 案 ≈ 8 万次 ADD；此处 P ≤ 数百），规模上量随检索批换 StringBuilder
-///（native 160 族）。
+/// 装配。**PLAN-018 装配切换**（SD-1801）：装配逐页 `+` 重接 →
+/// StringBuilder 追加（O(P²)→O(n)——PLAN-003 §10.7 上量挂账兑现；探针 F
+/// 定谳 natives 160 族可调。**执行期实勘（018 T-01）**：500 档合成语料
+/// 上旧 `+` 装配在 P≈512 处 VM 值损坏——link_index HTTP 200 空串形态，
+/// 阈值口径从「性能债」实勘升级为「正确性缺口」；builder 切换后 500 档
+/// 全量正确装配[probe_dir_ops ⑧ 修复直证]。零语义变化：probe 全族逐字节
+/// 零漂移回归承载）。
 pub fn links_json(path str, depth int) str {
     var pages List = collect_ad_pages(path, depth)
     var stems List = []
@@ -438,7 +446,7 @@ pub fn links_json(path str, depth int) str {
         dtitles.push(page_fm_value(fm, "title"))
         i = i + 1
     }
-    var pages_out str = ""
+    var sb StringBuilder = StringBuilder.new(1024)
     var j int = 0
     while j < rels.len() {
         var body str = read_body(rels[j])
@@ -449,15 +457,15 @@ pub fn links_json(path str, depth int) str {
         if dt == "" {
             dt = stems[j]
         }
-        if pages_out != "" {
-            pages_out = pages_out + ","
+        if sb.len() > 0 {
+            sb.append(",")
         }
-        pages_out = pages_out + "{\"path\":\"" + json_esc(rels[j]) + "\",\"title\":\"" + json_esc(stems[j])
-        pages_out = pages_out + "\",\"dtitle\":\"" + json_esc(dt)
-        pages_out = pages_out + "\",\"links\":[" + links + "]}"
+        sb.append("{\"path\":\"" + json_esc(rels[j]) + "\",\"title\":\"" + json_esc(stems[j]))
+        sb.append("\",\"dtitle\":\"" + json_esc(dt))
+        sb.append("\",\"links\":[" + links + "]}")
         j = j + 1
     }
-    return "[" + pages_out + "]"
+    return "[" + sb.build() + "]"
 }
 
 /// 工作区全文检索 JSON：命中数组 [{"path","title","snippet"},…]
@@ -468,15 +476,17 @@ pub fn links_json(path str, depth int) str {
 ///（read_body，frontmatter 剥离面）含 q；大小写 = 两侧 to_lower（探针 A
 /// 定谳：vue 发射在册——ts_adapter.rs:1610 `to_lower→toLowerCase`，T-02
 /// 构建期 gen 树源检复核）；命中序 = collect_ad_pages walk 序（确定性）；
-/// limit 钳 1..50（front 传 20 = 旧园 default_limit 同值）；walk depth = 4
-/// 内部常量（Init tree 首屏同值——快开/检索/链接三面覆盖一致）。
+/// limit 钳 1..50（front 传 20 = 旧园 default_limit 同值）；walk depth = 8
+/// 内部常量（**PLAN-018 depth 8 统一**——SD-1801：4→8，fs.tree 钳制上限
+/// 内；tree/link/tags/search/collect 五面一致，深目录覆盖收窄收口）。
 /// **PLAN-012 扩**：title 命中面 = stem ∪ frontmatter aliases（010
 /// page_aliases 接入——alias-title-only 命中 snippet="" 同判；命中行
 /// title 恒 = stem 口径不变；序/walk 零变化）。
 /// snippet = body 中首条命中行 trim 后整行（⚠ D-20③：禁 .length 截断
 /// ——CJK heap 串字节语义；CRLF 行尾 \r 剥离——is_delim 同族容错，
-/// 行终止符非内容）；title-only 命中 = ""。装配 = json_esc + 逐项 `+`
-/// 重接（links_json 同款）。
+/// 行终止符非内容）；title-only 命中 = ""。装配 = json_esc +
+/// **StringBuilder 追加（PLAN-018 SD-1801——`+` 重接 O(P²)→O(n)，零
+/// 语义变化）**。
 pub fn search_json(query str, limit int) str {
     var q str = query.trim()
     if q == "" {
@@ -490,8 +500,8 @@ pub fn search_json(query str, limit int) str {
         n = 50
     }
     var ql str = q.to_lower()
-    var pages List = collect_ad_pages("", 4)
-    var out str = ""
+    var pages List = collect_ad_pages("", 8)
+    var sb StringBuilder = StringBuilder.new(1024)
     var hits int = 0
     var i int = 0
     while i < pages.len() {
@@ -545,17 +555,17 @@ pub fn search_json(query str, limit int) str {
                     }
                     k = k + 1
                 }
-                if hits > 0 {
-                    out = out + ","
+                if sb.len() > 0 {
+                    sb.append(",")
                 }
-                out = out + "{\"path\":\"" + json_esc(p.rel) + "\",\"title\":\"" + json_esc(p.stem)
-                out = out + "\",\"snippet\":\"" + json_esc(snip) + "\"}"
+                sb.append("{\"path\":\"" + json_esc(p.rel) + "\",\"title\":\"" + json_esc(p.stem))
+                sb.append("\",\"snippet\":\"" + json_esc(snip) + "\"}")
                 hits = hits + 1
             }
         }
         i = i + 1
     }
-    return "[" + out + "]"
+    return "[" + sb.build() + "]"
 }
 
 // ===== 悬空建页（PLAN-005 T-01；知识库第三切片 back 半） =====
@@ -792,7 +802,9 @@ pub fn rename_page_impl(old_path str, new_name str) str {
     }
     var old_stem str = stem_of(old_path)
     if old_stem != "" {
-        var pages List = collect_ad_pages("", 4)
+        // PLAN-018 depth 8 统一（SD-1801）：改写 walk 4→8——深层目录档
+        // 的入链改写覆盖随五面统一收口。
+        var pages List = collect_ad_pages("", 8)
         var i int = 0
         while i < pages.len() {
             // ⚠ D-20②：列表元素先拷局部变量再取字段/调方法。
@@ -900,7 +912,7 @@ fn trash_target(orig_rel str) str {
 /// GET 无参契约——零 D-19 暴露面（CJK 条目在响应 body，UTF-8 直通）。
 pub fn trash_list_json() str {
     var tree str = fs.tree(resolve(".trash"), 8)
-    var out str = ""
+    var sb StringBuilder = StringBuilder.new(1024)
     var segs = tree.split("{\"id\":")
     var i int = 1
     while i < segs.len() {
@@ -913,17 +925,17 @@ pub fn trash_list_json() str {
                 if qparts.len() >= 2 {
                     var rel str = qparts[1]
                     if rel.ends_with(".ad") {
-                        if out != "" {
-                            out = out + ","
+                        if sb.len() > 0 {
+                            sb.append(",")
                         }
-                        out = out + "{\"path\":\"" + json_esc(".trash/" + rel) + "\"}"
+                        sb.append("{\"path\":\"" + json_esc(".trash/" + rel) + "\"}")
                     }
                 }
             }
         }
         i = i + 1
     }
-    return "[" + out + "]"
+    return "[" + sb.build() + "]"
 }
 
 /// `--{n}` 序号后缀尾剥（trash_restore 专用；split 标记法——D-20③ 禁
@@ -1364,6 +1376,163 @@ pub fn rename_dir_impl(path str, new_name str) str {
             return ""
         }
         if File.exists(old_file_full) {
+            return ""
+        }
+        j = j + 1
+    }
+    // ④旧目录清理：嵌套逆序（子先于父）+ 顶层；复核旧无新有。
+    var k int = subdirs.len()
+    while k > 0 {
+        k = k - 1
+        var sd2 str = subdirs[k]
+        File.remove_dir(resolve(sd2))
+    }
+    File.remove_dir(full)
+    if File.exists(full) {
+        return ""
+    }
+    if !File.is_dir(new_full) {
+        return ""
+    }
+    return new_rel
+}
+
+// ===== 目录面三期（PLAN-018 T-01；知识库第十六切片 back 半）——工作区
+// 三部曲收官：移动目录。三联对照目录级第三案（SD-1201/SD-1401 并表续
+// ——与 012 档移动同判）：**stem 不变 ⇒ 链接零改写零断链**——链接面纯
+// stem 解析对目录结构完全无感（目录可自由重组[建/删/改名/移动]而不伤
+// 链接网——组织自由度完备）。可调性面 = probe C 同族在册定谳件
+//（create_dir/is_dir/remove_dir）；返值忽略 D-24②——exists/is_dir 双
+// 复核内建同族纪律。
+
+/// 目录移动本体（api.move_dir 实现；SD-1801）——POST 单事务五步：
+/// ①五卫：dir_norm(path) 非空（根拒）+ **.trash 域卫**（path / new_parent
+///   任一为 .trash 本体或 ".trash/" 前缀拒——回收站条目唯一合法通道 =
+///   trash_restore；delete_dir_impl/delete_page_impl 同族域卫）+
+///   is_dir(path)（非目录/缺失拒）+ is_dir(new_parent)（目标父非目录/
+///   缺失拒——根 "" 合法：resolve("") = 工作区根，移入根为合法弧线）
+///   + **循环卫**（new_parent == path 或 new_parent 以 `path + "/"` 起
+///   → 拒——移入自身/后代结构性非法）+ **同父幂等**（new_parent ==
+///   dir_of(path) → 返回归一 path 零变化）+ **合并拒**（目标父下
+///   `{dirname}` exists → ""——同名目录/同名文件同判；**目录合并不做**
+///   [目标同名即拒]——文件并入 + 逐档冲突裁决 v1 排除，§10.2 r2 留口）；
+/// ②子件清单收集（rename_dir_impl 同款——工作区根树段扫描 + 前缀过滤
+///   + 段分类；**纯 .ad 卫**：任一 file 子件非 .ad 尾 → 拒，先于一切
+///   落盘）；
+/// ③新目录建（File.create_dir——create_dir_all 递归幂等，探针 A 定谳）
+///   + 嵌套镜像目录逐个建 + **逐文件迁移循环**（新 rel = new_rel + 余段
+///   [rel.split_once(path + "/") 首现即前缀位——D-20③ 禁 length+slice
+///   安全通道]；move_file 组合迁移 + 双复核——006/012/017 定文形态单点）；
+/// ④旧目录清理：嵌套旧子目录**逆序** File.remove_dir（walk 序父先子后
+///   ⇒ 逆序即子先于父——空目录原语非递归口径）+ 顶层 remove_dir +
+///   复核（旧无 && 新 is_dir）；
+/// ⑤返回新工作区根相对目录路径（**dirname 段原样——移动不改名**，
+///   清洗属 rename_dir 面）；"" = 任一卫拒/迁移未生效。**部分迁移容忍
+///   注记**：循环中段失败留双份（rename_dir_impl 同判，006 非原子窗口
+///   家族；File.rename 别名供料解锁后可整体原子化）。
+pub fn move_dir_impl(path str, new_parent str) str {
+    var p str = dir_norm(path)
+    if p == "" {
+        return ""
+    }
+    if p == ".trash" {
+        return ""
+    }
+    if p.starts_with(".trash/") {
+        return ""
+    }
+    var np str = dir_norm(new_parent)
+    if np == ".trash" {
+        return ""
+    }
+    if np.starts_with(".trash/") {
+        return ""
+    }
+    var full str = resolve(p)
+    if !File.is_dir(full) {
+        return ""
+    }
+    if !File.is_dir(resolve(np)) {
+        return ""
+    }
+    if np == p {
+        return ""
+    }
+    if np.starts_with(p + "/") {
+        return ""
+    }
+    if np == dir_norm(dir_of(p)) {
+        return p
+    }
+    var segs = p.split("/")
+    var dname str = segs[segs.len() - 1]
+    var new_rel str = dname
+    if np != "" {
+        new_rel = np + "/" + dname
+    }
+    if File.exists(resolve(new_rel)) {
+        return ""
+    }
+    // ②卫 + 清单：工作区根树段扫描 + 前缀过滤（⚠ D-20②：段元素先拷
+    // 局部变量再调方法——rename_dir_impl 同款段分类语义）。
+    var tree str = fs.tree(resolve(""), 8)
+    var segs2 = tree.split("{\"id\":")
+    var files List = []
+    var subdirs List = []
+    var i int = 1
+    while i < segs2.len() {
+        var seg str = segs2[i]
+        var head = seg.split_once(",\"label\":")
+        if head.len() == 2 {
+            var idq str = head[0]
+            var qparts = idq.split("\"")
+            if qparts.len() >= 2 {
+                var id str = qparts[1]
+                if id.starts_with(p + "/") {
+                    if seg.contains("\"kind\":\"file\"") {
+                        if !id.ends_with(".ad") {
+                            return ""
+                        }
+                        files.push(id)
+                    } else {
+                        if seg.contains("\"kind\":\"dir\"") {
+                            subdirs.push(id)
+                        } else {
+                            if seg.ends_with(",\"children\":[") {
+                                subdirs.push(id)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        i = i + 1
+    }
+    // ③新目录 + 嵌套镜像目录（create_dir_all 语义幂等）。
+    var new_full str = resolve(new_rel)
+    File.create_dir(new_full)
+    var d int = 0
+    while d < subdirs.len() {
+        var sd str = subdirs[d]
+        var sdp = sd.split_once(p + "/")
+        var sd_rest str = sd
+        if sdp.len() == 2 {
+            sd_rest = sdp[1]
+        }
+        File.create_dir(resolve(dir_norm(new_rel + "/" + sd_rest)))
+        d = d + 1
+    }
+    // 逐文件迁移（move_file 组合单点——读+写+删+双复核）。
+    var j int = 0
+    while j < files.len() {
+        // ⚠ D-20②：列表元素先拷局部变量再调方法。
+        var rel str = files[j]
+        var rp = rel.split_once(p + "/")
+        var rest str = rel
+        if rp.len() == 2 {
+            rest = rp[1]
+        }
+        if !move_file(rel, new_rel + "/" + rest) {
             return ""
         }
         j = j + 1
@@ -1854,24 +2023,23 @@ pub fn page_meta_json(path str) str {
     var title_v str = page_fm_value(fm, "title")
     var tags = page_fm_list(fm, "tags")
     var aliases = page_fm_list(fm, "aliases")
-    var out str = "["
+    var sb StringBuilder = StringBuilder.new(256)
     if title_v != "" {
-        out = out + "{\"key\":\"title\",\"value\":\"" + json_esc(title_v) + "\"}"
+        sb.append("{\"key\":\"title\",\"value\":\"" + json_esc(title_v) + "\"}")
     }
     if tags.len() > 0 {
-        if out != "[" {
-            out = out + ","
+        if sb.len() > 0 {
+            sb.append(",")
         }
-        out = out + "{\"key\":\"tags\",\"value\":\"" + json_esc(csv_join(tags)) + "\"}"
+        sb.append("{\"key\":\"tags\",\"value\":\"" + json_esc(csv_join(tags)) + "\"}")
     }
     if aliases.len() > 0 {
-        if out != "[" {
-            out = out + ","
+        if sb.len() > 0 {
+            sb.append(",")
         }
-        out = out + "{\"key\":\"aliases\",\"value\":\"" + json_esc(csv_join(aliases)) + "\"}"
+        sb.append("{\"key\":\"aliases\",\"value\":\"" + json_esc(csv_join(aliases)) + "\"}")
     }
-    out = out + "]"
-    return out
+    return "[" + sb.build() + "]"
 }
 
 /// 页面元数据受控写（api.set_page_meta 实现；五步）：
@@ -2325,8 +2493,9 @@ fn page_tag_set(rel str) List {
 /// walk 序。解析 = page_tag_set（frontmatter_of + page_tags + 行内
 /// page_inline_tags 并集，PLAN-009 T-01）。两遍聚合（元素先拷局部——
 /// D-20②）：pass1 全页 tag first-seen 去重收集；pass2 每 tag 收 paths。
-/// 装配 = json_esc + 逐项 `+` 重接（links_json 同款）；O(T×P) 重读——
-/// v0 规模可接受（search_json O(P²) 同判，上量随检索批换 StringBuilder）。
+/// 装配 = json_esc + **StringBuilder 追加（PLAN-018 SD-1801——`+` 重接
+/// O(T²+P²)→O(n)，零语义变化；O(T×P) page_tag_set 重读面不动——索引
+/// 单趟合并随 watch 批 §10.4）**。
 /// 契约形状/触发面零变化（PLAN-008 定文不变——仅逐页聚合源 +1）。
 pub fn tags_json(path str, depth int) str {
     var pages List = collect_ad_pages(path, depth)
@@ -2355,11 +2524,11 @@ pub fn tags_json(path str, depth int) str {
         }
         i = i + 1
     }
-    var out str = ""
+    var sb StringBuilder = StringBuilder.new(1024)
     var t int = 0
     while t < tags.len() {
         var tag2 str = tags[t]
-        var paths str = ""
+        var psb StringBuilder = StringBuilder.new(256)
         var i2 int = 0
         while i2 < pages.len() {
             var p2 = pages[i2]
@@ -2375,18 +2544,18 @@ pub fn tags_json(path str, depth int) str {
                 k2 = k2 + 1
             }
             if has {
-                if paths != "" {
-                    paths = paths + ","
+                if psb.len() > 0 {
+                    psb.append(",")
                 }
-                paths = paths + "\"" + json_esc(rel2) + "\""
+                psb.append("\"" + json_esc(rel2) + "\"")
             }
             i2 = i2 + 1
         }
-        if out != "" {
-            out = out + ","
+        if sb.len() > 0 {
+            sb.append(",")
         }
-        out = out + "{\"tag\":\"" + json_esc(tag2) + "\",\"paths\":[" + paths + "]}"
+        sb.append("{\"tag\":\"" + json_esc(tag2) + "\",\"paths\":[" + psb.build() + "]}")
         t = t + 1
     }
-    return "[" + out + "]"
+    return "[" + sb.build() + "]"
 }

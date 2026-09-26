@@ -257,6 +257,26 @@ pub fn rename_dir(path str, new_name str) str {
     return wsys.rename_dir_impl(path, new_name)
 }
 
+/// 移动目录（PLAN-018 第十六切片；**工作区三部曲收官**——目录：建
+/// [012]/重命名 [014]/删除 [014]/**移动 [本批]**；档四操作对称完备）：
+/// **三联对照目录级第三案**——stem 不变 ⇒ 链接零改写零断链（SD-1201
+/// 档移动/SD-1401 目录重命名同判并表续：链接面纯 stem 解析对目录结构
+/// 完全无感）。POST 单事务五步（卫：dir_norm 非空[根拒] + .trash 域卫
+/// [path/new_parent 任一涉回收站拒——条目唯一合法通道 trash_restore] +
+/// is_dir×2 + **循环卫**[new_parent == path 或以其 `path + "/"` 起拒
+/// ——移入自身/后代结构性非法] + **同父幂等**[返回归一 path 零变化] +
+/// **合并拒**[`new_parent/{dirname}` exists 拒——目标同名目录/文件同判
+/// ，**目录合并不做 v1**，r2 留口 §10.2] + 纯 .ad 卫；逐文件迁移循环
+/// [move_file 组合 + 双复核]；旧目录清理[嵌套逆序 + 顶层] + 复核）。
+/// 成功返回工作区根相对新目录路径（dirname 段原样——移动不改名）；"" =
+/// 任一卫拒/迁移未生效。**POST 而非 GET**（D-19：目录路径 CJK 常态，
+/// body 传参）。
+/// POST /api/move_dir
+#[api(method = "POST", path = "/api/move_dir")]
+pub fn move_dir(path str, new_parent str) str {
+    return wsys.move_dir_impl(path, new_parent)
+}
+
 /// 今日笔记（PLAN-015 第一切片；上游 Time 解锁兑现——back 侧 Date 独占
 /// 消费，front 零 Date 面——vue 轨 ts_adapter Date.* 发射未证，设计性
 /// 规避）：`Date.format(Date.now(), "yyyy_MM_dd")` stem 建档/幂等打开
