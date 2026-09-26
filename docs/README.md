@@ -124,6 +124,18 @@
   挂账——create 幂等 exists 卫天然正确/检索已 casefold 零变化）；
   零新契约/零新 UI 形态/**零重锁第二例**（基线 v15 不动——纯 back
   语义扩容）；
+  **第十六切片 = 目录移动 + 上量微批**（SD-1801，2026-09-26）：
+  **工作区三部曲收官**——档（建/移/删/改名）与目录（建/删/改名/
+  移动[本批]）全操作面补齐：①**`move_dir` POST 契约**（五卫定文：
+  循环卫[移入自身/后代拒]/合并拒[目标同名拒——目录合并不做 v1]/
+  纯 .ad/同父幂等/.trash 域卫[执行期加护]；单事务逐文件 + **stem
+  不变 ⇒ 链接零改写**——三联对照移动级）+ front 弹层双 input（
+  源/目标父——无快捷键 M 族避让）；②**StringBuilder 装配**（探针 F
+  定谳 natives 160-167 族可调 → 三索引+双 JSON 装配段 O(P²)→O(n)，
+  逐字节零漂移——PLAN-003/004 上量挂账兑现；**500 档实勘 VM 字符串
+  池值损坏→上游域 ledger D-35，稳定域 P ≤ 200**）；③**depth 8 统一**
+  （五面调用点 4→8——深目录覆盖收窄收口，语料 flat 零漂移）；基线
+  **v16 重锁**（movedir 弹层/开态/双字段入 dump）；
   **第八切片 = 别名解析 + 提及转链接**（SD-1001，
   2026-09-23）：链接域二期——frontmatter `aliases:` block-list 只读解析（`page_fm_list`，解析序 stem 精确首现优先 → alias 精确首现，消费面 exists/target_path/反链/出链/wanted 全面对齐，检索/提及/改名不入面）+ `linkify_page` POST 契约（明区改写、frontmatter 逐字节保留、计数返回）+ 提及行「转为链接」钮（串联自派生刷新消除 vue 轨并发 fetch 竞态）+ F-R9-4 删除流提及刷新收口；图谱 tab 顺位后移——vm 轨组
   件面依赖上游），本仓零依赖其代码。
@@ -179,14 +191,14 @@ node tests/vm_matrix.mjs            # 双臂（merged+split）检查单 + 基线
 pnpm test:e2e                       # vue 检查单（同一检查单；serve-back 后端）
 ```
 
-## Tests（判绿口径，SD-204；SD-304/403 扩定；SD-503 再扩定；SD-603 再扩定；SD-703 再扩定；SD-803 再扩定；SD-903 再扩定；SD-1003 再扩定；SD-1103 再扩定；SD-1203 再扩定；SD-1303 再扩定；SD-1403 再扩定；SD-1503 再扩定；SD-1603 再扩定；SD-1703 再扩定）
+## Tests（判绿口径，SD-204；SD-304/403 扩定；SD-503 再扩定；SD-603 再扩定；SD-703 再扩定；SD-803 再扩定；SD-903 再扩定；SD-1003 再扩定；SD-1103 再扩定；SD-1203 再扩定；SD-1303 再扩定；SD-1403 再扩定；SD-1503 再扩定；SD-1603 再扩定；SD-1703 再扩定；SD-1803 再扩定）
 
 检查单（PLAN-002 T-01 扩定 + PLAN-003 T-04 link 扩单 + PLAN-004 T-04
 find 扩单 + PLAN-005 T-04 create 扩单 + PLAN-006 T-04 rename 扩单 +
 PLAN-007 T-04 file 扩单 + PLAN-008 T-04 meta 扩单 + PLAN-009 T-04 mentions 扩单 +
 PLAN-010 T-04 alias/linkify 扩单 + PLAN-011 T-04 meta 属性扩单 + PLAN-012
 T-04 目录面/alias 检索扩单 + PLAN-013 T-04 显示名扩单 + PLAN-014 T-04
-面板行名化/目录二期扩单 + PLAN-015 T-05 daily/updated_at 扩单 + PLAN-016 T-04 trash 模式/改道恢复扩单 + PLAN-017 T-04 四级解析/词边界/case-only 弧线扩单）：
+面板行名化/目录二期扩单 + PLAN-015 T-05 daily/updated_at 扩单 + PLAN-016 T-04 trash 模式/改道恢复扩单 + PLAN-017 T-04 四级解析/词边界/case-only 弧线扩单 + PLAN-018 T-04 目录移动/depth 8 扩单）：
 `boot / tree / open / edit / save / reload` 六检查 + **tab / editops /
 quit** 扩单三组 + **link / link-empty**（链接索引已知答案 + 反链面板双轨
 可用 + 空态——CJK 路径导航子步仅 vm merged 臂，D-19）+ **create**（建页

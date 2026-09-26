@@ -78,7 +78,13 @@
 //             ⑮ 删除预览[计数行+无入链警示]+取消零落盘/⑯ 删除弧线[确
 //             认 → tab 全关 + 磁盘消；悬空翻转面 vm ⑯ 承载]（素材 =
 //             ⊕ 目录甲 + ＋ DirNote + 移动入——14 meta 已知答案免疫
-//             ：DirNote 无 tags 无链接）** + **daily 弧线（PLAN-015；vm
+//             ：DirNote 无 tags 无链接）** + **目录移动三子步（PLAN-018
+//             T-04；vm file 组 dir3 同单——真 DOM + CJK 目录名 POST body
+//             双臂面）：素材 ⊕ 目录丙/目录丁 + ＋ DirMvPg 移入目录丙
+//             → 移动目录弧线[双 input 弹层 源/目标父→tab 题恒+磁盘整迁
+//             目录丁/目录丙——三联对照移动级三部曲收官]/取消零落盘/
+//             循环卫拒弹层留置[源==目标父自身形]（deep 案 = vm 承载
+//             ——e2e 断言域外）** + **daily 弧线（PLAN-015；vm
 //             file 组 ⑰ 同单）：菜单「今日笔记」→ 开档（# 当日 body）→
 //             磁盘 created_at/updated_at 双时间戳 → 重入幂等（tab 不重复）
 //             ——日期面 back 单点[Date 原语独占消费]，已知答案免疫
@@ -971,6 +977,78 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
     .poll(() => fs.existsSync(path.join(WORKSPACE, '目录乙')), { timeout: 10_000 })
     .toBe(false)
   console.log('[13 dir2] PASS — 删除目录弧线（强确认→tab 全关+磁盘消；悬空翻转面 vm ⑯ 承载[DirNote 零入链素材]）')
+
+  // —— PLAN-018 目录移动弧线（vm file 组 dir3 同单——真 DOM；工作区
+  // 三部曲收官）。素材：⊕ 目录丙/目录丁 + ＋ DirMvPg → 移动到目录丙
+  // （012 档移动口——弹层单 input）→ 移动目录弧线[弹层双 input 源[0]/
+  // 目标父[1]——视图序 → 确认 → tab 题恒 DirMvPg + 磁盘整迁 目录丁/
+  // 目录丙——三联对照移动级]/取消零落盘/循环卫拒弹层留置[源==目标父
+  // 自身形]。deep 案 = vm ⑳ 承载（快开 depth 8 收口——e2e 断言域外）。——
+  await explorerFolderPlus.click()
+  await expect(page.getByPlaceholder('目录名…')).toBeVisible({ timeout: 10_000 })
+  await page.getByPlaceholder('目录名…').fill('目录丙')
+  await page.getByRole('button', { name: '创建', exact: true }).click()
+  await expect(page.getByText('新建目录')).toBeHidden({ timeout: 10_000 })
+  await explorerFolderPlus.click()
+  await expect(page.getByPlaceholder('目录名…')).toBeVisible({ timeout: 10_000 })
+  await page.getByPlaceholder('目录名…').fill('目录丁')
+  await page.getByRole('button', { name: '创建', exact: true }).click()
+  await expect(page.getByText('新建目录')).toBeHidden({ timeout: 10_000 })
+  await explorerPlus.click()
+  await expect(newNameInput).toBeVisible({ timeout: 10_000 })
+  await newNameInput.fill('DirMvPg')
+  await page.getByRole('button', { name: '创建', exact: true }).click()
+  await expect(page.getByText('新建页面')).toBeHidden({ timeout: 10_000 })
+  await expect(tabBtn('DirMvPg')).toHaveCount(1, { timeout: 15_000 })
+  // 档入目录丙（012 移动口——单 input 弹层）
+  await page.getByText('文件', { exact: true }).click()
+  await page.getByText('移动到目录…', { exact: true }).click()
+  await expect(moveText()).toBeVisible({ timeout: 10_000 })
+  await moveText().fill('目录丙')
+  await moveDialog.getByRole('button', { name: '移动', exact: true }).click()
+  await expect(page.getByRole('heading', { name: '移动到目录' })).toBeHidden({ timeout: 10_000 })
+  await expect
+    .poll(() => fs.existsSync(path.join(WORKSPACE, '目录丙', 'DirMvPg.ad')), { timeout: 10_000 })
+    .toBe(true)
+  console.log('[13 dir3] 素材就绪 — 目录丙/目录丁 + DirMvPg 移入（tab 题全量）')
+  // 移动目录弧线：双 textbox → 确认 → tab 题恒 + 磁盘整迁 + 弹层闭。
+  await page.getByText('文件', { exact: true }).click()
+  await page.getByText('移动目录…', { exact: true }).click()
+  const dir3Dialog = page.getByRole('dialog')
+  await expect(dir3Dialog).toBeVisible({ timeout: 10_000 })
+  const dir3Boxes = dir3Dialog.getByRole('textbox')
+  await expect(dir3Boxes).toHaveCount(2)
+  await dir3Boxes.nth(0).fill('目录丙')
+  await dir3Boxes.nth(1).fill('目录丁')
+  await dir3Dialog.getByRole('button', { name: '移动', exact: true }).click()
+  await expect(page.getByRole('heading', { name: '移动目录' })).toBeHidden({ timeout: 10_000 })
+  await expect(tabBtn('DirMvPg')).toHaveCount(1, { timeout: 15_000 })
+  await expect
+    .poll(() => fs.existsSync(path.join(WORKSPACE, '目录丁', '目录丙', 'DirMvPg.ad')) && !fs.existsSync(path.join(WORKSPACE, '目录丙')), { timeout: 10_000 })
+    .toBe(true)
+  console.log('[13 dir3] PASS — 移动目录弧线（双 input 弹层/tab 题恒/磁盘整迁——三联对照移动级三部曲收官）')
+  // 取消零落盘
+  await page.getByText('文件', { exact: true }).click()
+  await page.getByText('移动目录…', { exact: true }).click()
+  await expect(dir3Dialog).toBeVisible({ timeout: 10_000 })
+  await dir3Boxes.nth(0).fill('目录丁/目录丙')
+  await dir3Boxes.nth(1).fill('NoDirMv')
+  await page.getByRole('button', { name: '取消', exact: true }).last().click()
+  await expect(page.getByRole('heading', { name: '移动目录' })).toBeHidden({ timeout: 10_000 })
+  expect(fs.existsSync(path.join(WORKSPACE, 'NoDirMv')), '取消零落盘').toBe(false)
+  console.log('[13 dir3] 取消零落盘')
+  // 循环卫拒：源==目标父（自身形）→ 确认 → 弹层留置 + 磁盘零变化 → 取消。
+  await page.getByText('文件', { exact: true }).click()
+  await page.getByText('移动目录…', { exact: true }).click()
+  await expect(dir3Dialog).toBeVisible({ timeout: 10_000 })
+  await dir3Boxes.nth(0).fill('目录丁/目录丙')
+  await dir3Boxes.nth(1).fill('目录丁/目录丙')
+  await dir3Dialog.getByRole('button', { name: '移动', exact: true }).click()
+  await expect(page.getByRole('heading', { name: '移动目录' })).toBeVisible({ timeout: 10_000 })
+  expect(fs.existsSync(path.join(WORKSPACE, '目录丁', '目录丙', 'DirMvPg.ad')), '循环卫拒零变化').toBe(true)
+  await page.getByRole('button', { name: '取消', exact: true }).last().click()
+  await expect(page.getByRole('heading', { name: '移动目录' })).toBeHidden({ timeout: 10_000 })
+  console.log('[13 dir3] PASS — 循环卫拒弹层留置（源==目标父自身形）')
 
   // PLAN-015 daily 弧线（vm file 组 ⑰ 同单——菜单入口 → 开档 → 磁盘双
   // 时间戳 → 重入幂等；日期面 back 单点，动态值 = 当日格式断言；stem 全

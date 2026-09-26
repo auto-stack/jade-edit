@@ -10,14 +10,13 @@
 //   5 save    保存落盘（toolbar 保存 → 脏标清 + 磁盘字节含标记 + frontmatter 保留
 //             + updated_at 自动维护——PLAN-015：已有键保存即更新值[当日形]）
 //   6 reload  重载可见（磁盘外改 → toolbar 重载 → 编辑器见新内容）
-//   B base    结构基线 v15 零漂移（仅 merged 臂；必须在 1-6 后、扩单前采集
-//             ——v15 锁的是六检查终态，扩单不漂移基线；v15=PLAN-016 回收站
-//             UI 面[App trash_rows/trash_purge_open 入 dump + action
-//             file.trash[Ctrl+Shift+T 键位] + menubar 文件项「回收站」+
-//             清空强确认弹层实例入 id 序列]；v14=PLAN-015 每日
-//             笔记 UI 面[action/menubar/工具栏三节点——store/App 零状态面
-//             ；行:列消费上游门控续——探针 E 定谳 D-12 处置维持]、v13=
-//             PLAN-014、v12=PLAN-013、v11=PLAN-012 等留档）
+//   B base    结构基线 v16 零漂移（仅 merged 臂；必须在 1-6 后、扩单前采集
+//             ——v16 锁的是六检查终态，扩单不漂移基线；v16=PLAN-018 目录
+//             移动 UI 面[store movedir_open + App movedir_src/dst 入
+//             dump + action file.movedir 无快捷键 + menubar「移动目录…」
+//             + 移动目录弹层第十二实例双 input 入 id 序列]；v15=PLAN-016
+//             回收站 UI 面、v14=PLAN-015 每日笔记、v13=PLAN-014、v12=
+//             PLAN-013、v11=PLAN-012 等留档）
 //   7 tab     tab 面：开两档 → 切换（active 断言 + 内容互换）→ dirty 档
 //             关闭走确认弹层两路（取消=档留；直接关闭=弃改落盘零写入）
 //   8 editops 编辑操作族：段中回车/退格（C-5 整文构造——回车分段可见 +
@@ -91,6 +90,13 @@
 //             F-R9-4 案（PLAN-010
 //             ⑨——删激活靶档→提及行随新激活刷新消[Fr94Src/Fr94Del 弹
 //             层造档，收尾双删复原]）。执行序在 12 后 9 前
+//   + **目录移动四子步（PLAN-018——㉒移动目录弧线[DirMvA→DirMvB：弹
+//             层双 input 源/目标父→磁盘新位字节整迁+旧目录消+tab 全量
+//             路径变标题恒+ft_sel remap+面板快照零变化+links_json 归
+//             一 diff——三联对照移动级三部曲收官]/取消零落盘/循环卫拒
+//             弹层留置[源==目标父自身形]/5 层深档快开命中[depth 8
+//             front 面收口直证——素材 fs 外造 L1/../../L4/DeepPg.ad]；
+//             CJK 案 probe_dir_ops m①..m⑦ 双臂直证覆盖）**
 //   14 meta   标签面板+wanted 模式八子步 + inline tag 子步 + 属性子步
 //             六案（PLAN-008 + PLAN-009 + **PLAN-011**；多件同组——find
 //             组先例。属性子步：untitled no-op/预填回显[目标页双臂异位
@@ -149,7 +155,7 @@ const argOf = (name) => {
   return i >= 0 ? args[i + 1] : undefined
 }
 const ARM = argOf('--arm') ?? 'all' // all | merged | split
-const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v15.txt')
+const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v16.txt')
 const SAVE_BASELINE = argOf('--save-baseline')
 
 const EDIT_MARKER = 'jade-edit 冒烟标记：编辑回写可见。'
@@ -575,33 +581,31 @@ async function runArm(arm, port) {
       const stateDump = (await callTool('autoui_state', {})).trim()
       const snapIds = JSON.stringify([...(await snapshotText()).matchAll(/#(vnode_\d+)/g)].map((m) => m[1]))
       const headerFor = (file) =>
-        `// jade-edit vm 结构基线 v14（PLAN-015 T-04 重锁；v13=PLAN-014 T-04、v12=PLAN-013 T-04、v11=PLAN-012 T-04、
+        `// jade-edit vm 结构基线 v16（PLAN-018 T-04 重锁；v15=PLAN-016 T-04[头注字面 v14 系
 ` +
-        `// v10=PLAN-011 T-04、v9=PLAN-009 T-04、v8=PLAN-008 T-04、v7=PLAN-007 T-04、v6=PLAN-006
+        `// v15 重锁窗漏改——016 教训同款，本批随 v16 一并校正]、v14=PLAN-015、v13=PLAN-014、
 ` +
-        `// T-04、v5=PLAN-005 T-04、v4=PLAN-004 T-04、v3=PLAN-003 T-04、v2=PLAN-002 T-01、
+        `// v12=PLAN-013、v11=PLAN-012 等 16 版均留档）。
 ` +
-        `// v1=PLAN-001 T-04 换基、v0=PLAN-081 T-05 均留档）。
+        `// 重锁因由：目录移动 UI 面（PLAN-018 工作区三部曲收官批）——store movedir_open
 ` +
-        `// 重锁因由：每日笔记 UI 面（PLAN-015 上游解锁兑现批）——action file.daily（Ctrl+Alt+N 键位）
+        `// + App movedir_src/movedir_dst 入 state dump；menubar 文件项「移动目录…」+ action
 ` +
-        `// + menubar 文件项「今日笔记」+ 工具栏 calendar 钮进 snapshot vnode id 序列。store/App 模型
+        `// file.movedir（无快捷键）+ 移动目录弹层第十二实例（双 input）进 snapshot vnode id
 ` +
-        `// 零状态面变更（ActDaily 直调无新字段）；行:列消费未落地——探针 E 定谳：autodown_editor 无
+        `// 序列。G5 实勘落定：弹层闭态恒渲染（D-23③）→ id 序列含新节点 → v16 重锁（非零重锁
 ` +
-        `// oncursor 转换臂（PLAN-413 oncursor 在 code_editor——组件错位），vue EngineEditor 无 cursor
+        `// 第三例）。
 ` +
-        `// emit——D-12「行:列降级」处置维持，供料候选扩面（autodown_editor oncursor/anchor-reveal）。
-` +
-        `// 仪器同 v2..v13：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态
+        `// 仪器同 v2..v15：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态
 ` +
         `//（chrome 全套 + Hello World.ad 开；查找面板/建页弹层/新建弹层/属性弹层/新建目录
 ` +
-        `// 弹层/移动弹层/删除目录弹层/重命名目录弹层/重命名弹层/删除弹层/标签面板/反链面板
+        `// 弹层/移动弹层/删除目录弹层/重命名目录弹层/移动目录弹层/重命名弹层/删除弹层/标签
 ` +
-        `// 未开——find_*/create_*/new_*/meta_*/dir_*/move_*/deldir_*/rendir_*/rename_*/
+        `// 面板/反链面板未开——find_*/create_*/new_*/meta_*/dir_*/move_*/movedir_*/deldir_*/
 ` +
-        `// delete_*/tags_*/mention_rows 全为默认值入 dump）。
+        `// rendir_*/rename_*/delete_*/tags_*/mention_rows 全为默认值入 dump）。
 ` +
         `// 再生成：node tests/vm_matrix.mjs --save-baseline ${path.relative(repoRoot, file).replace(/\\\\/g, '/')}\n`
       const baselineBodyOf = () => `## state\n${stateDump}\n\n## snapshot-ids\n${snapIds}\n`
@@ -612,9 +616,9 @@ async function runArm(arm, port) {
       } else if (fs.existsSync(BASELINE)) {
         const raw = fs.readFileSync(BASELINE, 'utf8')
         const ok = raw === headerFor(BASELINE) + baselineBodyOf()
-        check('B', 'baseline', ok, ok ? '结构基线 v15 零漂移（state 逐字节 + id 序列）——PLAN-017 零重锁第二例实录（纯 back 语义扩容：store/App 零新字段，dump 零新字段断言随零漂移现跑兑现）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
+        check('B', 'baseline', ok, ok ? '结构基线 v16 零漂移（state 逐字节 + id 序列）——PLAN-018 重锁（movedir 弹层/开态/双字段入 dump）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
       } else {
-        console.log('  [baseline] structure-v15 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v15.txt')
+        console.log('  [baseline] structure-v16 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v16.txt')
       }
     }
 
@@ -2524,6 +2528,15 @@ async function runArm(arm, port) {
       return `${d.getFullYear()}_${p2(d.getMonth() + 1)}_${p2(d.getDate())}`
     })()
     const dailyDay = dailyStem.split('_').join('-')
+    // PLAN-018 素材 fs 外造（⑰ ActDaily 的 TreeRefresh 承载树新鲜度——
+    // 新行随刷入树）：DirMvA/MovePg.ad[含 [[Hello World]] 链——面板快照
+    // 断言语义面] + DirMvB 目标父 + L1/../L4 5 层深档[depth 8 收口直证
+    // 素材——depth 4 下不可见]。
+    fs.mkdirSync(path.join(FIXTURE, 'DirMvA'), { recursive: true })
+    fs.writeFileSync(path.join(FIXTURE, 'DirMvA', 'MovePg.ad'), '# MovePg\n\n见 [[Hello World]] 一处。\n', 'utf8')
+    fs.mkdirSync(path.join(FIXTURE, 'DirMvB'), { recursive: true })
+    fs.mkdirSync(path.join(FIXTURE, 'L1', 'L2', 'L3', 'L4'), { recursive: true })
+    fs.writeFileSync(path.join(FIXTURE, 'L1', 'L2', 'L3', 'L4', 'DeepPg.ad'), '# DeepPg\n\n深位档。\n', 'utf8')
     await pressButton('今日笔记')
     await stateIs('active_title', dailyStem)
     await stateHas('active_body', `# ${dailyDay}`)
@@ -2554,6 +2567,139 @@ async function runArm(arm, port) {
     // 收尾：关今日笔记 tab（洁净直接关——激活态 x 钮在册口）
     await pressActiveTabClose(dailyStem)
     const dailyOk = dailyDiskOk && dailyTreeOk && dailyIdemOk
+    // —— PLAN-018 T-04 目录移动四子步（file 组子步——组数不变，fail 即
+    // 臂败；素材已外造：DirMvA[MovePg.ad 含 [[Hello World]] 链] + DirMvB
+    // + L1/../../L4/DeepPg.ad 5 层深档）：
+    //   ㉒① 移动目录弧线（DirMvA→DirMvB：弹层双 input[源/目标父]→确认
+    //      → movedir_open=false + 磁盘新位字节整迁 + 旧目录消 + tab 全量
+    //      路径变标题恒 + 面板快照零变化 + links_json 归一 diff——三联
+    //      对照移动级[SD-1201/1401/1801 并表续——三部曲收官]）
+    //   ② 取消零落盘 ③ 循环卫拒弹层留置（源==目标父 自身形）
+    //   ④ deep 案：5 层深档快开命中（depth 8 front 面收口直证——
+    //      tree depth 4 下快开行集不含该档）
+    if (!/backlinks_open:\s*true/.test(await stateText('backlinks_open'))) {
+      await pressButton('视图', { exact: true })
+      await pressButton('切换反链', { exact: true })
+    }
+    await stateIs('backlinks_open', 'true')
+    // DirMvA 展开态自适应（fs 外造行不在 ft_expanded——press 展开）→
+    // 开 MovePg 档（tab 面——路径断言载体；显示名 'MovePg'）。
+    await pressTree('DirMvA')
+    await sleep(400)
+    await pressTree('MovePg')
+    await stateIs('active_title', 'DirMvA/MovePg')
+    // 面板锚 = MovePg 出链行 'Hello World'（区域锚——树行/tab 题同文
+    // 消歧；出链恒链接文本 SD-1401 定文）；面板快照零变化的对照态。
+    await waitButtonIn(panelRegion, 'Hello World')
+    const panel3Before = panelSliceOf(await snapshotText())
+    const lj3Before = (await callTool('autoui_state', {})).match(/links_json:\s*"((?:[^"\\]|\\.)*)"/)?.[1] ?? ''
+    const mvPgBytes = fs.readFileSync(path.join(FIXTURE, 'DirMvA', 'MovePg.ad'), 'utf8')
+    await pressButton('文件', { exact: true })
+    await pressButton('移动目录…', { exact: true })
+    await stateIs('movedir_open', 'true')
+    await stateIs('movedir_src', '')
+    await stateIs('movedir_dst', '')
+    await typeIntoDialogInput('移动目录', 'DirMvA')
+    await stateIs('movedir_src', 'DirMvA')
+    await typeIntoDialogInputIdx('移动目录', 1, 'DirMvB')
+    await stateIs('movedir_dst', 'DirMvB')
+    await pressInDialogByTitle('移动目录', '移动')
+    await stateIs('movedir_open', 'false')
+    // ① 断言族：磁盘新位字节整迁 + 旧目录消 + tab 全量路径变标题恒 +
+    // ft_sel remap + 面板快照零变化 + links_json 归一 diff。
+    const movedMvFile = path.join(FIXTURE, 'DirMvB', 'DirMvA', 'MovePg.ad')
+    const mvDirDiskOk = fs.existsSync(movedMvFile) && !fs.existsSync(path.join(FIXTURE, 'DirMvA'))
+      && fs.readFileSync(movedMvFile, 'utf8') === mvPgBytes
+    const mvDump3 = await callTool('autoui_state', {})
+    const mvDirTabOk = mvDump3.includes('active_path: "DirMvB/DirMvA/MovePg.ad"') && mvDump3.includes('active_title: "DirMvB/DirMvA/MovePg"')
+      && mvDump3.includes('ft_sel: "DirMvB/DirMvA/MovePg.ad"')
+    await waitButtonIn(tabStripRegion, 'MovePg')
+    let panel3After = ''
+    let panelZero3Ok = false
+    for (const dl = Date.now() + 8000; ; ) {
+      panel3After = panelSliceOf(await snapshotText())
+      panelZero3Ok = panel3Before !== '' && panel3Before === panel3After
+      if (panelZero3Ok || Date.now() > dl) break
+      await sleep(300)
+    }
+    const lj3After = mvDump3.match(/links_json:\s*"((?:[^"\\]|\\.)*)"/)?.[1] ?? ''
+    const lj3Unesc = (s) => { try { return JSON.parse(`"${s}"`) } catch { return s } }
+    const lj3Norm = (raw) => {
+      try {
+        const pages = JSON.parse(lj3Unesc(raw))
+        const normPath = (p) => (p === 'DirMvA/MovePg.ad' || p === 'DirMvB/DirMvA/MovePg.ad' ? '<MOVED>' : p)
+        return JSON.stringify(pages.map((p) => ({
+          path: normPath(p.path), title: p.title,
+          links: p.links.map((l) => ({ ...l, target_path: normPath(l.target_path) })),
+        })).sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b))))
+      } catch {
+        return '<unparsable>'
+      }
+    }
+    const linkNet3Ok = lj3Before !== '' && lj3Norm(lj3Before) === lj3Norm(lj3After)
+    // ② 取消零落盘：重开弹层 → 填源/目标父 → 取消 → 零落盘（NoDirMv
+    // 不在 + 位移档原样）。
+    await pressButton('文件', { exact: true })
+    await pressButton('移动目录…', { exact: true })
+    await stateIs('movedir_open', 'true')
+    await typeIntoDialogInput('移动目录', 'DirMvB/DirMvA')
+    await typeIntoDialogInputIdx('移动目录', 1, 'NoDirMv')
+    await pressInDialogByTitle('移动目录', '取消')
+    await stateIs('movedir_open', 'false')
+    const mvDirCancelOk = !fs.existsSync(path.join(FIXTURE, 'NoDirMv')) && fs.existsSync(movedMvFile)
+    // ③ 循环卫拒：源==目标父（自身形）→ 移动 → 弹层留置 + 磁盘零变化
+    // → 取消收口。
+    await pressButton('文件', { exact: true })
+    await pressButton('移动目录…', { exact: true })
+    await stateIs('movedir_open', 'true')
+    await typeIntoDialogInput('移动目录', 'DirMvB/DirMvA')
+    await typeIntoDialogInputIdx('移动目录', 1, 'DirMvB/DirMvA')
+    await pressInDialogByTitle('移动目录', '移动')
+    let mvCycleHoldOk = false
+    for (const dl = Date.now() + 8000; ; ) {
+      mvCycleHoldOk = /movedir_open:\s*true/.test(await stateText('movedir_open'))
+      if (mvCycleHoldOk || Date.now() > dl) break
+      await sleep(300)
+    }
+    const mvCycleDiskOk = fs.existsSync(movedMvFile)
+    await pressInDialogByTitle('移动目录', '取消')
+    await stateIs('movedir_open', 'false')
+    // ④ deep 案：快开 'DeepPg' → 5 层档行在（depth 8 front 面收口——
+    // depth 4 下 ft_nodes 不含 → 行集不含）→ 拾取开档（ASCII 路径双臂）
+    // → 关档收口。
+    await pressButton('视图', { exact: true })
+    await pressButton('快速打开', { exact: true })
+    await stateIs('find_open', 'true')
+    await stateIs('find_mode', 'files')
+    {
+      const t = await snapshot()
+      const fi = findFirst(t, (n) => n.head.startsWith('input ') && elementIdOf(n))
+      if (!fi) throw new Error('find input not found（deep 案）')
+      await callTool('autoui_action', { element_id: elementIdOf(fi), action: 'type_text', value: 'DeepPg' })
+      await stateHas('find_q', 'DeepPg')
+    }
+    const DEEP_REL = 'L1/L2/L3/L4/DeepPg.ad'
+    // 行标签 = dtitle（titles 随 link_index depth 8 含深档 → stem
+    // 'DeepPg'；depth 4 时 ft_nodes 不含 → 行集不含——行存在性即收口
+    // 证）。'DeepPg' 全树唯一（素材名避让）。
+    let deepRowOk = false
+    for (const dl = Date.now() + 8000; ; ) {
+      deepRowOk = (await panelRowTexts()).includes('DeepPg')
+      if (deepRowOk || Date.now() > dl) break
+      await sleep(300)
+    }
+    if (!deepRowOk) throw new Error(`deep 案快开行失守（DeepPg[${DEEP_REL}] 未现——depth 8 收口面）`)
+    await pressPanelRow('DeepPg')
+    await stateIs('active_title', 'L1/L2/L3/L4/DeepPg')
+    await stateHas('active_body', '深位档')
+    await pressActiveTabClose('DeepPg')
+    await pressTab('Hello World')
+    await stateIs('active_title', tabTitleOf(TARGET_LABEL))
+    const mvDirOk = mvDirDiskOk && mvDirTabOk && panelZero3Ok && linkNet3Ok && mvDirCancelOk && mvCycleHoldOk && mvCycleDiskOk && deepRowOk
+    console.log(`  [13 dir3] ${mvDirOk ? 'PASS' : 'FAIL'} — PLAN-018 目录移动四子步（移动弧线[弹层双 input→磁盘整迁+旧目录消+tab 全量标题恒+ft_sel remap+面板零变化+links_json 归一]/取消零落盘/循环卫拒弹层留置/5 层深档快开命中[depth 8 收口]）`)
+    if (!mvDirOk) {
+      console.log(`  [13 dir3 dbg] disk=${mvDirDiskOk} tab=${mvDirTabOk} panel=${panelZero3Ok} link=${linkNet3Ok} cancel=${mvDirCancelOk} cycle=${mvCycleHoldOk}/${mvCycleDiskOk} deep=${deepRowOk}`)
+    }
     // 收尾：面板关 + Hello World 复原（quit 前置口径——13 收尾同款）。
     if (/backlinks_open:\s*true/.test(await stateText('backlinks_open'))) {
       await pressButton('视图', { exact: true })
@@ -2570,7 +2716,7 @@ async function runArm(arm, port) {
       moveCancelOk, conflictHoldOk, conflictDiskOk,
       rendirPrevOk, renDirDiskOk, panelZero2Ok, linkNet2Ok,
       renDirCancelOk, delDirPrevOk, delDirCancelOk, delDirOk, flip2Ok,
-      dailyOk,
+      dailyOk, mvDirOk,
       trashCapRowOk, trashCapDiskOk, trashRestoreEmptyOk, capBackDiskOk,
       capFalseGoneOk, capTreeBackOk,
     }
@@ -2578,7 +2724,7 @@ async function runArm(arm, port) {
       console.log(`  [13 dbg] ${JSON.stringify(fileParts)} tabPre=${JSON.stringify(tabCountPre)} tabPost=${JSON.stringify(tabCountPost)}`)
     }
     check('13', 'file', Object.values(fileParts).every((v) => v) && tabCountFinal >= 0,
-      `file 组八子步+F-R9-4 案+目录面四子步+目录二期三子步+今日笔记弧线[PLAN-015 ⑰ 开档+树新行+磁盘双时间戳+重入幂等]+trash 改道/恢复弧线[PLAN-016 ⑱ 清单见 .trash/wiki/CAP 定理.ad→行恢复→空态+磁盘回+exists 翻转回双向态+树行回+tab 重开]（新建 index 模板逐字节+树新行/同名幂等 tab+磁盘不变/取消零落盘/CJK 新页${arm === 'merged' ? '导航断言' : '磁盘断言[D-19]'}＋删除预览 3 处入链已知答案+tab 面「${delTabsLine}」+取消零落盘/删除弧线 磁盘消失+ft_sel 清空+激活${arm === 'merged' ? '落邻档首页[同位保持]' : '保持 index[CloseTabsOf 零关闭面，D-19]'}/悬空翻转 出链行 CAP 定理（悬空）/未选中 no-op/F-R9-4 删后提及刷新/PLAN-012：⊕新建目录[树新行+磁盘在]→Project X 移动[预填 wiki/tab 全量${DIR_BOX}/Project X/字节整迁/面板快照零变化/links_json 定向 diff 归一]→取消零落盘→冲突拒[弹层留置+磁盘零变化]；PLAN-014：重命名目录 弧线[双 input 弹层+预览 将移动 1 个 .ad 页+tab 全量路径变标题恒+磁盘整迁+面板零变化+links_json 归一 diff——三联对照目录级]/取消零落盘两形/删除目录[预览计数+悬空警示→tab 全关计数-1+树行消+悬空翻转 Project X（悬空）]——键程 menubar 共口）`)
+      `file 组八子步+F-R9-4 案+目录面四子步+目录二期三子步+今日笔记弧线[PLAN-015 ⑰ 开档+树新行+磁盘双时间戳+重入幂等]+trash 改道/恢复弧线[PLAN-016 ⑱ 清单见 .trash/wiki/CAP 定理.ad→行恢复→空态+磁盘回+exists 翻转回双向态+树行回+tab 重开]（新建 index 模板逐字节+树新行/同名幂等 tab+磁盘不变/取消零落盘/CJK 新页${arm === 'merged' ? '导航断言' : '磁盘断言[D-19]'}＋删除预览 3 处入链已知答案+tab 面「${delTabsLine}」+取消零落盘/删除弧线 磁盘消失+ft_sel 清空+激活${arm === 'merged' ? '落邻档首页[同位保持]' : '保持 index[CloseTabsOf 零关闭面，D-19]'}/悬空翻转 出链行 CAP 定理（悬空）/未选中 no-op/F-R9-4 删后提及刷新/PLAN-012：⊕新建目录[树新行+磁盘在]→Project X 移动[预填 wiki/tab 全量${DIR_BOX}/Project X/字节整迁/面板快照零变化/links_json 定向 diff 归一]→取消零落盘→冲突拒[弹层留置+磁盘零变化]；PLAN-014：重命名目录 弧线[双 input 弹层+预览 将移动 1 个 .ad 页+tab 全量路径变标题恒+磁盘整迁+面板零变化+links_json 归一 diff——三联对照目录级]/取消零落盘两形/删除目录[预览计数+悬空警示→tab 全关计数-1+树行消+悬空翻转 Project X（悬空）]——键程 menubar 共口；**PLAN-018：目录移动四子步[弹层双 input 弧线——磁盘整迁/旧目录消/tab 全量标题恒/面板零变化/links_json 归一——三联对照移动级三部曲收官+取消零落盘+循环卫拒弹层留置+5 层深档快开命中——depth 8 收口]**）`)
 
     // 9 退出存盘：dirty → 文件菜单退出 → 确认弹层 → QuitSaveClose →
     // 磁盘三验 + 进程退出。恒为臂内最后一项（Process.exit 杀进程）。

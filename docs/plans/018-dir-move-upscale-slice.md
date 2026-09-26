@@ -6,7 +6,7 @@ author: [zhaopuming]
 created_at: 2026-09-25T23:04:36+08:00
 updated_at: 2026-09-25T23:04:36+08:00
 plan_revision: 1
-current_step: 3
+current_step: 4
 total_steps: 5
 supersedes_spec_components: []
 new_spec_components:
@@ -333,8 +333,27 @@ pub fn move_dir_impl(path str, new_parent str) str {
     T-04 扩单承载（本步以 vm_matrix 15/16 + 冒烟弧线为证）。
 - **T-04 测试扩单 + 基线按实取 + 判绿 + F-R17-1 复核**（AC-02/
   03/04/05）
-  - file 组子步 + deep 案 + 基线落定 + gate（单命令复核实录）。
+  - [x] file 组子步 + deep 案 + 基线落定 + gate（单命令复核实录）。
   - 验证：双臂全绿 + e2e 连跑 ≥5 + gate ALL GREEN。
+  - **[2026-09-26 执行实录]**：vm_matrix file 组**目录移动四子步**
+    （㉒移动弧线[DirMvA→DirMvB：磁盘整迁+旧目录消+tab 全量标题恒+
+    ft_sel remap+面板快照零变化+links_json 归一——三联对照移动级]/
+    取消零落盘/循环卫拒弹层留置/5 层深档快开命中[depth 8 收口——
+    行标签 dtitle 'DeepPg'，执行期校正：首版锚全路径错——titles 表
+    dtitle 命中优先于 path fallback]）+ e2e matrix.spec.ts 同弧线三
+    子步（13 dir3——真 DOM，heading 角色锚）。**基线 v16 重锁落定**
+    （G5 实勘：movedir 弹层闭态恒渲染入 id 序列 + store/App 三字段
+    入 dump → 非零重锁第三例；BASELINE 常量 + headerFor v16 化——
+    **顺带修 v15 锁文件头注字面 v14 滞留**[016 教训同款漏改]）。
+    判绿实录：vm_matrix **ALL GREEN 16/16+15/15**（v16 零漂移含）+
+    vue build 绿 ×2（release 路由——AUTO_EXE=release+
+    SCHEMA_DRIFT_GENERATE_AT=1）+ **e2e 5 连绿**（46.9/48.8/48.9/
+    48.8/48.7s）。**F-R17-1 复核维持留观**：裸单命令 `node scripts/
+    gate.mjs` 复跑实录——build 段 debug exe gen **满核自旋**（进程
+    717 CPU 秒/12min 墙钟 ≈ 100% 单核；exe 时间戳 09-25 11:00/17:58
+    未变——家族重建窗延续，D-21 v20 同判）；分段路由判绿在案（矩阵
+    [debug] + build[release+drift] + e2e[debug]），杀进程清面（0
+    auto.exe 复核）。
 - **T-05 文档 + ledger v21 + 收口**（AC-06/负向）
   - SD-1801..1804 落位；ledger v20→v21；负向证（probe 十代回归
     主证）；§9 work 记录。
