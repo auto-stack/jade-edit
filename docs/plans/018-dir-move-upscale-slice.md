@@ -1,6 +1,6 @@
 ---
 plan_id: PLAN-018
-status: execution_done
+status: reviewed
 feature_name: dir-move-upscale-slice
 author: [zhaopuming]
 created_at: 2026-09-25T23:04:36+08:00
@@ -417,6 +417,59 @@ pub fn move_dir_impl(path str, new_parent str) str {
     C2 递归帧面不涉）⑤G5 弹层入 dump 实勘 → v16 重锁落定 ⑥deep 案
     行标签 dtitle 优先于 path fallback（断言口径 1 轮迭代）⑦T-02/
     T-03 边界适配（MoveDirGo 流一体落地）。
+- **2026-09-26 复审 r1（auto-plan-review）**：
+  - `stage: review`，PLAN-018，revision 1，`outcome: pass`。
+  - **独立性声明**：与执行同会话——裁决自工件重建（不采信执行者
+    总结；全部验收面复审窗现跑复放/一手实勘承载，017 先例口径）。
+  - `reviewed_commit`: 1f2023b（全窗四提交 3b7c108→cc1b6f0→b47ede0
+    →1f2023b，base=7dde742；直接 main 线性祖谱核验 + 工作树净 +
+    worktree 清单仅 main——家族约定）。
+  - `dependency_revisions`: debug exe 09-25 11:00 / release exe
+    09-25 17:58（复审窗实测未变——F-R17-1 证据复用前提）；deps 树
+    09-22 未变（本批零接触 AC-05）；fixture wiki-demo 同源。
+  - `acceptance_results`（全现跑复放）：
+    - **AC-01 pass**：probe_dir_ops 双臂全案（move_dir 六案 + m2b/
+      m3b merged 域 + m⑦ 移动零扰动归一 diff + 磁盘逐字节/双复核/
+      副作用圈定 + 双臂一致=true）。
+    - **AC-02 pass**：vm_matrix 双臂 **ALL GREEN 16/16+15/15**（13
+      dir3 四子步双臂含——移动弧线/取消/循环卫拒/deep 快开命中）；
+      e2e 现跑 1 passed 48.9s（13 dir3 段含）。
+    - **AC-03 pass**：**三方逐字节对照** before[旧码]/after[执行窗]/
+      fresh[复审窗重建] fixture 九件全 0 差异（零漂移 + 可复现双证）
+      ；probe 族抽样 6/6 与在册态一致（casefold/tags/trash/page_
+      meta/dir_move 五绿 + receipt_d19 负结果同形复现[g①=0/g②
+      len=0]）；**D-35 损坏形态复审窗原样复现**（bulk 500 档
+      「bulkalias201」——确定性形态）。
+    - **AC-04 pass**：url_decode 重勘 p⑩ 现跑 PASS（D-19 维持=0）；
+      F-R17-1 证据**复用**（明示理由：exe 时间戳复审窗实测未变 +
+      阻塞签名同款 + 复跑仅重复 10min+ 自旋——717 CPU 秒实锚 +
+      分段判绿在案）。
+    - **AC-05 pass**：vm_matrix 现跑含 **B 基线 v16 零漂移**（重锁
+      断言现跑兑现）+ 组数口径不变 16/15/十五段 + vue build 复审窗
+      绿（首跑撞 **vue-build 负载窗家族**两形态[deps 包载缺目录 +
+      0xC0000409 退出断言]——D-21 v15/v16 在册签名，重跑即绿口径
+      成立；本会话连跑矩阵/probe/e2e 高负载窗与 D-21 负载正相关
+      在册口径吻合）+ N 定谳续记实勘。
+    - **AC-06 pass**：锚点实勘 SD-1801@ARCHITECTURE:849/SD-1802@
+      :903/SD-1803@README:194+N 定谳:439/SD-1804@:127+:489；ledger
+      v21 头注 + **D-35 新行**@:46 + D-21 v21 扩记 + **D-22 双观测
+      项收口注记**@:31；规范增量表四 delta 与落地实况一一对应（G5
+      「按实取」→v16 落定非零重锁第三例；frontmatter 四锚与 017
+      同格式）。
+  - `findings`：**F-R18-1（low，非阻塞观察项）**——move_dir **.trash
+    域卫双面**（执行期加护：path/new_parent 任一为 .trash 本体或
+    前缀拒）**无直证案**：plan §6 七案不含（加护超出验收面——防御
+    性卫，trash 域唯一合法通道 trash_restore 在册），probe/矩阵均
+    无案承载；源码审阅语义成立，大小写变体（`.TRASH`——Windows FS
+    不敏感）不在卫面（rename_dir/delete_dir 同暴露的家族级 case-
+    sensitivity caveat，非本批新增）。unblock = 随 019 probe 扩或
+    trash 批补案（拒双形 + 大小写变体裁定）。
+  - `evidence`：本记录内嵌复审窗现跑摘要（命令+结果——probe_dir_
+    ops/vm_matrix/e2e/build/sb_capture 三方对照/probe 抽样六件）；
+    一性脚本 e2e/.runtime/{sb-capture,smoke-movedir}（可再生非入库）
+    ；持久面 = tests/probe_dir_ops.mjs + tests/vm_matrix.mjs + tests/
+    baseline/structure-v16.txt + e2e/matrix.spec.ts（复审窗全绿承载）。
+  - `next`: **merge**（status → reviewed）。
 
 ## 10. 待澄清事项
 
