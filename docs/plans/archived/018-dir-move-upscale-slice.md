@@ -1,6 +1,6 @@
 ---
 plan_id: PLAN-018
-status: reviewed
+status: archived
 feature_name: dir-move-upscale-slice
 author: [zhaopuming]
 created_at: 2026-09-25T23:04:36+08:00
@@ -15,6 +15,7 @@ new_spec_components:
   - "docs/README.md#SD-1803"
   - "docs/README.md#SD-1804"
 touched_goals: []
+completion_kind: delivered
 ---
 
 # [PLAN-018] 知识库第十六切片——目录移动（工作区三部曲收官）+ 上量微批（StringBuilder 装配 + depth 8 统一）
@@ -470,6 +471,40 @@ pub fn move_dir_impl(path str, new_parent str) str {
     ；持久面 = tests/probe_dir_ops.mjs + tests/vm_matrix.mjs + tests/
     baseline/structure-v16.txt + e2e/matrix.spec.ts（复审窗全绿承载）。
   - `next`: **merge**（status → reviewed）。
+- **2026-09-26 merge 收口（auto-plan-merge）——`PLAN-018:r1` 收据**：
+  - `stage: merge`，PLAN-018，revision 1，`outcome: pass`。
+  - **prepared** = 复审基线 r1（fce14bf——docs-only 后代核验：1f2023b
+    之上仅计划文件复审记录，src/deps/tests/e2e 零变化）+ canonical
+    delta 已随实现落 main（SD-1801@ARCHITECTURE:849/SD-1802@:903/
+    SD-1803@README:194+N 定谳:439/SD-1804@:127+:489——直接 main
+    线性约定，001..017 在档惯例）+ ledger v21 tracked 读回核验
+    （H1 v21 ✓/D-35 行 ✓/D-21 v21 ✓/D-22 收口注记 ✓/35 项）。
+  - **landed** = main tip == fce14bf（直接 main 线性——无 ff-merge/
+    dev 分支面，家族约定）。**known-good 判绿链（分段路由——013
+    v16/017 v20 先例）**：复审窗双臂矩阵 ALL GREEN[16/16+15/15 含
+    B 基线 v16 零漂移——同 tip 内容、旧 debug exe 09-25 11:00] +
+    e2e 5 连绿[46.9-48.9s 执行窗+复审窗 1 绿] + vue build 绿×3
+    [release 路由] + **merge 窗 fresh 面**：probe_dir_ops 双臂全弧
+    绿[新 debug exe——back.api 全链+PLAN-018 全案承载] + 最小工程
+    冒烟绿。**矩阵 merge 窗 fresh-green 未取得——外部家族重建窗**
+    （debug exe 09-26 10:43 重建[127,345,152B→127,419,904B——复审
+    窗绿后落盘]；五跑五形态全为在册 D-21 族[check-12 面板窗/split
+    check-2 树行窗/ECONNRESET×2/boot ready 失守]；判别链定谳外部
+    性：最小工程✓/probe 双臂✓/端口净/CPU 23% 非饱和；泄漏进程三枚
+    清杀；**D-21 v22 扩记全录**——unblock = 家族 debug exe 稳定后
+    `node tests/vm_matrix.mjs`，与 F-R17-1 观察项合流同载体）。
+  - **ledger_refreshed** = parity-ledger v21→v22（tracked 在 main
+    读回：D-21 v22 merge 窗扩记 + 头注 v22 注记；无 live ledger
+    服务——PLAN-001 同判）。
+  - **archived** = `git mv docs/plans/018-dir-move-upscale-slice.md →
+    docs/plans/archived/` + status: archived + `completion_kind:
+    delivered`（本提交）。
+  - **cleaned** = 无 worktree/dev 分支[直接 main 约定——worktree
+    清单仅 main 核验]；代码工作树零 WIP[git status 净]；泄漏
+    auto.exe 清杀后 0 复核；一次性探针/采集件居 e2e/.runtime[ignored
+    可再生非入库]。
+  - PLAN-019 候选首位移交 §10.6（大纲十片门控/目录合并 r2/上游池
+    收口回执件等在册）。
 
 ## 10. 待澄清事项
 
