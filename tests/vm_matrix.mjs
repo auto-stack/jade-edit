@@ -10,14 +10,17 @@
 //   5 save    保存落盘（toolbar 保存 → 脏标清 + 磁盘字节含标记 + frontmatter 保留
 //             + updated_at 自动维护——PLAN-015：已有键保存即更新值[当日形]）
 //   6 reload  重载可见（磁盘外改 → toolbar 重载 → 编辑器见新内容）
-//   B base    结构基线 v17 零漂移（仅 merged 臂；必须在 1-6 后、扩单前采集
-//             ——v17 锁的是六检查终态，扩单不漂移基线；v17=PLAN-019 目录
-//             合并 UI 面[App dirmerge_on 入 dump + 移动目录弹层预览行 +
-//             「合并移动」条件钮——探针 G 定谳双钮变体 + trash 行路径
-//             ghost button 化入 id 序列；恢复全部钮零新 state]；v16=
-//             PLAN-018 目录移动 UI 面、v15=PLAN-016 回收站 UI 面、v14=
-//             PLAN-015 每日笔记、v13=PLAN-014、v12=PLAN-013、v11=
-//             PLAN-012 等留档）
+//   B base    结构基线 v18 零漂移（仅 merged 臂；必须在 1-6 后、扩单前采集
+//             ——v18 锁的是六检查终态，扩单不漂移基线；v18=PLAN-020 孤页
+//             +recents 切片[App orphan_rows/recent_paths 入 dump——孤页
+//             pristine 恒空[]/recent_paths 六检查后 1 项[check 3 开档]；
+//             第五模式 action/menubar 项入 id 序列——计划内重锁第五例]；
+//             v17=PLAN-019 目录合并 UI 面[App dirmerge_on 入 dump + 移动
+//             目录弹层预览行 + 「合并移动」条件钮——探针 G 定谳双钮变体
+//             + trash 行路径 ghost button 化入 id 序列；恢复全部钮零新
+//             state]；v16=PLAN-018 目录移动 UI 面、v15=PLAN-016 回收站
+//             UI 面、v14=PLAN-015 每日笔记、v13=PLAN-014、v12=PLAN-013、
+//             v11=PLAN-012 等留档）
 //   7 tab     tab 面：开两档 → 切换（active 断言 + 内容互换）→ dirty 档
 //             关闭走确认弹层两路（取消=档留；直接关闭=弃改落盘零写入）
 //   8 editops 编辑操作族：段中回车/退格（C-5 整文构造——回车分段可见 +
@@ -61,7 +64,13 @@
 //             ⑦（PLAN-019——双条目清单→行点击预览[.trash 路径 tab 开
 //             active_title=.trash/TrashR1+树不可见]→保存落回 .trash 原
 //             位[磁盘标记直证——可编辑口径]→恢复全部[循环 restore→清单
-//             空态+磁盘双档回根字节保真]）**。执行序在 10b 后 9 前
+//             空态+磁盘双档回根字节保真]）** + **⑧ orphans 第五模式子步
+//             （PLAN-020——空 q 断言修订[005「全量 5 行」→「最近」段替
+//             换式，累积位态；首跑无记录全量面 = T-02 冒烟承载]+无 input
+//             负向面+fs 造纯孤页档入列→行点击开档→造链清孤→悬空出链计
+//             入出链度[resolved 面直证]）+ ⑨ recents 弧线子步（PLAN-020
+//             ——清 q[type_text 空]→「最近」段→3 开逆序→拾取即关→去重
+//             置顶→容量截断[RecCap×12→10 行]）**。执行序在 10b 后 9 前
 //   12 rename 重命名+反链改写全弧线（PLAN-006；七子步——禁用态 untitled
 //             +脏档/弹层锚[预填+影响面预览]/取消零落盘/改名弧线[active
 //             投影+磁盘改写 index·CAP 定理]/面板+树新 stem/case-only 弧线
@@ -164,7 +173,7 @@ const argOf = (name) => {
   return i >= 0 ? args[i + 1] : undefined
 }
 const ARM = argOf('--arm') ?? 'all' // all | merged | split
-const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v17.txt')
+const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v18.txt')
 const SAVE_BASELINE = argOf('--save-baseline')
 
 const EDIT_MARKER = 'jade-edit 冒烟标记：编辑回写可见。'
@@ -590,23 +599,25 @@ async function runArm(arm, port) {
       const stateDump = (await callTool('autoui_state', {})).trim()
       const snapIds = JSON.stringify([...(await snapshotText()).matchAll(/#(vnode_\d+)/g)].map((m) => m[1]))
       const headerFor = (file) =>
-        `// jade-edit vm 结构基线 v17（PLAN-019 T-04 重锁；v16=PLAN-018 T-04、v15=PLAN-016
+        `// jade-edit vm 结构基线 v18（PLAN-020 T-03 重锁；v17=PLAN-019 T-04、v16=PLAN-018
 ` +
-        `// T-04[头注字面 v14 系 v15 重锁窗漏改——016 教训同款，v16 随锁已校正]、v14=PLAN-015、
+        `// T-04、v15=PLAN-016 T-04[头注字面 v14 系 v15 重锁窗漏改——016 教训同款，v16 随锁已
 ` +
-        `// v13=PLAN-014、v12=PLAN-013、v11=PLAN-012 等 17 版均留档）。
+        `// 校正]、v14=PLAN-015、v13=PLAN-014、v12=PLAN-013、v11=PLAN-012 等 18 版均留档）。
 ` +
-        `// 重锁因由：目录合并 UI 面（PLAN-019 工作区收尾批）——App dirmerge_on 旗标入 state
+        `// 重锁因由：孤页 + 最近打开切片（PLAN-020 纯 front 收割批）——App orphan_rows
 ` +
-        `// dump + 移动目录弹层预览行 text 节点 + 「合并移动」条件钮（探针 G 定谳双钮变体——
+        `// [pristine 语料全连接恒空 []] + recent_paths [六检查后 1 项=check 3 树行开档；
 ` +
-        `// dialog 内嵌 checkbox 生成器 v-model/onchange 双写缺陷 ledger 记账）进 snapshot
+        `// str 清单 dump 直出字符串非 vmref] 入 state dump；action view.find-orphans
 ` +
-        `// vnode id 序列；trash 增强面（恢复全部钮 + 行路径 ghost button）零新 state（trash
+        `// [Ctrl+Shift+O] + menubar 视图项「孤页清单」入 id 序列（计划内重锁第五例——
 ` +
-        `// rows 复用）但 trash 行按钮化入 id 序列。非零重锁第四例（弹层扩面 + 行形态化）。
+        `// 第五模式 chrome 扩面；快开空 q「最近」段/孤页行集均在 find_open 门控后不入
 ` +
-        `// 仪器同 v2..v16：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态
+        `// 终态 snapshot）。
+` +
+        `// 仪器同 v2..v17：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态
 ` +
         `//（chrome 全套 + Hello World.ad 开；查找面板/建页弹层/新建弹层/属性弹层/新建目录
 ` +
@@ -625,9 +636,9 @@ async function runArm(arm, port) {
       } else if (fs.existsSync(BASELINE)) {
         const raw = fs.readFileSync(BASELINE, 'utf8')
         const ok = raw === headerFor(BASELINE) + baselineBodyOf()
-        check('B', 'baseline', ok, ok ? '结构基线 v17 零漂移（state 逐字节 + id 序列）——PLAN-019 重锁（合并弹层预览行/合并移动条件钮/dirmerge_on 入 dump+trash 行按钮化）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
+        check('B', 'baseline', ok, ok ? '结构基线 v18 零漂移（state 逐字节 + id 序列）——PLAN-020 重锁（orphan_rows/recent_paths 入 dump+第五模式 action/menubar 项入 id 序列）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
       } else {
-        console.log('  [baseline] structure-v17 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v17.txt')
+        console.log('  [baseline] structure-v18 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v18.txt')
       }
     }
 
@@ -1665,10 +1676,18 @@ async function runArm(arm, port) {
     // 行文本 = 显示名（PLAN-013 快开面——dtitle_of fallback=path：有 title
     // 显 title、无 title 显全路径）；断言域 = panelRowTexts 面板行集（树行
     // 同文名不误中——区域锚）。
+    // **PLAN-020 空 q 断言修订（SD-2001——005「空 q 全量 5 行」计划内修
+    // 订）**：本位 = check 3..⑦ 开档记录累积后 → 「最近」段替换式（
+    // Obsidian 快速切换器同款）：段标题 + 已开档行（Hello World 在——10m
+    // 收尾激活口 + ⑦ 预览开口）+ 未开档排除（Projects 首开在 check 12
+    // ——替换式直证）；**首跑无记录全量面**[005 零漂移] = T-02 冒烟一次
+    // 性件承载[.runtime——boot 后零开档窗全量 5 行实录]，README N 定谳
+    // 注记（arm 内 recent_paths 会话域自 boot 累积，六检查位无零记录窗）。
     const panelRows0 = await panelRowTexts()
-    const allFive = ['首页', 'Hello World', 'CAP 定理', 'Projects', 'Tasks']
-      .every((d) => panelRows0.includes(d))
-    if (!allFive) throw new Error('empty-q 快开应列全量 5 行（显示名面）')
+    const panelAll0 = await panelTexts()
+    const recentsReplacedOk = panelAll0.includes('最近') && panelRows0.includes('Hello World')
+      && !panelRows0.includes('Projects') && panelRows0.length >= 1
+    if (!recentsReplacedOk) throw new Error(`空 q recents 替换面失守 rows=${JSON.stringify(panelRows0)} all=${JSON.stringify(panelAll0)}`)
     await callTool('autoui_action', { element_id: elementIdOf(findInput0), action: 'type_text', value: 'Pro' })
     await stateHas('find_q', 'Pro')
     const proRows = await panelRowTexts()
@@ -1916,8 +1935,141 @@ async function runArm(arm, port) {
       await sleep(300)
     }
     if (!restoreAllDiskOk) throw new Error('恢复全部磁盘失守（TrashR1 含标记回根/TrashR2 回根/.trash 内清）')
-    check('11', 'find', allFive && proOk && cjkFilterOk && notRanOk && hitOk && emptyFindOk && aliasHitOk && trashCopyOk && trashRerouteOk && trashRowOk && purgeCopyOk && purgeCancelOk && trashEmptyOk && purgeDiskOk && trashRows2Ok && trashTreeInvisibleOk && trashSaveBackOk && restoreAllEmptyOk && restoreAllDiskOk,
-      `快开（input 锚/空q全量5行/Pro→Projects 独行拾取即关/定理→CAP 独行${arm === 'merged' ? '+CJK 拾取开档' : '（CJK 拾取仅 merged 臂 D-19）'}）+ 检索（text 切换/未运行提示/CJK「任务列表」POST 双臂命中/行导航面板保持开/运行后空态）+ alias 检索（PLAN-012——fs 造档→搜「检别名」→AliasTgt.ad 行→拾取开档双臂）+ trash 模式[PLAN-016 ⑥：＋新建 TrashMe→菜单删除 弹层文案「将移入回收站」+改道磁盘面→回收站第四模式 清单行→清空强确认[M=1 派生+取消留置零落盘]→清空→空态闭环+磁盘 .trash 消]+ **trash 增强 ⑦[PLAN-019：双条目清单→行点击预览[.trash 路径 tab 开 active_title=.trash/TrashR1+树不可见]+保存落回 .trash 原位[磁盘标记直证——可编辑口径]+恢复全部[循环 restore→清单空态+磁盘双档回根字节保真]]`)
+    // ⑧ orphans 模式子步（PLAN-020 T-03；find 组第五模式——组数不变，
+    // fail 即臂败）：入口菜单（Ctrl+Shift+O 键程 menubar 共口）→ 无 input
+    // 断言（wanted ⑤ 同款负向文本面）→ **fs 造纯孤页档** Orphan Pg[
+    // link_index back walk 零树依赖——alias 案同款]→ 重入口（ActFindOrphans
+    // 入口即刷新）→ 行现 → 行点击 OpenLink 开档（active_title）→ **造链
+    // 清孤**（编辑加出链 + 保存 → ActSave 触发 LinksRefreshOf 顺产重算 →
+    // 重入口行消）→ **悬空出链计入出链度**（OrphanD 仅悬空出链档非孤——
+    // SD-2001 resolved 面直证）→ 收尾关孤页 tab + fs 删双素材（14 wanted
+    // 已知答案域洁净——OrphanD 悬空链随删消；pristine 空态[（无孤页）]面
+    // = T-02 冒烟实录承载——本位态 fs 素材族孤儿非空，相对断言口径）。
+    await pressButton('视图', { exact: true })
+    await pressButton('孤页清单', { exact: true })
+    await stateIs('find_open', 'true')
+    await stateIs('find_mode', 'orphans')
+    const orphSnap0 = await snapshotText()
+    const orphNoInput = !orphSnap0.includes('过滤文件名') && !orphSnap0.includes('输入查询词') && !orphSnap0.includes('"检索"')
+    if (!orphNoInput) throw new Error('orphans 无 input 断言失守（第五模式 wanted/trash 同构）')
+    const orphRowsBefore = await panelRowTexts()
+    if (orphRowsBefore.includes('Orphan Pg')) throw new Error('孤页预态失守（Orphan Pg 不应在列——素材残留）')
+    fs.writeFileSync(path.join(FIXTURE, 'Orphan Pg.ad'), '# Orphan Pg\n\n', 'utf8')
+    await pressButton('视图', { exact: true })
+    await pressButton('孤页清单', { exact: true })
+    let orphListedOk = false
+    for (const dl = Date.now() + 8000; ; ) {
+      orphListedOk = (await panelRowTexts()).includes('Orphan Pg')
+      if (orphListedOk || Date.now() > dl) break
+      await sleep(300)
+    }
+    if (!orphListedOk) throw new Error('孤页行未现（纯孤页档入列——link_index back walk）')
+    await pressPanelRow('Orphan Pg')
+    await stateIs('active_title', 'Orphan Pg')
+    await typeWholeDoc('# Orphan Pg\n\n见 [[Hello World]] 一处。\n')
+    await stateIs('active_dirty', 'true')
+    await pressButton('保存')
+    await stateIs('active_dirty', 'false')
+    await pressButton('视图', { exact: true })
+    await pressButton('孤页清单', { exact: true })
+    let orphClearedOk = false
+    for (const dl = Date.now() + 8000; ; ) {
+      orphClearedOk = !(await panelRowTexts()).includes('Orphan Pg')
+      if (orphClearedOk || Date.now() > dl) break
+      await sleep(300)
+    }
+    if (!orphClearedOk) throw new Error('造链清孤失守（出链度 1 后行未消）')
+    fs.writeFileSync(path.join(FIXTURE, 'OrphanD.ad'), '# OrphanD\n\n指 [[No Such Target]]。\n', 'utf8')
+    await pressButton('视图', { exact: true })
+    await pressButton('孤页清单', { exact: true })
+    let orphDanglingOk = false
+    for (const dl = Date.now() + 8000; ; ) {
+      orphDanglingOk = !(await panelRowTexts()).includes('OrphanD')
+      if (orphDanglingOk || Date.now() > dl) break
+      await sleep(300)
+    }
+    if (!orphDanglingOk) throw new Error('悬空出链度失守（仅悬空出链档不应入孤页清单——SD-2001 resolved 面）')
+    await pressActiveTabClose('Orphan Pg')
+    fs.rmSync(path.join(FIXTURE, 'Orphan Pg.ad'), { force: true })
+    fs.rmSync(path.join(FIXTURE, 'OrphanD.ad'), { force: true })
+    // ⑨ recents 弧线子步（PLAN-020 T-03；快开空 q 双态行为面——fail 即
+    // 臂败）：清 q（type_text 空 → FindEdit('') 通道）→「最近」段（累积
+    // 开档记录——⑦ 预览开口 head，结构性断言非具体序避免素材序耦合）→
+    // 开 3 档[index/Tasks/Hello World 快开拾取——ASCII 路径双臂 D-19 免疫
+    // ；Projects 避让——check 12 素材预开即扰其弹层锚位态]→ 清 q → 头 3
+    // 行逆序（Hello World/Tasks/首页——最近者首）→ 拾取即关（files 契约
+    // 不变）→ 去重置顶（重拾 Tasks → 头位）→ **容量截断**（fs 造
+    // RecCap1..12 + ActDaily 树刷新[018 素材承载同款]→ 12 开 → 10 行
+    // 头 RecCap12 尾 RecCap3——daily/旧记录全数位移出窗）。
+    const clearFindQ = async () => {
+      const ft = await snapshot()
+      const fi = findFirst(ft, (n) => n.head.startsWith('input ') && elementIdOf(n))
+      if (!fi) throw new Error('find input not found（recents 清 q）')
+      await callTool('autoui_action', { element_id: elementIdOf(fi), action: 'type_text', value: '' })
+      await stateIs('find_q', '')
+    }
+    const pickViaFiles = async (query, label) => {
+      await pressButton('视图', { exact: true })
+      await pressButton('快速打开', { exact: true })
+      const ft = await snapshot()
+      const fi = findFirst(ft, (n) => n.head.startsWith('input ') && elementIdOf(n))
+      if (!fi) throw new Error('find input not found（recents 拾取）')
+      await callTool('autoui_action', { element_id: elementIdOf(fi), action: 'type_text', value: query })
+      await stateHas('find_q', query)
+      await pressPanelRow(label)
+    }
+    await pressButton('视图', { exact: true })
+    await pressButton('快速打开', { exact: true })
+    await clearFindQ()
+    // 行集过滤「收起」（FindPanel 壳钮在 vm 快照面板区——行序断言域排除）
+    const recRows = async () => (await panelRowTexts()).filter((t) => t !== '收起')
+    const recRows0 = await recRows()
+    const recAccumOk = (await panelTexts()).includes('最近') && recRows0.length >= 1
+    if (!recAccumOk) throw new Error(`「最近」段失守（累积态 rows=${JSON.stringify(recRows0)}）`)
+    await pickViaFiles('index', '首页')
+    await pickViaFiles('Tasks', 'Tasks')
+    await pickViaFiles('Hello', 'Hello World')
+    await pressButton('视图', { exact: true })
+    await pressButton('快速打开', { exact: true })
+    await clearFindQ()
+    const recRows1 = await recRows()
+    const recOrderOk = recRows1[0] === 'Hello World' && recRows1[1] === 'Tasks' && recRows1[2] === '首页'
+    if (!recOrderOk) throw new Error(`「最近」逆序失守 rows=${JSON.stringify(recRows1)}`)
+    await pressPanelRow('Hello World')
+    await stateIs('find_open', 'false')
+    await stateIs('active_title', tabTitleOf(TARGET_LABEL))
+    await pickViaFiles('Tasks', 'Tasks')
+    await pressButton('视图', { exact: true })
+    await pressButton('快速打开', { exact: true })
+    await clearFindQ()
+    const recRows2 = await recRows()
+    const recDedupOk = recRows2[0] === 'Tasks' && recRows2[1] === 'Hello World' && recRows2[2] === '首页'
+    if (!recDedupOk) throw new Error(`去重置顶失守 rows=${JSON.stringify(recRows2)}`)
+    for (let i = 1; i <= 12; i++) fs.writeFileSync(path.join(FIXTURE, `RecCap${i}.ad`), `# RecCap${i}\n\n`, 'utf8')
+    await pressButton('今日笔记')
+    for (let i = 1; i <= 12; i++) {
+      await pressButton('视图', { exact: true })
+      await pressButton('快速打开', { exact: true })
+      const ft = await snapshot()
+      const fi = findFirst(ft, (n) => n.head.startsWith('input ') && elementIdOf(n))
+      if (!fi) throw new Error('find input not found（RecCap 拾取）')
+      await callTool('autoui_action', { element_id: elementIdOf(fi), action: 'type_text', value: `RecCap${i}` })
+      await stateHas('find_q', `RecCap${i}`)
+      await pressPanelRow(`RecCap${i}`)
+    }
+    await pressButton('视图', { exact: true })
+    await pressButton('快速打开', { exact: true })
+    await clearFindQ()
+    const recRows3 = await recRows()
+    const recCapOk = recRows3.length === 10 && recRows3[0] === 'RecCap12' && recRows3[9] === 'RecCap3'
+    if (!recCapOk) throw new Error(`容量截断失守 len=${recRows3.length} rows=${JSON.stringify(recRows3)}`)
+    // 收尾：find 面板关（⑨ 终态 files 模式「最近」段行集含 Projects/
+    // RecCap*——check 12 反链面板负向断言 !includes('Projects') 的区域
+    // 文本集会被 recents 行污染；关面板复位，⑦ trash 留置态先例同款）。
+    await pressButton('收起', { exact: true })
+    await stateIs('find_open', 'false')
+    check('11', 'find', recentsReplacedOk && proOk && cjkFilterOk && notRanOk && hitOk && emptyFindOk && aliasHitOk && trashCopyOk && trashRerouteOk && trashRowOk && purgeCopyOk && purgeCancelOk && trashEmptyOk && purgeDiskOk && trashRows2Ok && trashTreeInvisibleOk && trashSaveBackOk && restoreAllEmptyOk && restoreAllDiskOk && orphNoInput && orphListedOk && orphClearedOk && orphDanglingOk && recAccumOk && recOrderOk && recDedupOk && recCapOk,
+      `快开（input 锚/空q recents 替换面[PLAN-020 断言修订——最近段+已开档行+未开档排除]/Pro→Projects 独行拾取即关/定理→CAP 独行${arm === 'merged' ? '+CJK 拾取开档' : '（CJK 拾取仅 merged 臂 D-19）'}）+ 检索（text 切换/未运行提示/CJK「任务列表」POST 双臂命中/行导航面板保持开/运行后空态）+ alias 检索（PLAN-012——fs 造档→搜「检别名」→AliasTgt.ad 行→拾取开档双臂）+ trash 模式[PLAN-016 ⑥：＋新建 TrashMe→菜单删除 弹层文案「将移入回收站」+改道磁盘面→回收站第四模式 清单行→清空强确认[M=1 派生+取消留置零落盘]→清空→空态闭环+磁盘 .trash 消]+ **trash 增强 ⑦[PLAN-019：双条目清单→行点击预览[.trash 路径 tab 开 active_title=.trash/TrashR1+树不可见]+保存落回 .trash 原位[磁盘标记直证——可编辑口径]+恢复全部[循环 restore→清单空态+磁盘双档回根字节保真]]+ **⑧ orphans 第五模式[PLAN-020：无 input 负向面+fs 造纯孤页档入列[back walk 零树依赖]+行点击开档+造链清孤[ActSave 顺产重算行消]+悬空出链计入出链度[OrphanD 非孤——resolved 面直证]]+ ⑨ recents 弧线[PLAN-020：清 q[type_text 空]→「最近」段累积态→3 开[index/Tasks/Hello World ASCII 拾取]→头 3 行逆序→拾取即关→去重置顶[重拾 Tasks 头位]→容量截断[RecCap×12+ActDaily 树刷新→12 开→10 行 头 RecCap12 尾 RecCap3]]`)
 
     // 12 rename（PLAN-006 T-04）：重命名+反链改写全弧线（七子步——组内
     // 子步不占检查位，fail 即臂败，10c 同款）。素材 Projects.ad（ASCII

@@ -27,16 +27,20 @@
 //             计数漂移）。search_wiki POST 面无 D-19——全臂可跑。执行序
 //             在 10c 后 11 前
 //   11 find   查找面板双模式（PLAN-004；vm 矩阵 check 11 同单）：快开
-//             （文件模式——空 q 全量/过滤 Pro→Projects/拾取即关）+ 全文
-//             检索（text 模式——未运行提示/CJK 查询「任务列表」[POST 通道
-//             ——D-19 面无，vue 臂无 GET query 环节]/行导航面板保持开/
-//             运行后空态）+ **alias 检索（PLAN-012——write_wiki 内造
-//             alias 档 → 搜「检别名」→ AliasTgt.ad 命中行 → 拾取开档
-//             双臂）**。入口 = 视图菜单项（键位面 = 真键盘，e2e 不
-//             覆盖）；检索触发 = 检索钮（契约底线；Enter @keyup.enter
-//             随 fill() 不发 keyup 不覆盖——按钮面已证触发链）。
-//             执行序在 10 后 9 前（先关反链面板——find 行断言免反链行
-//             文本重叠）
+//             （文件模式——空 q 零记录全量[10m 重载位态]/过滤 Pro→Projects/
+//             拾取即关）+ 全文检索（text 模式——未运行提示/CJK 查询「任务
+//             列表」[POST 通道——D-19 面无，vue 臂无 GET query 环节]/行导
+//             航面板保持开/运行后空态）+ **alias 检索（PLAN-012——write_wiki
+//             内造 alias 档 → 搜「检别名」→ AliasTgt.ad 命中行 → 拾取开档
+//             双臂）** + **⑧ orphans 第五模式（PLAN-020——空 q 绝对空态
+//             [pristine 全连接 T-01 首锁]+造链清孤+悬空出链计入出链度
+//             [resolved 面]）+ ⑨ recents 弧线（PLAN-020——清 q「最近」段
+//             →3 开逆序→拾取即关→去重置顶→容量截断 RecCap×12→10 行——
+//             write_wiki 素材 + ActDaily 树刷新）**。入口 = 视图菜单项
+//             （键位面 = 真键盘，e2e 不覆盖）；检索触发 = 检索钮（契约底
+//             线；Enter @keyup.enter 随 fill() 不发 keyup 不覆盖——按钮面
+//             已证触发链）。执行序在 10 后 9 前（先关反链面板——find 行
+//             断言免反链行文本重叠）
 //   12 rename 重命名+反链改写全弧线（PLAN-006；vm 矩阵 check 12 同单，
 //             七子步——禁用态 untitled+脏档[handler 守卫，弹层不开]/
 //             弹层锚[预填+影响面预览]/取消零落盘/改名弧线[active/tab
@@ -499,7 +503,19 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await page.getByText('视图', { exact: true }).click()
   await page.getByText('切换反链', { exact: true }).click()
   await expect(page.getByText('LINKS', { exact: true })).toHaveCount(0, { timeout: 10_000 })
-  // 快开子步：开面板（文件模式）→ 空 q 全量 5 行 → 过滤 → 拾取即关
+  // ⑧ orphans 空 q 绝对空态（PLAN-020；T-01 首锁已知答案——10m 收尾删
+  // 素材 + goto 重载后语料全连接：pristine 5 页入/出度全非零[Projects
+  // 出链零但入链 2——双零恒空]）。e2e 位态 = 本位唯一全连接窗[vm 位态
+  // fs 素材族孤儿非空，绝对空态 = T-02 冒烟实录承载——两轨位态异位既
+  // 有口径]；重载后 recents 会话域复位零记录——空态断言不受「最近」
+  // 段影响（orphans 模式无 q 面）。
+  await page.getByText('视图', { exact: true }).click()
+  await page.getByText('孤页清单', { exact: true }).click()
+  await expect(page.getByText('（无孤页）', { exact: true })).toBeVisible({ timeout: 10_000 })
+  console.log('[11 find] PASS — orphans 第五模式空态（pristine 全连接——T-01 首锁）')
+  // 快开子步：开面板（文件模式）→ **空 q 零记录全量 5 行**[PLAN-020 ⑧
+  // 断言修订首半面——10m goto 重载后 recents 会话域复位，本位 = e2e 唯一
+  // 零记录窗；开档后「最近」段替换面在 ⑨ recents 弧线] → 过滤 → 拾取即关
   await page.getByText('视图', { exact: true }).click()
   await page.getByText('快速打开', { exact: true }).click()
   const findInput = page.getByPlaceholder('过滤文件名…')
@@ -550,6 +566,133 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await tabBtn('Hello World').click()
   await expect(visibleEditor(page)).toContainText('这是一段示例文本', { timeout: 15_000 })
   console.log('[11 find] PASS — alias 检索（PLAN-012）：内造 alias 档 → 搜「检别名」→ AliasTgt 命中行 → 拾取开档（双臂）')
+  // ⑧ orphans 相对弧线 + ⑨ recents 弧线（PLAN-020；vm 矩阵 check 11 ⑧⑨
+  // 同单——真 DOM）。位态 = alias 子步后（反链面板关——check 11 首步口径
+  // 延续，区域文本集洁净；TrashR1/R2 未建，孤页域零素材残留）；find_q =
+  // alias 子步残留 '检别名'——fill('') 清空通道即 FindEdit('')。
+  // ⑧ 相对弧：视图→孤页清单 → 第五模式 → 预态无 Orphan Pg → write_wiki
+  // 造纯孤页档 → 重入口[ActFindOrphans 入口即刷新] → 行现 → 行点击开档
+  // → 追加出链 + 保存[ActSave → LinksRefreshOf 顺产重算] → 重入口行消
+  // （造链清孤）→ OrphanD 仅悬空出链档非孤（悬空计入出链度——SD-2001
+  // resolved 面）→ 收尾 OrphanD 去链覆写[14 wanted 已知答案域洁净] +
+  // 关孤页 tab。
+  await page.getByText('视图', { exact: true }).click()
+  await page.getByText('孤页清单', { exact: true }).click()
+  await expect(page.getByPlaceholder('过滤文件名…')).toHaveCount(0, { timeout: 10_000 })
+  await expect(panel.getByRole('button', { name: 'Orphan Pg', exact: true })).toHaveCount(0)
+  await request.post('/api/write_wiki', { data: { path: 'Orphan Pg.ad', body: '# Orphan Pg\n\n' } })
+  await page.getByText('视图', { exact: true }).click()
+  await page.getByText('孤页清单', { exact: true }).click()
+  await expect(panel.getByRole('button', { name: 'Orphan Pg', exact: true })).toBeVisible({ timeout: 10_000 })
+  await panel.getByRole('button', { name: 'Orphan Pg', exact: true }).click()
+  await expect(visibleEditor(page)).toContainText('Orphan Pg', { timeout: 15_000 })
+  // 造链清孤：write_wiki 外改加出链（[[ 括号不落 vue 渲染 DOM——D-23③
+  // 渲染文断言口径，键入面 = vm typeWholeDoc 承载]）→ 重入口[ActFindOrphans
+  // 入口即刷新——LinksRefreshOf 重走 link_index] → 行消。
+  await request.post('/api/write_wiki', { data: { path: 'Orphan Pg.ad', body: '# Orphan Pg\n\n见 [[Hello World]] 一处。\n' } })
+  const opgFile = path.join(WORKSPACE, 'Orphan Pg.ad')
+  await expect.poll(() => fs.readFileSync(opgFile, 'utf8'), { timeout: 10_000 }).toContain('[[Hello World]]')
+  await page.getByText('视图', { exact: true }).click()
+  await page.getByText('孤页清单', { exact: true }).click()
+  await expect(panel.getByRole('button', { name: 'Orphan Pg', exact: true })).toHaveCount(0, { timeout: 10_000 })
+  console.log('[11 find] PASS — ⑧ orphans 造链清孤（第五模式 行入列→开档→出链度 1 行消）')
+  await request.post('/api/write_wiki', { data: { path: 'OrphanD.ad', body: '# OrphanD\n\n指 [[No Such Target]]。\n' } })
+  await page.getByText('视图', { exact: true }).click()
+  await page.getByText('孤页清单', { exact: true }).click()
+  await expect(panel.getByRole('button', { name: 'OrphanD', exact: true })).toHaveCount(0, { timeout: 10_000 })
+  await request.post('/api/write_wiki', { data: { path: 'OrphanD.ad', body: '# OrphanD\n\n' } })
+  // Orphan Pg 去链覆写（素材出链域清洁——13 file 删除已知答案「3 处入
+  // 链」防漂移：Orphan Pg 保留 [[Hello World]] 会成第 4 入链）
+  await request.post('/api/write_wiki', { data: { path: 'Orphan Pg.ad', body: '# Orphan Pg\n\n' } })
+  await tabBtn('Orphan Pg').click()
+  await page.locator('button:has(svg.lucide-xicon)').first().click()
+  console.log('[11 find] PASS — ⑧ 悬空出链计入出链度（仅悬空出链档非孤——resolved 面）')
+  // ⑨ recents 弧线：快开（find_q 残留）→ fill('') 清空[「最近」段累积态
+  // ——⑧ 开档记录在册]→ 3 开[index/Tasks/Hello World ASCII 拾取——
+  // Projects 避让 check 12 素材位态]→ fill('') 头 3 行逆序 → 拾取即关 →
+  // 去重置顶[重拾 Tasks 头位]→ 容量截断[write_wiki RecCap1..12 + 菜单
+  // 今日笔记 ActDaily 树刷新→12 开→10 行 头 RecCap12 尾 RecCap3]→
+  // 收尾 find 面板关[12 反链面板负向断言区域文本集防污染——vm 同款]。
+  const panelRowNames = async () =>
+    (await panel.getByRole('button').allTextContents()).filter((t) => t !== '收起' && t !== '')
+  await page.getByText('视图', { exact: true }).click()
+  await page.getByText('快速打开', { exact: true }).click()
+  const findInput9 = page.getByPlaceholder('过滤文件名…')
+  await expect(findInput9).toBeVisible({ timeout: 10_000 })
+  await findInput9.fill('')
+  await expect(page.getByText('最近', { exact: true })).toBeVisible({ timeout: 10_000 })
+  await expect((await panelRowNames()).length).toBeGreaterThanOrEqual(1)
+  const pick9 = async (query: string, label: string) => {
+    await page.getByText('视图', { exact: true }).click()
+    await page.getByText('快速打开', { exact: true }).click()
+    const inp = page.getByPlaceholder('过滤文件名…')
+    await expect(inp).toBeVisible({ timeout: 10_000 })
+    await inp.fill(query)
+    await panel.getByRole('button', { name: label, exact: true }).click()
+  }
+  await pick9('index', '首页')
+  await expect(visibleEditor(page)).toContainText('提示', { timeout: 15_000 })
+  await pick9('Tasks', 'Tasks')
+  await pick9('Hello', 'Hello World')
+  await page.getByText('视图', { exact: true }).click()
+  await page.getByText('快速打开', { exact: true }).click()
+  await findInput9.fill('')
+  await expect(page.getByText('最近', { exact: true })).toBeVisible({ timeout: 10_000 })
+  expect((await panelRowNames()).slice(0, 3), '「最近」逆序').toEqual(['Hello World', 'Tasks', '首页'])
+  await panel.getByRole('button', { name: 'Hello World', exact: true }).click()
+  await expect(findInput9).toHaveCount(0, { timeout: 10_000 })
+  await pick9('Tasks', 'Tasks')
+  await page.getByText('视图', { exact: true }).click()
+  await page.getByText('快速打开', { exact: true }).click()
+  await page.getByPlaceholder('过滤文件名…').fill('')
+  await expect(page.getByText('最近', { exact: true })).toBeVisible({ timeout: 10_000 })
+  expect((await panelRowNames()).slice(0, 3), '去重置顶').toEqual(['Tasks', 'Hello World', '首页'])
+  for (let i = 1; i <= 12; i++) {
+    await request.post('/api/write_wiki', { data: { path: `RecCap${i}.ad`, body: `# RecCap${i}\n\n` } })
+  }
+  // 先收起 find 面板再走菜单（⑥ 先例——files 模式标签「文件」与文件菜
+  // 单触发同名 strict 冲突），ActDaily 树刷新后重开快开拾取。
+  await page.getByRole('button', { name: '收起', exact: true }).first().click()
+  await expect(page.getByPlaceholder('过滤文件名…')).toHaveCount(0, { timeout: 10_000 })
+  await page.getByText('文件', { exact: true }).click()
+  await page.getByText('今日笔记', { exact: true }).click()
+  await expect(page.getByText('未保存', { exact: true })).toHaveCount(0, { timeout: 10_000 })
+  // 拾取循环 = 负载窗敏感面（12×4 菜单/面板交互——popover 内容窗家族
+  // 瞬态吞点击[D-21 v11③]）：逐拾取重试[vm 矩阵轮询惯用法同判]。
+  for (let i = 1; i <= 12; i++) {
+    let picked = false
+    for (let attempt = 0; attempt < 3 && !picked; attempt++) {
+      try {
+        await page.waitForTimeout(250)
+        await page.getByText('视图', { exact: true }).click({ timeout: 8000 })
+        await page.getByText('快速打开', { exact: true }).click({ timeout: 8000 })
+        const inp = page.getByPlaceholder('过滤文件名…')
+        await expect(inp).toBeVisible({ timeout: 8000 })
+        await inp.fill(`RecCap${i}`)
+        await panel.getByRole('button', { name: `RecCap${i}`, exact: true }).click({ timeout: 8000 })
+        picked = true
+      } catch {
+        if (attempt === 2) throw new Error(`RecCap${i} 拾取三试未达（负载窗家族）`)
+        await page.waitForTimeout(800)
+      }
+    }
+  }
+  await page.getByText('视图', { exact: true }).click()
+  await page.getByText('快速打开', { exact: true }).click()
+  await page.getByPlaceholder('过滤文件名…').fill('')
+  await expect(page.getByText('最近', { exact: true })).toBeVisible({ timeout: 10_000 })
+  const capped = await panelRowNames()
+  expect(capped.length, '容量 10 截断').toBe(10)
+  expect(capped[0], '截断头').toBe('RecCap12')
+  expect(capped[9], '截断尾').toBe('RecCap3')
+  await page.getByRole('button', { name: '收起', exact: true }).first().click()
+  await expect(page.getByPlaceholder('过滤文件名…')).toHaveCount(0, { timeout: 10_000 })
+  // 收尾：Hello World 激活复原（12①b 脏档追加的激活位态前置——pre-020
+  // 终态契约，⑥⑦ 收尾同款口径）。
+  await tabBtn('Hello World').click()
+  await expect(visibleEditor(page)).toContainText('这是一段示例文本', { timeout: 15_000 })
+  console.log('[11 find] PASS — ⑨ recents 弧线（清 q「最近」段→3 开逆序→拾取即关→去重置顶→容量截断 RecCap×12→10 行）')
+
   // ⑥ trash 模式（PLAN-016；vm 矩阵 check 11 trash 子步 + file 组 ⑱
   // 恢复弧同单——真 DOM）：素材 = write_wiki 内造 TrashSrc（[[TrashMe]]
   // 出链源）→ ＋新建 TrashMe（NewGo 树新行双行齐）→ 菜单删除（弹层文
@@ -666,6 +809,7 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await tabBtn('Hello World').click()
   console.log('[11 find] PASS — trash 模式（PLAN-016）：菜单删除 弹层文案「将移入回收站」+改道磁盘面→悬空翻转→回收站第四模式 清单行→行恢复[空态+翻转回+磁盘回+tab 重开]→清空强确认（M 派生+取消留置）→清空→空态+磁盘消')
 
+
   // 12 rename（PLAN-006 T-04；vm 矩阵 check 12 同单）：重命名+反链改写
   // 全弧线。素材 Projects.ad（ASCII——D-19 面无；入链 index/CAP 定理 两
   // 页两处 = 预览/改写断言域）。vue 轨 Dialog 闭态 = 卸载（radix-vue 形
@@ -680,9 +824,27 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await expect(page.getByText('重命名页面')).toBeHidden({ timeout: 5_000 })
   console.log('[12 rename] untitled 禁用 — 入口 press 后弹层不开（handler 守卫）')
   await page.locator('button:has(svg.lucide-xicon)').first().click()
-  // ①b 脏档禁用：HW 追加 → 未保存 → 入口 → 弹层不开 → 重载复原
-  await appendToEditor(page, ' rename 脏档标记。')
-  await neutralBlur()
+  // **PLAN-020 位态校正**：⑨ recents 弧后 tab 邻位 = RecCap12[pre-020 =
+  // Hello World]——untitled 关闭回落档漂移；①b 显式激活 Hello World
+  //（pre-020 位态复原——追加/冲刷/重载链在册机制承载）。
+  await tabBtn('Hello World').click()
+  await expect(visibleEditor(page)).toContainText('这是一段示例文本', { timeout: 15_000 })
+  // ①b 脏档禁用：激活档追加 → 未保存 → 入口 → 弹层不开 → 重载复原。
+  // **PLAN-020 位态校正**：⑨ recents 弧后 tab 邻位 = RecCap12[pre-020 =
+  // Hello World]——untitled 关闭回落档为 ⑨ 开档邻位；其编辑器 = 切档重
+  // 挂载实例[D-17 门控：键入不发射 update:modelValue，DOM 断言不可见]——
+  // 追加走 blur 冲刷形态（D-17 中性 blur = 确定性冲刷在册件；断言面 =
+  // 未保存旗标非渲染文——语义同单）。
+  let dirtyShown = false
+  for (let i = 0; i < 3 && !dirtyShown; i++) {
+    await page.waitForTimeout(400)
+    const dirtyTabContent = visibleEditor(page).locator('.autodown-editor-content')
+    await dirtyTabContent.click()
+    await page.keyboard.press('Control+End')
+    await page.keyboard.type(' rename 脏档标记。', { delay: 25 })
+    await neutralBlur()
+    dirtyShown = await page.getByText('未保存', { exact: true }).first().isVisible().catch(() => false)
+  }
   await expect(page.getByText('未保存', { exact: true }).first()).toBeVisible({ timeout: 10_000 })
   await page.getByText('文件', { exact: true }).click()
   await page.getByText('重命名…', { exact: true }).click()

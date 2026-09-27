@@ -16,8 +16,11 @@ const FRONT_PORT = 4443
 export default defineConfig({
   testDir: '.',
   // PLAN-002 T-01 扩单（六检查 → 九检查同单）：HTTP 往返逐拍累加
-  // （D-03 切换面 0.5-1.2s/拍），单 test 预算 30s→90s。
-  timeout: 90_000,
+  // （D-03 切换面 0.5-1.2s/拍），单 test 预算 30s→90s；**PLAN-020 T-03
+  // 再扩**（find 组 ⑧⑨ 弧线——12 开拾取循环菜单往返累加）：90s→240s
+  //（150s 窗实录：⑬ 位 menubar popover 内容窗[D-21 v11③ 家族]×1 即触顶
+  // ——余量扩容非断言放宽）。
+  timeout: 240_000,
   workers: 1,
   retries: 0,
   reporter: [['list']],
