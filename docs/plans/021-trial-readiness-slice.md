@@ -1,12 +1,12 @@
 ---
 plan_id: PLAN-021
-status: executing
+status: execution_done
 feature_name: trial-readiness-slice
 author: [zhaopuming]
 created_at: 2026-09-27T17:19:53+08:00
-updated_at: 2026-09-27T19:05:00+08:00
+updated_at: 2026-09-27T19:40:00+08:00
 plan_revision: 1
-current_step: 3
+current_step: 5
 total_steps: 5
 supersedes_spec_components: []
 new_spec_components:
@@ -376,8 +376,34 @@ pub fn recent_paths_set_impl(paths str) bool {
     无恶化证据[D-03 域内]。e2e 段时长膨胀观测：全跑 1.2m（020 era
     40-48s + ⑩ 段 ~25s——含 201 页防线案两次大 walk，240s 预算内）。
 - **T-05 文档 + ledger v25 + 收口**（AC-05/06）
-  - SD-2101..2104 落位；ledger v24→v25；负向证；§9 work 记录。
+  - [x] SD-2101..2104 落位；ledger v24→v25；负向证；§9 work 记录。
   - 验证：文档 diff 检视 + gate 复跑绿。
+  - **[执行实录 2026-09-27]**：ARCHITECTURE SD-2101[§5 第十九切片四
+    段：持久层首开定文[.jade 语义/专用不泛化/双契约格式/会话域→工作
+    区域]+front 面[Init 载入/RecentsPersist 共享口/StatusBar 条件行]
+    +P≤200 防线[知情不禁用/WsWarn msg 通道/阈值即 D-35② 稳定域] +
+    直证面] + SD-2102[§6 heading 续+find 组 ⑩ 段+臂尾 ⑩b/⑩c 段+基线
+    v19 行[非零重锁第六例 store 新字段面——id 序列零变化 StatusBar 组
+    件子树快照不可见]]；README SD-2103[Tests heading/检查单链/find 组
+    PLAN-021 ⑩ 段/N 定谳 021 实录[merged ×2+split 家族第五例判别链
+    git-archive A/B+e2e 1.2m+gate 第五批留观+probe 14 件+D-35② 条件
+    未至]/基线条目 v19 化/运行矩阵注释 v19 化] + SD-2104[第十九切片
+    条目+ledger v25 指针]；ledger v25[表头 bump+**D-38 新行**[①bool
+    回值 vm 模型 dump=int 1/0 ②state dump 大字段截断+150 页位态通道
+    间歇降级[上游仪器面] ③进程重启载入真弧通道 ④testDir 扫入教训二
+    例 ⑤时钟基准单源 ⑥toolbar ownText 前缀形]+D-21 v25 扩记[家族窗第
+    五例+git-archive A/B 判别链+F-R17-1 第五批维持]+D-35 处置更新[防
+    线落地知情口径+复测条件未至维持+150 页稳定域健康实证]]。**负向证
+    （AC-05）**：probe 全族 **14 件 fresh**（probe_recent 新件双臂十
+    案+十三代回归——13 件 RESULT 全绿双臂+probe_receipt_d19 负结果一
+    致[g①/g② D-19 维持在册]）；`.console` 写面零违例（app.at grep
+    0——D-25①）；契约纯增量（api.at diff 删除行 0）；纪律 grep 族
+    （front split_once 仅 2 处在册注释 D-31①；recents 族零 .length
+    字节算术 D-20③/D-34①；零 computed 串接 D-33②——ws_warn 静态文
+    案直读）；冻结池/家族仓零接触（全程仅 jade-edit 检出写面；fixture
+    源只读拷贝）；gen/dist ignored 零手改；补件面零增量（regen-vue
+    diff 0）；.jade 免索引证（probe ⑥ tree+link_index 双 face + 矩阵
+    ⑩ 快照负向 + 基线 v19 state 全文）。
 
 依赖序：T-01 → T-02 → T-03 → T-04 → T-05（线性；零探针零闸——
 File 族/dot 免索引/纯函数复用全在册）。
@@ -390,6 +416,25 @@ File 族/dot 免索引/纯函数复用全在册）。
   - `next: work`（T-01 起；零探针零闸）。
   - .jade 语义按默认提案（§4.1——全局化 r2 口）；实测工件 = 试用
     反馈代行首批（真实反馈仍待用户试用）。
+
+- **2026-09-27 work 收口（auto-plan:work）**：
+  - `stage: work | plan_id: PLAN-021 | plan_revision: 1 | outcome: pass`
+  - `code_commit`: 42cb478（T-01+T-02 back 双契约+front 接线）→
+    ce39b26（T-03 测试扩单+基线 v19）→ d62aaf8（T-04 150 页实测工件）
+    → T-05 docs（本文）——线性直接 main（001..020 在档惯例）。
+  - `task_ids`: T-01..T-05 全勾；`current_step: 5/5`。
+  - `evidence`: probe_recent 双臂十案全绿；merged 矩阵 16/16 ALL
+    GREEN ×2（基线 v19 零漂移）；e2e 十五段全绿 1.2m（⑩三面）；vue
+    build PASS（release 路由）；probe 全族 14 件 fresh（13 RESULT 全
+    绿+receipt 负结果一致）；150 页实测四点计时+findings 分账工件
+    （§8 T-04 实录）；负向证七面（本表 T-05 实录）。
+  - `blockers`: split 臂 + gate 单命令 = **外部家族窗延续**（exe
+    时间戳未变 debug 09-26 10:43——D-21 v25 第五例；git-archive
+    pre-change A/B 判别链定谳本批零接触）——分段判绿先例承载（018
+    v22/019 v23/020 v24），unblock = 家族 exe 稳定后双臂复跑（与
+    F-R17-1 合流同载体）；D-35② bulkalias 复测条件未至维持。
+  - `next`: review（建议独立会话复审；工件重建口径 = probe_recent
+    + merged 矩阵 + e2e 三件重跑）。
 
 ## 10. 待澄清事项
 
@@ -409,10 +454,14 @@ File 族/dot 免索引/纯函数复用全在册）。
    PLAN-022「索引单趟合并」候选域）；上游面 = autoui_state 大态序列化
    间歇降级（④——仪器面，供料候选：state sync 分块/截断标注）；零
    产品败形（⑧ 完整性/防线阈值/切换面全过）。
-5. **D-21 POST 波及**（观测项）：recents_set 低频小 POST；负载窗
-   按 README 重跑口径。
-6. **PLAN-022 候选池**（本批后更新）：试用反馈件（首位——用户
-   真实反馈 + 本批实测工件衍生）、大纲（anchor-reveal 解锁）、
-   索引单趟合并（D-35 收口后）、recents 全局化（r2）、Time front
-   probe、NFKC、合并三择 r3、批量 restore、F-R19-1 r3、checkbox/
-   url_decode 供料回执件。
+5. **D-21 POST 波及**（✅ T-03/T-04 观测更新）：recents_set 低频小
+   POST——e2e 全跑 1.2m 零 400 丢参签名（API 日志 recent_paths_set
+   触点即发实录）；merged 臂全绿多轮零复现；负载窗按 README 重跑口
+   径不变。
+6. **PLAN-022 候选池**（✅ 本批后更新）：**试用反馈件（首位——用户
+   真实反馈 + 本批 150 页实测工件衍生）**；**索引单趟合并（本仓面
+   findings 衔升——tags_json O(T×P) 3.6s/orphan O(P²) 8.2s/boot
+   tags walk 实测量级在案[D-22 观测③+D-38]）**；大纲（anchor-reveal
+   解锁）、recents 全局化（r2 口）、Time front probe、NFKC、合并三
+   择 r3、批量 restore、F-R19-1 r3、checkbox/url_decode 供料回执件、
+   autoui_state 大态序列化（D-38② 仪器面供料候选）。
