@@ -1,12 +1,12 @@
 ---
 plan_id: PLAN-021
-status: drafting
+status: executing
 feature_name: trial-readiness-slice
 author: [zhaopuming]
 created_at: 2026-09-27T17:19:53+08:00
-updated_at: 2026-09-27T17:19:53+08:00
+updated_at: 2026-09-27T19:05:00+08:00
 plan_revision: 1
-current_step: 0
+current_step: 3
 total_steps: 5
 supersedes_spec_components: []
 new_spec_components:
@@ -279,16 +279,73 @@ pub fn recent_paths_set_impl(paths str) bool {
 ## 8. 执行步骤
 
 - **T-01 back 双契约 + 直证**（AC-01）
-  - wsys 双 impl；probe_recent.mjs 新增（五案）。
+  - [x] wsys 双 impl；probe_recent.mjs 新增（五案）。
   - 验证：直证全绿 + vm 矩阵现行组回归。
+  - **[执行实录 2026-09-27 @42cb478]**：wsys.at 尾段「工作区状态持久层」
+    区段（专用不泛化/.jade 点前缀免索引 D-33①/非用户内容/工作区本地定
+    文注记）+ recent_paths_get_impl（exists 卫先行——只读不建）+
+    recent_paths_set_impl（create_dir 递归幂等 D-29①→write_text→exists
+    复核 D-24②）；api.at 双契约（GET 无参零 D-19 面/POST body CJK 免疫
+    ——_impl 名错开 013 形态）。probe_recent.mjs 双臂**十案全绿**（①缺
+    档容错 ②往返逐字节+磁盘逐字节 ③CJK 两行 POST ④空串清空文件存在
+    空内容 ⑤exists 复核+.jade 域圈定 ⑥免索引证 tree+link_index contains
+    判 false——merged 探针工程 + split serve-back + 逐案对读一致）。执行
+    期实勘两件：autoui_state dump 大 str 字段截断（45KB JSON 后字段全缺
+    ——免索引面改 bool contains 字段形态）；bool 契约回值入 vm 模型
+    dump = int 1/0（D-35③ GET 裸 1/0 家族 POST 直调同域）。
 - **T-02 front 接线（载入/保存/防线）**（AC-01/02 前半）
-  - Init 载入 + 七触点保存 + ws_warn 计算（store 写入——StatusBar
+  - [x] Init 载入 + 七触点保存 + ws_warn 计算（store 写入——StatusBar
     读面落定）+ StatusBar 条件行。
   - 验证：merged 冒烟（开档→磁盘行→防线案）+ `pnpm build` PASS。
+  - **[执行实录 2026-09-27 @42cb478]**：app.at 导入扩双件 + recents_
+    split/recents_join 换装纯函数对 + Init 载入半（get try/catch 容错""
+    →split 入态）+ **RecentsPersist 共享 msg 口**（join→set POST try/
+    catch console；handler 间直发 vue 轨 fire-and-forget 安全——无后续
+    同 handler 读依赖）+ 八触点（直开口四 push 后 + rekey 二 + 循环尾
+    二单发）；ws_warn = **store 模型字段 + WsWarn(str) msg 单向通道**
+    （§10.2 落定：App→store 直写字段赋值无先例，msg 口为在册形态；
+    TreeRefresh 派生段 collect_ad_paths(nodes) 计数 >200 → 静态文案 +
+    console 计数，否则清空）；status_bar.at 条件行（save_note 后 amber
+    行）。**执行期裁定（§2.3「str 直通」按实取）**：App recent_paths
+    维持 List<str>（020 视图/push_recent/recents_rekey 消费面零波及+
+    D-37① dump 基线锚），join/split = 契约 str 形态最小换装——「零
+    parse/serialize」读作「零 JSON 包装原样存取」。验证：merged 矩阵
+    15/16（唯基线 B 漂移=v19 计划内 ws_warn 新 store 字段；其余全绿含
+    ⑨ 弧持久化无扰）+ `pnpm build` PASS（release 路由+SCHEMA_DRIFT_
+    GENERATE_AT=1）。
 - **T-03 测试扩单 + 基线 v19 + gate + 随批复测**（AC-01/02/04）
-  - find/boot 子步 + e2e reload 弧线 + v19 重锁 + gate（F-R17-1
+  - [x] find/boot 子步 + e2e reload 弧线 + v19 重锁 + gate（F-R17-1
     第五批）。
   - 验证：双臂全绿 + e2e 连跑 ≥5 + gate ALL GREEN。
+  - **[执行实录 2026-09-27]**：vm 矩阵 find 组 **⑩ 持久化逐行验子步**
+    （⑨ 终态 RecCap12..RecCap3 ↔ .jade/recents.txt 逐行一致[显示域归一
+    剥 .ad——dtitle 缺省 stem；身份域逐行锚 = ⑩b] + 快照免索引负向）+
+    **臂尾 ⑩b/⑩c**（check 9 后第二 boot——§10.1 落定：**取进程重启真
+    弧**强于二 Init 模拟；⑩b = recent_paths state 清单逐行 = check 9
+    退出时磁盘逐行[12/13 组 rename/move/daily/deep 触点在 ⑨ 后仍改写
+    清单——硬编码 RecCap 面不成立，不变式 = 重启读盘 = 退出时落盘] +
+    「最近」段渲染；⑩c = 201 页微语料→ActDaily→ws_warn 警示文案+警示
+    窗内快开可用+清料零警示回归——fail 即臂败不占检查位）。基线 **v19**
+    重锁（store ws_warn 入 dump——计划内重锁第六例；id 序列零变化——
+    StatusBar 组件子树快照不可见）+ merged **16/16 ALL GREEN ×2**（锁
+    跑+独立复跑零漂移）。e2e：**快开子步断言计划内修订**（「空 q 零记
+    录全量 5 行」→「最近」段跨会话载入——020 会话域复位语义随持久化
+    退役）+ **⑩a 磁盘逐行验** + **⑤ reload 跨会话真弧线**（goto→Init
+    载入→「最近」段 RecCap12..RecCap3 逐行恢复+拾取开档顺收 tab/树展
+    开/反链关位态复原）+ **防线案渲染面**（201 页→StatusBar 警示行
+    可见[vm 组件子树不可见的对位承载]→清料→警示行消；面板开启三试重
+    试[负载窗家族瞬态 D-21 v11③]+find_q 残留清 q 通道）——e2e 全绿
+    1.2m。`pnpm build` PASS。**split 臂+gate 单命令=F-R17-1 第五批维持
+    留观**：split 独立跑 boot FAIL+wiki 树行不现（v23/v24 逐字同形）+
+    gate 两跑[第一跑 split 段 check 11 快速打开钮 UI 弧败、第二跑 split
+    boot FAIL 短路 build 未达]——**判别链外部性定谳**：git-archive 物料
+    pre-change 树（283c702）同 exe A/B 两轮——pre 树 ready 失败/
+    ready 后开档 tab 恒 0 复现同款（本批零接触证）；败形集中重 UI chrome
+    弧[v22 五形态/v23/v24 同族]，分段判绿先例承载（018 v22/019 v23/020
+    v24）。D-35② 复测条件观测：exe 时间戳未变（debug 09-26 10:43/
+    release 09-25 17:58）——条件未至挂起维持。执行期实勘：e2e testDir
+    '.' 递归扫入面再触（pre21-tree 判别链物料忘却清场——D-37⑦ 同款
+    教训二例，物料即用即删入纪律）。
 - **T-04 真实规模实测（工件）**（AC-03）
   - 150 页语料生成 + 四点计时 + 全链冒烟 + findings 清单。
   - 验证：工件实录进 §9/§10（无断言门——如实记录口径）。
@@ -310,12 +367,13 @@ File 族/dot 免索引/纯函数复用全在册）。
 
 ## 10. 待澄清事项
 
-1. **vm 跨会话弧线断言通道**（T-03 落定）：vm 矩阵单进程——进程内
-   二 Init（LinksRefreshOf 类重入）或直证面（get 二读）承载；真
-   重启弧线归 e2e reload。落定后进 T-03 证据块。
-2. **ws_warn 位置**（T-02 落定）：StatusBar 读 .store——倾向 store
-   字段（App 写入）；若 dump 面考量为 App + props 传参（StatusBar
-   无 props 先例——倾向维持 store）。按实取。
+1. **vm 跨会话弧线断言通道**（✅ T-03 落定）：**臂尾进程重启真弧**承载
+   （check 9 退出存盘后第二 boot——recent_paths state 清单逐行 = 退出时
+   磁盘逐行 + 「最近」段渲染）——强于「进程内二 Init 模拟/直证面」两候
+   选；e2e ⑤ reload 弧线为 vue 轨对位。见 §8 T-03 实录。
+2. **ws_warn 位置**（✅ T-02 落定）：store 模型字段 + `WsWarn(str)` msg
+   单向通道（App TreeRefresh 单写口）——App→store 直写字段赋值无先例，
+   msg 口为在册形态；StatusBar 组件 `.store.*` 读面。按实取如左。
 3. **recents 全局化**（r2 口）：跨工作区共享清单（全局存储位
    [%LOCALAPPDATA% 族]）——用户需求首现时裁决。
 4. **实测 findings 分账口径**（T-04）：上游（VM/生成器族）vs 本仓

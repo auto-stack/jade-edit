@@ -27,7 +27,8 @@
 //             计数漂移）。search_wiki POST 面无 D-19——全臂可跑。执行序
 //             在 10c 后 11 前
 //   11 find   查找面板双模式（PLAN-004；vm 矩阵 check 11 同单）：快开
-//             （文件模式——空 q 零记录全量[10m 重载位态]/过滤 Pro→Projects/
+//             （文件模式——空 q「最近」段跨会话载入[10m 重载位态——PLAN-021
+//             修订：020「零记录全量」语义随持久化退役]/过滤 Pro→Projects/
 //             拾取即关）+ 全文检索（text 模式——未运行提示/CJK 查询「任务
 //             列表」[POST 通道——D-19 面无，vue 臂无 GET query 环节]/行导
 //             航面板保持开/运行后空态）+ **alias 检索（PLAN-012——write_wiki
@@ -36,7 +37,11 @@
 //             [pristine 全连接 T-01 首锁]+造链清孤+悬空出链计入出链度
 //             [resolved 面]）+ ⑨ recents 弧线（PLAN-020——清 q「最近」段
 //             →3 开逆序→拾取即关→去重置顶→容量截断 RecCap×12→10 行——
-//             write_wiki 素材 + ActDaily 树刷新）**。入口 = 视图菜单项
+//             write_wiki 素材 + ActDaily 树刷新）+ **⑩ 持久化三面
+//             （PLAN-021——磁盘逐行验[⑨ 终态 RecCap12..RecCap3 ↔
+//             .jade/recents.txt]+⑤ reload 跨会话恢复[「最近」段真弧]+
+//             防线案 201 页 StatusBar 警示行显隐[渲染面——vm 组件子树
+//             不可见的对位承载]+清料零警示回归）**。入口 = 视图菜单项
 //             （键位面 = 真键盘，e2e 不覆盖）；检索触发 = 检索钮（契约底
 //             线；Enter @keyup.enter 随 fill() 不发 keyup 不覆盖——按钮面
 //             已证触发链）。执行序在 10 后 9 前（先关反链面板——find 行
@@ -507,29 +512,31 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   // 素材 + goto 重载后语料全连接：pristine 5 页入/出度全非零[Projects
   // 出链零但入链 2——双零恒空]）。e2e 位态 = 本位唯一全连接窗[vm 位态
   // fs 素材族孤儿非空，绝对空态 = T-02 冒烟实录承载——两轨位态异位既
-  // 有口径]；重载后 recents 会话域复位零记录——空态断言不受「最近」
+  // 有口径]；重载后 recents 跨会话载入[PLAN-021]——空态断言不受「最近」
   // 段影响（orphans 模式无 q 面）。
   await page.getByText('视图', { exact: true }).click()
   await page.getByText('孤页清单', { exact: true }).click()
   await expect(page.getByText('（无孤页）', { exact: true })).toBeVisible({ timeout: 10_000 })
   console.log('[11 find] PASS — orphans 第五模式空态（pristine 全连接——T-01 首锁）')
-  // 快开子步：开面板（文件模式）→ **空 q 零记录全量 5 行**[PLAN-020 ⑧
-  // 断言修订首半面——10m goto 重载后 recents 会话域复位，本位 = e2e 唯一
-  // 零记录窗；开档后「最近」段替换面在 ⑨ recents 弧线] → 过滤 → 拾取即关
+  // 快开子步：开面板（文件模式）→ **空 q「最近」段（PLAN-021 修订——
+  // 10m goto 重载 = 新 Init，recents 自 .jade/recents.txt 跨会话载入
+  // [020「会话域复位零记录」语义随持久化退役——本位 = G1 跨会话恢复
+  // e2e 首证位]）** → 过滤 → 拾取即关
+  const panelRowNames = async () =>
+    (await panel.getByRole('button').allTextContents()).filter((t) => t !== '收起' && t !== '')
   await page.getByText('视图', { exact: true }).click()
   await page.getByText('快速打开', { exact: true }).click()
   const findInput = page.getByPlaceholder('过滤文件名…')
   await expect(findInput).toBeVisible({ timeout: 10_000 })
-  for (const f of fixtureAdNames()) {
-    await expect(panel.getByRole('button', { name: displayTitleOf(f), exact: true })).toBeVisible()
-  }
+  await expect(page.getByText('最近', { exact: true })).toBeVisible({ timeout: 10_000 })
+  await expect((await panelRowNames()).length).toBeGreaterThanOrEqual(1)
   await findInput.fill('Pro')
   await expect(panel.getByRole('button', { name: 'Projects', exact: true })).toBeVisible()
   await expect(panel.getByRole('button', { name: 'CAP 定理', exact: true })).toHaveCount(0)
   await panel.getByRole('button', { name: 'Projects', exact: true }).click()
   await expect(visibleEditor(page)).toContainText('当前进行中的项目', { timeout: 15_000 })
   await expect(findInput).toHaveCount(0, { timeout: 10_000 })
-  console.log('[11 find] PASS — 快开：空 q 全量 5 行 + 过滤 Pro→Projects 独行 + 拾取开档即关')
+  console.log('[11 find] PASS — 快开：空 q「最近」段跨会话载入[PLAN-021] + 过滤 Pro→Projects 独行 + 拾取开档即关')
   // 检索子步：text 模式 → 未运行提示 → CJK 查询（POST 通道）→ 行导航
   // 面板保持开 → 运行后空态
   await page.getByText('视图', { exact: true }).click()
@@ -613,8 +620,6 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   // 去重置顶[重拾 Tasks 头位]→ 容量截断[write_wiki RecCap1..12 + 菜单
   // 今日笔记 ActDaily 树刷新→12 开→10 行 头 RecCap12 尾 RecCap3]→
   // 收尾 find 面板关[12 反链面板负向断言区域文本集防污染——vm 同款]。
-  const panelRowNames = async () =>
-    (await panel.getByRole('button').allTextContents()).filter((t) => t !== '收起' && t !== '')
   await page.getByText('视图', { exact: true }).click()
   await page.getByText('快速打开', { exact: true }).click()
   const findInput9 = page.getByPlaceholder('过滤文件名…')
@@ -687,11 +692,76 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   expect(capped[9], '截断尾').toBe('RecCap3')
   await page.getByRole('button', { name: '收起', exact: true }).first().click()
   await expect(page.getByPlaceholder('过滤文件名…')).toHaveCount(0, { timeout: 10_000 })
-  // 收尾：Hello World 激活复原（12①b 脏档追加的激活位态前置——pre-020
-  // 终态契约，⑥⑦ 收尾同款口径）。
-  await tabBtn('Hello World').click()
-  await expect(visibleEditor(page)).toContainText('这是一段示例文本', { timeout: 15_000 })
   console.log('[11 find] PASS — ⑨ recents 弧线（清 q「最近」段→3 开逆序→拾取即关→去重置顶→容量截断 RecCap×12→10 行）')
+
+  // ⑩ 持久化三面（PLAN-021 T-03；SD-2101——vm 矩阵 ⑩/⑩b/⑩c 同单）：
+  // ⑩a 磁盘逐行验（⑨ 弧终态 RecCap12..RecCap3 ↔ .jade/recents.txt——
+  // 变更即存落盘面，身份域逐行）；
+  const recentsDiskLines = fs.readFileSync(path.join(WORKSPACE, '.jade', 'recents.txt'), 'utf8').split('\n').filter((l) => l !== '')
+  expect(recentsDiskLines, '⑩a 磁盘逐行 = RecCap12..RecCap3').toEqual(
+    Array.from({ length: 10 }, (_, k) => `RecCap${12 - k}.ad`),
+  )
+  // ⑤ 跨会话真弧线（G1——e2e = page reload 通道）：reload = 新 Init →
+  // recent_paths_get 读盘 → recents_split 入态 → 空 q「最近」段恢复
+  // RecCap12..RecCap3（跨会话/跨重启真弧——vm 臂尾 ⑩b 进程重启对位）；
+  // 拾取开档顺收 Hello World tab 位态复原（⑥⑦/12 段前置口径——10m 重载
+  // 复原同款）+ wiki 树展开复原（12② 起按树行点击——重载后 ft_expanded
+  // 复位）+ 反链面板复位关态 = 12 段「反链关」口径。
+  await page.goto('/')
+  await expect(page.getByText('ready', { exact: true }).first()).toBeVisible({ timeout: 15_000 })
+  await page.getByText('视图', { exact: true }).click()
+  await page.getByText('快速打开', { exact: true }).click()
+  await expect(page.getByPlaceholder('过滤文件名…')).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByText('最近', { exact: true })).toBeVisible({ timeout: 10_000 })
+  expect(await panelRowNames(), '⑤ 重载后「最近」段跨会话恢复').toEqual(
+    Array.from({ length: 10 }, (_, k) => `RecCap${12 - k}`),
+  )
+  await page.getByPlaceholder('过滤文件名…').fill('Hello')
+  await panel.getByRole('button', { name: 'Hello World', exact: true }).click()
+  await expect(visibleEditor(page)).toContainText('这是一段示例文本', { timeout: 15_000 })
+  await expect(page.getByPlaceholder('过滤文件名…')).toHaveCount(0, { timeout: 10_000 })
+  await page.getByText('wiki', { exact: true }).first().click()
+  // ⑩b 防线案（P≤200——D-35② 知情警示面）：fs 造 201 页微语料（安全线
+  // +1 直证阈值 >200）→ ActDaily 树刷新（今日笔记重入幂等 + TreeRefresh
+  // 重计数）→ StatusBar 警示行可见 + 警示窗内快开可用（纯显示面零功能
+  // 影响）→ 清料再刷 → 警示行消（零警示回归）。vm 组件子树快照不可见 →
+  // 渲染面断言由本臂承载（vm 臂 ⑩c = store 态断言对位）。
+  for (let i = 1; i <= 201; i++) {
+    fs.writeFileSync(path.join(WORKSPACE, `WarnFill${i}.ad`), `# WarnFill${i}\n\n`, 'utf8')
+  }
+  const WARN_TEXT = '工作区超 200 页（上游 VM 上限）——索引可能不稳定'
+  // 面板开启 = 负载窗敏感面（popover 内容窗家族瞬态吞点击——D-21 v11③，
+  // ⑨ 拾取循环同款三试重试惯用法）。
+  const openFilesPanelRetry = async () => {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        await page.waitForTimeout(250)
+        await page.getByText('视图', { exact: true }).click({ timeout: 8000 })
+        await page.getByText('快速打开', { exact: true }).click({ timeout: 8000 })
+        const inp = page.getByPlaceholder('过滤文件名…')
+        await expect(inp).toBeVisible({ timeout: 8000 })
+        await inp.fill('')
+        await expect(page.getByText('最近', { exact: true })).toBeVisible({ timeout: 8000 })
+        return
+      } catch {
+        if (attempt === 2) throw new Error('防线案 快开面板三试未达（负载窗家族）')
+        await page.waitForTimeout(800)
+      }
+    }
+  }
+  await page.getByText('文件', { exact: true }).click()
+  await page.getByText('今日笔记', { exact: true }).click()
+  await expect(page.getByText(WARN_TEXT, { exact: true })).toBeVisible({ timeout: 20_000 })
+  await openFilesPanelRetry()
+  await page.getByRole('button', { name: '收起', exact: true }).first().click()
+  await expect(page.getByPlaceholder('过滤文件名…')).toHaveCount(0, { timeout: 10_000 })
+  for (let i = 1; i <= 201; i++) {
+    fs.rmSync(path.join(WORKSPACE, `WarnFill${i}.ad`), { force: true })
+  }
+  await page.getByText('文件', { exact: true }).click()
+  await page.getByText('今日笔记', { exact: true }).click()
+  await expect(page.getByText(WARN_TEXT, { exact: true })).toHaveCount(0, { timeout: 20_000 })
+  console.log('[11 find] PASS — ⑩ 持久化三面[PLAN-021]：磁盘逐行验 RecCap12..RecCap3 + reload 跨会话恢复「最近」段（真重启弧 e2e 载体）+ 防线案 201 页警示行显隐（知情纯显示面）')
 
   // ⑥ trash 模式（PLAN-016；vm 矩阵 check 11 trash 子步 + file 组 ⑱
   // 恢复弧同单——真 DOM）：素材 = write_wiki 内造 TrashSrc（[[TrashMe]]
