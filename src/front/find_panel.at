@@ -26,8 +26,9 @@ widget FindPanel {
                 style: "text-[11px] h-5 px-1 text-muted-foreground"
             }
             // 模式标签（files=文件 / text=全文 / wanted=悬空 / trash=回收站
-            // ——快捷键分流的结果态显示（PLAN-008 增 wanted 第三模式、
-            // PLAN-016 增 trash 第四模式）。
+            // / orphans=孤页——快捷键分流的结果态显示（PLAN-008 增 wanted
+            // 第三模式、PLAN-016 增 trash 第四模式、PLAN-020 增 orphans
+            // 第五模式）。
             if .store.find_mode == "files" {
                 text "文件" { style: find_meta }
             }
@@ -39,6 +40,9 @@ widget FindPanel {
             }
             if .store.find_mode == "trash" {
                 text "回收站" { style: find_meta }
+            }
+            if .store.find_mode == "orphans" {
+                text "孤页" { style: find_meta }
             }
         }
     }

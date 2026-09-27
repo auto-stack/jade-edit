@@ -211,6 +211,61 @@ fn file_rows_of(paths List, q str) List {
     return out
 }
 
+/// 最近打开头插（PLAN-020 T-02；SD-2001 recents 半——快开空 q「最近」
+/// 段数据面）：recent_paths 维护原语——头插 path + 既有清单去同项（去
+/// 重置顶）+ 容量 10 截断（while 重建法——列表定址删除/截断原语未用，
+/// push 重建为在册安全通道；cap 预算 = min(len+1, 10)，恒含新头）。
+/// ⚠ D-30①：参数名 paths 避开模型名（recent_paths——vue codegen 阴影
+/// 面）。
+fn push_recent(paths List, path str) List {
+    var out List = []
+    out.push(path)
+    var cap int = paths.len() + 1
+    if cap > 10 {
+        cap = 10
+    }
+    var i int = 0
+    while i < paths.len() {
+        // ⚠ D-20②：列表元素先拷局部变量再比较。
+        var p str = paths[i]
+        if p != path {
+            if out.len() < cap {
+                out.push(p)
+            }
+        }
+        i = i + 1
+    }
+    return out
+}
+
+/// 最近打开旧键置换（PLAN-020 T-02；§10.4 有效性口径——重命名/移动后
+/// 旧路径清 + 新路径头插，recents 恒可开；旧键不在册零变化——无关
+/// 路径零扰动）：存在判定单趟 + 命中才重建（去旧 + push_recent 委托）。
+fn recents_rekey(paths List, old_path str, new_path str) List {
+    var hit bool = false
+    var i int = 0
+    while i < paths.len() {
+        var p str = paths[i]
+        if p == old_path {
+            hit = true
+        }
+        i = i + 1
+    }
+    if !hit {
+        return paths
+    }
+    var dropped List = []
+    var j int = 0
+    while j < paths.len() {
+        var q str = paths[j]
+        if q != old_path {
+            dropped.push(q)
+        }
+        j = j + 1
+    }
+    return push_recent(dropped, new_path)
+}
+
 /// titles 行集派生（PLAN-013 T-02；SD-1301 显示域）：link_pages →
 /// {path,dtitle} 映射行——LinksRefreshOf 派生段顺产（**零新状态面
 /// 原则**：显示期映射表随链接索引刷新同鲜度，触发集 v5 零扩）；
@@ -708,6 +763,55 @@ fn wanted_rows_of(pages List) List {
     return out
 }
 
+/// 孤页行集（PLAN-020 T-01；SD-2001 孤页半——find 第五模式 orphans
+/// 数据面；wanted_rows_of 聚合族同构第四实例）：link_pages 双零判定的
+/// 完全孤岛页——出度 = 自身 links.len()（**悬空链接计入出链度**：有链
+/// 即非孤，SD-2001 定文）；入度 = 他档出链扫 target_path 精确命中计数
+///（**resolved 面**：悬空 target_path="" 不计入[卫语句——backlink_
+/// rows_of 同族]；自链接排除 j != i——SD-302 同语义：自链计入出链不
+/// 计入反链）。双零 → 行 {path}（pages 原序 = walk 序）。**纯派生零
+/// back 增量**（孤页清单 = 图谱门控的清单替代——知识健康第二切面）。
+/// ⚠ D-20②：元素先拷局部再取字段；⚠ D-30①：参数名 pages 避开模型名
+///（link_pages——vue codegen 阴影面）。
+fn orphan_rows_of(pages List) List {
+    var out List = []
+    var i int = 0
+    while i < pages.len() {
+        // ⚠ D-20②：列表元素先拷局部变量再取字段。
+        var page = pages[i]
+        var ppath str = page.path
+        var links List = page.links
+        var outd int = links.len()
+        var ind int = 0
+        var j int = 0
+        while j < pages.len() {
+            if j != i {
+                var other = pages[j]
+                var olinks List = other.links
+                var k int = 0
+                while k < olinks.len() {
+                    var lnk = olinks[k]
+                    var tp str = lnk.target_path
+                    if tp != "" {
+                        if tp == ppath {
+                            ind = ind + 1
+                        }
+                    }
+                    k = k + 1
+                }
+            }
+            j = j + 1
+        }
+        if outd == 0 {
+            if ind == 0 {
+                out.push({ path: ppath })
+            }
+        }
+        i = i + 1
+    }
+    return out
+}
+
 /// 清空回收站强确认文案（PLAN-016 T-02；M 本地派生——trash_rows 现算
 /// 长度。⚠ 模块纯函数形态（computed 委托——deldir_files_preview 同族；
 /// T-02 实勘：computed 表达式内联 `+` 串接不发射——vm 快照描述节点缺
@@ -786,7 +890,7 @@ widget App {
         ActNewFile, NewEdit(str), NewGo, NewCancel, ActDelete,
         DeleteGo, DeleteCancel,
         ActTags, TagToggle(str), TagsRefresh,
-        ActFindWanted,
+        ActFindWanted, ActFindOrphans,
         ActMeta, MetaEditTitle(str), MetaEditTags(str), MetaEditAliases(str), MetaGo, MetaCancel,
         ActDirNew, DirEdit(str), DirGo, DirCancel,
         ActMove, MoveEdit(str), MoveGo, MoveCancel,
@@ -824,6 +928,14 @@ widget App {
         var find_q str = ""
         var find_rows List = []
         var find_ran bool = false
+        // —— 最近打开数据态（PLAN-020 T-02；SD-2001 recents 半）：会话
+        // 域 App 态（**持久化不做**——v1 重启即失，§10.3 留口）——开档
+        // 成功触点头插（push_recent：去重置顶 + 容量 10 截断；触点族 =
+        // OpenFile/OpenLink/CreateGo[经 OpenLink]/NewGo/ActDaily 直开 +
+        // RenameGo/MoveGo/RenDirGo/MoveDirExec 旧键置换）。快开空 q 双态
+        // 消费（视图直读——「最近」段替换式，Obsidian 快速切换器同款；
+        // find_q/find_rows 同构不入 store——D-20④ 同款裁定）。----
+        var recent_paths List = []
         // —— 重命名弹层数据态（PLAN-006）：input 值（RenameOpen handler
         // 预填现 stem）——find_q 同构，不入 store（D-20④ 同款裁定）。
         var rename_q str = ""
@@ -875,6 +987,11 @@ widget App {
         // 同触点 + ActFindWanted 入口；tags_rows 同判不入 store——
         // D-20④）。----
         var wanted_rows List = []
+        // —— 孤页清单数据态（PLAN-020；第五模式）：孤页行 {path}——
+        // link_pages 派生（orphan_rows_of——重算挂 LinksRefreshOf 派生段
+        // 同触点 + ActFindOrphans 入口即刷新；wanted_rows 同判不入
+        // store——D-20④）。----
+        var orphan_rows List = []
         // —— 未链接提及数据态（PLAN-009）：提及行 {path, snippet}——
         // search_wiki(stem) 结果 −自身 −已链源（bl_rows）−title-only
         // （SD-901 mentions 半）。**唯一新模型字段**（store 零新增——
@@ -976,6 +1093,11 @@ widget App {
                 checked_if: ".store.find_open && .store.find_mode == \"text\"")
         action (id: "view.find-wanted", handler: .ActFindWanted, title: "悬空清单", shortcut: "Ctrl+Shift+D",
                 checked_if: ".store.find_open && .store.find_mode == \"wanted\"")
+        // 孤页清单（PLAN-020 T-01；第五模式入口——O 族：Ctrl+O 打开在册
+        // 、Ctrl+Shift+O 空闲实核[Ctrl+Shift+D/F/M/R/T 在册，Shift+O 空
+        // 闲]；不挂 enabled——无状态依赖可挂，D-24③ 同判）。
+        action (id: "view.find-orphans", handler: .ActFindOrphans, title: "孤页清单", shortcut: "Ctrl+Shift+O",
+                checked_if: ".store.find_open && .store.find_mode == \"orphans\"")
         action (id: "view.switch-tab", handler: .ActSwitchTab,  title: "切换 Tab", shortcut: "Ctrl+D")
         action (id: "view.reload",    handler: .Reload,    title: "重载",  icon: "refresh-cw",   shortcut: "F5",
                 enabled_if: ".store.tab_count > 0")
@@ -1050,6 +1172,8 @@ widget App {
                             menubar-item (title: "快速打开", icon: "file-search", shortcut: "Ctrl+P") { onclick: .ActFindFiles }
                             menubar-checkbox-item (title: "全文检索", icon: "search", checked: .store.find_open && .store.find_mode == "text", shortcut: "Ctrl+Shift+F") { onclick: .ActFindText }
                             menubar-checkbox-item (title: "悬空清单", checked: .store.find_open && .store.find_mode == "wanted", shortcut: "Ctrl+Shift+D") { onclick: .ActFindWanted }
+                            // 孤页清单（PLAN-020——「悬空清单」后，§2.4 键位/菜单面）
+                            menubar-checkbox-item (title: "孤页清单", checked: .store.find_open && .store.find_mode == "orphans", shortcut: "Ctrl+Shift+O") { onclick: .ActFindOrphans }
                             menubar-item (title: "切换 Tab", shortcut: "Ctrl+D") { onclick: .ActSwitchTab }
                             menubar-item (title: "重载", icon: "refresh-cw", shortcut: "F5", enabled: .store.tab_count > 0) { onclick: .Reload }
                         }
@@ -1235,14 +1359,48 @@ widget App {
                             // FindPick 口）。行文本 = 显示名覆盖（PLAN-013
                             // ——fallback = path 身份可读：无 title 档显示
                             // 完整 path 与现状一致零变化，§10.3 注记）。
+                            // **PLAN-020 空 q 双态**（SD-2001 recents 半
+                            // ——Obsidian 快速切换器同款替换式 v1）：空 q
+                            // 且有记录 → 「最近」段（标题行 + recents 行
+                            // 集——视图直读 recent_paths，str 清单 for 消
+                            // 费 r.paths 同款在册形态；段标题 = 静态 text
+                            // 零 computed 串接 D-33②）；无记录空 q → 全量
+                            // （现状不变——首跑零漂移面）；有输入 → 过滤
+                            // （现状回归）。拾取即关契约不变（FindPick 口）。
                             if .store.find_mode == "files" {
-                                if .find_rows.len() == 0 {
-                                    text "（无匹配文件）" { style: "text-[11px] text-muted-foreground px-3" }
+                                if .find_q == "" {
+                                    if .recent_paths.len() > 0 {
+                                        row (style: "h-6 items-center shrink-0 px-3") {
+                                            text "最近" { style: "text-[11px] font-bold text-muted-foreground" }
+                                        }
+                                        for p in .recent_paths {
+                                            button (text: dtitle_of(.titles, p, p), variant: "ghost") {
+                                                onclick: .FindPick(p)
+                                                style: "w-full justify-start px-3 h-6 text-left text-[12px]"
+                                            }
+                                        }
+                                    }
+                                    if .recent_paths.len() == 0 {
+                                        if .find_rows.len() == 0 {
+                                            text "（无匹配文件）" { style: "text-[11px] text-muted-foreground px-3" }
+                                        }
+                                        for r in .find_rows {
+                                            button (text: dtitle_of(.titles, r.path, r.path), variant: "ghost") {
+                                                onclick: .FindPick(r.path)
+                                                style: "w-full justify-start px-3 h-6 text-left text-[12px]"
+                                            }
+                                        }
+                                    }
                                 }
-                                for r in .find_rows {
-                                    button (text: dtitle_of(.titles, r.path, r.path), variant: "ghost") {
-                                        onclick: .FindPick(r.path)
-                                        style: "w-full justify-start px-3 h-6 text-left text-[12px]"
+                                if .find_q != "" {
+                                    if .find_rows.len() == 0 {
+                                        text "（无匹配文件）" { style: "text-[11px] text-muted-foreground px-3" }
+                                    }
+                                    for r in .find_rows {
+                                        button (text: dtitle_of(.titles, r.path, r.path), variant: "ghost") {
+                                            onclick: .FindPick(r.path)
+                                            style: "w-full justify-start px-3 h-6 text-left text-[12px]"
+                                        }
                                     }
                                 }
                             }
@@ -1320,6 +1478,22 @@ widget App {
                                     button (text: "清空回收站", variant: "text") {
                                         onclick: .TrashPurge
                                         style: "text-[11px] h-6 px-2 text-muted-foreground"
+                                    }
+                                }
+                            }
+                            // orphans 模式（PLAN-020 T-01；第五模式——wanted/
+                            // trash 无 input 形态同构）：孤页行（path 文本
+                            // ——dtitle 显示期覆盖同族，fallback = path 身
+                            // 份可读）→ 行点击 OpenLink 开档；空态留根
+                            //（全连接语料态达成）。
+                            if .store.find_mode == "orphans" {
+                                if .orphan_rows.len() == 0 {
+                                    text "（无孤页）" { style: "text-[11px] text-muted-foreground px-3" }
+                                }
+                                for r in .orphan_rows {
+                                    button (text: dtitle_of(.titles, r.path, r.path), variant: "ghost") {
+                                        onclick: .OpenLink(r.path)
+                                        style: "w-full justify-start px-3 h-6 text-left text-[12px]"
                                     }
                                 }
                             }
@@ -1811,6 +1985,8 @@ widget App {
             } else {
                 .ft_sel = path
                 store.Open({ path: path })
+                // 最近打开触点（PLAN-020——开档成功头插去重置顶）
+                .recent_paths = push_recent(.recent_paths, path)
                 // 链接行重算（显式 path——handler 内 .store 读为陈旧投影，
                 // T-03 实勘；Open 即激活入参 path，两轨一致）
                 .bl_rows = backlink_rows_of(.link_pages, path)
@@ -1859,6 +2035,8 @@ widget App {
             }
             if r != "" {
                 store.Open({ path: r })
+                // 最近打开触点（PLAN-020——ActDaily 直开口同收录）
+                .recent_paths = push_recent(.recent_paths, r)
                 .LinksRefreshOf(r)
                 .TagsRefresh()
                 .TreeRefresh()
@@ -1969,6 +2147,9 @@ widget App {
             // wanted 行重算挂同触点（PLAN-008——link_pages 变化即消缺：
             // 建页成功后 wanted 行自动消失，G2 闭环）
             .wanted_rows = wanted_rows_of(.link_pages)
+            // 孤页行重算同段顺产（PLAN-020——link_pages 变即重算，触发集
+            // v5 零扩：本口既有触点全覆盖孤页面消费）
+            .orphan_rows = orphan_rows_of(.link_pages)
             // 提及重算串联（PLAN-010）：link_pages 就绪后刷新提及，
             // 确保 mentions_of 消费新鲜的 backlink_rows_of 排重源，
             // 消除 vue 轨并发 fetch 时序竞态（D-26② 闭环）。
@@ -2045,6 +2226,9 @@ widget App {
         .OpenLink(path) -> {
             if path != "" {
                 store.Open({ path: path })
+                // 最近打开触点（PLAN-020——开档成功头插去重置顶；CreateGo
+                // 等建页导航经本口同收录）
+                .recent_paths = push_recent(.recent_paths, path)
                 // 链接行重算（显式 path——tab 条/面板行点击共用本口：
                 // Open 已开即激活语义 + 行派生）
                 .bl_rows = backlink_rows_of(.link_pages, path)
@@ -2130,7 +2314,8 @@ widget App {
             .find_ran = true
         }
         // 快开入口（幂等重开——已开则保模式清过滤面）；行集就绪待过滤
-        //（空 q = 全量清单）。
+        //（空 q = 全量清单——PLAN-020 后空 q 有记录时视图改显 recents
+        // 段[recent_paths 直读]，行集消费面 = 无记录/有输入两态）。
         .ActFindFiles -> {
             store.FindOpen("files")
             .find_rows = file_rows_of(collect_ad_paths(.ft_nodes), .find_q)
@@ -2147,6 +2332,16 @@ widget App {
         // App 上下文零 `.console` 写面。
         .ActFindWanted -> {
             store.FindOpen("wanted")
+            .LinksRefreshOf(.store.active_path)
+        }
+        // 孤页清单入口（PLAN-020 T-01；Ctrl+Shift+O/菜单共口——find-wanted
+        // 同构第五模式）：幂等重开 + 切模式 + 链接索引重取（入口即刷新
+        // ——orphan 行集 = link_pages 派生，重取后孤页面新鲜；行重算在
+        // .LinksRefreshOf 内联，link_index 走 back walk 零树依赖——fs 外
+        // 造档入口即现，alias 检索同款口径）。D-25① 纪律：App 上下文
+        // 零 `.console` 写面。
+        .ActFindOrphans -> {
+            store.FindOpen("orphans")
             .LinksRefreshOf(.store.active_path)
         }
         // 查找行点击口：OpenLink 共用导航口（开档 + 链接行派生）；files
@@ -2230,6 +2425,8 @@ widget App {
             if r != "" {
                 store.NewClose()
                 store.Open({ path: r })
+                // 最近打开触点（PLAN-020——NewGo 直开口同收录）
+                .recent_paths = push_recent(.recent_paths, r)
                 .LinksRefreshOf(r)
                 .TagsRefresh()
                 .TreeRefresh()
@@ -2351,6 +2548,9 @@ widget App {
                 store.RenameClose()
                 store.TabsRenamed(old_path, r)
                 store.Reload()
+                // 最近打开旧键置换（PLAN-020——重命名后旧路径清 + 新路径
+                // 头插，recents 恒可开 §10.4）
+                .recent_paths = recents_rekey(.recent_paths, old_path, r)
                 .LinksRefreshOf(r)
                 .TagsRefresh()
                 .MentionsRefreshOf(r)
@@ -2550,6 +2750,9 @@ widget App {
                 store.MoveClose()
                 store.TabsRenamed(old_path, r)
                 store.Reload()
+                // 最近打开旧键置换（PLAN-020——移动后旧路径清 + 新路径
+                // 头插，recents 恒可开 §10.4）
+                .recent_paths = recents_rekey(.recent_paths, old_path, r)
                 .LinksRefreshOf(r)
                 .TagsRefresh()
                 .MentionsRefreshOf(r)
@@ -2687,6 +2890,9 @@ widget App {
                             if f.ends_with(".ad") {
                                 var rest str = rel_under(f, target)
                                 store.TabsRenamed(f, r + "/" + rest)
+                                // 最近打开旧键置换（PLAN-020——目录级同
+                                // 口径，在册键才动无关零扰动）
+                                .recent_paths = recents_rekey(.recent_paths, f, r + "/" + rest)
                             }
                             i = i + 1
                         }
@@ -2795,6 +3001,10 @@ widget App {
                         if f.ends_with(".ad") {
                             var rest str = rel_under(f, src)
                             store.TabsRenamed(f, r + "/" + rest)
+                            // 最近打开旧键置换（PLAN-020——目录级同口径
+                            // 014 循环同款；合并冲突后缀档 v1 记账面同
+                            // SD-1901 注记——新档键不在册零扰动）
+                            .recent_paths = recents_rekey(.recent_paths, f, r + "/" + rest)
                         }
                         i = i + 1
                     }
