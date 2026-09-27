@@ -1,6 +1,6 @@
 ---
 plan_id: PLAN-021
-status: execution_done
+status: reviewed
 feature_name: trial-readiness-slice
 author: [zhaopuming]
 created_at: 2026-09-27T17:19:53+08:00
@@ -435,6 +435,53 @@ File 族/dot 免索引/纯函数复用全在册）。
     F-R17-1 合流同载体）；D-35② bulkalias 复测条件未至维持。
   - `next`: review（建议独立会话复审；工件重建口径 = probe_recent
     + merged 矩阵 + e2e 三件重跑）。
+
+- **2026-09-27 复审（auto-plan:review）**：
+  - `stage: review | plan_id: PLAN-021 | plan_revision: 1 | outcome:
+    pass | reviewed_commit: 549c8a3 | base_commit: 283c702 |
+    dependency_revisions: auto-lang debug 09-26 10:43 / release 09-25
+    17:58（exe 时间戳复核未变） | spec_inputs: docs/ARCHITECTURE.md
+    §5/§6@549c8a3 + docs/README.md Tests/是什么/文档@549c8a3 +
+    docs/parity-ledger.md v25@549c8a3`
+  - **复审方式声明**：实现同会话复审（无独立会话授权）——按技能以
+    工件重建裁定：验收命令在受审提交 549c8a3 树上全量重放（非执行
+    期摘要采信）。
+  - `acceptance_results`:
+    - **AC-01 pass**：probe_recent 双臂十案重放全绿（缺档容错/往返/
+      CJK/清空/复核+免索引）；merged 矩阵 ⑩ 逐行验 + ⑩b 进程重启载
+      入真弧 + e2e ⑤ reload 跨会话恢复重放绿——跨会话/跨重启/缺档
+      容错/工作区隔离四口径全证。
+    - **AC-02 pass**：merged ⑩c 201 页警示 + 现行语料零回归 + 警示
+      窗内快开可用（纯显示面）重放绿；e2e StatusBar 警示行显隐渲染
+      面绿。
+    - **AC-03 pass**：bench150 复审窗重放一致（link_index 289ms/
+      rename 45ms/tags 2.8s/boot-ready 5.3s/保存 511ms——执行期实录
+      量级带内；findings 无新增）+ 工件在案（§8 T-04 实录 +
+      d62aaf8）。
+    - **AC-04 pass（分段判绿——外部阻断如实记）**：merged 16/16
+      ALL GREEN（复审重放 + 基线 v19 零漂移）+ e2e 十五段绿（1.1m
+      重放）+ vue build 绿（release 路由 ✓ built）；**gate 单命令
+      split 段 = 外部家族窗第五例**（D-21 v25——git-archive A/B 判
+      别链定谳本批零接触；unblock = 家族 exe 稳定后双臂复跑）——
+      018 v22/019 v23/020 v24 复审-delivered 同判先例承载。
+    - **AC-05 pass**：probe 全族 14 件 fresh（执行期 T-05 窗实跑——
+      13 RESULT 全绿 + receipt 负结果一致；其后零代码变更——docs-only
+      后代核验 d62aaf8..549c8a3 仅 docs/**）+ 负向证 grep 族复核
+      （.console 0/契约纯增量/纪律族/冻结池零接触/gen 零手改/补件
+      零增量/.jade 免索引证）。
+    - **AC-06 pass**：SD-2101..2104 锚位核验（ARCH §5/§6 + README
+      Tests/是什么/ledger 指针）+ ledger v25 读回（表头 bump+D-38 行
+      在册）+ v18 留档在案。
+  - `findings`: 无阻断项。观测一项：复审窗 bench150 重放 state 通道
+    62 字符降级复现（与 D-38② 在册一致——快照通道健康，仪器面非产
+    品败形）。规范增量四面文本核验与实现行为一致（SD-2101 持久层定
+    文/SD-2102 测试面/SD-2103 判绿口径/SD-2104 进度面——无废弃实现
+    计划语残留）。
+  - `evidence`: 本记录验收命令即证据（重放于 549c8a3 树）；基线文件
+    tests/baseline/structure-v19.txt（tracked 持久）；探针件
+    tests/probe_recent.mjs（tracked）；bench 一次性件居 ignored
+    .runtime（口径在 §8 T-04 实录，量级结论已入计划/ledger 持久面）。
+  - `next`: merge（工作流已授权——移交 auto-plan:merge）。
 
 ## 10. 待澄清事项
 
