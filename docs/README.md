@@ -616,7 +616,35 @@ e2e 同单（断言域 = 结构/文本/磁盘字节，非像素）。
   上游供料包（D-16 预热 / D-15 残余 / D-17 键入发射 / D-18 投影双态，
   期望形态+复验条件+回执方式）
 
-## 计划
+## 计划（阶段仪表盘）
+
+**当前阶段：试用驱动阶段**（2026-09-27 起——020 §10.5 建议、021 试用
+赋能批承接）：功能面 **19 片已完备**（PLAN-001..021 全部 delivered
+归档，见 [plans/archived/](plans/archived/)；第十九切片 = 试用赋能批
+——recents 持久层 + P≤200 防线 + 150 页实测），瓶颈已从「缺功能」
+移向「可用性验证」——**以真实工作区试用反馈驱动下一批立项**。
+
+**下一步（PLAN-022 立项候选池，首位在前）**：
+
+1. **试用反馈件**——用户真实试用反馈 + 021 150 页实测工件衍生
+   （无反馈则本类不立项）；
+2. **索引单趟合并**——150 页实测 findings 衔升（量级在案：tags_json
+   O(T×P) 3.6s / orphan_rows_of O(P²) 8.2s / boot tags walk 为
+   boot-ready 6.2s 大头——ledger D-22 观测③+D-38）；
+3. 上游回执件（视家族窗）：url_decode UTF-8 组装（D-19 供料候选——
+   翻 1 即 CJK 双臂化解锁）、checkbox v-model 互斥发射、menubar
+   memo 生成器化（8cb0a87 在册形态）、autoui_state 大态序列化
+   （D-38② 仪器面）；
+4. 微件池（反馈缺位时的顺延项）：大纲（anchor-reveal 解锁——十二片
+   门控维持，上游 grep 定谳窗复核）、recents 全局化（r2 口——跨工作
+   区共享清单）、Time front probe、NFKC、合并三择 r3、批量 restore、
+   F-R19-1 r3、checkbox/url_decode 供料回执。
+
+**留观项（跨批交接）**：split 臂 + gate 单命令 F-R17-1 第五批留观
+（D-21 v25——家族 exe 稳定后双臂复跑闭账）；D-35② bulkalias 复测
+（exe 变更窗挂起）。
+
+---
 
 PLAN-081（bootstrap）+ PLAN-001（换基自有 back）已交付归档——后者见
 [plans/archived/001-jade-edit-rebase-autoedit.md](plans/archived/001-jade-edit-rebase-autoedit.md)；
