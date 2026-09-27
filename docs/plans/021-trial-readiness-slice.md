@@ -347,8 +347,34 @@ pub fn recent_paths_set_impl(paths str) bool {
     '.' 递归扫入面再触（pre21-tree 判别链物料忘却清场——D-37⑦ 同款
     教训二例，物料即用即删入纪律）。
 - **T-04 真实规模实测（工件）**（AC-03）
-  - 150 页语料生成 + 四点计时 + 全链冒烟 + findings 清单。
+  - [x] 150 页语料生成 + 四点计时 + 全链冒烟 + findings 清单。
   - 验证：工件实录进 §9/§10（无断言门——如实记录口径）。
+  - **[执行实录 2026-09-27]**：一次性件 `e2e/.runtime/p21-bench150.mjs`
+    （ignored 家族口径——非入库源；语料 = e2e/.runtime/p21-ws150 150 页
+    合成：wiki/ 30 CJK 三键档 + deep/d1..d4 40 深目录 + notes/ 40[别名
+    15/悬空 10/纯 body tags 15] + 根 ASCII 40——CJK/深目录/别名/tags/
+    悬空混布）。**HTTP 四点计时**（serve-back，JADE_FIXTURE 指语料——
+    首跑实录：env 置于 import 后致 5 页 fixture 混入全案作废重跑）：
+    ①索引 link_index 冷/热 304/293/295ms（150 页全 walk+装配——P≤200
+    稳定域内健康，D-35 对照 P=300 中止）②检索 search CJK/ASCII/别名
+    54-72ms ③建页 create ×3 1-3ms ④改名 rename_page 46-50ms（**反链
+    改写全 walk**——改写链翻转+零残留+页数 153 直证）+①b tags_index
+    全量 **3.4-3.6s**。完整性：150 页 walk/CJK+深锚/悬空 10/153 计数
+    全过。**UI 冒烟**（merged 臂）：boot-ready **6.2s**（spawn→UI ready
+    全窗）；快开过滤 513-567ms（命中 11 行）；深档开档 1658-1696ms
+    （D-03 域内）；保存弧线 513-515ms（ActSave→刷新族 153 页重走）；
+    孤页清单 **8078-8248ms**（行集 0——语料全连接）；ws_warn 零警示
+    @153 页（阈值不误触）。**findings 清单（§10.4 分账）**：①tags_
+    index 3.6s @150 页[本仓 tags_json O(T×P) 双遍 page_tag_set 重读面
+    ——D-22 观测③「索引单趟合并」量级观测首实录→PLAN-022 候选]；
+    ②孤页清单入口 8.2s[本仓 orphan_rows_of O(P²)+入口即刷新双 walk
+    →PLAN-022 候选（随索引单趟顺产）]；③boot-ready 6.2s 大头 = tags
+    walk[同①根因]；④**autoui_state 通道 150 页位态间歇降级**（62 字
+    符 vs 专注窗 31317 字符；快照通道恒健康 22KB——**仪器面上游级**
+    ：MCP state sync 大态序列化，>100 页工作区 state 断言可用性约束
+    注记，⑩b 类断言在 ≤26 页位态实证健康）；⑤深档/快开/保存面 150 页
+    无恶化证据[D-03 域内]。e2e 段时长膨胀观测：全跑 1.2m（020 era
+    40-48s + ⑩ 段 ~25s——含 201 页防线案两次大 walk，240s 预算内）。
 - **T-05 文档 + ledger v25 + 收口**（AC-05/06）
   - SD-2101..2104 落位；ledger v24→v25；负向证；§9 work 记录。
   - 验证：文档 diff 检视 + gate 复跑绿。
@@ -376,9 +402,13 @@ File 族/dot 免索引/纯函数复用全在册）。
    msg 口为在册形态；StatusBar 组件 `.store.*` 读面。按实取如左。
 3. **recents 全局化**（r2 口）：跨工作区共享清单（全局存储位
    [%LOCALAPPDATA% 族]）——用户需求首现时裁决。
-4. **实测 findings 分账口径**（T-04）：上游（VM/生成器族）vs 本仓
-   （索引/面板）——工件逐项标注；上游项转供料候选清单，本仓项转
-   PLAN-022 候选。
+4. **实测 findings 分账口径**（✅ T-04 落定）：上游（VM/生成器族）vs
+   本仓（索引/面板）——工件逐项标注；上游项转供料候选清单，本仓项转
+   PLAN-022 候选。落定分账：本仓面 = tags_json O(T×P) 双遍重读 3.6s/
+   orphan_rows_of O(P²) 8.2s/boot tags walk 大头（①②③——均转
+   PLAN-022「索引单趟合并」候选域）；上游面 = autoui_state 大态序列化
+   间歇降级（④——仪器面，供料候选：state sync 分块/截断标注）；零
+   产品败形（⑧ 完整性/防线阈值/切换面全过）。
 5. **D-21 POST 波及**（观测项）：recents_set 低频小 POST；负载窗
    按 README 重跑口径。
 6. **PLAN-022 候选池**（本批后更新）：试用反馈件（首位——用户
