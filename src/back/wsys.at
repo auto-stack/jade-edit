@@ -2600,3 +2600,38 @@ pub fn tags_json(path str, depth int) str {
     }
     return "[" + sb.build() + "]"
 }
+
+// ===== 工作区状态持久层（PLAN-021 T-01；第十九切片 back 半——back 持久
+// 层首开，SD-2101）：**专用不泛化**（通用 KV state_get/set 面 v1 不做
+// ——第二持久需求出现时再议，避免过早抽象）。`.jade/` = jade 内部态目
+// 录（工作区根点前缀）：fs_tree_skipped 点前缀忽略一手源（D-33①——
+// SD-1601 .trash 同论证）⇒ walk 忽略，索引/标签/检索/树/快开五面零污
+// 染；**非用户内容**（jade 内部态——与 D-14 frontmatter 用户域无涉）。
+// 工作区本地（每工作区独立清单——工作区隔离口径）；跨会话/跨重启持久
+//（recents 会话域 → 工作区域升级——SD-2001 持久化留口兑现）。
+
+/// 最近打开清单读（api.recent_paths_get 实现；SD-2101）：换行分隔相对
+/// 路径清单**原样直通**（与 front App recent_paths str 形态 D-37① 直通
+/// ——零 JSON 包装）；**缺档容错返 ""**（exists 卫先行——**只读不建**
+/// ——首跑零 .jade 目录保留，G1 缺档容错口径）。GET 无参契约——零
+/// D-19 暴露面（trash_list 同判；路径行在响应 body，UTF-8 直通）。
+pub fn recent_paths_get_impl() str {
+    var full str = resolve(".jade/recents.txt")
+    if !File.exists(full) {
+        return ""
+    }
+    return File.read_text(full)
+}
+
+/// 最近打开清单写（api.recent_paths_set 实现；SD-2101）：create_dir(
+/// resolve(".jade"))（**递归幂等**——D-29① 探针 A 定谳 create_dir_all
+/// 语义 + 已存在不炸）→ write_text 原样直写 → exists 复核（D-24② 双
+/// 复核族——写成功唯一可信判据）。≤10 行小文件**无容量卫**（front 权
+/// 威——容量 10 截断在 push_recent 单点）；**空串 = 清空语义**（写入空
+/// 文件——不删除文件，SD-2101 格式定文注记）。返回 true = 落盘复核过。
+pub fn recent_paths_set_impl(paths str) bool {
+    File.create_dir(resolve(".jade"))
+    var full str = resolve(".jade/recents.txt")
+    File.write_text(full, paths)
+    return File.exists(full)
+}

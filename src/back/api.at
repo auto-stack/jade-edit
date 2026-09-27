@@ -333,3 +333,27 @@ pub fn trash_purge() str {
 }
 
 
+
+/// 最近打开清单读（PLAN-021 第十九切片——**back 持久层首开**；SD-2101
+/// ——020 recents 会话域留口兑现）：`.jade/recents.txt` 工作区本地持久
+/// 层（点前缀目录 walk 忽略一手源 D-33①——索引/标签/检索/树/快开五面
+/// 零污染；jade 内部态非用户内容——专用不泛化，通用 KV 面 v1 不做）。
+/// 换行分隔相对路径清单**原样存取**（与 front App recent_paths str 形态
+/// D-37① 直通——零 JSON 包装）；缺档容错返 ""（只读不建——首跑零
+/// .jade 目录）。**GET 无参契约**——零 D-19 暴露面（trash_list 同判）。
+/// GET /api/recent_paths_get
+#[api(method = "GET", path = "/api/recent_paths_get")]
+pub fn recent_paths_get() str {
+    return wsys.recent_paths_get_impl()
+}
+
+/// 最近打开清单写（PLAN-021；SD-2101）：create_dir(.jade) 递归幂等 →
+/// write_text 原样直写 → exists 复核。≤10 行小文件无容量卫（front 权
+/// 威——容量 10 截断在 push_recent 单点）；空串 = 清空语义（写空文件，
+/// 不删文件）。**POST 而非 GET**（路径行 CJK 常态——body 传参 D-19 免
+/// 疫；daily_note 无参动作族同形）。
+/// POST /api/recent_paths_set
+#[api(method = "POST", path = "/api/recent_paths_set")]
+pub fn recent_paths_set(paths str) bool {
+    return wsys.recent_paths_set_impl(paths)
+}

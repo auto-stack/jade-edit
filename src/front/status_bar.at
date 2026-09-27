@@ -26,6 +26,11 @@ widget StatusBar {
                 if .store.save_note != "" {
                     text .store.save_note { style: status_alt }
                 }
+                // 工作区规模警示（PLAN-021；P≤200 试用防线——D-35② 知情
+                // 不禁用口径：纯显示面条件行，功能路径零影响）。
+                if .store.ws_warn != "" {
+                    text .store.ws_warn { style: "text-[11px] text-amber-400" }
+                }
 
                 text "docs: ${.store.tab_count}" {
                     style: "text-[11px] text-muted-foreground ml-auto"

@@ -96,6 +96,12 @@ store EditorStore {
         // —— 移动目录弹层开态（PLAN-018；基线 v16 面）：目录移动 = 低频
         // 组织操作，双 input 数据态在 App 模型（014 目录弹层族同裁定）。
         var movedir_open bool = false
+        // —— 工作区规模警示（PLAN-021；基线 v19 面）：P≤200 试用防线态
+        // ——App TreeRefresh 计数 >200 写入（WsWarn msg 单向通道），
+        // StatusBar 条件行直读（组件只读 .store.*——App 模型字段不可见，
+        // 计划 §4.2 落定位）。"" = 无警示（现行语料恒空——纯显示面，功
+        // 能路径零影响）。
+        var ws_warn str = ""
     }
 
     // msg 载荷单类型（编译器约束）：Open 单 map、Edit 单 str。
@@ -116,6 +122,7 @@ store EditorStore {
         DirOpen, DirClose, MoveOpen, MoveClose,
         DelDirOpen, DelDirClose, RenDirOpen, RenDirClose,
         MoveDirOpen, MoveDirClose,
+        WsWarn(str),
     }
 
     on {
@@ -552,6 +559,12 @@ store EditorStore {
         .MoveDirClose -> {
             .movedir_open = false
             .console = console_lines()
+        }
+
+        // ---- 工作区规模警示（PLAN-021；App TreeRefresh 单写口——阈值
+        // 判定在 App 侧，store 只承载显示态）：text 直写（"" = 清警示）。
+        .WsWarn(text) -> {
+            .ws_warn = text
         }
 
         // ---- 删除档 tab 全量关闭（PLAN-007 T-03；G2 tab 关闭面）：

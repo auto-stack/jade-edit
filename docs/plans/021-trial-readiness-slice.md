@@ -1,0 +1,330 @@
+---
+plan_id: PLAN-021
+status: drafting
+feature_name: trial-readiness-slice
+author: [zhaopuming]
+created_at: 2026-09-27T17:19:53+08:00
+updated_at: 2026-09-27T17:19:53+08:00
+plan_revision: 1
+current_step: 0
+total_steps: 5
+supersedes_spec_components: []
+new_spec_components:
+  - "docs/ARCHITECTURE.md#SD-2101"
+  - "docs/ARCHITECTURE.md#SD-2102"
+  - "docs/README.md#SD-2103"
+  - "docs/README.md#SD-2104"
+touched_goals: []
+---
+
+# [PLAN-021] 试用赋能批——recents 持久化（持久层首开）+ P≤200 试用防线 + 真实规模首轮实测
+
+## 0. 变更摘要
+
+PLAN-020 §10.5 建议「试用驱动阶段」的**赋能前置批**（池内可立项件
+仅 recents 持久化；其余全门控/量级触发——§2.1 对表），三件：
+
+1. **recents 持久化**（020 §10.3 留口兑现——**back 持久层首开**）：
+   `.jade/recents.txt`（工作区根点前缀目录——**walk 忽略面一手源
+   免索引**[D-33①/SD-302]）；back 双契约 `recent_paths_get() str`
+   （GET 无参——零 D-19 面）/`recent_paths_set(paths str) bool`
+   （POST）；换行分隔清单**原样存取**（与 020 App 态 recent_paths
+   str 形态[D-37①]直通——front 零转换）；Init 载入 + 变更即存
+   （≤10 行小文件无 debounce）——**会话域 → 工作区域升级**（跨
+   会话/跨重启：重启后快开空 q 显上次「最近」——试用核心润滑）。
+2. **P≤200 试用防线**（D-35② 处置更新——试用保护面）：front 树
+   刷新时 .ad 计数 > 200 → StatusBar 警示行「工作区超 200 页（上游
+   VM 上限）——索引可能不稳定」+ console（D-35② 在册判据：500 页
+   实勘损坏、200 安全线）；**不禁用不拦截**（如实警示口径——真实
+   工作区超限时用户知情自判）。
+3. **真实规模首轮实测**（bounded investigation + 决策工件——PLAN-022
+   「试用反馈件」首批输入）：合成 **150 页语料**（P≤200 安全线内；
+   CJK/深目录/别名/tags/悬空混布）专项冒烟——索引/检索/改名/建页/
+   建目录全链 + 计时实录 + **findings 清单工件**（进本计划 §10 与
+   复审记录——上游/本仓分账）。
+
+上游缺口适配内置：D-20②；D-24②③④⑤；D-25①；D-26②；D-28②；
+D-29①；D-30①；D-31；D-33②；D-37①（recent_paths str 形态直通）。
+
+## 1. 目标
+
+- **G1（recents 持久化可用·双轨）**：开 3 档 → 重启（e2e = page
+  reload / vm = 进程重启矩阵外直证面）→ Ctrl+P 空 q → 「最近」
+  3 行恢复（跨会话）；recents 变更即落盘（磁盘逐行验）；缺档容错
+  （首跑 .jade 不存在 → get 返回 "" → 空态现状）；工作区隔离
+  （.jade 居工作区根——每工作区独立清单）。
+- **G2（P≤200 防线可用·双轨）**：合成 >200 页语料（直证面 201 页
+  微语料）→ 启动 → StatusBar 警示行 + console；≤200（现行语料/
+  实测语料）→ 零警示回归；警示**不影响任何功能路径**（纯显示面）。
+- **G3（真实规模实测工件）**：150 页语料全链冒烟绿 + 计时实录
+  （索引/检索/建页/改名四点）+ findings 清单（≥0 项如实——预期
+  观察点：索引耗时/快开过滤延迟/e2e 段时长膨胀）→ 工件进 §9/§10。
+- **G4（测试面）**：find 组子步扩（持久化跨会话弧线）+ boot/tree
+  组子步（防线）——**组数不变 16/15/十五段**；基线 **v19** 计划内
+  重锁（App ws_warn 面 + recent_paths 载入值域[首跑→载入态]）。
+- **非目标**（明确排除）：
+  - **通用 KV 持久层**（`state_get/set(key)` 泛化面——v1 专用双
+    契约；泛化随第二持久需求出现时再议[避免过早抽象]）；
+  - recents 容量/顺序配置、多清单（favorites/pinned——试用反馈
+    触发）；
+  - **P>200 索引分页/降级策略**（上游 D-35② 根修前的工程绕行——
+    不做；防线=知情口径）；
+  - 大文档（1MB read_wiki 阻塞——§3 在册 blocked-upstream，防线
+    不涉）；**真实用户语料实测**（用户侧动作——本批合成语料代行；
+    用户试用反馈另通道）；
+  - 大纲（anchor-reveal 十二片门控）、索引单趟（D-35 后）、Time
+    front probe、NFKC、合并三择 r3、批量 restore、F-R19-1 r3、
+    checkbox/url_decode 回执（池内顺延）、上游件实做与生成物补件
+    （AC-05 负向证）。
+
+## 2. 架构方案
+
+### 2.1 选型依据（为什么第二十片是试用赋能批
+
+- **候选池对表**（PLAN-020 §10.6 + ledger v24 实核）：大纲（门控
+  维持——上游 grep 0，auto-lang 忙 PLAN-043/清理裁定）、索引单趟
+  （D-35② 后移）、**recents 持久化（本批主件——020 §10.3 留口 +
+  试用第一痛点[重启丢最近清单]）**、孤页宽口径/合并三择/批量
+  restore/F-R19-1（反馈或量级触发）、Time front probe/NFKC（低值
+  未触发）、checkbox/url_decode 回执（上游未动）、试用反馈件
+  （**未至**——用户尚未反馈）。北标口径（SD-405）+ 020 §10.5：
+  **功能面 18 片已完备，瓶颈从「缺功能」移向「可用性验证」**——
+  本批三件分别解决：试用润滑（跨会话 recents）、试用安全（P≤200
+  防线——真实 wiki 立即会撞的上游限）、试用数据（150 页实测工件
+  = 反馈代行）。**赋能批之后进入纯反馈驱动**（PLAN-022+ 无反馈
+  则转上游回执/微件池）。
+- **形态复用度**：持久层 = File 族原语（read_text/write_text/
+  create_dir 递归已证）+ dot-dir 免索引在册语义；防线 = 树刷新
+  计数（collect_ad_paths 复用）+ StatusBar 条件行；实测 = probe/
+  e2e 资产 + pick_port（016）。**零新 UI 形态、零探针**。
+
+### 2.2 数据面（back：持久层双契约首开）
+
+```rust
+/// 最近打开清单读（换行分隔原样；缺档 = ""）
+/// GET /api/recent_paths_get
+#[api(method = "GET", path = "/api/recent_paths_get")]
+pub fn recent_paths_get() str {
+    return wsys.recent_paths_get_impl()
+}
+
+/// 最近打开清单写（.jade/recents.txt；≤10 行预期——无容量卫[front 权威]）
+/// POST /api/recent_paths_set
+#[api(method = "POST", path = "/api/recent_paths_set")]
+pub fn recent_paths_set(paths str) bool {
+    return wsys.recent_paths_set_impl(paths)
+}
+```
+
+- **get**：`File.read_text(resolve(".jade/recents.txt"))`——缺档
+  try/catch 容错返 ""（**只读不建**——首跑零 .jade 目录）。
+- **set**：`File.create_dir(resolve(".jade"))`（递归幂等已证）→
+  `File.write_text` + 复核（D-24② 双复核形态）。
+- **格式定文（SD-2101）**：换行分隔相对路径清单、原样存取（与
+  App recent_paths str 形态直通——front 零 parse/serialize）；空串
+  = 清空（写入空文件——语义注记：不删除文件）。
+- **免索引论证**：`.jade` 点前缀目录 walk 忽略（fs_tree_skipped
+  一手源[D-33①]）——索引/标签/检索/孤页面零污染；**非用户内容**
+  （jade 内部态——与 D-14 frontmatter 用户域无涉）。
+
+### 2.3 消费面（front）
+
+- **载入**：Init handler——`rp = recent_paths_get()`（try/catch
+  容错 ""）→ `recent_paths = rp`（str 直通——D-37① 形态）；空 →
+  现状空态。
+- **保存**：push_recent/rekeys_rekey 变更点后即存（`recent_paths_
+  set(.recent_paths)`——try/catch console；小文件无 debounce）。
+- **P≤200 防线**：refresh_tree 派生段顺产 `ws_warn`——`ad_count =
+  collect_ad_paths(.ft_nodes).len()`（在册纯函数复用）> 200 →
+  `ws_warn = "工作区超 200 页（上游 VM 上限）——索引可能不稳定"`+
+  console_log；否则 ""；StatusBar 增条件行（`if .ws_warn != ""`
+  text 行——status_bar.at +1 行）。
+- ⚠ D-26② 自派生；D-30① 参数纪律；D-33② 零 computed 串接。
+
+### 2.4 键位/菜单面
+
+零新增。
+
+## 3. 技术栈
+
+不变：AutoUI `.at` 单源双轨 + 自有 Auto src/back + gate 双臂。无新
+依赖、无新控件。
+
+## 4. 需求分析与背景调查
+
+### 4.1 授权记录
+
+- 用户 2026-09-27 会话口述：「计划020已经完成；请 [$auto-plan-new]
+  规划下一个计划」——**立项授权**：020 已归档（283c702——正常
+  立项窗）。方向选择（试用赋能批）= 020 §10.5 建议 + §2.1 对表；
+  handoff 未否决即生效（PLAN-004..020 同款约定）。
+- **.jade 目录语义**按默认提案（jade 内部态、dot 免索引、工作区
+  本地）；用户要全局清单（跨工作区）→ r2 口（全局存储位裁决）。
+- 仓库/动作范围：仅 jade-edit 主检出；冻结池与家族仓零接触
+  （AC-05）。无预算/自动续跑/工具链版本指定。
+
+### 4.2 接地证据（本仓/家族实读，2026-09-27 @ main 98dd55e/283c702）
+
+- **在册复用件**：App recent_paths str 形态（020——app.at:938/
+  push_recent :215 族 + D-37① dump 直出定谳）；File 三原语 +
+  create_dir 递归（D-29①）；dot-dir walk 忽略一手源（D-33①——
+  SD-1601 .trash 同论证）；StatusBar 条件行形态（status_bar.at
+  .store 读面——ws_warn 居 App 则经 computed/传参？**StatusBar 读
+  .store**——ws_warn 若居 App 模型，StatusBar 组件读不到（组件只
+  读 store）→ **ws_warn 居 store**（App 写入 store 新字段——与
+  status 族同判）——T-02 落定位）；pick_port（016）。
+- **D-35② 判据**（ledger v24）：500 页实勘 VM 字符串池值损坏 /
+  200 安全线（018 定谳 P≤200 口径）——防线阈值依据；复测条件
+  「exe 变更窗」未至（v24 注记）。
+- **实测语料生成通道**：write_wiki 造档（既有 probe 先例）+ 150
+  页脚本（tools/ 或 tests/probe 内一次性——居 ignored .runtime
+  家族口径[020 先例]）；JADE_WORKSPACE 隔离指向（README 运行矩阵）。
+- **基线**：v18 现行（020）；**v19 变更面** = store ws_warn +
+  recent_paths 载入值域（首跑空 → 会话中载入态——dump 值变化面）
+  + StatusBar 行。
+- **上游实勘**（2026-09-27）：auto-lang 近线 = 清理裁定/apps.
+  manifest——anchor-reveal grep 0（门控维持）。
+
+### 4.3 与既有计划的关系
+
+- 兑现 PLAN-020 §10.3（recents 持久化留口）+ §10.5（试用赋能
+  承接）；D-35② 处置更新（试用防线注记）；D-33①（.jade 免索引
+  引用）。
+- 试用反馈件类目（020 新晋）本批以「实测工件」代行首批——真实
+  用户反馈仍待用户试用。
+- D-12（anchor-reveal）/checkbox 三件/url_decode 供料留观不变；
+  F-R17-1 第五批随附（T-03 gate 载体）。
+- PLAN-022 候选池（§10.7 更新）：**试用反馈件（首位——用户真实
+  反馈/本批实测工件衍生）**、大纲（anchor-reveal 解锁）、索引
+  单趟合并（D-35 收口后）、recents 全局化（r2 口）、Time front
+  probe、NFKC、合并三择 r3、批量 restore、F-R19-1 r3、checkbox/
+  url_decode 供料回执件。
+
+## 5. 详细设计
+
+### 5.1 back 双契约（SD-2101）
+
+```
+pub fn recent_paths_get_impl() str {
+    // try read_text(resolve(".jade/recents.txt")) catch → ""
+    //（只读不建——首跑零 .jade）
+}
+
+pub fn recent_paths_set_impl(paths str) bool {
+    // create_dir(resolve(".jade"))[递归幂等] → write_text(
+    //   resolve(".jade/recents.txt"), paths) → 复核 exists
+}
+```
+
+### 5.2 front 接线（SD-2101）
+
+- store：`ws_warn` str（防线态——StatusBar 读面）；App：Init 载入
+  recent_paths_get + 变更点 set；refresh_tree 派生段 ws_warn 计算写
+  store；StatusBar 条件行。
+- ⚠ recents 保存点 = push_recent/rekeys_rekey 全触点后（七处在册
+  ——020 D-37 触点族）。
+
+### 5.3 规范增量
+
+| delta_id | add/modify/retire | target | before/after rule | rationale | acceptance IDs |
+| --- | --- | --- | --- | --- | --- |
+| SD-2101 | modify | docs/ARCHITECTURE.md §5 | before：recents 会话域（SD-2001——持久化留口）；D-35② = 规模上限在册无防线。after：增「工作区状态持久层」子段——`.jade/` 定位（jade 内部态/点前缀 walk 免索引一手源/工作区本地/非用户内容域）；`recent_paths_get/set` 双契约（换行分隔原样直通[str 形态 D-37①]/get 只读不建/set 双复核）；front 面（Init 载入/七触点变更即存）；**会话域→工作区域升级**；**P≤200 防线**（树刷新计数 >200 → store ws_warn → StatusBar 警示行——知情不禁用口径；D-35② 处置更新注记） | 试用润滑+安全；持久层首开边界定文（专用不泛化） | AC-01/02/06 |
+| SD-2102 | modify | docs/ARCHITECTURE.md §6 | before：十五组检查 + 基线 v18。after：组数**不变**（持久化入 find 组、防线入 boot/tree 组子步）+ **基线 v19**（store ws_warn + recent_paths 载入值域 + StatusBar 行；v18 留档） | 测试体系表更新 | AC-04 |
+| SD-2103 | modify | docs/README.md Tests 节 | before：16+15+十五段、基线 v18。after：口径不变 + 子步扩注记 + 基线 v19 指针 + **实测工件注记**（150 页专项——计时/findings 记录面）+ N 定谳续记（F-R17-1 第五批实录） | 判绿口径单一权威面（…/2003 续） | AC-04 |
+| SD-2104 | modify | docs/README.md「是什么/文档」节 | before：第十八切片=孤页+最近打开。after：**第十九切片=试用赋能批**条目（持久层首开/防线/实测三件注记 + 试用驱动阶段承接）+ ledger v25 指针 | 产品主线进度面派生同步（…/2004 续） | AC-06 |
+
+## 6. 测试设计
+
+- **back 直证（T-01，双臂）**：①get 缺档容错（""——零 .jade 目录
+  保留）②set/get 往返（3 行清单逐字节）③CJK 路径行（POST 双臂）
+  ④空串 set（清空语义——文件存在空内容）⑤复核（set 后 exists）。
+- **vm 矩阵（T-03）**：find 组子步——①持久化跨会话弧线（开 3 档
+  → 磁盘逐行验[.jade/recents.txt]→ 矩阵 reopen 面[vm 单进程——
+  **进程内二 Init 模拟**或直证面承载，T-03 落定]②载入态空 q 恢复
+  （Init 后 recent_paths 非空断言）；boot/tree 组子步——③防线案
+  （201 页微语料[JADE_WORKSPACE 指向合成]→ StatusBar 警示行快照）
+  ④零警示回归（现行语料）。
+- **e2e（T-03）**：⑤跨会话真弧线（page reload → Ctrl+P 空 q →
+  「最近」恢复——Playwright reload 通道）。
+- **基线 v19（T-03）**：计划内重锁；连跑 ≥3 零漂移；v18 留档。
+- **实测件（T-04）**：150 页合成语料（生成脚本 + JADE_WORKSPACE
+  隔离）——索引/检索/建页/改名四点计时实录 + 全链冒烟（vm merged
+  臂 + probe 复用）+ findings 清单工件（≥0 项如实）。
+- **随批复测（T-03）**：F-R17-1 第五批（gate 载体）；D-35② 复测
+  条件观测（exe 时间戳）。
+- **负向（T-05）**：probe 全族十三代回归；`.console` 零；契约纯
+  增量；纪律 grep 族；冻结池/家族仓零接触；`gen/` 无手改；补件面
+  零增量；**.jade 免索引证**（索引/孤页/检索面对 .jade 内容零感知
+  断言）。
+
+## 7. 验收标准
+
+- **AC-01（recents 持久化）**：直证五案双臂绿；跨会话弧线（vm
+  模拟 + e2e reload 真弧线）双轨绿；缺档容错/工作区隔离口径可证。
+  验证：T-01/T-03。
+- **AC-02（P≤200 防线）**：201 页警示 + 现行语料零回归双轨绿；
+  纯显示面（功能路径零影响）断言。验证：T-03。
+- **AC-03（实测工件）**：150 页全链冒烟绿 + 四点计时实录 + findings
+  清单在案（工件入 §9/§10——上游/本仓分账）。验证：T-04。
+- **AC-04（gate + 基线 v19）**：gate ALL GREEN（16/15/十五段口径
+  不变）；基线 v19 零漂移（v18 留档）；N 定谳续记（F-R17-1 第五批
+  实录）。
+- **AC-05（负向证）**：probe 全族十三代回归；`.console` 零；契约
+  纯增量；纪律 grep 族；冻结池/家族仓零接触；`gen/` 无手改；补件
+  面零增量；.jade 免索引证。
+- **AC-06（文档面）**：SD-2101..2104 落位锚注齐；**持久层边界定文
+  （专用不泛化/.jade 语义）与防线知情口径**入 SD-2101；parity-
+  ledger **v25**（D-35② 处置更新 + 执行期实勘 + 实测工件摘要）。
+
+## 8. 执行步骤
+
+- **T-01 back 双契约 + 直证**（AC-01）
+  - wsys 双 impl；probe_recent.mjs 新增（五案）。
+  - 验证：直证全绿 + vm 矩阵现行组回归。
+- **T-02 front 接线（载入/保存/防线）**（AC-01/02 前半）
+  - Init 载入 + 七触点保存 + ws_warn 计算（store 写入——StatusBar
+    读面落定）+ StatusBar 条件行。
+  - 验证：merged 冒烟（开档→磁盘行→防线案）+ `pnpm build` PASS。
+- **T-03 测试扩单 + 基线 v19 + gate + 随批复测**（AC-01/02/04）
+  - find/boot 子步 + e2e reload 弧线 + v19 重锁 + gate（F-R17-1
+    第五批）。
+  - 验证：双臂全绿 + e2e 连跑 ≥5 + gate ALL GREEN。
+- **T-04 真实规模实测（工件）**（AC-03）
+  - 150 页语料生成 + 四点计时 + 全链冒烟 + findings 清单。
+  - 验证：工件实录进 §9/§10（无断言门——如实记录口径）。
+- **T-05 文档 + ledger v25 + 收口**（AC-05/06）
+  - SD-2101..2104 落位；ledger v24→v25；负向证；§9 work 记录。
+  - 验证：文档 diff 检视 + gate 复跑绿。
+
+依赖序：T-01 → T-02 → T-03 → T-04 → T-05（线性；零探针零闸——
+File 族/dot 免索引/纯函数复用全在册）。
+
+## 9. 复审记录
+
+- **2026-09-27 立项 handoff（auto-plan-new）**：
+  - `stage: new`，PLAN-021，revision 1。
+  - `outcome: pass`——可进 work（020 已归档 283c702——正常立项窗）。
+  - `next: work`（T-01 起；零探针零闸）。
+  - .jade 语义按默认提案（§4.1——全局化 r2 口）；实测工件 = 试用
+    反馈代行首批（真实反馈仍待用户试用）。
+
+## 10. 待澄清事项
+
+1. **vm 跨会话弧线断言通道**（T-03 落定）：vm 矩阵单进程——进程内
+   二 Init（LinksRefreshOf 类重入）或直证面（get 二读）承载；真
+   重启弧线归 e2e reload。落定后进 T-03 证据块。
+2. **ws_warn 位置**（T-02 落定）：StatusBar 读 .store——倾向 store
+   字段（App 写入）；若 dump 面考量为 App + props 传参（StatusBar
+   无 props 先例——倾向维持 store）。按实取。
+3. **recents 全局化**（r2 口）：跨工作区共享清单（全局存储位
+   [%LOCALAPPDATA% 族]）——用户需求首现时裁决。
+4. **实测 findings 分账口径**（T-04）：上游（VM/生成器族）vs 本仓
+   （索引/面板）——工件逐项标注；上游项转供料候选清单，本仓项转
+   PLAN-022 候选。
+5. **D-21 POST 波及**（观测项）：recents_set 低频小 POST；负载窗
+   按 README 重跑口径。
+6. **PLAN-022 候选池**（本批后更新）：试用反馈件（首位——用户
+   真实反馈 + 本批实测工件衍生）、大纲（anchor-reveal 解锁）、
+   索引单趟合并（D-35 收口后）、recents 全局化（r2）、Time front
+   probe、NFKC、合并三择 r3、批量 restore、F-R19-1 r3、checkbox/
+   url_decode 供料回执件。

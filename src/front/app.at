@@ -29,7 +29,7 @@ use find_panel: FindPanel
 use tags_panel: TagsPanel
 use bps.navigation.filetree.tree_util: flatten_tree, toggle_id
 use bps.navigation.filetree.tree_icon: TreeIcon
-use back.api: tree, ws_root, link_index, search_wiki, create_page, rename_page, delete_page, tags_index, linkify_page, page_meta, set_page_meta, create_dir, move_page, delete_dir, rename_dir, move_dir, daily_note, trash_list, trash_restore, trash_purge
+use back.api: tree, ws_root, link_index, search_wiki, create_page, rename_page, delete_page, tags_index, linkify_page, page_meta, set_page_meta, create_dir, move_page, delete_dir, rename_dir, move_dir, daily_note, trash_list, trash_restore, trash_purge, recent_paths_get, recent_paths_set
 
 style warn_label = "text-[12px] text-amber-400 mr-1"
 
@@ -264,6 +264,50 @@ fn recents_rekey(paths List, old_path str, new_path str) List {
         j = j + 1
     }
     return push_recent(dropped, new_path)
+}
+
+// —— recents 持久化换装纯函数（PLAN-021 T-02；SD-2101——会话域 → 工作
+// 区域升级）：get/set 契约 = 换行分隔 str 原样直通（back 定文），App 态
+// recent_paths = List<str>（020 视图/push_recent/recents_rekey 消费面零
+// 波及——D-37① dump 面基线锚）。join/split = 契约 str 形态与 List 态的
+// 最小换装（行原样、零 trim/转义——写侧产物恒 push_recent 相对路径，
+// 无空白注入面）；空串 = 空清单（缺档容错 get "" 同形）。
+
+/// 换行分隔 str → 路径清单（载入半）：split("\n") 逐行直入，空行丢弃
+///（尾换行行/空文件）；项原样不 trim。
+fn recents_split(raw str) List {
+    var out List = []
+    if raw == "" {
+        return out
+    }
+    var parts = raw.split("\n")
+    var i int = 0
+    while i < parts.len() {
+        // ⚠ D-20②：列表元素先拷局部变量再比较。
+        var p str = parts[i]
+        if p != "" {
+            out.push(p)
+        }
+        i = i + 1
+    }
+    return out
+}
+
+/// 路径清单 → 换行分隔 str（保存半）：行间 "\n" 直接重接（无尾换行
+/// ——round-trip 与 split 恒等）；空清单 = ""（set 空文件清空语义）。
+fn recents_join(paths List) str {
+    var out str = ""
+    var i int = 0
+    while i < paths.len() {
+        if i > 0 {
+            out = out + "\n"
+        }
+        // ⚠ D-20②：列表元素先拷局部变量再拼接。
+        var p str = paths[i]
+        out = out + p
+        i = i + 1
+    }
+    return out
 }
 
 /// titles 行集派生（PLAN-013 T-02；SD-1301 显示域）：link_pages →
@@ -898,6 +942,7 @@ widget App {
         ActRenDir, RenDirTargetEdit(str), RenDirEdit(str), RenDirGo, RenDirCancel,
         ActMoveDir, MoveDirSrc(str), MoveDirDst(str), MoveDirGo, MoveDirGoMerge, MoveDirCancel,
         ActTrash, TrashRestore(str), TrashRestoreAll, TrashPurge, TrashPurgeGo, TrashPurgeCancel,
+        RecentsPersist,
     }
 
     model {
@@ -1968,6 +2013,43 @@ widget App {
             .LinksRefreshOf("")
             .TagsRefresh()
             .MentionsRefreshOf("")
+            // —— recents 载入（PLAN-021；SD-2101——会话域 → 工作区域升
+            // 级的载入半）：get 契约（GET 无参——零 D-19 面）try/catch 容
+            // 错 ""（backend-offline 不炸 boot）→ recents_split 最小换装
+            // 入 App 态。空（首跑缺档/清空态）→ 现状空态零漂移。
+            var rp_raw str = ""
+            var rp_ok bool = true
+            try {
+                rp_raw = recent_paths_get()
+            } catch (e) {
+                rp_ok = false
+            }
+            if !rp_ok {
+                console_log("recents: load failed")
+            }
+            .recent_paths = recents_split(rp_raw)
+        }
+
+        // —— recents 持久化共享口（PLAN-021；SD-2101 保存半——变更即存，
+        // ≤10 行小文件无 debounce）：recents_join 换装 → recent_paths_set
+        // POST（try/catch console——backend-offline 不炸；路径行 CJK 常态
+        // body 传参 D-19 免疫）。触点族 = push_recent/recents_rekey 变更
+        // 点后（020 D-37 触点族同源——直开口四 + 循环置换后两共享口）。
+        // 共享以 msg handler 形态收口（TreeRefresh 五触点同款理由——api
+        // 调用须居 handler 体内）；handler 间直发在册（vue 轨不 await——
+        // 持久化无后续同 handler 读依赖，fire-and-forget 语义安全）。
+        // D-25① 纪律：App 上下文零 `.console` 写面。
+        .RecentsPersist -> {
+            var body str = recents_join(.recent_paths)
+            var ok bool = true
+            try {
+                recent_paths_set(body)
+            } catch (e) {
+                ok = false
+            }
+            if !ok {
+                console_log("recents: save failed")
+            }
         }
 
         // 目录展开/折叠（受控展开态，toggle_id 纯函数返回新 List）。
@@ -1985,8 +2067,10 @@ widget App {
             } else {
                 .ft_sel = path
                 store.Open({ path: path })
-                // 最近打开触点（PLAN-020——开档成功头插去重置顶）
+                // 最近打开触点（PLAN-020——开档成功头插去重置顶）+ 持久化
+                //（PLAN-021——变更即存）
                 .recent_paths = push_recent(.recent_paths, path)
+                .RecentsPersist()
                 // 链接行重算（显式 path——handler 内 .store 读为陈旧投影，
                 // T-03 实勘；Open 即激活入参 path，两轨一致）
                 .bl_rows = backlink_rows_of(.link_pages, path)
@@ -2035,8 +2119,10 @@ widget App {
             }
             if r != "" {
                 store.Open({ path: r })
-                // 最近打开触点（PLAN-020——ActDaily 直开口同收录）
+                // 最近打开触点（PLAN-020——ActDaily 直开口同收录）+ 持久化
+                //（PLAN-021——变更即存）
                 .recent_paths = push_recent(.recent_paths, r)
+                .RecentsPersist()
                 .LinksRefreshOf(r)
                 .TagsRefresh()
                 .TreeRefresh()
@@ -2108,6 +2194,22 @@ widget App {
                 .status = "ready"
             } catch (e) {
                 .status = "backend-offline"
+            }
+            // —— P≤200 试用防线（PLAN-021；D-35② 处置更新——知情警示
+            // 纯显示面，不禁用不拦截）：collect_ad_paths 在册纯函数复用
+            //（ft_nodes 本地派生零 fetch）计数 .ad 页；> 200 → store 警示
+            // 文案 + console（D-35② 在册判据：500 页实勘上游字符串池值损
+            // 坏、200 安全线——阈值即其稳定域口径）；否则清空（零警示回
+            // 归——现行语料恒空）。文案静态字面（StatusBar text 直读
+            // .store.ws_warn——零 computed 串接 D-33②；计数只入 console）。
+            // store 写入经 WsWarn msg（App→store 单向在册通道——直接字段
+            // 赋值无先例）。
+            var ad_count int = collect_ad_paths(nodes).len()
+            if ad_count > 200 {
+                store.WsWarn("工作区超 200 页（上游 VM 上限）——索引可能不稳定")
+                console_log("warn: workspace over 200 pages (" + ad_count.str() + ")")
+            } else {
+                store.WsWarn("")
             }
         }
 
@@ -2227,8 +2329,9 @@ widget App {
             if path != "" {
                 store.Open({ path: path })
                 // 最近打开触点（PLAN-020——开档成功头插去重置顶；CreateGo
-                // 等建页导航经本口同收录）
+                // 等建页导航经本口同收录）+ 持久化（PLAN-021——变更即存）
                 .recent_paths = push_recent(.recent_paths, path)
+                .RecentsPersist()
                 // 链接行重算（显式 path——tab 条/面板行点击共用本口：
                 // Open 已开即激活语义 + 行派生）
                 .bl_rows = backlink_rows_of(.link_pages, path)
@@ -2425,8 +2528,10 @@ widget App {
             if r != "" {
                 store.NewClose()
                 store.Open({ path: r })
-                // 最近打开触点（PLAN-020——NewGo 直开口同收录）
+                // 最近打开触点（PLAN-020——NewGo 直开口同收录）+ 持久化
+                //（PLAN-021——变更即存）
                 .recent_paths = push_recent(.recent_paths, r)
+                .RecentsPersist()
                 .LinksRefreshOf(r)
                 .TagsRefresh()
                 .TreeRefresh()
@@ -2549,8 +2654,9 @@ widget App {
                 store.TabsRenamed(old_path, r)
                 store.Reload()
                 // 最近打开旧键置换（PLAN-020——重命名后旧路径清 + 新路径
-                // 头插，recents 恒可开 §10.4）
+                // 头插，recents 恒可开 §10.4）+ 持久化（PLAN-021——变更即存）
                 .recent_paths = recents_rekey(.recent_paths, old_path, r)
+                .RecentsPersist()
                 .LinksRefreshOf(r)
                 .TagsRefresh()
                 .MentionsRefreshOf(r)
@@ -2751,8 +2857,9 @@ widget App {
                 store.TabsRenamed(old_path, r)
                 store.Reload()
                 // 最近打开旧键置换（PLAN-020——移动后旧路径清 + 新路径
-                // 头插，recents 恒可开 §10.4）
+                // 头插，recents 恒可开 §10.4）+ 持久化（PLAN-021——变更即存）
                 .recent_paths = recents_rekey(.recent_paths, old_path, r)
+                .RecentsPersist()
                 .LinksRefreshOf(r)
                 .TagsRefresh()
                 .MentionsRefreshOf(r)
@@ -2896,6 +3003,9 @@ widget App {
                             }
                             i = i + 1
                         }
+                        // 循环置换毕持久化一次（PLAN-021——循环内零写盘，
+                        // 循环尾共享口单发；无命中 = 同内容幂等写）
+                        .RecentsPersist()
                         // active/ft_sel 属目录 remap（显式计算——.store
                         // 读陈旧投影规避，RenameGo 同款）。
                         var new_active str = .store.active_path
@@ -3008,6 +3118,9 @@ widget App {
                         }
                         i = i + 1
                     }
+                    // 循环置换毕持久化一次（PLAN-021——RenDirGo 同款循环尾
+                    // 共享口单发；无命中 = 同内容幂等写）
+                    .RecentsPersist()
                     // active/ft_sel 属目录 remap（显式计算——.store 读
                     // 陈旧投影规避，RenDirGo 同款）。
                     var new_active str = .store.active_path
