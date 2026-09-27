@@ -1,10 +1,10 @@
 ---
 plan_id: PLAN-021
-status: reviewed
+status: archived
 feature_name: trial-readiness-slice
 author: [zhaopuming]
 created_at: 2026-09-27T17:19:53+08:00
-updated_at: 2026-09-27T19:40:00+08:00
+updated_at: 2026-09-27T21:55:00+08:00
 plan_revision: 1
 current_step: 5
 total_steps: 5
@@ -482,6 +482,34 @@ File 族/dot 免索引/纯函数复用全在册）。
     tests/probe_recent.mjs（tracked）；bench 一次性件居 ignored
     .runtime（口径在 §8 T-04 实录，量级结论已入计划/ledger 持久面）。
   - `next`: merge（工作流已授权——移交 auto-plan:merge）。
+- **2026-09-27 合并收口（auto-plan:merge）**：
+  - `stage: merge | PLAN-021:r1 | outcome: pass`。
+  - `prepared`: 复审基线 r1@549c8a3（reviewed）——canonical delta 已随
+    实现落 main[SD-2101@ARCHITECTURE §5 第十九切片四段/SD-2102@§6
+    heading+find ⑩+臂尾 ⑩b/⑩c+基线 v19 行/SD-2103@README Tests+
+    find PLAN-021 段+N 定谳/SD-2104@README 第十九切片条目+ledger v25
+    指针——直接 main 线性约定 001..020 在档惯例；本仓 canonical 知识
+    基座 = ARCHITECTURE/README/ledger 三件——001..020 二十批复审-
+    delivered 在档先例承载，非 docs/specs/ 目录为在册既定知识库形]；
+    后代纯净性：7b01e0a（复审记录）+1346a3b（补记）均 docs/plans/
+    021 单文件 docs-only 后代核验；8cb0a87[plan045 家族会话正交提交
+    ——app.at memo:true 四行]保序保留非本计划范围。
+  - `landed`: main tip==1346a3b 含 549c8a3[merge-base --is-ancestor
+    ancestor-OK——线性无 merge commit]；known-good smoke=合并窗 fresh
+    vm merged **16/16 ALL GREEN**[当前 tip 实跑——含 memo 树+复审
+    docs，基线 v19 零漂移]。
+  - `ledger_refreshed`: docs/parity-ledger.md v24→v25@549c8a3
+    [tracked 读回：表头 v24→v25 指针+**三十八行**（37+D-38 新行）+
+    D-21 v25/D-35 处置更新注记；无 live ledger 服务 PLAN-001 同判
+    tracked 文件面]。
+  - `archived`: docs/plans/archived/021-trial-readiness-slice.md
+    [git mv+status archived]+`completion_kind: delivered`。
+  - `cleaned`: 无 worktree/dev 分支[直接 main 约定 worktree 仅 main；
+    os-045 家族 worktree 非本计划所有未触碰]+代码工作树零 WIP。
+  - `next`: ——（delivered 收口；交接=split fresh-green[F-R17-1 第五
+    批留观 D-21 v25]/D-35② 复测[exe 变更窗挂起]/PLAN-022 候选池
+    [§10.6——试用反馈件首位+索引单趟合并衔升]/试用驱动阶段建议
+    [020 §10.5 续——以真实工作区试用反馈驱动下一批]）。
   - **复审窗并发事实补记（2026-09-27 21:40）**：复审重放窗内（21:27:48）
     家族会话（os-045）向 main 落入正交提交 8cb0a87[plan045 T-06
     menubar memo opt-in——src/front/app.at +3/-1 一处 `memo: true`
