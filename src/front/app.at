@@ -1165,7 +1165,9 @@ widget App {
 
             // —— 顶栏：menubar + toolbar（基座 chrome）——
             row (style: "h-8 items-center bg-muted/30 shrink-0 w-full gap-0 px-2") {
-                menubar (class: "items-center") {
+                // PLAN-045 T-06: memo opt-in（展开/勾选正确性实靶面；
+                // 去掉本 prop 即回非 memo 原始形态）。
+                menubar (class: "items-center", memo: true) {
                     menubar-menu (value: "file") {
                         menubar-trigger "文件"
                         menubar-content {
