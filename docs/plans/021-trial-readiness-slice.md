@@ -482,6 +482,15 @@ File 族/dot 免索引/纯函数复用全在册）。
     tests/probe_recent.mjs（tracked）；bench 一次性件居 ignored
     .runtime（口径在 §8 T-04 实录，量级结论已入计划/ledger 持久面）。
   - `next`: merge（工作流已授权——移交 auto-plan:merge）。
+  - **复审窗并发事实补记（2026-09-27 21:40）**：复审重放窗内（21:27:48）
+    家族会话（os-045）向 main 落入正交提交 8cb0a87[plan045 T-06
+    menubar memo opt-in——src/front/app.at +3/-1 一处 `memo: true`
+    prop；author 19:32/commit 21:27]——位于 549c8a3 与本复审记录提
+    交之间。**重放证据绑定不受污染**：AC-01/02/04 重放（矩阵 ×2/e2e/
+    build）跑于纯 549c8a3 树[复审基线 21:15 工作树零 WIP 实证]；
+    bench150 重放（21:29+）跑于含 memo 树且结果与在册量级一致[该四
+    行经其会话实靶对拍自证 + 本方 bench 窗无扰双证]；8cb0a87 非
+    PLAN-021 范围（其编号/计划独立），合并阶段**保序不重写**。
 
 ## 10. 待澄清事项
 
