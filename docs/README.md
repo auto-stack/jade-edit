@@ -178,6 +178,17 @@
   候选）；**赋能批后进入纯反馈驱动**（PLAN-022+ 无反馈则转上游回执/
   微件池）；基线 **v19 重锁**（store ws_warn 入 dump——非零重锁第六
   例）；probe_recent 双臂十案直证（缺档/往返/CJK/清空/复核+免索引）。
+  **第二十切片 = 索引单趟合并性能批**（SD-2201，2026-09-28）：试用
+  驱动阶段首个立项批（候选①试用反馈件反馈缺席按定文不立项，②顺延
+  立项）——**纯内部性能优化，契约零变化/输出逐字节零漂移/基线零重
+  锁**（零重锁第三例）：①back `tags_json` 单趟平行集聚合（O(T×P)
+  双遍 `page_tag_set` 磁盘重读 → P×1 趟——150 页 tags_index
+  2.8-3.6s → **246ms**）+ ②front `orphan_rows_of` 守卫前置+平面化
+  （无条件 O(P²×L̄) 入度全扫 → 平面表 C×L；入口弧同 exe A/B
+  −0.93s，bench 口径 8.2s → 3.4s——残余 2.5s = 非目标面[双取形/
+  派生族/仪表] watch 批供料记账）+ ③boot tags walk 大头随之消除
+  （boot-ready 5.3-6.2s → 2.64s）。前后采逐字节门 + probe_tags 双臂
+  + merged 矩阵 16/16（v19 零漂移）全量承载。
   **第八切片 = 别名解析 + 提及转链接**（SD-1001，
   2026-09-23）：链接域二期——frontmatter `aliases:` block-list 只读解析（`page_fm_list`，解析序 stem 精确首现优先 → alias 精确首现，消费面 exists/target_path/反链/出链/wanted 全面对齐，检索/提及/改名不入面）+ `linkify_page` POST 契约（明区改写、frontmatter 逐字节保留、计数返回）+ 提及行「转为链接」钮（串联自派生刷新消除 vue 轨并发 fetch 竞态）+ F-R9-4 删除流提及刷新收口；图谱 tab 顺位后移——vm 轨组
   件面依赖上游），本仓零依赖其代码。
@@ -233,7 +244,7 @@ node tests/vm_matrix.mjs            # 双臂（merged+split）检查单 + 基线
 pnpm test:e2e                       # vue 检查单（同一检查单；serve-back 后端）
 ```
 
-## Tests（判绿口径，SD-204；SD-304/403 扩定；SD-503 再扩定；SD-603 再扩定；SD-703 再扩定；SD-803 再扩定；SD-903 再扩定；SD-1003 再扩定；SD-1103 再扩定；SD-1203 再扩定；SD-1303 再扩定；SD-1403 再扩定；SD-1503 再扩定；SD-1603 再扩定；SD-1703 再扩定；SD-1803 再扩定；SD-1903 再扩定；SD-2003 再扩定；SD-2103 再扩定）
+## Tests（判绿口径，SD-204；SD-304/403 扩定；SD-503 再扩定；SD-603 再扩定；SD-703 再扩定；SD-803 再扩定；SD-903 再扩定；SD-1003 再扩定；SD-1103 再扩定；SD-1203 再扩定；SD-1303 再扩定；SD-1403 再扩定；SD-1503 再扩定；SD-1603 再扩定；SD-1703 再扩定；SD-1803 再扩定；SD-1903 再扩定；SD-2003 再扩定；SD-2103 再扩定；SD-2202 再扩定——PLAN-022 零扩单零子步：纯内部性能片既有断言域全量承载 + 前后采逐字节门 + bench150 重放对拍门）
 
 检查单（PLAN-002 T-01 扩定 + PLAN-003 T-04 link 扩单 + PLAN-004 T-04
 find 扩单 + PLAN-005 T-04 create 扩单 + PLAN-006 T-04 rename 扩单 +
@@ -568,6 +579,35 @@ e2e 同单（断言域 = 结构/文本/磁盘字节，非像素）。
   十案+十三代回归，见 T-05 负向证）+ **D-35② 复测条件未至**[exe 时
   间戳未变——bulkalias 观测窗挂起维持]。file/find 组零失败漂移，组
   数不变 16/15/十五段。
+- N 定谳（2026-09-28 PLAN-022 T-03，SD-2202）：vm **merged 臂 ALL
+  GREEN**（16/16 含基线 **v19 零漂移**——零重锁第三例：纯内部性能
+  片 tags_json 单趟化 + orphan_rows_of 平面化，store/App 零新字段/
+  dump 零变化/id 序列零变化；⑧ orphans 三语义面[纯孤页入列/造链清
+  孤/悬空出链度]全过 = orphan 重写语义面直证）+ **前后采逐字节门**
+  （tags_json 标准语料 397B/7tag + p21-ws150 3379B/46tag——sha256
+  改动前后全等 + 首中尾锚逐项相等，9 采点形）+ probe_tags 双臂六案
+  全绿 + probe 全族 **14 件** fresh（12 RESULT 全绿双臂 + probe_tags
+  + probe_receipt_d19 负结果 D-19 在册一致）+ e2e 十五段全绿 1.1m +
+  vue build 绿[release 路由+SCHEMA_DRIFT_GENERATE_AT=1 ✓ built] +
+  bench150 重放对拍门[AC-03]：tags_index **246ms ≤1.5s 过**（在册
+  2.8-3.6s）+ boot-ready 2.64s 实录（在册 5.3-6.2s——记录面不设门）
+  + **孤页清单入口 3.4s 越门（门 ≤2.0s）如实记**：同窗重跑落家族负
+  载劣化窗（零接触面 link_index 冷 294→902ms 三面同证）不作判据；
+  细粒度 A/B 归因（dbg 一次性件同 exe 同语料交替三轮）：click→mode
+  2480→1560ms[定向面贡献 ≈ −0.93s]——残余 2.5s = 非目标面
+  [LinksRefreshOf 双取 0.6s + to_value + 派生族 + mentions 串联 +
+  仪表固定 sleep 0.7s]，VM 循环量主导而非磁盘读——零成本反事实仍越
+  门[门在本批授权范围不可达]，§10.1 口径 watch 批供料记账不硬调门，
+  needs_fix 归因交复审裁处 + **split 臂 = 外部家族窗第六例[分段判
+  绿先例承载，018 v22..021 v25 同判]**：独立跑 ×2 boot FAIL+wiki
+  树行不现 v23/v24/v25 逐字同形——判别链外部性定谳：git-archive
+  物料 pre-change 树（7ebe95c）同 exe 复现同款[本批零接触证；物料
+  形状教训实录：archive 不含 ignored deps/ 首跑 flatten_tree 符号
+  未定——补拷后复现同款；物料即用即删 D-37⑦ 纪律续]+ serve-back
+  通道健康旁证[e2e 1.1m + probe 族 split 臂全绿同窗]+ **exe 时间戳
+  变更实录**[debug 09-27 22:38——021 在册 09-26 10:43 后家族重建，
+  本批全程新 exe 载体；release 09-25 17:58 未变；D-35② 复测执行窗
+  条件或至——留观面板交接非本批范围]。
 - 结构基线 = `tests/baseline/structure-v19.txt`：state 段逐字节 +
   snapshot vnode id 出现序列（v2 仪器延续；**v19 = PLAN-021 计划内重锁**[store ws_warn[P≤200 防线态——现行语料恒 "" 入 dump]——非零重锁第六例 store 新字段面；App 模型零新字段/recent_paths 值域六检查后 1 项同 v18——pristine 语料零 .jade 载入半=臂尾 ⑩b 承载；id 序列零变化——StatusBar 组件子树快照不可见]；**v18 = PLAN-020 计划内重
   锁**[App orphan_rows[pristine 恒空 []]+recent_paths[六检查后 1 项
@@ -583,7 +623,7 @@ e2e 同单（断言域 = 结构/文本/磁盘字节，非像素）。
   file.movedir 无快捷键 + menubar 文件项「移动目录…」+ 移动目录弹层
   第十二实例双 input 闭态恒渲染入 id 序列——G5 实勘落定非零重锁第三例
   ；v15 锁文件头注字面 v14 系重锁窗漏改——016 教训同款，v16 随锁校正]
-  ；**PLAN-017 = 零重锁第二例**[v15 维持——纯 back 语义扩容片]；**v15
+  ；**PLAN-017 = 零重锁第二例**[v15 维持——纯 back 语义扩容片]；**PLAN-022 = 零重锁第三例**[v19 维持——纯内部性能片：tags_json 单趟平行集 + orphan_rows_of 守卫前置/平面化，store/App 模型零新字段、autoui_state dump 面零变化[links_json/tags_rows/orphan_rows 值域不变]、snapshot id 序列零变化——017 先例同判]；**v15
   = PLAN-016 计划内重锁**
   [App trash_rows/trash_purge_open 入 dump + action file.trash[Ctrl+Shift+T
   键位] + menubar 文件项「回收站」+ 清空强确认弹层实例入 id 序列；
@@ -619,18 +659,21 @@ e2e 同单（断言域 = 结构/文本/磁盘字节，非像素）。
 ## 计划（阶段仪表盘）
 
 **当前阶段：试用驱动阶段**（2026-09-27 起——020 §10.5 建议、021 试用
-赋能批承接）：功能面 **19 片已完备**（PLAN-001..021 全部 delivered
-归档，见 [plans/archived/](plans/archived/)；第十九切片 = 试用赋能批
-——recents 持久层 + P≤200 防线 + 150 页实测），瓶颈已从「缺功能」
-移向「可用性验证」——**以真实工作区试用反馈驱动下一批立项**。
+赋能批承接）：功能面 **20 片已完备**（PLAN-001..021 delivered 归档 +
+PLAN-022 性能批交付[复审/归档窗]——功能面 19 片 + 纯内部性能片第二十
+切片，见 [plans/](plans/) 与 [plans/archived/](plans/archived/)；第
+十九切片 = 试用赋能批——recents 持久层 + P≤200 防线 + 150 页实测），
+瓶颈已从「缺功能」移向「可用性验证」——**以真实工作区试用反馈驱动
+下一批立项**。
 
-**下一步（PLAN-022 立项候选池，首位在前）**：
+**下一步（候选池，首位在前；②已出池交付）**：
 
 1. **试用反馈件**——用户真实试用反馈 + 021 150 页实测工件衍生
-   （无反馈则本类不立项）；
-2. **索引单趟合并**——150 页实测 findings 衔升（量级在案：tags_json
-   O(T×P) 3.6s / orphan_rows_of O(P²) 8.2s / boot tags walk 为
-   boot-ready 6.2s 大头——ledger D-22 观测③+D-38）；
+   （无反馈则本类不立项；022 交付后维持首位）；
+2. ~~索引单趟合并~~——**已交付**（PLAN-022 第二十切片：tags 246ms/
+   孤页弧 A/B −0.93s/boot-ready 2.64s；**watch 批供料面在册**：孤页
+   入口残余 2.5s = 非目标面[双取形/派生族/仪表] VM 循环量主导——
+   AC-03 孤页门越门归因待复审裁处）；
 3. 上游回执件（视家族窗）：url_decode UTF-8 组装（D-19 供料候选——
    翻 1 即 CJK 双臂化解锁）、checkbox v-model 互斥发射、menubar
    memo 生成器化（8cb0a87 在册形态）、autoui_state 大态序列化
@@ -641,8 +684,9 @@ e2e 同单（断言域 = 结构/文本/磁盘字节，非像素）。
    F-R19-1 r3、checkbox/url_decode 供料回执。
 
 **留观项（跨批交接）**：split 臂 + gate 单命令 F-R17-1 第五批留观
-（D-21 v25——家族 exe 稳定后双臂复跑闭账）；D-35② bulkalias 复测
-（exe 变更窗挂起）。
+（D-21 v25——家族 exe 稳定后双臂复跑闭账；022 执行窗第六例续记——
+pre-change A/B 零接触定谳同前）；D-35② bulkalias 复测（022 实勘：
+debug exe 已变更 09-27 22:38——复测执行窗条件或至，留观面板交接）。
 
 ---
 

@@ -1021,8 +1021,44 @@ src/back/api.at           /api 契约（自有 Auto 源，与实现同 commit—
   警示+警示窗内快开+清料回归）+ e2e ⑩三面（磁盘逐行/reload 跨会话
   「最近」段恢复/StatusBar 警示行显隐渲染面——vm 组件子树快照不可
   见的对位承载）+ 150 页实测工件（§10.4 分账——T-04）。
+- **索引单趟合并性能批（SD-2201，PLAN-022 第二十切片——纯内部性能
+  优化，契约零变化）**：021 150 页实测 findings ①②③（§10.4 分账本
+  仓面）收口批——两处纯函数内部重写，接口/输出/契约三零变化。
+  ① **back tags_json 单趟平行集聚合**（wsys.at）：原两遍聚合 pass2
+  每 (tag, page) 对重调 `page_tag_set`（File.read_text + read_body
+  两趟磁盘读——O(T×P) 重读面）→ pass1 循环内 `ptags_all` 平行集保留
+  （pages 序平行——links_json stems/rels 同款在册形态），pass2 读
+  `ptags_all[i2]` 平行集索引取（零磁盘）。输出逐字节等价定文：
+  `ptags_all[i] ≡ page_tag_set(pages[i].rel)`（纯读函数同输入同输出
+  ——前后采门实证：标准语料 + 150 页语料全文逐字节相等，9 采点形）；
+  tag first-seen 序/paths walk 序/StringBuilder 装配段零触碰；
+  `page_tag_set` 本体保留（单页语义面在册——调用点 tags_json 内清
+  零）。150 页量级：tags_index 2.8-3.6s → **246ms**（AC-03 门
+  ≤1.5s 过）。
+  ② **front orphan_rows_of 守卫前置 + 平面化**（app.at）：原每页无
+  条件 O(P²×L̄) 入度全扫（守卫后置——ind 仅 outd==0 时被消费）→
+  平面预收一趟全部 resolved target_path（O(L)，tp != "" 卫原样）+
+  仅零出链候选页对平面表计 ind（C×L）。**自链排除等价定文**：
+  outd==0 ⇒ 自身 links.len()==0 ⇒ 平面表零自贡献（原 j != i 卫的
+  守卫前置副产品）；行集/行序/行形状 {path} 零变化（vm 矩阵 ⑧
+  orphans 三语义面全绿承载）。入口弧同 exe A/B（7ebe95c 树 vs 本批
+  树）：click→mode 2480→1560ms（定向面贡献 ≈ −0.93s）；bench 口径
+  8.2s → 3.4s——**残余 2.5s = 非目标面**（LinksRefreshOf 双取形
+  link_index 两次 GET ~0.6s + json.to_value 解析 + 派生族
+  [titles/backlink/outlink/wanted] + MentionsRefreshOf 串联 + 仪表
+  固定 sleep ~0.7s——VM 循环量主导而非磁盘读，AC-03 孤页门 ≤2.0s
+  越门如实记：门在本批授权范围内不可达[零成本反事实仍越]，watch 批
+  供料面记账不硬调门，复审裁处）。
+  ③ **boot 序顺产**：Init tags walk 大头随①消除——boot-ready
+  5.3-6.2s → 2.64s（记录面不设门）。
+  ④ **直证**：前后采逐字节门（两语料 sha256 前后全等 + 首中尾锚）+
+  probe_tags 双臂六案全绿 + api.at 零 diff + merged 矩阵 16/16 ALL
+  GREEN（基线 v19 零漂移——**零重锁第三例**[PLAN-017 纯 back 语义
+  扩容片先例同判：store/App 模型零新字段、autoui_state dump 零变
+  化、snapshot id 序列零变化]）+ probe 全族 14 件 fresh + e2e 十五段
+  + vue build（release 路由）+ bench150 重放对拍（§5.3 门裁定实录）。
 
-## 6. 测试体系（双轨一致性门；PLAN-001 T-04 换基迁移；SD-402 find 扩单；SD-502 create 扩单；SD-602 rename 扩单；SD-702 file 扩单；SD-802 meta 扩单；SD-902 meta/link 扩单；SD-1002 link 扩单；SD-1102 meta 属性子步扩单；SD-1202 dir/alias 子步扩单；SD-1302 显示名子步扩单；SD-1402 目录二期/面板名化子步扩单；SD-1502 daily/updated_at 子步扩单；SD-1602 trash 子步扩单；SD-1702 四级解析/词边界/case-only 子步扩单；SD-1802 目录移动/depth 8 子步扩单；SD-1902 目录合并/trash 增强子步扩单；SD-2002 orphans/recents 子步扩单；SD-2102 持久化/防线子步扩单）
+## 6. 测试体系（双轨一致性门；PLAN-001 T-04 换基迁移；SD-402 find 扩单；SD-502 create 扩单；SD-602 rename 扩单；SD-702 file 扩单；SD-802 meta 扩单；SD-902 meta/link 扩单；SD-1002 link 扩单；SD-1102 meta 属性子步扩单；SD-1202 dir/alias 子步扩单；SD-1302 显示名子步扩单；SD-1402 目录二期/面板名化子步扩单；SD-1502 daily/updated_at 子步扩单；SD-1602 trash 子步扩单；SD-1702 四级解析/词边界/case-only 子步扩单；SD-1802 目录移动/depth 8 子步扩单；SD-1902 目录合并/trash 增强子步扩单；SD-2002 orphans/recents 子步扩单；SD-2102 持久化/防线子步扩单；SD-2202 零扩单——PLAN-022 纯内部性能片：行为零变化，既有断言域全量承载[vm 矩阵 16 组含 link ⑧ orphans 三语义面/meta 组 tags 面] + 基线 v19 零漂移[零重锁第三例] + 前后采逐字节门[tags_json 两语料 9 采点] + bench150 重放对拍门[tags ≤1.5s 过 246ms/孤页 ≤2.0s 越门 3.4s——非目标面残余记账，split 臂家族窗第六例口径续记]）
 
 | 门 | 命令 | 断言域 |
 | --- | --- | --- |

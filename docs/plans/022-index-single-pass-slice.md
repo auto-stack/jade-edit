@@ -1,12 +1,12 @@
 ---
 plan_id: PLAN-022
-status: executing
+status: execution_done
 feature_name: 索引单趟合并性能批（第二十切片）
 author: [agent]
 created_at: 2026-09-28T03:56:15Z
-updated_at: 2026-09-28T06:40:00Z
+updated_at: 2026-09-28T07:05:00Z
 plan_revision: 1
-current_step: 4
+current_step: 5
 total_steps: 5
 supersedes_spec_components: []
 new_spec_components: []
@@ -398,11 +398,31 @@ modify（本仓 canonical 知识基座 = ARCHITECTURE/README/ledger 三件，
     定**：needs_fix 归因入档（watch 批供料面记账不硬调门）交复审
     裁处——见 §10.7。
 - **T-05 文档 + ledger v26 + 收口**（AC-06）
-  - [ ] SD-2201（ARCH §5）/SD-2202（ARCH §6 + README Tests）/SD-2203
+  - [x] SD-2201（ARCH §5）/SD-2202（ARCH §6 + README Tests）/SD-2203
     （README 是什么 + 仪表盘）/SD-2204（ledger v25→v26）落位 + §9
     work 记录。
   - 验证：文档 diff 检视 + ledger 表头读回 + 负向证 grep 族（AC-05）。
-  - （docs 落位随批线性提交——T-05 实录随收口笔入档）
+  - **[执行实录 2026-09-28]**：ARCHITECTURE SD-2201[§5 第二十切片四
+    段：tags 单趟平行集定文[逐字节等价论证+246ms]+orphan 守卫前置/
+    平面化定文[自链排除等价+A/B 归因+残余构成+门越门如实记]+boot
+    顺产 2.64s+直证面四面] + SD-2202[§6 heading 零扩单注记]；README
+    SD-2202[Tests heading SD-2202 续零扩单/N 定谳 022 实录[merged
+    16/16+前后采门+probe 14 件+e2e 1.1m+build 绿+bench 对拍门[tags
+    过/孤页越门归因]+split 家族窗第六例 A/B 定谳+exe 时间戳变更]/
+    基线条目 PLAN-022 零重锁第三例注记] + SD-2203[是什么第二十切片
+    条目+仪表盘候选池②出池[供料面在册]+留观项面板续记[D-35② exe
+    已变更]]；ledger SD-2204[H1 字面滞留校正 v23→v26（020/021 两版
+    H1 漏 bump——F-R16-1 先例同判）+ 表尾 v25→v26 + D-22 处置更新
+    [双件兑现+残余构成+watch 批剩余面注记] + D-35 处置更新[exe 变更
+    实录+复测条件观察]——无 D-39 新行（执行窗实勘面全数 D-21 v26
+    头注扩记/D-35 处置承载，无新增双轨差异面）。**负向证（AC-05）**：
+    `.console` 属性写面零违例（app.at 精确 grep 0——11 处命中全为
+    在册纪律注释/store.console_open 态面，D-25①）+ 契约零变化
+    （api.at diff 删除行 0/新增行 0）+ 基线文件零触碰（git status
+    tests/baseline 空——零重锁实证）+ gen/dist ignored 零手改 +
+    冻结池/家族仓零接触（全程仅 jade-edit 检出写面；A/B 物料仓外
+    即用即删）+ 一次性件居 ignored `.runtime`（p22-tags-sample/
+    dbg-p22/日志族）。
 
 依赖序：T-01 → T-02 → T-03 → T-04 → T-05（线性——001..021 提交序
 惯例；零探针零闸：平行 List/守卫前置全在册形态，无上游解锁依赖）。
@@ -425,8 +445,7 @@ modify（本仓 canonical 知识基座 = ARCHITECTURE/README/ledger 三件，
     计划进度随批——线性直接 main，001..021 在档惯例；T-05 docs
     SD-2201..2204 + ledger v26 随后线性提交）。T-03 判绿/T-04 bench
     = 零入库面工件（日志/一次性件居 ignored `.runtime`——实录进 §8）。
-  - `task_ids`: T-01..T-04 全勾（T-05 docs 落位随批线性提交——收口
-    笔入档后全勾 5/5）；`current_step: 4/5`。
+  - `task_ids`: T-01..T-05 全勾；`current_step: 5/5`。
   - `evidence`: 前后采逐字节门（双语料 sha256 改动前后全等 + 首中尾
     锚——AC-01 直证）+ probe_tags 双臂六案全绿 + merged 矩阵 16/16
     ALL GREEN（基线 v19 零漂移——零重锁第三例；⑧ orphans 三语义面
