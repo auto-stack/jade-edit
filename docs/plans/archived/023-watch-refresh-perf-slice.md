@@ -1,10 +1,11 @@
 ---
 plan_id: PLAN-023
-status: reviewed
+status: archived
+completion_kind: delivered
 feature_name: watch 批——刷新链路读面/取面收口（第二十一切片）
 author: [agent]
 created_at: 2026-09-28T00:00:00Z
-updated_at: 2026-09-28T19:50:00Z
+updated_at: 2026-09-28T20:10:00Z
 plan_revision: 2
 current_step: 5
 total_steps: 5
@@ -589,6 +590,53 @@ docs/ARCHITECTURE.md（§5 后端/§6 测试体系）+ docs/README.md（Tests/
     径，值已内嵌本记录可追溯。
   - `next`：**merge**（auto-plan:merge——r2 合同 = 本批交付面；归
     档时 T-03/D-39 挂账面随档）。
+
+- **2026-09-28 merge 收口（auto-plan:merge）**：
+  - `stage: merge | PLAN-023:r2 | outcome: pass`
+  - **checkpoint 五联**：
+  - `prepared`: 复审基线 r2@f1215ce[reviewed——168ae69 复审记录为其
+    docs-only 后代]——canonical delta 已随实现落 main（直接 main
+    线性约定 001..022 在档惯例 + ARCHITECTURE/README/ledger 三件知
+    识库形 019/020/021/022 merge 先例承载；SD-2301@ARCH §5 第二十
+    一切片段:1060[③挂账定文 D-39]/SD-2302@§6 heading + README Tests
+    heading/N 定谳:594/SD-2303@README 是什么:192 + 仪表盘/文档节
+    ledger 指针 v27 化/SD-2304@ledger H1 v27 + D-22 收口处置 + D-39
+    新行 + D-21 v27 扩记 + D-35 exe 实录）+ 后代纯净性核验（950b4ea
+    以来恰 2 提交全 PLAN-023 范围零正交介入：f1215ce 实现[含 r1 执
+    行 + T-03 回退落点] → 168ae69 复审记录[docs-only——plan 单文件
+    101+/21-]；merge-base --is-ancestor ancestor-OK 线性无 merge
+    commit）。
+  - `landed`: main tip == 168ae69 含 f1215ce[复审基线]（直接 main
+    约定无 worktree/dev 分支无 ff 动作——线性在档）+ **known-good
+    smoke = 合并窗 fresh vm merged 16/16 ALL GREEN**（当前 tip 实跑
+    `p23-merge-smoke.log`——基线 v19 零漂移 PASS；09-28 exe 载体
+    跨批稳定第四证）。
+  - `ledger_refreshed`: v27@f1215ce tracked 读回核验（H1 字面 v27 +
+    D-39 新行恰一 + PLAN-023 收口处置段 + D-21 v27 + D-35 exe 实录
+    ——无 live ledger 服务，tracked 文件面同 PLAN-001/022 判例）。
+  - `archived`: untracked→git mv→docs/plans/archived/
+    023-watch-refresh-perf-slice.md + status archived + completion_
+    kind delivered。
+  - `cleaned`: 无 worktree/dev 分支[直接 main 约定 worktree 仅 main
+    ——git worktree list 单一主检出核验；无本计划所有 worktree 可
+    清]+代码工作树零 WIP + 执行/复审 A/B 物料仓外即用即删复核
+    （p23-ab*/p23-bisect* 已删）。
+  - **deployment 面观察**（landing ≠ deployment）：gen/front/vue/
+    dist = 复审窗 `pnpm build` ✓built@f1215ce src[其后零 src 变更
+    ——168ae69 docs-only——内容现势]；家族 exe = auto-lang 仓所有
+    非本仓工件[debug/release 09-28 载体——本仓零涉]。jade-edit 无
+    常驻生产进程面。
+  - **留观交接**（下游批次口径）：F-R17-1 split 双臂复跑[家族窗第
+    七例续——022 第六例延续，unblock = 家族 exe 稳定后双臂复跑]；
+    D-35② bulkalias 复测[exe 时间戳 09-28 载体本批未变——复测执行
+    窗条件维持观察]；**T-03/D-39 挂账面**（双取形维持 + dev-stack
+    竞态——unlock 三选随 ledger D-39/README 候选池③，后批重推载
+    体 = 本计划 §5.3 设计文本 + 执行/复审全链证据）；fs 监听半
+    （原语缺席定谳——mtime 键控缓存专项挂账）；试用反馈件维持候选
+    池首位（真实反馈缺席）。
+  - `next`: ——（PLAN-023 delivered 收口；下一批 = 试用驱动阶段候
+    选池首位序[README 仪表盘现势]，T-03 重推与 D-39 消化按裁决后
+    批立项）
 
 ## 10. 待澄清事项
 
