@@ -1,10 +1,11 @@
 ---
 plan_id: PLAN-022
-status: reviewed
+status: archived
+completion_kind: delivered
 feature_name: 索引单趟合并性能批（第二十切片）
 author: [agent]
 created_at: 2026-09-28T03:56:15Z
-updated_at: 2026-09-28T08:10:00Z
+updated_at: 2026-09-28T08:35:00Z
 plan_revision: 1
 current_step: 5
 total_steps: 5
@@ -535,6 +536,45 @@ modify（本仓 canonical 知识基座 = ARCHITECTURE/README/ledger 三件，
   - `next`: merge（复审基线=6245d03——merge 窗若现 docs-only 后代按
     021 先例核验；ledger v26 已随实现落 main——merge 阶段归档+
     cleaned checkpoint）。
+
+- **2026-09-28 merge 收口（auto-plan:merge）**：
+  - `stage: merge | PLAN-022:r1 | outcome: pass`
+  - **checkpoint 五联**：
+  - `prepared`: 复审基线 r1@6245d03[reviewed——b23afd8 复审记录为其
+    docs-only 后代]——canonical delta 已随实现落 main（直接 main 线
+    性约定 001..021 在档惯例 + ARCHITECTURE/README/ledger 三件知识库
+    形 019/020/021 merge 先例承载；SD-2201@ARCH §5 第二十切片段:
+    1024/SD-2202@§6 heading:1061 + README Tests heading:247/N 定谳:
+    582/基线注记:626/SD-2203@README 是什么:181 + 仪表盘:673/
+    SD-2204@ledger H1 v26 + D-22 处置）+ 后代纯净性核验（7ebe95c 以
+    来恰 3 提交全 PLAN-022 范围零正交介入：6a9e54d 实现 → 6245d03
+    docs → b23afd8 复审记录[docs-only]；merge-base --is-ancestor
+    ancestor-OK 线性无 merge commit）。
+  - `landed`: main tip == b23afd8 含 6245d03[复审基线]（直接 main 约定
+    无 worktree/dev 分支无 ff 动作——线性在档）+ **known-good smoke =
+    合并窗 fresh vm merged 16/16 ALL GREEN**（当前 tip 实跑
+    `p22-merge-smoke.log`——基线 v19 零漂移；09-28 exe 载体）。
+  - `ledger_refreshed`: v26@6245d03 tracked 读回核验（H1 字面 v26
+    [020/021 两版漏 bump 随批校正] + 表尾 v25→v26（SD-2204 指针）+
+    D-22 PLAN-022 收口处置 + D-35 exe 变更实录——无 live ledger 服
+    务，tracked 文件面同 PLAN-001 判例）。
+  - `archived`: untracked→git mv→docs/plans/archived/
+    022-index-single-pass-slice.md + status archived + completion_
+    kind delivered。
+  - `cleaned`: 无 worktree/dev 分支[直接 main 约定 worktree 仅 main
+    ——无本计划所有 worktree 可清]+代码工作树零 WIP + 复审 A/B 物料
+    仓外即用即删复核。
+  - **deployment 面观察**（landing ≠ deployment）：gen/front/vue/dist
+    = 复审窗 `pnpm build` ✓built@6245d03 src[其后零 src 变更——内容
+    现势]；家族 exe = auto-lang 仓所有非本仓工件[debug 09-28 15:02
+    家族自建——本仓零涉]。jade-edit 无常驻生产进程面。
+  - **留观交接**（下游批次口径）：F-R17-1 split 双臂复跑[家族窗第六
+    例续——跨两次 exe 重建延续]；D-35② bulkalias 复测[exe 已变更——
+    复测执行窗或至，随 F-R17-1 合流]；孤页门残余面 = watch 批供料
+    [复审 F-1 裁定——unblock = watch 批立项以 dbg-p22 A/B 口径重推
+    门]；试用反馈件维持候选池首位（真实反馈缺席）。
+  - `next`: ——（PLAN-022 delivered 收口；下一批 = 试用驱动阶段候选
+    池①试用反馈件/③上游回执件按仪表盘首位序）。
 
 ## 10. 待澄清事项
 
