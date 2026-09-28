@@ -813,11 +813,34 @@ fn wanted_rows_of(pages List) List {
 /// 即非孤，SD-2001 定文）；入度 = 他档出链扫 target_path 精确命中计数
 ///（**resolved 面**：悬空 target_path="" 不计入[卫语句——backlink_
 /// rows_of 同族]；自链接排除 j != i——SD-302 同语义：自链计入出链不
-/// 计入反链）。双零 → 行 {path}（pages 原序 = walk 序）。**纯派生零
+/// 计入反链）。双零 → 行 {path}（pages 原序 = walk 序）。**PLAN-022
+/// 单趟化**（SD-2201——原无条件 O(P²×L̄) 全扫收口）：平面预收一趟全页
+/// resolved target_path（O(L)，tp != "" 卫原样——悬空不入表）+ 守卫
+/// 前置仅零出链候选页对平面表计 ind（O(C×L)）；自链排除等价 =
+/// outd==0 ⇒ 自身 links.len()==0 ⇒ 平面表零自贡献（原 j != i 卫的守
+/// 卫前置副产品）。**纯派生零
 /// back 增量**（孤页清单 = 图谱门控的清单替代——知识健康第二切面）。
 /// ⚠ D-20②：元素先拷局部再取字段；⚠ D-30①：参数名 pages 避开模型名
 ///（link_pages——vue codegen 阴影面）。
 fn orphan_rows_of(pages List) List {
+    // 平面预收：一趟收集全部 resolved target_path（O(L)）。
+    var tps List = []
+    var j int = 0
+    while j < pages.len() {
+        // ⚠ D-20②：列表元素先拷局部变量再取字段。
+        var other = pages[j]
+        var olinks List = other.links
+        var k int = 0
+        while k < olinks.len() {
+            var lnk = olinks[k]
+            var tp str = lnk.target_path
+            if tp != "" {
+                tps.push(tp)
+            }
+            k = k + 1
+        }
+        j = j + 1
+    }
     var out List = []
     var i int = 0
     while i < pages.len() {
@@ -826,27 +849,17 @@ fn orphan_rows_of(pages List) List {
         var ppath str = page.path
         var links List = page.links
         var outd int = links.len()
-        var ind int = 0
-        var j int = 0
-        while j < pages.len() {
-            if j != i {
-                var other = pages[j]
-                var olinks List = other.links
-                var k int = 0
-                while k < olinks.len() {
-                    var lnk = olinks[k]
-                    var tp str = lnk.target_path
-                    if tp != "" {
-                        if tp == ppath {
-                            ind = ind + 1
-                        }
-                    }
-                    k = k + 1
-                }
-            }
-            j = j + 1
-        }
+        // 守卫前置：仅零出链候选页扫平面表计入度（C×L）。
         if outd == 0 {
+            var ind int = 0
+            var m int = 0
+            while m < tps.len() {
+                var tp2 str = tps[m]
+                if tp2 == ppath {
+                    ind = ind + 1
+                }
+                m = m + 1
+            }
             if ind == 0 {
                 out.push({ path: ppath })
             }

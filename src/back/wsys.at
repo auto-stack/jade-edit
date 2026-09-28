@@ -2532,20 +2532,25 @@ fn page_tag_set(rel str) List {
 /// 损坏，D-20④）；tag 序 = first-seen（walk 序确定性——link_index 哲学
 /// 同判；PLAN-009：fm 序在前、inline 追加——语料基线零漂移）；paths =
 /// walk 序。解析 = page_tag_set（frontmatter_of + page_tags + 行内
-/// page_inline_tags 并集，PLAN-009 T-01）。两遍聚合（元素先拷局部——
-/// D-20②）：pass1 全页 tag first-seen 去重收集；pass2 每 tag 收 paths。
-/// 装配 = json_esc + **StringBuilder 追加（PLAN-018 SD-1801——`+` 重接
-/// O(T²+P²)→O(n)，零语义变化；O(T×P) page_tag_set 重读面不动——索引
-/// 单趟合并随 watch 批 §10.4）**。
+/// page_inline_tags 并集，PLAN-009 T-01）。**单趟平行集聚合**（PLAN-022
+/// SD-2201——O(T×P) 双遍 page_tag_set 磁盘重读面兑现收口；元素先拷局
+/// 部——D-20②）：pass1 全页逐页 page_tag_set 一次收集 ptags_all 平行集
+/// （pages 序平行——links_json stems/rels 同款在册形态）+ tag first-seen
+/// 去重；pass2 每 tag 收 paths 读 ptags_all[i2] 平行集索引取（零磁盘
+/// 重读——输出逐字节等价：ptags_all[i] ≡ page_tag_set(pages[i].rel)，
+/// 纯读函数同输入同输出）。装配 = json_esc + **StringBuilder 追加
+///（PLAN-018 SD-1801——`+` 重接 O(T²+P²)→O(n)，零语义变化）**。
 /// 契约形状/触发面零变化（PLAN-008 定文不变——仅逐页聚合源 +1）。
 pub fn tags_json(path str, depth int) str {
     var pages List = collect_ad_pages(path, depth)
     var tags List = []
+    var ptags_all List = []
     var i int = 0
     while i < pages.len() {
         var p = pages[i]
         var rel str = p.rel
         var ptags List = page_tag_set(rel)
+        ptags_all.push(ptags)
         var k int = 0
         while k < ptags.len() {
             var tag str = ptags[k]
@@ -2574,7 +2579,9 @@ pub fn tags_json(path str, depth int) str {
         while i2 < pages.len() {
             var p2 = pages[i2]
             var rel2 str = p2.rel
-            var ptags2 List = page_tag_set(rel2)
+            // ⚠ D-20②：pass2 数据源 = pass1 平行集（PLAN-022 单趟化——
+            // 原 page_tag_set(rel2) 磁盘重读点清零）。
+            var ptags2 List = ptags_all[i2]
             var has bool = false
             var k2 int = 0
             while k2 < ptags2.len() {
