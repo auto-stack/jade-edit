@@ -1,12 +1,12 @@
 ---
 plan_id: PLAN-023
-status: executing
+status: reviewed
 feature_name: watch 批——刷新链路读面/取面收口（第二十一切片）
 author: [agent]
 created_at: 2026-09-28T00:00:00Z
-updated_at: 2026-09-28T18:00:00Z
-plan_revision: 1
-current_step: 4
+updated_at: 2026-09-28T19:50:00Z
+plan_revision: 2
+current_step: 5
 total_steps: 5
 supersedes_spec_components: []
 new_spec_components: []
@@ -26,10 +26,11 @@ PLAN-022 归档后的首个立项批。**立项路由依据**：README 仪表盘
 裁）。**纯内部性能优化（PLAN-022 同族续批）**：back 索引装配每页双读
 单读化（File.read_text frontmatter 面 + read_body 再读 → 一读两剖）+
 front `wanted_rows_of` 同构收口（O(D×P×L̄) 重复全扫 → 平面计数）+
-`LinksRefreshOf` 双取形消除（link_index 原文态+解析态两次取 →
-`json.parse` 单取——规划期一手源已证通道可行）。**契约零变化、输出
-逐字节零漂移、基线 v19 零重锁候选（零重锁第四例——017/022 先例续）**
-，收口件 = dbg-p22 口径孤页门重推（F-1 兑现）+ bench150 重放对拍。
+~~`LinksRefreshOf` 双取形消除~~（**r2 划出本批——D-39 挂账**：单取实
+现 vm 轨全绿后 vue 轨 e2e 确定性触发 dev-stack 树响应滞留竞态，执行窗
+回退，用户裁决挂账降级后批重推）。**契约零变化、输出逐字节零漂移、
+基线 v19 零重锁（零重锁第四例——017/022 先例续）**，收口件 = dbg-p22
+口径孤页门重推（F-1 兑现）+ bench150 重放对拍。
 
 ## 1. 目标
 
@@ -47,12 +48,14 @@ front `wanted_rows_of` 同构收口（O(D×P×L̄) 重复全扫 → 平面计数
    （O(D×P×L̄) VM 解释循环——022 `orphan_rows_of` 收口前同族形态）→
    pass1 平面收集全部悬空 target（flat 含重复，O(L)）+ pass2 首现序
    去重同时计数（O(D×L)）。行集/行序/行形状/label 公式零变化。
-3. **③ `LinksRefreshOf` 双取形消除**（app.at:2244-2254）：现
-   `lj = link_index("",8)` 原文态 + `json.to_value(link_index("",8))`
-   解析态**两次全量取**（双取 ~0.6s@150 页——D-20⑤ ts_adapter 恒等
-   陷阱的 workaround）→ `lp = json.parse(lj)` 单取（.links_json 原文
-   态赋值保留——基线 v19 state 面零触碰）。通道可行性规划期一手源
-   闭合（§4.3）。
+3. **③ `LinksRefreshOf` 双取形消除**（app.at:2244-2254）——**【r2
+   划出本批交付面（2026-09-28 用户裁决 §10.6 选①挂账降级）】**：
+   原 `lj = link_index("",8)` 原文态 + `json.to_value(link_index("",8))`
+   解析态两次全量取（双取 ~0.6s@150 页——D-20⑤ ts_adapter 恒等
+   陷阱的 workaround）→ `lp = json.parse(lj)` 单取。单取实现本批
+   完成且 vm 轨全绿，但 vue 轨 e2e 确定性触发 dev-stack 树响应滞
+   留竞态（D-39 立案——执行窗回退），本批双取形维持在册，后批随
+   D-39 消化重推（§5.3 设计文本留存作重推基线）。
 4. **④ 量级实录与孤页门重推**（AC-03）：bench150 重放四点对拍 +
    dbg-p22 口径孤页弧 A/B（同 exe 同语料交替轮——双取段清偿直证）；
    **门 = dbg 口径孤页弧（press→mode + mode→rows 合计）≤ 2.0s**
@@ -301,10 +304,10 @@ docs/ARCHITECTURE.md（§5 后端/§6 测试体系）+ docs/README.md（Tests/
 
 | delta_id | add/modify/retire | docs/specs/... target | before/after rule | rationale | acceptance IDs |
 | --- | --- | --- | --- | --- | --- |
-| SD-2301 | modify | docs/ARCHITECTURE.md §5（后端） | before：§5 第二十切片段（SD-2201）watch 批剩余面注记（重 walk 免除属 watch 批）；links_json/search_json/page_tag_set 双读形态无专项定文；§5 front 共享口域 LinksRefreshOf 双取形 workaround 注记（D-20⑤）。after：§5 第二十一切片段——刷新链路读面/取面收口定文：back 单读两剖（body_of 助手 + 平行 bodies 表——逐字节等价论证）+ wanted 平面计数（O(D×P×L̄)→O(D×L)——行集等价论证）+ 双取形消除（json.parse 单取——ts_adapter/stdlib 双面一手源引证 + 失败路径精化注记）+ 量级实录（150 页对拍带）+ fs 监听原语缺席一手源结论（watch 愿景监听半维持上游供料；auto.fs.mtime 在册注记） | watch 批供料兑现（ledger v26 D-22 剩余面四件之三 + F-1 unblock）；022 非目标三条转正 | AC-01/02/03 |
+| SD-2301 | modify | docs/ARCHITECTURE.md §5（后端） | before：§5 第二十切片段（SD-2201）watch 批剩余面注记（重 walk 免除属 watch 批）；links_json/search_json/page_tag_set 双读形态无专项定文；§5 front 共享口域 LinksRefreshOf 双取形 workaround 注记（D-20⑤）。after：§5 第二十一切片段——刷新链路读面/取面收口定文：back 单读两剖（body_of 助手 + 平行 bodies 表——逐字节等价论证）+ wanted 平面计数（O(D×P×L̄)→O(D×L)——行集等价论证）+ **双取形消除挂账定文（D-39——vue 轨 e2e dev-stack 树响应滞留竞态，r2 划出本批；双取形/D-20⑤ workaround 维持在册，unlock 三选随 D-39）**【r2 校正：原拟「双取形消除兑现」按实际交付面改挂账定文】+ 量级实录（150 页对拍带）+ fs 监听原语缺席一手源结论（watch 愿景监听半维持上游供料；auto.fs.mtime 在册注记） | watch 批供料部分兑现（ledger v27 D-22 剩余面四件之二 + F-1 unblock）；022 非目标两条转正（①②） | AC-01/02/03 |
 | SD-2302 | modify | docs/ARCHITECTURE.md §6 + docs/README.md Tests heading | before：§6 SD-2202 heading（PLAN-022 零扩单——第二十切片）。after：SD-2302 续零扩单注记（第二十一切片同判——纯内部性能片第三例：既有断言域全量承载 + 基线 v19 零漂移[零重锁第四例候选] + 前后采逐字节门扩 links/search/tags 三面 + dbg 口径孤页门注记） | 022 SD-2202 先例同款（§6 heading 惯例随批扩） | AC-02/03 |
 | SD-2303 | modify | docs/README.md（是什么 + Tests N 定谳 + 计划仪表盘） | before：是什么第二十切片条目 + 仪表盘②出池注记（watch 批供料面在册——孤页门「归因待复审裁处」陈注）+ 留观项面板。after：是什么第二十一切片条目（watch 批读面/取面收口——单读/平面计数/双取消除/dbg 门重推实录值）+ Tests N 定谳 023 实录 + 仪表盘更新（孤页门重推结果落位——F-1 兑现闭环注记；留观面板续记） | 知识库三件形惯例（019/020/021/022 先例）；F-1 陈注闭环 | AC-03/06 |
-| SD-2304 | modify | docs/parity-ledger.md | before：v26——D-22 处置列 watch 批剩余面注记（四件挂账）+ D-20⑤ 双取 workaround 在册。after：v26→v27——D-22 处置更新（watch 批供料兑现分账：双读单读化/双取消除/wanted 同构三件兑现 + fs 监听原语缺席一手源定谳 + mtime 键控缓存挂账）+ D-20⑤ 注记（json.parse 通道在册——恒等陷阱 workaround 退役面）+ D-39 新行若执行窗现新双轨差异面（022 惯例：无新面则不立） | 衍生账随批刷新惯例（SD-2104/2204 同款） | AC-06 |
+| SD-2304 | modify | docs/parity-ledger.md | before：v26——D-22 处置列 watch 批剩余面注记（四件挂账）+ D-20⑤ 双取 workaround 在册。after：v26→v27——D-22 处置更新（watch 批供料兑现分账：双读单读化/wanted 同构**二件兑现** + dbg 口径孤页门重推 PASS + **双取形挂账 D-39** + fs 监听原语缺席一手源定谳 + mtime 键控缓存挂账）+ **D-39 新行（执行窗新立——vue 轨 dev-stack 树响应滞留竞态：形态/根因链/二分四象限/unlock 三选）** + D-21 v27 扩记（家族窗第七例）+ D-35 exe 实录【r2 校正：原拟「D-20⑤ workaround 退役面注记」按实际改维持注记；「D-39 无新面则不立」按实勘改新立】 | 衍生账随批刷新惯例（SD-2104/2204 同款） | AC-06 |
 
 ## 6. 测试设计
 
@@ -347,14 +350,20 @@ docs/ARCHITECTURE.md（§5 后端/§6 测试体系）+ docs/README.md（Tests/
 - **AC-02 front 两处重写行为零变化**：vm 矩阵 merged 臂 16/16 ALL
   GREEN 含基线 v19 零漂移 PASS（⑧ orphans/wanted 语义面全过）+
   e2e 十五段全绿 + vue build 绿（release 路由）+ 生成源检 link_index
-  调用点恰 1 处。验证：`node tests/vm_matrix.mjs` + gate 分段 + gen
-  源 grep。
+  调用点恰 1 处【r2 修订：该子断言系 T-03 载体——T-03 划出本批后
+  为 gen 源检双取形现役形态记录（link_index 调用点 2 处/
+  JSON.parse 恰 1 处 = to_value call-arg 发射面），行为面断言
+  （矩阵/e2e/build）不变】。验证：`node tests/vm_matrix.mjs` + gate
+  分段 + gen 源 grep。
 - **AC-03 量级实录与孤页门重推（F-1 兑现）**：bench150 重放——
   tags_index ≤1.5s（022 门续）+ link/search 带内或改善 + boot-ready
   实录（记录面）+ findings 无新增；**dbg 口径孤页弧 ≤2.0s**（§5.4
   门——同窗重跑一次预授权出口 + 越门归因裁定实录[022 §10.1 同款]，
   门文本随本计划冻结）；A/B 分量归因 = 双取段清偿直证（pre-change
-  950b4ea 树 vs 本批树交替 ≥3 轮 press→mode 对比）。验证：
+  950b4ea 树 vs 本批树交替 ≥3 轮 press→mode 对比）【r2 修订：双取
+  段清偿子断言随 T-03 划出——执行窗实测归因（全三改动树弧
+  545/495/503ms 含 T-03 贡献 ≈−0.35s）随 D-39 挂账入档；门判定
+  本身与 A/B 交替轮纪律不变（落点树 vs pre 树）】。验证：
   p21-bench150.mjs + dbg-p22.mjs A/B 两树日志（.runtime 落盘）。
 - **AC-04 判绿矩阵与外部窗口径**：merged 矩阵 + e2e + build 全绿
   （AC-02 载体）；probe 全族 14 件 fresh；split 臂 = 家族窗口径续
@@ -406,8 +415,9 @@ docs/ARCHITECTURE.md（§5 后端/§6 测试体系）+ docs/README.md（Tests/
     生链）+ e2e + build 后 gen 源检 `JSON.parse(` link_index 调用
     点恰 1 处 + merged 臂冒烟（json.parse native 1902 表达式消费
     实跑直证）。
-  - **[⛔ blocked 2026-09-28——实现完成并验证后回退，待用户裁处]**
-    实现已按 §5.3 落地且 **vm 轨全绿**（全三改动树 merged 矩阵
+  - **[⏸ 挂账（plan_revision 2 划出本批——2026-09-28 用户裁决
+    §10.6 选①）]** 实现已按 §5.3 落地且 **vm 轨全绿**（全三改动树
+    merged 矩阵
     16/16 含基线 v19 零漂移——json.parse native 1902 表达式消费
     实跑直证；gen 源检 `lp = JSON.parse(lj)` link_index 调用点恰
     1 处）。**vue 轨 e2e 确定性败形**（3/3 复现）：`pnpm test:e2e`
@@ -509,6 +519,76 @@ docs/ARCHITECTURE.md（§5 后端/§6 测试体系）+ docs/README.md（Tests/
   - `next`：**用户裁处 T-03**（§10.6 三选：①挂账降级②e2e 基建授权
     修③上游竞态修复后重推）→ 决后进 review（落点范围 AC 全数
     pass 面，T-03 按裁决结果并入或划出 AC-02/03 子断言）。
+
+- **2026-09-28 revision 2（用户裁决 §10.6 选①挂账降级——auto-plan-
+  review 入口裁定）**：
+  - `stage: new`（合同修订），PLAN-023，revision 1 → **2**。
+  - 基线：r1 @ 950b4ea（立项）+ 执行窗 f1215ce（T-01/T-02/T-04/T-05
+    落地，T-03 实现回退）。修订触发 = 用户 `review` 指令 = §10.6
+    选①（②需 e2e 基建授权、③需上游修复，均未给出——①为唯一
+    不触授权面的 review 通路）。
+  - 实际变更：**T-03 双取形消除划出本批交付面**（挂账 D-39——双取
+    形维持在册，后批随 D-39 消化重推；§5.3 设计文本留存作重推基
+    线）；§0 摘要/§1 目标③/§7 AC-02 生成源检子断言/AC-03 双取段
+    归因子断言/§8 T-03 块随改。目标①②④、约束、门文本（≤2.0s
+    dbg 口径）、T-01/T-02/T-04/T-05 任务与验证全不变——已完成工作
+    与既有授权全保留。
+  - `next: review`（r2 口径全 AC 重放）。
+
+- **2026-09-28 复审（auto-plan:review）——reviewed**：
+  - `stage: review`，PLAN-023，**revision 2**。
+  - `outcome: pass`——r2 口径全 AC 重放通过。
+  - `reviewed_commit`：f1215ce（代码树；本复审记录为 docs-only 后
+    代——022 b23afd8 先例同口径）。`base_commit`：950b4ea。
+  - `dependency_revisions`：auto-lang debug exe 09-28 15:02 /
+    release 09-28 15:17（本批全程未变——执行窗/复审窗同载体跨批
+    稳定第四证）；@autodown/engine dist 09-22 20:30（022 绿窗同源
+    未变）。
+  - `spec_inputs`：本仓无 docs/specs/（§4 在册声明）——canonical =
+    ARCHITECTURE.md + README.md + parity-ledger.md@f1215ce；delta
+    校正（SD-2301/2304 after 文本 r2 化）已并入本提交。
+  - **同会话复审声明**：与执行同会话——按技能纪律以工件重建口径
+    采信，全 AC 独立重放（非执行期摘要采信）。
+  - `acceptance_results`：
+    - **AC-01 pass**：后采重放 cmp 逐字节全等（三面×双语料 vs 执
+      行窗前采件——link/tags sha 与在册值同源；注记：p21-ws150 曾
+      经 bench 重建+保存弧 updated_at 变更一面，三采面均不消费
+      updated_at 字段，cmp 等价对受测读剖路径结论性不变）+ probe
+      全族 14 件 fresh（13 RESULT 全绿双臂 + receipt 负结果 D-19
+      在册一致）+ api.at diff 0。
+    - **AC-02 pass**（r2 口径）：merged 矩阵重放——首跑 file 组遇
+      D-21 v11③ popover 内容窗瞬态（「删除…」项未现，在册家族签
+      名），按 README 重跑口径 r2 跑 **16/16 ALL GREEN**（基线 v19
+      零漂移 PASS）+ e2e 重放 **1 passed 1.1m** + build ✓built
+      （release 路由）+ gen 源检 = r2 记录形态（:646
+      `lp = JSON.parse(await link_index('', 8))`——双取形现役）。
+    - **AC-03 pass**：bench150 重放 tags **229ms ≤1.5s 过** + link
+      281ms 带内 + boot-ready 2683ms 实录（带内；执行窗 2455 同树
+      异窗双证）+ **findings 零新增**；dbg 门重放三轮
+      **774/749/742ms ≤2.0s PASS**（执行窗 891/841 同树异窗双证
+      ——门稳定过）。
+    - **AC-04 pass**：merged fresh 16/16（跨窗第二证）+ probe 全族
+      fresh（跨窗第二证）+ split 臂家族窗签名复现（boot FAIL——
+      外部性定谳由执行窗二分判别链承载[pre 树同 exe 同签名，入档
+      f1215ce]；分段判绿 018..022 先例）+ exe 时间戳实录未变。
+    - **AC-05 pass**：负向证族重放全零（.console 写面 0[两文件]/
+      代码 diff 面 = 零[复审窗仅本计划 docs] / 基线·gen·dist 零
+      触碰 / 物料仓外即用即删已复核）。
+    - **AC-06 pass**：锚位读回 [1]-[9] 全现 + SD-2301/2304 delta
+      after 文本 r2 校正（挂账定文/D-39 新立——与 ARCH/ledger 落
+      地文本语义一致；字面异形注记：ARCH 用「③双取形消除挂账
+      （D-39）」短语，delta 表用「挂账定文」——同规则异表述）。
+  - `findings`：无阻断项。观测一项 F-2-1（非阻断）：复审窗 merged
+    矩阵首跑 D-21 v11③ 瞬态一例（重跑即绿口径兑现——第 28 批次
+    在册家族签名续记）。
+  - `evidence`：e2e/.runtime/p23-rev-{after-std,after-150}.txt（后
+    采重放件，对拍 p23-links-before-*.txt）/
+    p23-rev-matrix-merged{,-r2}.log / p23-rev-matrix-split.log /
+    p23-rev-build.log / p23-rev-e2e.log / p23-rev-bench150.log /
+    dbg 三轮 stdout（复审记录内嵌值）——.runtime ignored 家族口
+    径，值已内嵌本记录可追溯。
+  - `next`：**merge**（auto-plan:merge——r2 合同 = 本批交付面；归
+    档时 T-03/D-39 挂账面随档）。
 
 ## 10. 待澄清事项
 
