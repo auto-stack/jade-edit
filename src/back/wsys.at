@@ -74,8 +74,12 @@ fn is_delim(line str) bool {
 /// after 即旧「行重接」语义逐字节等价（含尾随换行保留）；两标记字节
 /// 互斥（--- 后一位 \n vs \r），before 前缀单调保证首现比较与
 /// .length 计数语义无关。VM 无 str.join 内建，此法为唯一 O(n) 通道。
-pub fn read_body(path str) str {
-    var text str = File.read_text(resolve(path))
+/// body 域剖切共享口（PLAN-023 T-01 单读化）：全文 text → body 域——
+/// read_body 剖切逻辑原样搬移（同代码路径：界符开头则 body_after_open，
+/// 否则全文直通）。单读两剖消费面 = links_json / search_json /
+/// page_tag_set（fm 域与 body 域同源一次 File.read_text——每页磁盘读
+/// 2→1，输出逐字节零漂移：纯读函数同输入同输出）。
+fn body_of(text str) str {
     if text.starts_with("---\n") {
         return body_after_open(text)
     }
@@ -85,7 +89,11 @@ pub fn read_body(path str) str {
     return text
 }
 
-/// 首行已确认为界符后的 body 提取（read_body 专用）。
+pub fn read_body(path str) str {
+    return body_of(File.read_text(resolve(path)))
+}
+
+/// 首行已确认为界符后的 body 提取（body_of/read_body 同通道）。
 fn body_after_open(text str) str {
     var p1 = text.split_once("\n---\n")
     var p2 = text.split_once("\n---\r\n")
@@ -422,8 +430,13 @@ pub fn collect_ad_pages(path str, depth int) List {
 /// 不动**（stem 恒——解析域零变化）；dtitle = 纯增量字段（既有消费者
 /// 零感知——backlink/outlink/wanted/mentions 派生面不读）。
 /// 三步：①walk = collect_ad_pages（本切片 T-01 提取共享——链接/检索两面
-/// 覆盖一致）②逐档 read_body 后 extract_links_json 标记法提取 ③stem 解析
-/// 装配。**PLAN-018 装配切换**（SD-1801）：装配逐页 `+` 重接 →
+/// 覆盖一致）②逐档提取 extract_links_json 标记法提取 ③stem 解析
+/// 装配。**PLAN-023 单读两剖**（T-01——每页磁盘读 2→1）：pass1 循环内
+/// 全文一次 File.read_text，fm 域（aliases/dtitles）与 body 域同源剖切
+///（body_of），body 存平行 bodies 表（pages 序平行——stems/rels 同款
+/// 在册形态 D-20② 纪律；022 ptags_all 同款），pass2 索引取零磁盘——
+/// 输出逐字节等价：bodies[j] ≡ read_body(rels[j])（纯读同输入同输出）。
+/// **PLAN-018 装配切换**（SD-1801）：装配逐页 `+` 重接 →
 /// StringBuilder 追加（O(P²)→O(n)——PLAN-003 §10.7 上量挂账兑现；探针 F
 /// 定谳 natives 160 族可调。**执行期实勘（018 T-01）**：500 档合成语料
 /// 上旧 `+` 装配在 P≈512 处 VM 值损坏——link_index HTTP 200 空串形态，
@@ -436,20 +449,25 @@ pub fn links_json(path str, depth int) str {
     var rels List = []
     var aliases List = []
     var dtitles List = []
+    var bodies List = []
     var i int = 0
     while i < pages.len() {
         var p = pages[i]
         stems.push(p.stem)
         rels.push(p.rel)
-        var fm str = frontmatter_of(File.read_text(resolve(p.rel)))
+        // PLAN-023 单读两剖：全文一次读入，fm 域与 body 域同源剖切。
+        var text str = File.read_text(resolve(p.rel))
+        var fm str = frontmatter_of(text)
         aliases.push(page_aliases(fm))
         dtitles.push(page_fm_value(fm, "title"))
+        bodies.push(body_of(text))
         i = i + 1
     }
     var sb StringBuilder = StringBuilder.new(1024)
     var j int = 0
     while j < rels.len() {
-        var body str = read_body(rels[j])
+        // 平行 bodies 表索引取（原每页 read_body 再读一趟磁盘——收口）。
+        var body str = bodies[j]
         var links str = extract_links_json(body, stems, aliases, rels)
         // dtitle 缺省 = stem（page_fm_value 空 → stem——front 侧 fallback
         // 双保险口径，back 侧装配即定值）。
@@ -509,13 +527,16 @@ pub fn search_json(query str, limit int) str {
             // ⚠ D-20②：列表元素先拷局部变量再取字段/调方法。
             var p = pages[i]
             var stem_l str = p.stem.to_lower()
-            var body str = read_body(p.rel)
+            // PLAN-023 单读两剖：全文一次读入，body 域与 fm 域同源（原
+            // read_body + frontmatter_of(File.read_text) 每页两趟磁盘读）。
+            var text str = File.read_text(resolve(p.rel))
+            var body str = body_of(text)
             var body_l str = body.to_lower()
             // PLAN-012：title 命中面 = stem ∪ aliases（frontmatter 解析接
             // 010 在册件 page_aliases——links_json:331-338 同款模式）；
             // alias-title-only 命中 → snippet = ""（下方 snippet 只从 body
             // 取，天然满足——SD-401 口径续）。命中行 title 恒 = stem。
-            var als List = page_aliases(frontmatter_of(File.read_text(resolve(p.rel))))
+            var als List = page_aliases(frontmatter_of(text))
             var title_hit bool = false
             if stem_l.contains(ql) {
                 title_hit = true
@@ -2499,12 +2520,14 @@ fn page_inline_tags(body str) List {
 
 /// 单页 tag 集（PLAN-009 T-01 聚合口径）：frontmatter tags ∪ body 行内
 /// #tag——fm 序在前（PLAN-008 基线 first-seen 序零漂移），inline 新 tag
-/// 去重追加。body 走 read_body（frontmatter 已剥——# 扫描面不涉 fm 值
-/// 内的 # 字符）；fm 面仍读原文 File.read_text（read_body 已剥 front-
-/// matter，与 PLAN-008 同通道）。
+/// 去重追加。**PLAN-023 单读两剖**：全文一次 File.read_text，fm 域
+///（page_tags）与 body 域（body_of——frontmatter 已剥，# 扫描面不涉 fm
+/// 值内的 # 字符）同源剖切（原两趟磁盘读——022 tags_json pass1 每页恰
+/// 调一次本函数，本批再砍其第二读）。
 fn page_tag_set(rel str) List {
-    var out List = page_tags(frontmatter_of(File.read_text(resolve(rel))))
-    var itags List = page_inline_tags(read_body(rel))
+    var text str = File.read_text(resolve(rel))
+    var out List = page_tags(frontmatter_of(text))
+    var itags List = page_inline_tags(body_of(text))
     var i int = 0
     while i < itags.len() {
         // ⚠ D-20②：列表元素先拷局部变量再调方法。

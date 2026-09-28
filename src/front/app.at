@@ -744,13 +744,17 @@ fn tabs_impact_text(tabs List, path str) str {    var m int = 0
 /// 悬空目标聚合行纯函数（PLAN-008 T-03；wanted 模式数据面——rename_
 /// impact/dangling_impact 纯函数族同构第三实例）：link_pages 全页面
 /// 出链扫 exists=false → 按 target 聚合计数（行 = {target,count,label}
-/// ——label 派生期拼接 `{target}（{n}）`，双段插值 avoidance）。两遍
-/// 聚合（D-20② 元素先拷局部；首遍 first-seen 去重、次遍计数——列表
-/// 元素定址替换未证形态，双遍规避）：行序 = first-seen（确定性，
-/// tags_json/link_index 哲学同判）。**纯派生零 back 增量**（wanted
-/// 面语义：link_pages 已知答案上聚合——SD-801）。
+/// ——label 派生期拼接 `{target}（{n}）`，双段插值 avoidance）。
+/// **PLAN-023 平面计数**（T-02——022 orphan_rows_of 平面化同构先例）：
+/// pass1 平面收全部悬空 target（flat 含重复，O(L)——不去重）；pass2
+/// 按 flat 序首现判定去重 + 同值计数一次装配（O(D×L)——原 pass2 每
+/// distinct target 全页全链重扫 O(D×P×L̄) 收口）。行序 = flat 首现序
+/// ≡ 原 first-seen 扫描序（同一 flat 序的首现）；count = 悬空链实例数
+///（原 pass2 计数同义）——行集/行序/行形状/label 公式零变化（无
+/// List 元素定址写，「未证形态」规避延续）。**纯派生零 back 增量**
+///（wanted 面语义：link_pages 已知答案上聚合——SD-801）。
 fn wanted_rows_of(pages List) List {
-    var targets List = []
+    var flat List = []
     var i int = 0
     while i < pages.len() {
         var page = pages[i]
@@ -761,48 +765,38 @@ fn wanted_rows_of(pages List) List {
             var ex bool = lnk.exists
             if !ex {
                 var t str = lnk.target
-                var seen bool = false
-                var j int = 0
-                while j < targets.len() {
-                    var tj str = targets[j]
-                    if tj == t {
-                        seen = true
-                    }
-                    j = j + 1
-                }
-                if !seen {
-                    targets.push(t)
-                }
+                flat.push(t)
             }
             k = k + 1
         }
         i = i + 1
     }
     var out List = []
-    var t2 int = 0
-    while t2 < targets.len() {
-        var target str = targets[t2]
-        var n int = 0
-        var i2 int = 0
-        while i2 < pages.len() {
-            var page2 = pages[i2]
-            var links2 List = page2.links
-            var k2 int = 0
-            while k2 < links2.len() {
-                var lnk2 = links2[k2]
-                var ex2 bool = lnk2.exists
-                if !ex2 {
-                    var t3 str = lnk2.target
-                    if t3 == target {
-                        n = n + 1
-                    }
-                }
-                k2 = k2 + 1
+    var f2 int = 0
+    while f2 < flat.len() {
+        var target str = flat[f2]
+        var seen bool = false
+        var j int = 0
+        while j < f2 {
+            var tj str = flat[j]
+            if tj == target {
+                seen = true
             }
-            i2 = i2 + 1
+            j = j + 1
         }
-        out.push({ target: target, count: n, label: target + "（" + n.str() + "）" })
-        t2 = t2 + 1
+        if !seen {
+            var n int = 0
+            var j2 int = 0
+            while j2 < flat.len() {
+                var t3 str = flat[j2]
+                if t3 == target {
+                    n = n + 1
+                }
+                j2 = j2 + 1
+            }
+            out.push({ target: target, count: n, label: target + "（" + n.str() + "）" })
+        }
+        f2 = f2 + 1
     }
     return out
 }

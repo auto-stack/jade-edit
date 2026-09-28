@@ -1057,8 +1057,56 @@ src/back/api.at           /api 契约（自有 Auto 源，与实现同 commit—
   扩容片先例同判：store/App 模型零新字段、autoui_state dump 零变
   化、snapshot id 序列零变化]）+ probe 全族 14 件 fresh + e2e 十五段
   + vue build（release 路由）+ bench150 重放对拍（§5.3 门裁定实录）。
+- **watch 批——刷新链路读面/取面收口（SD-2301，PLAN-023 第二十一
+  切片——纯内部性能优化，契约零变化；部分交付：③双取形消除挂账
+  D-39）**：PLAN-022 复审 F-1 裁定 unblock 路由批（watch 批立项以
+  dbg-p22 A/B 口径重推门）。①**back 单读两剖**（wsys.at——每页磁
+  盘读 2→1）：`body_of(text)` 共享口提取（read_body 剖切逻辑原样
+  搬移——同代码路径字节语义零变化），`links_json` pass1 全文一次
+  File.read_text、fm 域（aliases/dtitles）与 body 域同源剖切、body
+  存平行 bodies 表（pages 序平行——022 ptags_all 同款在册形态）+
+  pass2 索引取零磁盘（输出逐字节等价定文 `bodies[j] ≡
+  read_body(rels[j])`——纯读同输入同输出）+ `search_json` 单读两
+  剖（body 域/fm 域同源——原 read_body +
+  frontmatter_of(File.read_text) 两趟收口）+ `page_tag_set` 单读两
+  剖（022 tags_json pass1 每页恰调一次本函数，本批再砍其第二读）。
+  ②**front `wanted_rows_of` 平面计数**（022 orphan_rows_of 平面化
+  同构先例）：pass1 平面收全部悬空 target（flat 含重复 O(L)——不
+  去重）+ pass2 首现判定去重 + 同值计数一次装配（O(D×L)——原每
+  distinct target 全页全链重扫 O(D×P×L̄) 收口）；行序 = flat 首现
+  序 ≡ 原 first-seen 扫描序、count = 悬空链实例数——行集/行序/行
+  形状/label 公式零变化（无 List 元素定址写，「未证形态」规避延
+  续；vm 矩阵 wanted 已知答案直证）。③**双取形消除挂账（D-39）**：
+  `LinksRefreshOf` json.parse 单取实现完成且 vm 轨全绿（native
+  1902 表达式消费实跑直证 + gen 源检 link_index 调用点恰 1 处），
+  但 vue 轨 e2e 确定性触发 dev-stack 树响应滞留竞态（恢复弧
+  MentionsRefreshOf search_wiki 与 TreeRefresh tree 响应同毫秒完成
+  → 浏览器侧 fetch 200+ 秒未落——后端已 200；git-archive pre-change
+  树 A/B 二分四象限定谳唯 T-03 引入）→ 实现回退、双取形维持在册
+  （D-20⑤ workaround 保留），待用户裁处（挂账/基建授权修/上游修
+  复后重推三选——ledger D-39 全链证据）。④**量级实录**（150 页，
+  落点树 = T-01+T-02）：link_index 282/265ms（022 在册 289-304 带
+  内微改善）、tags_index **235ms** ≤1.5s 门过（022 门续）、search
+  48-54ms（在册 54-72 微改善）、boot-ready 2455ms（022 在册
+  2640-2659——单读化 Init 链顺产，记录面不设门）；**dbg 口径孤页
+  门重推 PASS**（F-1 兑现）：dbg-p22 A/B 口径弧合计（press→mode +
+  mode→rows）891/841ms ≤ 2.0s（交替轮 pre 树 866/867ms 同带；022
+  冻结门数值面沿用、口径面换 dbg 细粒度[无 bench 固定 sleep(500)
+  干扰]——严格性不减的口径净化；bench ⑨ 3699ms 降记录面照录）。
+  ⑤**fs 监听原语缺席定谳**（auto-lang native_catalog.rs 全量 grep
+  一手源）：fs 面无 watch/notify 族，`auto.fs.mtime`（2997）在册
+  ——watch 批原始愿景「免重 walk」的监听半维持上游供料记账；
+  mtime 键控跨调用缓存（读缓存 + mtime 失效）为潜在本仓通道但违
+  「纯读函数同输入同输出」零漂移纪律 + 字符串驻留量/mtime 粒度未
+  勘，挂账（unlock = 专项立项）。⑥**直证**：前后采逐字节门三面双
+  语料（links_json/tags_json/search_json——sha256 全等 9 件 + tags
+  两面与 022 在册值同源）+ probe 全族 14 件 fresh + api.at 零 diff
+  + merged 矩阵 16/16 ALL GREEN（基线 v19 零漂移——**零重锁第四
+  例**[017/022 先例续]）+ e2e 十五段全绿 1.3m + vue build（release
+  路由）+ split 臂家族窗第七例（git-archive 950b4ea pre-change 树
+  同 exe 同签名零接触定谳——分段判绿 018..022 先例续）。
 
-## 6. 测试体系（双轨一致性门；PLAN-001 T-04 换基迁移；SD-402 find 扩单；SD-502 create 扩单；SD-602 rename 扩单；SD-702 file 扩单；SD-802 meta 扩单；SD-902 meta/link 扩单；SD-1002 link 扩单；SD-1102 meta 属性子步扩单；SD-1202 dir/alias 子步扩单；SD-1302 显示名子步扩单；SD-1402 目录二期/面板名化子步扩单；SD-1502 daily/updated_at 子步扩单；SD-1602 trash 子步扩单；SD-1702 四级解析/词边界/case-only 子步扩单；SD-1802 目录移动/depth 8 子步扩单；SD-1902 目录合并/trash 增强子步扩单；SD-2002 orphans/recents 子步扩单；SD-2102 持久化/防线子步扩单；SD-2202 零扩单——PLAN-022 纯内部性能片：行为零变化，既有断言域全量承载[vm 矩阵 16 组含 link ⑧ orphans 三语义面/meta 组 tags 面] + 基线 v19 零漂移[零重锁第三例] + 前后采逐字节门[tags_json 两语料 9 采点] + bench150 重放对拍门[tags ≤1.5s 过 246ms/孤页 ≤2.0s 越门 3.4s——非目标面残余记账，split 臂家族窗第六例口径续记]）
+## 6. 测试体系（双轨一致性门；PLAN-001 T-04 换基迁移；SD-402 find 扩单；SD-502 create 扩单；SD-602 rename 扩单；SD-702 file 扩单；SD-802 meta 扩单；SD-902 meta/link 扩单；SD-1002 link 扩单；SD-1102 meta 属性子步扩单；SD-1202 dir/alias 子步扩单；SD-1302 显示名子步扩单；SD-1402 目录二期/面板名化子步扩单；SD-1502 daily/updated_at 子步扩单；SD-1602 trash 子步扩单；SD-1702 四级解析/词边界/case-only 子步扩单；SD-1802 目录移动/depth 8 子步扩单；SD-1902 目录合并/trash 增强子步扩单；SD-2002 orphans/recents 子步扩单；SD-2102 持久化/防线子步扩单；SD-2202 零扩单——PLAN-022 纯内部性能片：行为零变化，既有断言域全量承载[vm 矩阵 16 组含 link ⑧ orphans 三语义面/meta 组 tags 面] + 基线 v19 零漂移[零重锁第三例] + 前后采逐字节门[tags_json 两语料 9 采点] + bench150 重放对拍门[tags ≤1.5s 过 246ms/孤页 ≤2.0s 越门 3.4s——非目标面残余记账，split 臂家族窗第六例口径续记]；SD-2302 续零扩单——PLAN-023 纯内部性能片（读面/取面收口，第三例）：行为零变化，既有断言域全量承载[vm 矩阵 16 组含 ⑧ orphans/wanted 语义面] + 基线 v19 零漂移[零重锁第四例] + 前后采逐字节门扩面[links_json/tags_json/search_json 三面×双语料 9 件 sha256 全等] + dbg 口径孤页门重推门[≤2.0s 过 891/841ms——F-1 兑现；bench ⑨ 降记录面] + 双取形消除挂账[SD-2301③——D-39 vue 轨竞态，split 臂家族窗第七例口径续记]）
 
 | 门 | 命令 | 断言域 |
 | --- | --- | --- |
