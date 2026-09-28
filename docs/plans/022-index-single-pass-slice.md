@@ -1,10 +1,10 @@
 ---
 plan_id: PLAN-022
-status: execution_done
+status: reviewed
 feature_name: 索引单趟合并性能批（第二十切片）
 author: [agent]
 created_at: 2026-09-28T03:56:15Z
-updated_at: 2026-09-28T07:05:00Z
+updated_at: 2026-09-28T08:10:00Z
 plan_revision: 1
 current_step: 5
 total_steps: 5
@@ -461,6 +461,80 @@ modify（本仓 canonical 知识基座 = ARCHITECTURE/README/ledger 三件，
   - `next`: review（建议独立会话复审；工件重建口径 = merged 矩阵 +
     前后采件 `e2e/.runtime/p22-tags-sample.mjs` + probe_tags +
     `e2e/.runtime/p21-bench150.mjs` 重放 + dbg-p22.mjs A/B）。
+
+- **2026-09-28 复审（auto-plan:review）**：
+  - `stage: review | plan_id: PLAN-022 | plan_revision: 1 | outcome:
+    pass | reviewed_commit: 6245d03 | base_commit: 7ebe95c |
+    dependency_revisions: auto-lang debug 2026-09-28 15:02（家族重建
+    窗第二例——work 窗 09-27 22:38 后复审窗再建，重放全程新 exe 载
+    体）/ release 2026-09-25 17:58（未变） | spec_inputs:
+    docs/ARCHITECTURE.md §5/§6@6245d03 + docs/README.md
+    Tests/是什么/仪表盘@6245d03 + docs/parity-ledger.md v26@6245d03`
+  - **复审方式声明**：实现同会话复审（无独立会话授权）——按技能以
+    工件重建裁定：验收命令在受审提交 6245d03 树上全量重放（非执行
+    期摘要采信）；受审树工作树零 WIP、后代纯净（6a9e54d→6245d03
+    docs-only 四件核验）。
+  - `acceptance_results`:
+    - **AC-01 pass**：跨提交独立逐字节对拍重放（7ebe95c archive 物
+      料 +deps 树 vs 受审树，双语料新鲜采样 cmp 逐字节零差异——标准
+      语料/150 页语料全量；锚逐项一致）+ probe_tags 双臂六案全绿重
+      放 + api.at diff（7ebe95c..6245d03）= 0 行。契约零变化直证。
+    - **AC-02 pass**：merged 矩阵重放 ⑧ orphans 三语义面 PASS（16/16
+      内）——orphan 重写语义面直证。
+    - **AC-03 pass（孤页门组件=已裁未达项 F-1，非阻断——裁定依据
+      见 findings）**：bench150 复审窗新鲜重放 tags_index **237ms
+      ≤1.5s 过**（work 窗 246ms 复现——量级稳定非窗内偶然）+ boot-
+      ready 2659ms 实录（记录面）+ findings 无新增 + 孤页入口
+      3424ms（work 窗 3412ms 复现——越门非偶然系稳定实测）+ **A/B
+      归因复核成立**：同 exe 交替轮受审树弧 consistently 快于基线树
+      （09-28 载体 mode 1195→736ms ≈ −0.46s；09-27 载体 −0.93s——
+      方向与机制双 exe 复现）；零成本反事实在新载体复核成立（旧码新
+      exe 弧亦仅 ~1.8s 细粒度——8.2s 在册基线系 exe+窗口绑定；残余
+      构成=非目标面 VM 循环量主导，授权范围不可达结论维持）。
+    - **AC-04 pass（分段判绿——外部阻断如实记）**：merged 矩阵
+      16/16 ALL GREEN（受审树 + 09-28 新 exe 载体重放——基线 v19 零
+      漂移；跨 exe 稳定性第二证）+ e2e 十五段绿 1.2m 重放 + vue
+      build 绿（release 路由 ✓ built 14.26s 重放）；**split 臂 = 外
+      部家族窗延续（第六例续——新鲜采样同形败 boot FAIL+wiki 树行
+      不现，跨两次 exe 重建延续，外部性再证；D-21 v26 + work 窗
+      pre-change A/B 零接触定谳承载）**——018..021 四批分段判绿先例。
+    - **AC-05 pass**：probe 全族 **14 件 fresh 重放**（受审树+新 exe
+      ——12 RESULT 全绿双臂 + probe_tags + probe_receipt_d19 负结果
+      D-19 在册一致）+ 负向证复核全零（`.console` 属性写面 grep 0/
+      api.at 0/基线 0/tests 0[零扩单实证]/gen·dist 零手改）+ 冻结池
+      /家族仓零接触 + 复审物料仓外即用即删。
+    - **AC-06 pass**：四面锚位读回（ARCH §5 SD-2201 第二十切片段@:1024
+      + §6 SD-2202 零扩单 heading；README Tests heading SD-2202@:247
+      + N 定谳@:582 + 基线零重锁第三例注记@:626 + 是什么第二十切片
+      @:181 + 仪表盘②出池@:673；ledger H1 v26 + 表尾 v25→v26 指针
+      + D-22 PLAN-022 收口处置读回）+ delta 文本与实测一致
+      （246ms/−0.93s/3.4s/2.64s 均与重放值带内）。
+  - `findings`:
+    - **F-1（已裁未达项——非阻断，裁定点=计划预授权「交复审裁处」
+      §10.7）**：AC-03 孤页清单入口数值门未达（bench 口径 3424ms >
+      2.0s；在册 8.078-8.248ms 基线——2.4× 改善未达 ≥4× 底线）。
+      **裁定 pass 的依据链**：①归因审计确认——定向面清偿已交付（同
+      exe A/B 双载体方向一致 −0.93s/−0.46s），残余全数落 §1 明列非
+      目标面（双取形/派生族/mentions 串联/仪表），零成本反事实双 exe
+      复核成立=授权范围内不可修；②计划 §10.1 预置此确切结局路径
+      （VM 循环量主导→供料记账不硬调门）且立项时经用户授权——
+      needs_replan 修门与 §10.1「不硬调门」直接相抵，needs_fix 无在
+      册可修面（反事实已证）——两非 pass 出口均自我矛盾；③知识基座
+      四面一致响亮记录（plan §10.7/ledger v26 D-22/README 仪表盘供
+      料/ARCH §5 定文）——门「防静默弱化」保护目的已达成，无静默
+      面；④tags 门（237ms）/boot 实录/findings 无新增三组件全过。
+      **处置**：门文本冻结原样随档；残余面=watch 批供料（在册）；
+      unblock=watch 批立项时以本批 A/B 件（dbg-p22.mjs 口径）为基线
+      重推门。
+  - `evidence`: 跨提交逐字节对拍 cmp 零差异（双语料）+ merged 矩阵
+    16/16（`e2e/.runtime/p22-rev-matrix-merged.log`）+ split 新鲜采样
+    （`p22-rev-matrix-split.log`——同形败实录）+ e2e 1.2m + build
+    ✓built + bench150 重放（`p22-rev-bench150.log`——tags 237ms/孤页
+    3424ms/boot 2659ms）+ dbg A/B 交替轮四采（本记录 AC-03 内联值）
+    + probe 族 RESULT 行 ×12 + 负向证 grep 全零 + 锚位行号七处。
+  - `next`: merge（复审基线=6245d03——merge 窗若现 docs-only 后代按
+    021 先例核验；ledger v26 已随实现落 main——merge 阶段归档+
+    cleaned checkpoint）。
 
 ## 10. 待澄清事项
 
