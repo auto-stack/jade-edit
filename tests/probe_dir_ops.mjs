@@ -81,6 +81,39 @@
 //                      相等（无冲突全入径=纯移动语义；冲突后缀档=新档
 //                      零改写口径 SD-1901 注记随 mb② 磁盘案承载）
 //
+// **PLAN-025 T-03 扩**（SD-2501——move_dir 四参三择 + moves 映射返回形；
+// **返回形 = JSON {"dir","moves"}——全案 dir 抽取随校 + 双臂 raw 字节
+// 等值升级；m①..mb⑨ 全案 strategy="both" 四参化 = 零漂移回归承载**）：
+//   s② skip 基础       SkA（SkP.ad=SrcP2）→ SkT（twin SkA/SkP.ad=SrcP
+//                      在）merge=true skip → "SkT/SkA"；靶 twin 档逐字
+//                      节不动 + 源冲突档 .trash/SkA/SkP.ad（SrcP2）+
+//                      moves 恰一对[src→.trash 位]
+//   s③ skip 多冲突     SkA 重建双档（SkP=SrcP3+SkQ=SrcQ）→ skip →
+//                      .trash 序号续接 SkP--1.ad + 首入 SkQ.ad；moves
+//                      二对集等
+//   s④ overwrite 基础  OvA（OvP=SrcOv2+OvX 含 [[OvP]]）→ OvT（twin
+//                      OvA/OvP.ad=TgtOv）overwrite → 靶旧档 .trash/
+//                      OvT/OvA/OvP.ad + 源档落靶位逐字节 + 双映射对[
+//                      靶旧→.trash + 源→靶位] + OvX 正常迁
+//   s⑤ 策略×卫正交     循环卫/域卫双面/纯 .ad 卫/同名文件占位拒 ×
+//                      skip/overwrite 八案全 "" 零变化（拒径与 strategy
+//                      值无关直证）
+//   s⑥ fail-closed     未知策略 "xxx"/空串 → ""（合法几何下仍拒——
+//                      白名单前置直证）；UkD 磁盘零变化
+//   s⑦ CJK skip        跳甲（跳档.ad=跳源2）→ 跳靶（twin 跳甲/跳档.ad
+//                      =跳源）→ 靶档逐字节不动 + .trash/跳甲/跳档.ad
+//   s⑧ 回滚弧          trash_restore 对 skip/overwrite 改道档：SkP--1
+//                      恢复回源位去后缀名（SrcP3 逐字节）→ SkP.ad 再
+//                      恢复受 exists 卫拒（""——v1 冲突守卫）→ overwrite
+//                      占用期恢复受拒两步可回（occupant 移出后恢复
+//                      TgtOv 逐字节）——probe_trash 域联证
+//   s⑨ 链接零扰动     ov4 径 link_index 前后归一 diff 相等（m⑦ 口径
+//                      三择径续——moved 集含 .trash 改道位归一）
+//   s⑩ moves 完整性   成功径迁移档数 == 映射对数（mb①/mb②/s② 恰一
+//                      对精确形；s③ 二对/s④ 三对[overwrite 双对计]
+//                      集等；m⑤ 幂等 moves=[] 精确形）
+//                      双臂
+//
 // 嵌套目标目录造档通道（双臂同构零 ws_join 依赖——write_text 不建父目
 // 录，create_dir 清洗层不含分隔符）：MgBoot 根目录 + 档 → move_dir 入
 // MgTgt → rename_dir 改名靶名——全部已证 back 通道五连。
@@ -142,6 +175,21 @@ const CASES = [
   { id: 'mb7-trash-dst', expect: '' },
   { id: 'mb8-cjk-merge', expect: '合并靶/目录合并甲' },
   { id: 'mb9-link-merge', expect: 'MgTgt2/DirMgLink' },
+  // PLAN-025 三择案组（SD-2501——返回 JSON dir 抽取随校；全案四参化）
+  { id: 's2-skip-basic', expect: 'SkT/SkA' },
+  { id: 's3-skip-multi', expect: 'SkT/SkA' },
+  { id: 's4-over-basic', expect: 'OvT/OvA' },
+  { id: 's5a-cycle-skip', expect: '' },
+  { id: 's5b-cycle-over', expect: '' },
+  { id: 's5c-trash-src', expect: '' },
+  { id: 's5d-trash-dst', expect: '' },
+  { id: 's5e-purad-skip', expect: '' },
+  { id: 's5f-purad-over', expect: '' },
+  { id: 's5g-block-skip', expect: '' },
+  { id: 's5h-block-over', expect: '' },
+  { id: 's6a-unknown', expect: '' },
+  { id: 's6b-empty-strat', expect: '' },
+  { id: 's7-cjk-skip', expect: '跳靶/跳甲' },
 ]
 const RET_FIELD = {
   'd1-root': 'd1', 'd2-not-dir': 'd2', 'd3-recursive': 'd3', 'd4-empty': 'd4',
@@ -153,6 +201,24 @@ const RET_FIELD = {
   'mb1-merge-basic': 'mb1', 'mb2-conflict-suffix': 'mb2', 'mb3-merge-false': 'mb3',
   'mb4-merge-cycle': 'mb4', 'mb5-merge-file-block': 'mb5', 'mb6-trash-src': 'mb6',
   'mb7-trash-dst': 'mb7', 'mb8-cjk-merge': 'mb8', 'mb9-link-merge': 'mb9',
+  's2-skip-basic': 'sk2', 's3-skip-multi': 'sk3', 's4-over-basic': 'ov4',
+  's5a-cycle-skip': 'g5a', 's5b-cycle-over': 'g5b', 's5c-trash-src': 'g5c',
+  's5d-trash-dst': 'g5d', 's5e-purad-skip': 'g5e', 's5f-purad-over': 'g5f',
+  's5g-block-skip': 'g5g', 's5h-block-over': 'g5h', 's6a-unknown': 'uk6a',
+  's6b-empty-strat': 'uk6b', 's7-cjk-skip': 'cjk7',
+}
+// s⑩ moves 完整性期望（PLAN-025——成功径每迁移档恰一对；overwrite 双
+// 对计；幂等 moves=[]。数组对 = [old,new]；set 形 = 顺序无关集合等）。
+const MOVES_EXACT = {
+  'm1-basic': [['DirMove/MoveA.ad', 'Tgt/DirMove/MoveA.ad'], ['DirMove/MoveB.ad', 'Tgt/DirMove/MoveB.ad']],
+  'm5-idem': [],
+  'mb1-merge-basic': [['DirMg/MgA.ad', 'MgTgt/DirMg/MgA.ad']],
+  'mb2-conflict-suffix': [['DirMg2/MgC.ad', 'MgTgt/DirMg2/MgC--1.ad']],
+  's2-skip-basic': [['SkA/SkP.ad', '.trash/SkA/SkP.ad']],
+}
+const MOVES_SET = {
+  's3-skip-multi': { pairs: [['SkA/SkP.ad', '.trash/SkA/SkP--1.ad'], ['SkA/SkQ.ad', '.trash/SkA/SkQ.ad']] },
+  's4-over-basic': { pairs: [['OvT/OvA/OvP.ad', '.trash/OvT/OvA/OvP.ad'], ['OvA/OvP.ad', 'OvT/OvA/OvP.ad'], ['OvA/OvX.ad', 'OvT/OvA/OvX.ad']] },
 }
 // r⑦ 嵌套（merged 探针域）+ r⑧ 链接面（link_index 前后采 dual field）
 // + PLAN-018 m2b（循环卫后代形——ws_join 域）/m3b（合并拒同名目录形）
@@ -173,19 +239,51 @@ const REN_A_TMPL = '# RenA\n\n'
 const CJK_YI_TMPL = '# 中文乙\n\n'
 
 /** r⑧ 链接零扰动归一（vm_matrix ljNorm 同族——moved 集合 path/target_path
- *  归一 <MOVED> + 页序无关排序后逐字节比对）。 */
-function ljNorm(raw, movedSet) {
+ *  归一 <MOVED> + 页序无关排序后逐字节比对）。dropBefore = 单侧剔除集
+ *  （PLAN-025 s⑨ overwrite 2→1 塌缩：被覆盖靶旧档退出索引面[内容存续
+ *  .trash walk 忽略域]——前态剔除使页集可比，后态占位页保留）。 */
+function ljNorm(raw, movedSet, dropBefore = null) {
   const unesc = (s) => { try { return JSON.parse(`"${s}"`) } catch { return s } }
   try {
     const pages = JSON.parse(unesc(raw))
     const norm = (p) => (movedSet.has(p) ? '<MOVED>' : p)
-    return JSON.stringify(pages.map((p) => ({
+    return JSON.stringify(pages.filter((p) => !(dropBefore && dropBefore.has(p.path))).map((p) => ({
       path: norm(p.path), title: p.title, dtitle: p.dtitle,
       links: p.links.map((l) => ({ ...l, target_path: norm(l.target_path) })),
     })).sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b))))
   } catch {
     return '<unparsable>'
   }
+}
+
+/** PLAN-025 返回形 dir 抽取（返回 = JSON {"dir","moves"}；"" 拒哨兵
+ *  原样穿透——非 JSON 形输入按原文返回）。 */
+function dirOf(raw) {
+  try {
+    const v = JSON.parse(raw)
+    if (v && typeof v === 'object' && typeof v.dir === 'string') return v.dir
+  } catch { /* 非 JSON——拒哨兵形 */ }
+  return raw
+}
+
+/** PLAN-025 moves 抽取（JSON 形 → [old,new][]；形外 = null）。 */
+function movesOf(raw) {
+  try {
+    const v = JSON.parse(raw)
+    if (v && typeof v === 'object' && Array.isArray(v.moves)) return v.moves
+  } catch { /* 非 JSON */ }
+  return null
+}
+
+/** split 臂 HTTP 封套剥离（serve-back 对 str 返回再 JSON 字符串编码一
+ *  层——move_dir 的 JSON 返回形被双重编码；剥至内层 JSON 原文与 merged
+ *  臂 dump 字段同形，双臂 raw 字节等值比较面归一）。 */
+function unwrapStr(raw) {
+  try {
+    const v = JSON.parse(raw)
+    if (typeof v === 'string') return v
+  } catch { /* 非 JSON 封套——原文 */ }
+  return raw
 }
 
 function diskAsserts(ws, tag, failures, opts = {}) {
@@ -293,6 +391,31 @@ function diskAsserts(ws, tag, failures, opts = {}) {
   ck(!isDir('目录合并甲'), 'mb⑧ 目录合并甲/ 源目录已消')
   // mb⑨ 链接案源迁移逐字节
   ck(read('MgTgt2/DirMgLink/MgLink.ad') === '# MgLink\n\n见 [[MoveA]] 一处。\n', 'mb⑨ MgLink.ad 迁移逐字节')
+  // —— PLAN-025 三择面（SD-2501）——
+  // s② skip 基础：靶 twin 档逐字节不动 + 源冲突档 .trash 改道 + 源目录消
+  ck(read('SkT/SkA/SkP.ad') === '# SrcP\n\n', 's② SkT/SkA/SkP.ad 靶 twin 档逐字节不动（skip 零触碰）')
+  ck(read('.trash/SkA/SkQ.ad') === '# SrcQ\n\n', 's③ .trash/SkA/SkQ.ad 首入改道逐字节')
+  ck(isDir('SkA'), 's②③ SkA/ 仅 rs⑧ 恢复重建位（重建复消后恢复面重建——SkP.ad 逐字节随 s⑧ 断言）')
+  // s③ skip 多冲突：.trash 序号续接（SkP--1 = rs⑧ 已恢复出——恢复面断言）
+  ck(!fs.existsSync(path.join(ws, '.trash', 'SkA', 'SkP--1.ad')), 's③⑧ .trash/SkA/SkP--1.ad 已随 rs⑧ 恢复出（.trash 清位）')
+  ck(read('SkT/SkA/SkQ.ad') === '# TgtQ\n\n', 's③ SkT/SkA/SkQ.ad 靶 twin 档逐字节不动')
+  // s④ overwrite：靶旧档 .trash + 源档落靶位逐字节 + OvX 正常迁
+  ck(read('OvT/OvA/OvP.ad') === '# TgtOv\n\n', 's④⑧ OvT/OvA/OvP.ad = 靶旧档恢复回位逐字节（rs⑧ 两步可回）')
+  ck(read('.trash/OvT/OvA/OvP.ad') === null, 's④⑧ .trash/OvT/OvA/OvP.ad 已随 rs⑧ 恢复出（.trash 清位）')
+  ck(read('OvT/OvA/OvX.ad') === '# OvX\n\n见 [[OvP]] 一处。\n', 's④ OvX.ad 正常迁移逐字节')
+  ck(!isDir('OvA'), 's④ OvA/ 源目录已消')
+  ck(read('UkD/OvP.ad') === '# SrcOv2\n\n', 's④⑧ UkD/OvP.ad 占用档移出逐字节（恢复前置步）')
+  // s⑤ 卫正交：GuardD/BlockD/UkD 零变化 + 占位原样
+  ck(read('GuardD/G.ad') === '# G\n\n', 's⑤ GuardD/G.ad 原样（纯 .ad 卫拒零落盘）')
+  ck(read('GuardD/notes.txt') === 'x\n', 's⑤ GuardD/notes.txt 原样')
+  ck(read('SkT/BlockD') === 'x\n', 's⑤ SkT/BlockD 文件占位原样')
+  ck(read('BlockD/B.ad') === '# B\n\n', 's⑤ BlockD/B.ad 原样（同名文件占位拒零落盘）')
+  ck(read('UkD/U.ad') === '# U\n\n', 's⑥ UkD/U.ad 原样（fail-closed 拒零落盘）')
+  // s⑦ CJK skip：靶 twin 档不动 + 改道 .trash
+  ck(read('跳靶/跳甲/跳档.ad') === '# 跳源\n\n', 's⑦ 跳靶/跳甲/跳档.ad 靶 twin 档逐字节不动')
+  ck(read('.trash/跳甲/跳档.ad') === '# 跳源2\n\n', 's⑦ .trash/跳甲/跳档.ad 改道逐字节')
+  // s⑧ 回滚弧：SkP--1 恢复回源位去后缀名（SrcP3）；SkP.ad 再恢复受卫拒
+  ck(read('SkA/SkP.ad') === '# SrcP3\n\n', 's⑧ SkA/SkP.ad = SkP--1 恢复回源位去后缀名逐字节')
   // 副作用圈定：根 .ad 集合恰为四档（+LinkSrc2——PLAN-018 素材）；语料 json 不动
   const rootAds = rootEntries.filter((f) => f.endsWith('.ad')).sort()
   ck(rootAds.join(',') === 'Blocker.ad,DelFile.ad,LinkSrc.ad,LinkSrc2.ad', `根 .ad 集合恰为四档（实际：${rootAds.join(', ')}）`)
@@ -305,7 +428,7 @@ const PROBE_AT = `// 探针 widget（tests/probe_dir_ops.mjs 生成件——直�
 // 非入库源）。Init 内进程内直调 setup + delete_dir 六案 + rename_dir 六案
 // + 嵌套案 + link_index 前后采，返回值落 model 字段供 autoui_state dump。
 // 入口文件名固定 app.at（auto 前端入口约定）。
-use back.api: create_dir, move_page, create_page, write_wiki, delete_dir, rename_dir, move_dir, link_index, search_wiki
+use back.api: create_dir, move_page, create_page, write_wiki, delete_dir, rename_dir, move_dir, link_index, search_wiki, trash_restore
 use back.probe_support: ws_join
 
 widget App {
@@ -390,6 +513,43 @@ widget App {
         var mb9 str = ""
         var l8 str = ""
         var l9 str = ""
+        // —— PLAN-025 扩（SD-2501——move_dir 三择 + moves 映射面）——
+        var s34 str = ""
+        var s35 bool = false
+        var s36 bool = false
+        var s37 str = ""
+        var s38 str = ""
+        var s39 bool = false
+        var s40 bool = false
+        var s41 bool = false
+        var sk2 str = ""
+        var sk3 str = ""
+        var s42 str = ""
+        var s43 str = ""
+        var s44 str = ""
+        var s45 bool = false
+        var ov4 str = ""
+        var l10 str = ""
+        var l11 str = ""
+        var s46 bool = false
+        var g5a str = ""
+        var g5b str = ""
+        var g5c str = ""
+        var g5d str = ""
+        var g5e str = ""
+        var g5f str = ""
+        var g5g str = ""
+        var g5h str = ""
+        var s47 bool = false
+        var uk6a str = ""
+        var uk6b str = ""
+        var s48 str = ""
+        var s49 bool = false
+        var cjk7 str = ""
+        var rs8a str = ""
+        var rs8b str = ""
+        var rs8c str = ""
+        var rs8d str = ""
     }
     view {
         col (style: "h-full w-full items-center justify-center") {
@@ -464,76 +624,136 @@ widget App {
             l4 = link_index("", 8)
             l5 = link_index("", 4)
             m8 = search_wiki("Deep5", 5)
-            // move_dir 六案 + 前后链接采（**PLAN-019：全案三参化**——merge
-            //=false 承载 018 拒径零变化）
+            // move_dir 六案 + 前后链接采（**PLAN-025：全案四参化**——
+            // strategy="both" = v1 行为零漂移回归承载）
             l6 = link_index("", 4)
-            m1 = move_dir("DirMove", "Tgt", false)
-            m2 = move_dir("Tgt/DirMove", "Tgt/DirMove", false)
+            m1 = move_dir("DirMove", "Tgt", false, "both")
+            m2 = move_dir("Tgt/DirMove", "Tgt/DirMove", false, "both")
             s28 = ws_join("Tgt/DirMove/sub")
-            m2b = move_dir("Tgt/DirMove", "Tgt/DirMove/sub", false)
-            m3 = move_dir("Tgt/DirMove", "Tgt2", false)
+            m2b = move_dir("Tgt/DirMove", "Tgt/DirMove/sub", false, "both")
+            m3 = move_dir("Tgt/DirMove", "Tgt2", false, "both")
             s28 = ws_join("Tgt3/DirMove")
-            m3b = move_dir("Tgt/DirMove", "Tgt3", false)
+            m3b = move_dir("Tgt/DirMove", "Tgt3", false, "both")
             w2 = write_wiki("Tgt/DirMove/notes.txt", "x\\n")
-            m4 = move_dir("Tgt/DirMove", "Tgt4", false)
-            m5 = move_dir("DirMove2", "", false)
-            m6 = move_dir("目录丙", "Tgt", false)
+            m4 = move_dir("Tgt/DirMove", "Tgt4", false, "both")
+            m5 = move_dir("DirMove2", "", false, "both")
+            m6 = move_dir("目录丙", "Tgt", false, "both")
             l7 = link_index("", 4)
             // —— PLAN-019 merge 面（SD-1901）——setup：嵌套靶目录 back
             // 通道建成（MgBoot 根建+档 → move_dir 入 MgTgt → rename_dir
-            // 改靶名——双臂同构零 ws_join 依赖）+ merge 九案。
+            // 改靶名——双臂同构零 ws_join 依赖）+ merge 九案（**PLAN-025
+            // 全案四参化 both**）。
             s29 = create_dir("MgTgt")
             s29 = create_dir("MgBoot")
             s29 = create_page("MgB")
             s29 = move_page("MgB.ad", "MgBoot")
-            s29 = move_dir("MgBoot", "MgTgt", false)
+            s29 = move_dir("MgBoot", "MgTgt", false, "both")
             s29 = rename_dir("MgTgt/MgBoot", "DirMg")
             s29 = create_dir("DirMg")
             s29 = create_page("MgA")
             s29 = move_page("MgA.ad", "DirMg")
-            mb1 = move_dir("DirMg", "MgTgt", true)
+            mb1 = move_dir("DirMg", "MgTgt", true, "both")
             s30 = create_dir("MgBoot2")
             s30 = create_page("MgC")
             s30 = move_page("MgC.ad", "MgBoot2")
             s30 = write_wiki("MgBoot2/MgC.ad", "# TgtC\\n\\n")
-            s30 = move_dir("MgBoot2", "MgTgt", false)
+            s30 = move_dir("MgBoot2", "MgTgt", false, "both")
             s30 = rename_dir("MgTgt/MgBoot2", "DirMg2")
             s30 = create_dir("DirMg2")
             s30 = create_page("MgC")
             s30 = write_wiki("MgC.ad", "# SrcC\\n\\n")
             s30 = move_page("MgC.ad", "DirMg2")
-            mb2 = move_dir("DirMg2", "MgTgt", true)
+            mb2 = move_dir("DirMg2", "MgTgt", true, "both")
             s31 = create_dir("MgBoot3")
             s31 = create_page("MgE")
             s31 = move_page("MgE.ad", "MgBoot3")
-            s31 = move_dir("MgBoot3", "MgTgt", false)
+            s31 = move_dir("MgBoot3", "MgTgt", false, "both")
             s31 = rename_dir("MgTgt/MgBoot3", "DirMg3")
             s31 = create_dir("DirMg3")
             s31 = create_page("MgD")
             s31 = move_page("MgD.ad", "DirMg3")
-            mb3 = move_dir("DirMg3", "MgTgt", false)
-            mb4 = move_dir("Tgt/DirMove", "Tgt/DirMove", true)
-            mb5 = move_dir("Tgt/DirMove", "Tgt2", true)
-            mb6 = move_dir(".trash/NoDir", "Tgt", false)
-            mb7 = move_dir("Tgt/DirMove", ".trash", true)
+            mb3 = move_dir("DirMg3", "MgTgt", false, "both")
+            mb4 = move_dir("Tgt/DirMove", "Tgt/DirMove", true, "both")
+            mb5 = move_dir("Tgt/DirMove", "Tgt2", true, "both")
+            mb6 = move_dir(".trash/NoDir", "Tgt", false, "both")
+            mb7 = move_dir("Tgt/DirMove", ".trash", true, "both")
             s32 = create_dir("合并靶")
             s32 = create_dir("MgCjkBoot")
             s32 = create_page("靶档")
             s32 = move_page("靶档.ad", "MgCjkBoot")
-            s32 = move_dir("MgCjkBoot", "合并靶", false)
+            s32 = move_dir("MgCjkBoot", "合并靶", false, "both")
             s32 = rename_dir("合并靶/MgCjkBoot", "目录合并甲")
             s32 = create_dir("目录合并甲")
             s32 = create_page("档甲")
             s32 = move_page("档甲.ad", "目录合并甲")
-            mb8 = move_dir("目录合并甲", "合并靶", true)
+            mb8 = move_dir("目录合并甲", "合并靶", true, "both")
             s33 = create_dir("MgTgt2")
             s33 = create_dir("DirMgLink")
             s33 = create_page("MgLink")
             s33 = write_wiki("MgLink.ad", "# MgLink\\n\\n见 [[MoveA]] 一处。\\n")
             s33 = move_page("MgLink.ad", "DirMgLink")
             l8 = link_index("", 4)
-            mb9 = move_dir("DirMgLink", "MgTgt2", true)
+            mb9 = move_dir("DirMgLink", "MgTgt2", true, "both")
             l9 = link_index("", 4)
+            // —— PLAN-025 三择面（SD-2501）——skip 基础/多冲突（twin 目
+            // 标靶经 move_dir+rename_dir 双通道建成）+ overwrite 基础（
+            // 链接零扰动前后采）+ 卫正交八案 + fail-closed + CJK skip +
+            // trash_restore 回滚弧。
+            s34 = create_dir("SkT")
+            s35 = write_wiki("SkT/SkP.ad", "# TgtP\\n\\n")
+            s36 = create_dir("SkBoot")
+            s36 = write_wiki("SkBoot/SkP.ad", "# SrcP\\n\\n")
+            s37 = move_dir("SkBoot", "SkT", false, "both")
+            s38 = rename_dir("SkT/SkBoot", "SkA")
+            s39 = create_dir("SkA")
+            s39 = write_wiki("SkA/SkP.ad", "# SrcP2\\n\\n")
+            sk2 = move_dir("SkA", "SkT", true, "skip")
+            s40 = write_wiki("SkT/SkA/SkQ.ad", "# TgtQ\\n\\n")
+            s41 = create_dir("SkA")
+            s41 = write_wiki("SkA/SkP.ad", "# SrcP3\\n\\n")
+            s41 = write_wiki("SkA/SkQ.ad", "# SrcQ\\n\\n")
+            sk3 = move_dir("SkA", "SkT", true, "skip")
+            s42 = create_dir("OvT")
+            s43 = create_dir("OvA0")
+            s43 = write_wiki("OvA0/OvP.ad", "# TgtOv\\n\\n")
+            s43 = move_dir("OvA0", "OvT", false, "both")
+            s44 = rename_dir("OvT/OvA0", "OvA")
+            s45 = create_dir("OvA")
+            s45 = write_wiki("OvA/OvP.ad", "# SrcOv2\\n\\n")
+            s45 = write_wiki("OvA/OvX.ad", "# OvX\\n\\n见 [[OvP]] 一处。\\n")
+            l10 = link_index("", 4)
+            ov4 = move_dir("OvA", "OvT", true, "overwrite")
+            l11 = link_index("", 4)
+            s46 = create_dir("GuardD")
+            s46 = write_wiki("GuardD/G.ad", "# G\\n\\n")
+            s46 = write_wiki("GuardD/notes.txt", "x\\n")
+            g5a = move_dir("SkT", "SkT", true, "skip")
+            g5b = move_dir("SkT", "SkT", true, "overwrite")
+            g5c = move_dir(".trash/NoDir", "SkT", true, "skip")
+            g5d = move_dir("SkT", ".trash", true, "overwrite")
+            g5e = move_dir("GuardD", "SkT", true, "skip")
+            g5f = move_dir("GuardD", "SkT", true, "overwrite")
+            s46 = write_wiki("SkT/BlockD", "x\\n")
+            s46 = create_dir("BlockD")
+            s46 = write_wiki("BlockD/B.ad", "# B\\n\\n")
+            g5g = move_dir("BlockD", "SkT", true, "skip")
+            g5h = move_dir("BlockD", "SkT", true, "overwrite")
+            s47 = create_dir("UkD")
+            s47 = write_wiki("UkD/U.ad", "# U\\n\\n")
+            uk6a = move_dir("UkD", "SkT", false, "xxx")
+            uk6b = move_dir("UkD", "SkT", false, "")
+            s48 = create_dir("跳靶")
+            s48 = create_dir("跳Boot")
+            s48 = write_wiki("跳Boot/跳档.ad", "# 跳源\\n\\n")
+            s48 = move_dir("跳Boot", "跳靶", false, "both")
+            s48 = rename_dir("跳靶/跳Boot", "跳甲")
+            s49 = create_dir("跳甲")
+            s49 = write_wiki("跳甲/跳档.ad", "# 跳源2\\n\\n")
+            cjk7 = move_dir("跳甲", "跳靶", true, "skip")
+            rs8a = trash_restore(".trash/SkA/SkP--1.ad")
+            rs8b = trash_restore(".trash/SkA/SkP.ad")
+            rs8c = move_page("OvT/OvA/OvP.ad", "UkD")
+            rs8d = trash_restore(".trash/OvT/OvA/OvP.ad")
             done = true
         }
     }
@@ -671,6 +891,14 @@ async function runMergedArm() {
       && strField(dump, 's31') === 'DirMg3/MgD.ad' && strField(dump, 's32') === '目录合并甲/档甲.ad'
       && strField(dump, 's33') === 'DirMgLink/MgLink.ad'
     if (!setupOk3) throw new Error(`probe setup (PLAN-019) failed:\n${dump.slice(0, 1200)}`)
+    // PLAN-025 setup 自证（s34..s49——三择素材链关键回执：twin 靶 move+
+    // rename 双通道、Ov 链、CJK 链；move_dir 回执 = JSON 形 dir 抽取）
+    const setupOk4 = dirOf(strField(dump, 's37')) === 'SkT/SkBoot' && strField(dump, 's38') === 'SkT/SkA'
+      && truthy(boolField(dump, 's35')) && truthy(boolField(dump, 's40'))
+      && dirOf(strField(dump, 's43')) === 'OvT/OvA0' && strField(dump, 's44') === 'OvT/OvA'
+      && truthy(boolField(dump, 's46')) && truthy(boolField(dump, 's47'))
+      && strField(dump, 's48') === '跳靶/跳甲' && truthy(boolField(dump, 's49'))
+    if (!setupOk4) throw new Error(`probe setup (PLAN-025) failed:\n${dump.slice(0, 2400)}`)
     const returns = {}
     for (const c of CASES) {
       returns[c.id] = strField(dump, RET_FIELD[c.id])
@@ -694,8 +922,20 @@ async function runMergedArm() {
     if (!linksMb.before || !linksMb.after) {
       throw new Error('probe state missing l8/l9')
     }
+    // PLAN-025 面：ov4 三择径前后链接采 + trash_restore 回滚弧字段
+    const linksOv = { before: strField(dump, 'l10'), after: strField(dump, 'l11') }
+    if (!linksOv.before || !linksOv.after) {
+      throw new Error('probe state missing l10/l11')
+    }
+    const restores = {
+      rs8a: strField(dump, 'rs8a'), rs8b: strField(dump, 'rs8b'),
+      rs8c: strField(dump, 'rs8c'), rs8d: strField(dump, 'rs8d'),
+    }
+    if (restores.rs8a === null || restores.rs8b === null || restores.rs8c === null || restores.rs8d === null) {
+      throw new Error('probe state missing rs8a..rs8d')
+    }
     return {
-      returns, links, nested: true, depth, deepSearch, linksM, linksMb,
+      returns, links, nested: true, depth, deepSearch, linksM, linksMb, linksOv, restores,
       diskCheck: (failures) => diskAsserts(MERGED_WS, 'merged', failures, { nested: true }),
     }
   } finally {
@@ -722,6 +962,17 @@ async function runSplitArm() {
       try { val = JSON.parse(text) } catch { val = text }
       return String(val)
     }
+    // 原文捕获（PLAN-025——move_dir 返回 JSON 对象形，String() 化会
+    // 坍缩 "[object Object]"；raw 直返供 dirOf/movesOf 解包）。
+    const postRaw = async (api, payload) => {
+      const res = await fetch(`${back.url}/api/${api}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) throw new Error(`POST ${api}(${JSON.stringify(payload)}) -> HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`)
+      return (await res.text()).trim()
+    }
     const get = async (api, params) => {
       const qs = new URLSearchParams(params).toString()
       const res = await fetch(`${back.url}/api/${api}${qs ? `?${qs}` : ''}`)
@@ -733,6 +984,8 @@ async function runSplitArm() {
     }
     const returns = {}
     const exec = async (id, api, payload) => { returns[id] = await post(api, payload) }
+    // move_dir 案专用（PLAN-025——JSON 返回形原文捕获 + HTTP 封套剥离）
+    const execRaw = async (id, api, payload) => { returns[id] = unwrapStr(await postRaw(api, payload)) }
     // setup
     if (await post('create_page', { title: 'DelFile' }) !== 'DelFile.ad') throw new Error('setup DelFile failed')
     if (await post('create_dir', { name: 'DirDel' }) !== 'DirDel') throw new Error('setup DirDel failed')
@@ -798,16 +1051,17 @@ async function runSplitArm() {
       d4: await get('link_index', { path: '', depth: '4' }),
     }
     const deepSearch = await post('search_wiki', { query: 'Deep5', limit: 5 })
-    // move_dir 六案 + 前后链接采（m2b/m3b 跳过——同 r⑦ 口径；**PLAN-019
-    // ：全案 payload 三参化**——merge 缺参 = 400 missing param）
+    // move_dir 六案 + 前后链接采（m2b/m3b 跳过——同 r⑦ 口径；**PLAN-025
+    // ：全案 payload 四参化 + JSON 返回原文捕获**——strategy="both" =
+    // v1 行为零漂移回归承载）
     const linksM = { before: await get('link_index', { path: '', depth: '4' }) }
-    await exec('m1-basic', 'move_dir', { path: 'DirMove', new_parent: 'Tgt', merge: false })
-    await exec('m2-cycle', 'move_dir', { path: 'Tgt/DirMove', new_parent: 'Tgt/DirMove', merge: false })
-    await exec('m3-merge-file', 'move_dir', { path: 'Tgt/DirMove', new_parent: 'Tgt2', merge: false })
+    await execRaw('m1-basic', 'move_dir', { path: 'DirMove', new_parent: 'Tgt', merge: false, strategy: 'both' })
+    await execRaw('m2-cycle', 'move_dir', { path: 'Tgt/DirMove', new_parent: 'Tgt/DirMove', merge: false, strategy: 'both' })
+    await execRaw('m3-merge-file', 'move_dir', { path: 'Tgt/DirMove', new_parent: 'Tgt2', merge: false, strategy: 'both' })
     if (!(await post('write_wiki', { path: 'Tgt/DirMove/notes.txt', body: 'x\n' }))) throw new Error('setup move notes.txt failed')
-    await exec('m4-pur-ad', 'move_dir', { path: 'Tgt/DirMove', new_parent: 'Tgt4', merge: false })
-    await exec('m5-idem', 'move_dir', { path: 'DirMove2', new_parent: '', merge: false })
-    await exec('m6-cjk', 'move_dir', { path: '目录丙', new_parent: 'Tgt', merge: false })
+    await execRaw('m4-pur-ad', 'move_dir', { path: 'Tgt/DirMove', new_parent: 'Tgt4', merge: false, strategy: 'both' })
+    await execRaw('m5-idem', 'move_dir', { path: 'DirMove2', new_parent: '', merge: false, strategy: 'both' })
+    await execRaw('m6-cjk', 'move_dir', { path: '目录丙', new_parent: 'Tgt', merge: false, strategy: 'both' })
     linksM.after = await get('link_index', { path: '', depth: '4' })
     // —— PLAN-019（SD-1901）：merge setup（嵌套靶 back 通道——create_dir
     // + write_wiki + move_dir + rename_dir 全已证通道，双臂同构）——
@@ -815,60 +1069,120 @@ async function runSplitArm() {
     if (await post('create_dir', { name: 'MgBoot' }) !== 'MgBoot') throw new Error('setup MgBoot failed')
     if (await post('create_page', { title: 'MgB' }) !== 'MgB.ad') throw new Error('setup MgB failed')
     if (await post('move_page', { path: 'MgB.ad', dir: 'MgBoot' }) !== 'MgBoot/MgB.ad') throw new Error('setup move MgB failed')
-    if (await post('move_dir', { path: 'MgBoot', new_parent: 'MgTgt', merge: false }) !== 'MgTgt/MgBoot') throw new Error('setup move MgBoot failed')
+    if (dirOf(unwrapStr(await postRaw('move_dir', { path: 'MgBoot', new_parent: 'MgTgt', merge: false, strategy: 'both' }))) !== 'MgTgt/MgBoot') throw new Error('setup move MgBoot failed')
     if (await post('rename_dir', { path: 'MgTgt/MgBoot', new_name: 'DirMg' }) !== 'MgTgt/DirMg') throw new Error('setup rename DirMg failed')
     if (await post('create_dir', { name: 'DirMg' }) !== 'DirMg') throw new Error('setup DirMg failed')
     if (await post('create_page', { title: 'MgA' }) !== 'MgA.ad') throw new Error('setup MgA failed')
     if (await post('move_page', { path: 'MgA.ad', dir: 'DirMg' }) !== 'DirMg/MgA.ad') throw new Error('setup move MgA failed')
-    await exec('mb1-merge-basic', 'move_dir', { path: 'DirMg', new_parent: 'MgTgt', merge: true })
+    await execRaw('mb1-merge-basic', 'move_dir', { path: 'DirMg', new_parent: 'MgTgt', merge: true, strategy: 'both' })
     if (await post('create_dir', { name: 'MgBoot2' }) !== 'MgBoot2') throw new Error('setup MgBoot2 failed')
     if (await post('create_page', { title: 'MgC' }) !== 'MgC.ad') throw new Error('setup MgC failed')
     if (await post('move_page', { path: 'MgC.ad', dir: 'MgBoot2' }) !== 'MgBoot2/MgC.ad') throw new Error('setup move MgC failed')
     if (!(await post('write_wiki', { path: 'MgBoot2/MgC.ad', body: '# TgtC\n\n' }))) throw new Error('setup TgtC body failed')
-    if (await post('move_dir', { path: 'MgBoot2', new_parent: 'MgTgt', merge: false }) !== 'MgTgt/MgBoot2') throw new Error('setup move MgBoot2 failed')
+    if (dirOf(unwrapStr(await postRaw('move_dir', { path: 'MgBoot2', new_parent: 'MgTgt', merge: false, strategy: 'both' }))) !== 'MgTgt/MgBoot2') throw new Error('setup move MgBoot2 failed')
     if (await post('rename_dir', { path: 'MgTgt/MgBoot2', new_name: 'DirMg2' }) !== 'MgTgt/DirMg2') throw new Error('setup rename DirMg2 failed')
     if (await post('create_dir', { name: 'DirMg2' }) !== 'DirMg2') throw new Error('setup DirMg2 failed')
     if (await post('create_page', { title: 'MgC' }) !== 'MgC.ad') throw new Error('setup MgC(2) failed')
     if (!(await post('write_wiki', { path: 'MgC.ad', body: '# SrcC\n\n' }))) throw new Error('setup SrcC body failed')
     if (await post('move_page', { path: 'MgC.ad', dir: 'DirMg2' }) !== 'DirMg2/MgC.ad') throw new Error('setup move MgC(2) failed')
-    await exec('mb2-conflict-suffix', 'move_dir', { path: 'DirMg2', new_parent: 'MgTgt', merge: true })
+    await execRaw('mb2-conflict-suffix', 'move_dir', { path: 'DirMg2', new_parent: 'MgTgt', merge: true, strategy: 'both' })
     if (await post('create_dir', { name: 'MgBoot3' }) !== 'MgBoot3') throw new Error('setup MgBoot3 failed')
     if (await post('create_page', { title: 'MgE' }) !== 'MgE.ad') throw new Error('setup MgE failed')
     if (await post('move_page', { path: 'MgE.ad', dir: 'MgBoot3' }) !== 'MgBoot3/MgE.ad') throw new Error('setup move MgE failed')
-    if (await post('move_dir', { path: 'MgBoot3', new_parent: 'MgTgt', merge: false }) !== 'MgTgt/MgBoot3') throw new Error('setup move MgBoot3 failed')
+    if (dirOf(unwrapStr(await postRaw('move_dir', { path: 'MgBoot3', new_parent: 'MgTgt', merge: false, strategy: 'both' }))) !== 'MgTgt/MgBoot3') throw new Error('setup move MgBoot3 failed')
     if (await post('rename_dir', { path: 'MgTgt/MgBoot3', new_name: 'DirMg3' }) !== 'MgTgt/DirMg3') throw new Error('setup rename DirMg3 failed')
     if (await post('create_dir', { name: 'DirMg3' }) !== 'DirMg3') throw new Error('setup DirMg3 failed')
     if (await post('create_page', { title: 'MgD' }) !== 'MgD.ad') throw new Error('setup MgD failed')
     if (await post('move_page', { path: 'MgD.ad', dir: 'DirMg3' }) !== 'DirMg3/MgD.ad') throw new Error('setup move MgD failed')
-    await exec('mb3-merge-false', 'move_dir', { path: 'DirMg3', new_parent: 'MgTgt', merge: false })
-    await exec('mb4-merge-cycle', 'move_dir', { path: 'Tgt/DirMove', new_parent: 'Tgt/DirMove', merge: true })
-    await exec('mb5-merge-file-block', 'move_dir', { path: 'Tgt/DirMove', new_parent: 'Tgt2', merge: true })
-    await exec('mb6-trash-src', 'move_dir', { path: '.trash/NoDir', new_parent: 'Tgt', merge: false })
-    await exec('mb7-trash-dst', 'move_dir', { path: 'Tgt/DirMove', new_parent: '.trash', merge: true })
+    await execRaw('mb3-merge-false', 'move_dir', { path: 'DirMg3', new_parent: 'MgTgt', merge: false, strategy: 'both' })
+    await execRaw('mb4-merge-cycle', 'move_dir', { path: 'Tgt/DirMove', new_parent: 'Tgt/DirMove', merge: true, strategy: 'both' })
+    await execRaw('mb5-merge-file-block', 'move_dir', { path: 'Tgt/DirMove', new_parent: 'Tgt2', merge: true, strategy: 'both' })
+    await execRaw('mb6-trash-src', 'move_dir', { path: '.trash/NoDir', new_parent: 'Tgt', merge: false, strategy: 'both' })
+    await execRaw('mb7-trash-dst', 'move_dir', { path: 'Tgt/DirMove', new_parent: '.trash', merge: true, strategy: 'both' })
     if (await post('create_dir', { name: '合并靶' }) !== '合并靶') throw new Error('setup 合并靶 failed')
     if (await post('create_dir', { name: 'MgCjkBoot' }) !== 'MgCjkBoot') throw new Error('setup MgCjkBoot failed')
     if (await post('create_page', { title: '靶档' }) !== '靶档.ad') throw new Error('setup 靶档 failed')
     if (await post('move_page', { path: '靶档.ad', dir: 'MgCjkBoot' }) !== 'MgCjkBoot/靶档.ad') throw new Error('setup move 靶档 failed')
-    if (await post('move_dir', { path: 'MgCjkBoot', new_parent: '合并靶', merge: false }) !== '合并靶/MgCjkBoot') throw new Error('setup move MgCjkBoot failed')
+    if (dirOf(unwrapStr(await postRaw('move_dir', { path: 'MgCjkBoot', new_parent: '合并靶', merge: false, strategy: 'both' }))) !== '合并靶/MgCjkBoot') throw new Error('setup move MgCjkBoot failed')
     if (await post('rename_dir', { path: '合并靶/MgCjkBoot', new_name: '目录合并甲' }) !== '合并靶/目录合并甲') throw new Error('setup rename 目录合并甲 failed')
     if (await post('create_dir', { name: '目录合并甲' }) !== '目录合并甲') throw new Error('setup 目录合并甲 failed')
     if (await post('create_page', { title: '档甲' }) !== '档甲.ad') throw new Error('setup 档甲 failed')
     if (await post('move_page', { path: '档甲.ad', dir: '目录合并甲' }) !== '目录合并甲/档甲.ad') throw new Error('setup move 档甲 failed')
-    await exec('mb8-cjk-merge', 'move_dir', { path: '目录合并甲', new_parent: '合并靶', merge: true })
+    await execRaw('mb8-cjk-merge', 'move_dir', { path: '目录合并甲', new_parent: '合并靶', merge: true, strategy: 'both' })
     if (await post('create_dir', { name: 'MgTgt2' }) !== 'MgTgt2') throw new Error('setup MgTgt2 failed')
     if (await post('create_dir', { name: 'DirMgLink' }) !== 'DirMgLink') throw new Error('setup DirMgLink failed')
     if (await post('create_page', { title: 'MgLink' }) !== 'MgLink.ad') throw new Error('setup MgLink failed')
     if (!(await post('write_wiki', { path: 'MgLink.ad', body: '# MgLink\n\n见 [[MoveA]] 一处。\n' }))) throw new Error('setup MgLink body failed')
     if (await post('move_page', { path: 'MgLink.ad', dir: 'DirMgLink' }) !== 'DirMgLink/MgLink.ad') throw new Error('setup move MgLink failed')
     const linksMb = { before: await get('link_index', { path: '', depth: '4' }) }
-    await exec('mb9-link-merge', 'move_dir', { path: 'DirMgLink', new_parent: 'MgTgt2', merge: true })
+    await execRaw('mb9-link-merge', 'move_dir', { path: 'DirMgLink', new_parent: 'MgTgt2', merge: true, strategy: 'both' })
     linksMb.after = await get('link_index', { path: '', depth: '4' })
+    // —— PLAN-025（SD-2501）：三择案组（skip 基础/多冲突 → overwrite 基础
+    // [链接零扰动前后采] → 卫正交八案 → fail-closed → CJK skip →
+    // trash_restore 回滚弧；twin 靶 move+rename 双通道同 mb 套路）——
+    if (await post('create_dir', { name: 'SkT' }) !== 'SkT') throw new Error('setup SkT failed')
+    if (!(await post('write_wiki', { path: 'SkT/SkP.ad', body: '# TgtP\n\n' }))) throw new Error('setup SkT/SkP failed')
+    if (await post('create_dir', { name: 'SkBoot' }) !== 'SkBoot') throw new Error('setup SkBoot failed')
+    if (!(await post('write_wiki', { path: 'SkBoot/SkP.ad', body: '# SrcP\n\n' }))) throw new Error('setup SkBoot/SkP failed')
+    if (dirOf(unwrapStr(await postRaw('move_dir', { path: 'SkBoot', new_parent: 'SkT', merge: false, strategy: 'both' }))) !== 'SkT/SkBoot') throw new Error('setup move SkBoot failed')
+    if (await post('rename_dir', { path: 'SkT/SkBoot', new_name: 'SkA' }) !== 'SkT/SkA') throw new Error('setup rename SkA failed')
+    if (await post('create_dir', { name: 'SkA' }) !== 'SkA') throw new Error('setup SkA failed')
+    if (!(await post('write_wiki', { path: 'SkA/SkP.ad', body: '# SrcP2\n\n' }))) throw new Error('setup SkA/SkP failed')
+    await execRaw('s2-skip-basic', 'move_dir', { path: 'SkA', new_parent: 'SkT', merge: true, strategy: 'skip' })
+    if (!(await post('write_wiki', { path: 'SkT/SkA/SkQ.ad', body: '# TgtQ\n\n' }))) throw new Error('setup SkT/SkA/SkQ failed')
+    if (await post('create_dir', { name: 'SkA' }) !== 'SkA') throw new Error('setup SkA(2) failed')
+    if (!(await post('write_wiki', { path: 'SkA/SkP.ad', body: '# SrcP3\n\n' }))) throw new Error('setup SkA/SkP(3) failed')
+    if (!(await post('write_wiki', { path: 'SkA/SkQ.ad', body: '# SrcQ\n\n' }))) throw new Error('setup SkA/SkQ failed')
+    await execRaw('s3-skip-multi', 'move_dir', { path: 'SkA', new_parent: 'SkT', merge: true, strategy: 'skip' })
+    if (await post('create_dir', { name: 'OvT' }) !== 'OvT') throw new Error('setup OvT failed')
+    if (await post('create_dir', { name: 'OvA0' }) !== 'OvA0') throw new Error('setup OvA0 failed')
+    if (!(await post('write_wiki', { path: 'OvA0/OvP.ad', body: '# TgtOv\n\n' }))) throw new Error('setup OvA0/OvP failed')
+    if (dirOf(unwrapStr(await postRaw('move_dir', { path: 'OvA0', new_parent: 'OvT', merge: false, strategy: 'both' }))) !== 'OvT/OvA0') throw new Error('setup move OvA0 failed')
+    if (await post('rename_dir', { path: 'OvT/OvA0', new_name: 'OvA' }) !== 'OvT/OvA') throw new Error('setup rename OvA failed')
+    if (await post('create_dir', { name: 'OvA' }) !== 'OvA') throw new Error('setup OvA(2) failed')
+    if (!(await post('write_wiki', { path: 'OvA/OvP.ad', body: '# SrcOv2\n\n' }))) throw new Error('setup OvA/OvP failed')
+    if (!(await post('write_wiki', { path: 'OvA/OvX.ad', body: '# OvX\n\n见 [[OvP]] 一处。\n' }))) throw new Error('setup OvA/OvX failed')
+    const linksOv = { before: await get('link_index', { path: '', depth: '4' }) }
+    await execRaw('s4-over-basic', 'move_dir', { path: 'OvA', new_parent: 'OvT', merge: true, strategy: 'overwrite' })
+    linksOv.after = await get('link_index', { path: '', depth: '4' })
+    if (await post('create_dir', { name: 'GuardD' }) !== 'GuardD') throw new Error('setup GuardD failed')
+    if (!(await post('write_wiki', { path: 'GuardD/G.ad', body: '# G\n\n' }))) throw new Error('setup GuardD/G failed')
+    if (!(await post('write_wiki', { path: 'GuardD/notes.txt', body: 'x\n' }))) throw new Error('setup GuardD/notes failed')
+    await execRaw('s5a-cycle-skip', 'move_dir', { path: 'SkT', new_parent: 'SkT', merge: true, strategy: 'skip' })
+    await execRaw('s5b-cycle-over', 'move_dir', { path: 'SkT', new_parent: 'SkT', merge: true, strategy: 'overwrite' })
+    await execRaw('s5c-trash-src', 'move_dir', { path: '.trash/NoDir', new_parent: 'SkT', merge: true, strategy: 'skip' })
+    await execRaw('s5d-trash-dst', 'move_dir', { path: 'SkT', new_parent: '.trash', merge: true, strategy: 'overwrite' })
+    await execRaw('s5e-purad-skip', 'move_dir', { path: 'GuardD', new_parent: 'SkT', merge: true, strategy: 'skip' })
+    await execRaw('s5f-purad-over', 'move_dir', { path: 'GuardD', new_parent: 'SkT', merge: true, strategy: 'overwrite' })
+    if (!(await post('write_wiki', { path: 'SkT/BlockD', body: 'x\n' }))) throw new Error('setup SkT/BlockD failed')
+    if (await post('create_dir', { name: 'BlockD' }) !== 'BlockD') throw new Error('setup BlockD failed')
+    if (!(await post('write_wiki', { path: 'BlockD/B.ad', body: '# B\n\n' }))) throw new Error('setup BlockD/B failed')
+    await execRaw('s5g-block-skip', 'move_dir', { path: 'BlockD', new_parent: 'SkT', merge: true, strategy: 'skip' })
+    await execRaw('s5h-block-over', 'move_dir', { path: 'BlockD', new_parent: 'SkT', merge: true, strategy: 'overwrite' })
+    if (await post('create_dir', { name: 'UkD' }) !== 'UkD') throw new Error('setup UkD failed')
+    if (!(await post('write_wiki', { path: 'UkD/U.ad', body: '# U\n\n' }))) throw new Error('setup UkD/U failed')
+    await execRaw('s6a-unknown', 'move_dir', { path: 'UkD', new_parent: 'SkT', merge: false, strategy: 'xxx' })
+    await execRaw('s6b-empty-strat', 'move_dir', { path: 'UkD', new_parent: 'SkT', merge: false, strategy: '' })
+    if (await post('create_dir', { name: '跳靶' }) !== '跳靶') throw new Error('setup 跳靶 failed')
+    if (await post('create_dir', { name: '跳Boot' }) !== '跳Boot') throw new Error('setup 跳Boot failed')
+    if (!(await post('write_wiki', { path: '跳Boot/跳档.ad', body: '# 跳源\n\n' }))) throw new Error('setup 跳Boot/跳档 failed')
+    if (dirOf(unwrapStr(await postRaw('move_dir', { path: '跳Boot', new_parent: '跳靶', merge: false, strategy: 'both' }))) !== '跳靶/跳Boot') throw new Error('setup move 跳Boot failed')
+    if (await post('rename_dir', { path: '跳靶/跳Boot', new_name: '跳甲' }) !== '跳靶/跳甲') throw new Error('setup rename 跳甲 failed')
+    if (await post('create_dir', { name: '跳甲' }) !== '跳甲') throw new Error('setup 跳甲(2) failed')
+    if (!(await post('write_wiki', { path: '跳甲/跳档.ad', body: '# 跳源2\n\n' }))) throw new Error('setup 跳甲/跳档 failed')
+    await execRaw('s7-cjk-skip', 'move_dir', { path: '跳甲', new_parent: '跳靶', merge: true, strategy: 'skip' })
+    const restores = {
+      rs8a: await post('trash_restore', { entry: '.trash/SkA/SkP--1.ad' }),
+      rs8b: await post('trash_restore', { entry: '.trash/SkA/SkP.ad' }),
+      rs8c: await post('move_page', { path: 'OvT/OvA/OvP.ad', dir: 'UkD' }),
+      rs8d: await post('trash_restore', { entry: '.trash/OvT/OvA/OvP.ad' }),
+    }
     // p⑩ url_decode 重勘（017 §10.6——家族重建窗后复测一次；in-register
     // 期望 false[D-19：GET query 百分号序列不解码]。翻 true = 上游已修
     // ——fail 即信号，probe+ledger 随改）。
     const urlDecode = await get('exists', { path: '归档夹/中文乙.ad' })
     return {
-      returns, links, nested: false, depth, deepSearch, linksM, linksMb, urlDecode,
+      returns, links, nested: false, depth, deepSearch, linksM, linksMb, linksOv, restores, urlDecode,
       diskCheck: (failures) => diskAsserts(back.workspace, 'split', failures, { nested: false }),
     }
   } finally {
@@ -887,21 +1201,59 @@ console.log(`[probe-dir-ops] arm 2: split serve-back POST（:${SPLIT_PORT}，JSO
 const split = await runSplitArm()
 split.diskCheck(failures)
 
-console.log('\n[probe-dir-ops] 双臂返回值逐案对读：')
+console.log('\n[probe-dir-ops] 双臂返回值逐案对读（PLAN-025：返回 JSON dir 抽取随校 + 双臂 raw 字节等值）：')
 let agree = true
 for (const c of CASES) {
   const m = merged.returns[c.id]
   const s = split.returns[c.id]
-  const ok = m === s && m === c.expect
+  const ok = m === s && dirOf(m) === c.expect
   if (m !== s) agree = false
-  console.log(`  [${c.id}] ${ok ? 'PASS' : 'FAIL'} — merged="${m}" split="${s}" expect="${c.expect}"`)
-  if (!ok) failures.push(`case ${c.id}: merged="${m}" split="${s}" expect="${c.expect}"`)
+  console.log(`  [${c.id}] ${ok ? 'PASS' : 'FAIL'} — merged="${m}" split="${s}" expect(dir)=${JSON.stringify(c.expect)}`)
+  if (!ok) failures.push(`case ${c.id}: merged="${m}" split="${s}" expect(dir)=${JSON.stringify(c.expect)}`)
 }
 for (const c of MERGED_ONLY_CASES) {
   const m = merged.returns[c.id]
   const ok = m === c.expect
   console.log(`  [${c.id}] ${ok ? 'PASS' : 'FAIL'} — merged="${m}" expect="${c.expect}"（探针域——split 无嵌套造档通道）`)
   if (!ok) failures.push(`case ${c.id}: merged="${m}" expect="${c.expect}"`)
+}
+
+// s⑩ moves 完整性（PLAN-025——双臂各自解包：精确形逐对等 / 集形无序等 +
+// 计数不变式；mb② 后缀新位映射直证）
+{
+  const eqPair = (a, b) => Array.isArray(a) && Array.isArray(b) && a.length === 2 && b.length === 2 && a[0] === b[0] && a[1] === b[1]
+  for (const [id, expectPairs] of Object.entries(MOVES_EXACT)) {
+    const mMoves = movesOf(merged.returns[id])
+    const sMoves = movesOf(split.returns[id])
+    const ok = mMoves !== null && sMoves !== null && mMoves.length === expectPairs.length
+      && sMoves.length === expectPairs.length
+      && expectPairs.every((p, i) => eqPair(mMoves[i], p) && eqPair(sMoves[i], p))
+    console.log(`  [s10-moves ${id}] ${ok ? 'PASS' : 'FAIL'} — moves 恰 ${expectPairs.length} 对精确形 merged=${JSON.stringify(mMoves)} split=${JSON.stringify(sMoves)}`)
+    if (!ok) failures.push(`s10-moves ${id}: 精确形失守`)
+  }
+  for (const [id, spec] of Object.entries(MOVES_SET)) {
+    const key = (p) => (Array.isArray(p) ? p.join('=>') : String(p))
+    const mMoves = movesOf(merged.returns[id])
+    const sMoves = movesOf(split.returns[id])
+    const wantSet = new Set(spec.pairs.map(key))
+    const ok = mMoves !== null && sMoves !== null && mMoves.length === spec.pairs.length
+      && sMoves.length === spec.pairs.length
+      && mMoves.every((p) => wantSet.has(key(p))) && sMoves.every((p) => wantSet.has(key(p)))
+      && new Set(mMoves.map(key)).size === spec.pairs.length
+    console.log(`  [s10-moves ${id}] ${ok ? 'PASS' : 'FAIL'} — moves 恰 ${spec.pairs.length} 对集等（overwrite 双对计/多冲突）merged=${JSON.stringify(mMoves)} split=${JSON.stringify(sMoves)}`)
+    if (!ok) failures.push(`s10-moves ${id}: 集形失守`)
+  }
+}
+
+// s⑧ trash_restore 回滚弧（PLAN-025——skip 改道档恢复回源位去后缀名 +
+// exists 卫拒 + overwrite 两步可回；双臂同判）
+{
+  const rOk = merged.restores.rs8a === 'SkA/SkP.ad' && split.restores.rs8a === 'SkA/SkP.ad'
+    && merged.restores.rs8b === '' && split.restores.rs8b === ''
+    && merged.restores.rs8c === 'UkD/OvP.ad' && split.restores.rs8c === 'UkD/OvP.ad'
+    && merged.restores.rs8d === 'OvT/OvA/OvP.ad' && split.restores.rs8d === 'OvT/OvA/OvP.ad'
+  console.log(`  [s8-restore] ${rOk ? 'PASS' : 'FAIL'} — SkP--1 恢复回源位去后缀名（${merged.restores.rs8a}）+ SkP.ad 再恢复卫拒（${merged.restores.rs8b}）+ occupant 移出（${merged.restores.rs8c}）+ overwrite 改道档两步恢复（${merged.restores.rs8d}）双臂同判`)
+  if (!rOk) failures.push(`s8-restore: merged=${JSON.stringify(merged.restores)} split=${JSON.stringify(split.restores)}`)
 }
 
 // r⑧ 链接零扰动归一 diff（双臂 + 一致）
@@ -940,6 +1292,21 @@ const mbLinkOk = !ljNorm(merged.linksMb.before, movedMb).includes('<unparsable>'
 console.log(`  [mb9-link-net] ${mbLinkOk ? 'PASS' : 'FAIL'} — merge（无冲突全入径）前后 link_index 归一 diff 双臂零扰动（merge=true 无冲突 = 纯移动语义）`)
 if (!mbLinkOk) failures.push('mb9-link-net: merge 前后 link_index 归一 diff 失守')
 
+// s⑨ 三择径（overwrite）链接零扰动归一 diff（PLAN-025——m⑦ 口径三择径
+// 续：moved 集含改道 .trash 位归一；.trash walk 忽略域不入索引，改道
+// 档链接解析恒达[同 rel 同 stem]；overwrite 2→1 塌缩——被覆盖靶旧档
+// 前态剔除[内容存续 .trash 域，占位页后态保留]；双臂 + 一致）
+const movedOv = new Set([
+  'OvA/OvP.ad', 'OvT/OvA/OvP.ad', 'OvA/OvX.ad', 'OvT/OvA/OvX.ad',
+])
+const dropOvBefore = new Set(['OvT/OvA/OvP.ad'])
+const ovLinkOk = !ljNorm(merged.linksOv.before, movedOv, dropOvBefore).includes('<unparsable>')
+  && !ljNorm(split.linksOv.before, movedOv, dropOvBefore).includes('<unparsable>')
+  && ljNorm(merged.linksOv.before, movedOv, dropOvBefore) === ljNorm(merged.linksOv.after, movedOv)
+  && ljNorm(split.linksOv.before, movedOv, dropOvBefore) === ljNorm(split.linksOv.after, movedOv)
+console.log(`  [s9-link-net] ${ovLinkOk ? 'PASS' : 'FAIL'} — overwrite 三择径前后 link_index 归一 diff 双臂零扰动（m⑦ 口径三择径续——改道位归一+被覆盖靶旧档前态剔除[2→1 塌缩]）`)
+if (!ovLinkOk) failures.push('s9-link-net: overwrite 径 link_index 归一 diff 失守')
+
 // p⑨ depth 8 统一（PLAN-018——fs.tree depth 语义面）：depth 1 不含 wiki/
 // 深度档、depth 8 全含（双臂语料现成结构）；merged 域深档（5 层）depth 8
 // 含 / depth 4 不含——**4→8 覆盖收窄收口直证** + search 内部 8 walk 命中。
@@ -970,4 +1337,4 @@ if (failures.length > 0) {
   console.error(`\n[probe-dir-ops] FAIL（${failures.length} 项）:\n  - ${failures.join('\n  - ')}`)
   process.exit(1)
 }
-console.log(`\n[probe-dir-ops] RESULT: merged + split 全案通过（probe C 定谳[remove_dir 族可调]+delete_dir 六案+rename_dir 六案+嵌套案[merged]+链接零扰动归一 diff[r⑧+m⑦+mb⑨]+磁盘逐字节/双复核/副作用圈定+双臂一致=${agree}；**PLAN-018：move_dir 六案+循环卫后代形/合并拒同名目录形[merged]+depth 8 统一[三深度采+5 层深档收口直证+search 8 walk]+url_decode 重勘[D-19 维持]；PLAN-019：move_dir merge 九案[合并基础/冲突后缀保双份/merge=false 拒径回归/循环卫先于合并/文件占位仍拒/.trash 域卫双面直证——F-R18-1 闭账/CJK 合并/无冲突链接零扰动]+mb② 冲突档=新档磁盘承载**）`)
+console.log(`\n[probe-dir-ops] RESULT: merged + split 全案通过（probe C 定谳[remove_dir 族可调]+delete_dir 六案+rename_dir 六案+嵌套案[merged]+链接零扰动归一 diff[r⑧+m⑦+mb⑨+s⑨]+磁盘逐字节/双复核/副作用圈定+双臂一致=${agree}；**PLAN-018：move_dir 六案+循环卫后代形/合并拒同名目录形[merged]+depth 8 统一[三深度采+5 层深档收口直证+search 8 walk]+url_decode 重勘[D-19 维持]；PLAN-019：move_dir merge 九案[合并基础/冲突后缀保双份/merge=false 拒径回归/循环卫先于合并/文件占位仍拒/.trash 域卫双面直证——F-R18-1 闭账/CJK 合并/无冲突链接零扰动]+mb② 冲突档=新档磁盘承载；PLAN-025：move_dir 四参三择+moves 映射返回形[dir 抽取随校全案四参化 both 零漂移+双臂 raw 字节等值升级/s②③ skip 零数据丢失[靶 twin 逐字节不动+源冲突档 .trash 改道+序号续接]/s④ overwrite 零数据丢失[靶旧改道+源落位+双映射对]/s⑤ 策略×卫正交八案/s⑥ fail-closed 白名单前置/s⑦ CJK skip/s⑧ trash_restore 回滚弧[去后缀名回源位+exists 卫拒+两步可回]/s⑨ 三择径链接零扰动/s⑩ moves 完整性[精确形+集形+幂等空对]]**）`)

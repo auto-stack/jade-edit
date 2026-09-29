@@ -1426,41 +1426,65 @@ pub fn rename_dir_impl(path str, new_name str) str {
 //（create_dir/is_dir/remove_dir）；返值忽略 D-24②——exists/is_dir 双
 // 复核内建同族纪律。
 
-/// 目录移动本体（api.move_dir 实现；SD-1801 + **PLAN-019 扩参 merge**
-/// ——SD-1901，013 set_page_meta 签名扩参先例二：唯一消费者 front 同批
-/// 改）——POST 单事务五步：
-/// ①六卫：dir_norm(path) 非空（根拒）+ **.trash 域卫双面**（path /
-///   new_parent 任一为 .trash 本体或 ".trash/" 前缀拒——回收站条目唯一
-///   合法通道 = trash_restore；delete_dir_impl/delete_page_impl 同族域卫
-///   ；F-R18-1 直证面——018 执行期加护，本批 probe 直证闭账）+
-///   is_dir(path)（非目录/缺失拒）+ is_dir(new_parent)（目标父非目录/
-///   缺失拒——根 "" 合法：resolve("") = 工作区根，移入根为合法弧线）
-///   + **循环卫**（new_parent == path 或 new_parent 以 `path + "/"` 起
-///   → 拒——移入自身/后代结构性非法；**先于合并分支**——merge=true 不
-///   绕循环卫）+ **同父幂等**（new_parent == dir_of(path) → 返回归一
-///   path 零变化）+ **目标冲突卫分支**（目标父下 `{dirname}` exists：
-///   merge=false → 现拒径零变化；merge=true → **并入径**——目标同名
-///   **文件**占位仍拒[并入面是目录]，同名**目录** → 文件并入）+
-///   **纯 .ad 卫**（根树段扫描——任一 file 子件非 .ad 尾拒，先于一切
-///   落盘）；
+/// 目录移动本体（api.move_dir 实现；SD-1801 + PLAN-019 扩参 merge +
+/// **PLAN-025 扩参 strategy 三择 + moves 映射返回形**——SD-2501，019
+/// 同款先例续：唯一消费者 front 同批改）——POST 单事务五步：
+/// ①七卫：**策略白名单前置**（strategy ∉ {"both","skip","overwrite"}
+///   → "" 拒 fail-closed——逐字等值判定；合法三值下拒径与 strategy
+///   值无关——probe s⑤/s⑥ 正交承载）+ dir_norm(path) 非空（根拒）+
+///   **.trash 域卫双面**（path / new_parent 任一为 .trash 本体或
+///   ".trash/" 前缀拒——回收站条目唯一合法通道 = trash_restore；
+///   delete_dir_impl/delete_page_impl 同族域卫；F-R18-1 直证面——018
+///   执行期加护，019 probe 直证闭账）+ is_dir(path)（非目录/缺失拒）+
+///   is_dir(new_parent)（目标父非目录/缺失拒——根 "" 合法：resolve("")
+///   = 工作区根，移入根为合法弧线）+ **循环卫**（new_parent == path 或
+///   new_parent 以 `path + "/"` 起 → 拒——移入自身/后代结构性非法；
+///   **先于合并分支**——merge=true 不绕循环卫）+ **同父幂等**（
+///   new_parent == dir_of(path) → 返回归一 path 零变化[moves 空对]）+
+///   **目标冲突卫分支**（目标父下 `{dirname}` exists：merge=false →
+///   现拒径零变化；merge=true → **并入径**——目标同名**文件**占位仍拒
+///   [并入面是目录]，同名**目录** → 文件并入）+ **纯 .ad 卫**（根树段
+///   扫描——任一 file 子件非 .ad 尾拒，先于一切落盘）；
 /// ②子件清单收集（rename_dir_impl 同款——工作区根树段扫描 + 前缀过滤
 ///   + 段分类）；
 /// ③新目录建（非合并径 File.create_dir——create_dir_all 递归幂等，探针
 ///   A 定谳；合并径目标已存免建）+ 嵌套镜像目录逐个建（create_dir 幂等
-///   ——合并径目标内既有同名子目录免建直入）+ **逐文件迁移循环**（新
-///   rel = new_rel + 余段[rel.split_once(path + "/") 首现即前缀位——
-///   D-20③ 禁 length+slice 安全通道]；**合并径冲突档 `{stem}--{n}.ad`
-///   后缀 while exists**[trash_target 同族规则——n 从 1 起；**冲突后缀
-///   档 = 新档**，stem 变链接零改写语义下如实悬空/换指口径 SD-1901 注
-///   记]；move_file 组合迁移 + 双复核——006/012/017 定文形态单点）；
+///   ——合并径目标内既有同名子目录免建直入）+ **逐文件迁移循环 + 冲突
+///   三择**（新 rel = new_rel + 余段[rel.split_once(path + "/") 首现即
+///   前缀位——D-20③ 禁 length+slice 安全通道]；**合并径冲突档三分支
+///   零数据丢失**——strategy 仅作用于此分支，卫语句族先于其正交维持：
+///   `both` = `{stem}--{n}.ad` 后缀 while exists **现行原样**[v1 行为
+///   逐字节等价——m①..mb⑨ 回归承载；冲突后缀档 = 新档，stem 变链接零
+///   改写语义下如实悬空/换指口径 SD-1901 注记]；`skip` = 靶档保留 +
+///   **源冲突档改道 .trash**[trash_target 源 rel 复用——保源结构 +
+///   序号后缀，restore 回源位]；`overwrite` = **靶旧档改道 .trash**[
+///   trash_target 靶位 rel——restore 回靶位] + 源档落靶位；改道均
+///   move_file 字节整迁 + 双复核——006/012/017 定文形态单点）+
+///   **moves 平面收集随行**（正常迁移/后缀/skip 改道全量恰一对；
+///   overwrite 双对[靶旧→.trash + 源→靶位]——映射完整性不变式：成功
+///   径每迁移档恰一对，改道档新位 = .trash 域）；
 /// ④旧目录清理：嵌套旧子目录**逆序** File.remove_dir（walk 序父先子后
 ///   ⇒ 逆序即子先于父——空目录原语非递归口径）+ 顶层 remove_dir +
 ///   复核（旧无 && 新 is_dir）；
-/// ⑤返回新工作区根相对目录路径（**dirname 段原样——移动不改名**，
-///   清洗属 rename_dir 面；合并径同返回目标 rel）；"" = 任一卫拒/迁移
-///   未生效。**部分迁移容忍注记**：循环中段失败留双份（rename_dir_impl
-///   同判，006 非原子窗口家族；File.rename 别名供料解锁后可整体原子化）。
-pub fn move_dir_impl(path str, new_parent str, merge bool) str {
+/// ⑤**返回 JSON**（PLAN-025 契约升级——019 merge 扩参同款仓内同步，无
+///   外部消费方）：`{"dir":"<新目录 rel>","moves":[["old","new"],…]}`
+///   ——json_esc 转义复用 + `+` 装配（条目量 ≤ 工作区档数，P ≤ 200
+///   稳定域[021 防线]）；dir = **dirname 段原样——移动不改名**（清洗属
+///   rename_dir 面；合并径同返回目标 rel——front active/ft_sel remap
+///   消费面）；moves 见③；同父幂等返回 dir=p moves=[]；"" = 任一卫拒/
+///   迁移未生效（哨兵零变化）。**部分迁移容忍注记**：循环中段失败留
+///   双份（rename_dir_impl 同判，006 非原子窗口家族；File.rename 别名
+///   供料解锁后可整体原子化）。
+pub fn move_dir_impl(path str, new_parent str, merge bool, strategy str) str {
+    // PLAN-025：策略白名单前置（fail-closed——未知值拒，卫语句族同判
+    // 风格；合法三值下后续拒径与 strategy 值零耦合）。
+    if strategy != "both" {
+        if strategy != "skip" {
+            if strategy != "overwrite" {
+                return ""
+            }
+        }
+    }
     var p str = dir_norm(path)
     if p == "" {
         return ""
@@ -1492,7 +1516,8 @@ pub fn move_dir_impl(path str, new_parent str, merge bool) str {
         return ""
     }
     if np == dir_norm(dir_of(p)) {
-        return p
+        // 同父幂等（零迁移——moves 空对，返回形契约随批升级）。
+        return "{\"dir\":\"" + json_esc(p) + "\",\"moves\":[]}"
     }
     var segs = p.split("/")
     var dname str = segs[segs.len() - 1]
@@ -1565,9 +1590,13 @@ pub fn move_dir_impl(path str, new_parent str, merge bool) str {
         File.create_dir(resolve(dir_norm(new_rel + "/" + sd_rest)))
         d = d + 1
     }
-    // 逐文件迁移（move_file 组合单点——读+写+删+双复核）；合并径冲突档
-    // `{stem}--{n}.ad` 后缀 while exists（trash_target 同族规则——新档
-    // 保双份零数据丢失默认）。
+    // 逐文件迁移（move_file 组合单点——读+写+删+双复核）+ **冲突三择**
+    // （PLAN-025——strategy 仅作用于合并径冲突分支，both = v1 现行零
+    // 变化；skip/overwrite 改道 .trash 零数据丢失可回滚——trash_target
+    // 共享单点复用）+ moves 平面收集随行（映射完整性不变式：成功径每
+    // 迁移档恰一对；overwrite 双对）。
+    var moves_old List = []
+    var moves_new List = []
     var j int = 0
     while j < files.len() {
         // ⚠ D-20②：列表元素先拷局部变量再调方法。
@@ -1578,24 +1607,62 @@ pub fn move_dir_impl(path str, new_parent str, merge bool) str {
             rest = rp[1]
         }
         var to_rel str = new_rel + "/" + rest
+        var skip_move bool = false
         if merging {
             if File.exists(resolve(to_rel)) {
-                var drest str = dir_of(rest)
-                var fstem str = stem_of(rest)
-                if fstem == "" {
-                    return ""
+                if strategy == "skip" {
+                    // 靶档保留原内容；源冲突档改道 .trash（源 rel 保结构
+                    // ——trash_restore 回源位）。
+                    var t_skip str = trash_target(rel)
+                    if t_skip == "" {
+                        return ""
+                    }
+                    if !move_file(rel, t_skip) {
+                        return ""
+                    }
+                    moves_old.push(rel)
+                    moves_new.push(t_skip)
+                    skip_move = true
+                } else {
+                    if strategy == "overwrite" {
+                        // 靶旧档先改道 .trash（靶位 rel——restore 回靶位
+                        // [占用期恢复受 trash_restore 冲突卫拒，两步可
+                        // 回]），源档随正常径落靶位——双映射对。
+                        var t_ov str = trash_target(to_rel)
+                        if t_ov == "" {
+                            return ""
+                        }
+                        if !move_file(to_rel, t_ov) {
+                            return ""
+                        }
+                        moves_old.push(to_rel)
+                        moves_new.push(t_ov)
+                    } else {
+                        // both = v1 现行后缀逻辑原样（零代码路径变化——
+                        // 等价论证锚点）：`{stem}--{n}.ad` while exists，
+                        // trash_target 同族规则 n 从 1 起。
+                        var drest str = dir_of(rest)
+                        var fstem str = stem_of(rest)
+                        if fstem == "" {
+                            return ""
+                        }
+                        var n int = 1
+                        var cand str = drest + fstem + "--1.ad"
+                        while File.exists(resolve(new_rel + "/" + cand)) {
+                            n = n + 1
+                            cand = drest + fstem + "--" + n.str() + ".ad"
+                        }
+                        to_rel = new_rel + "/" + cand
+                    }
                 }
-                var n int = 1
-                var cand str = drest + fstem + "--1.ad"
-                while File.exists(resolve(new_rel + "/" + cand)) {
-                    n = n + 1
-                    cand = drest + fstem + "--" + n.str() + ".ad"
-                }
-                to_rel = new_rel + "/" + cand
             }
         }
-        if !move_file(rel, to_rel) {
-            return ""
+        if !skip_move {
+            if !move_file(rel, to_rel) {
+                return ""
+            }
+            moves_old.push(rel)
+            moves_new.push(to_rel)
         }
         j = j + 1
     }
@@ -1613,7 +1680,23 @@ pub fn move_dir_impl(path str, new_parent str, merge bool) str {
     if !File.is_dir(new_full) {
         return ""
     }
-    return new_rel
+    // 返回 JSON 装配（PLAN-025——{dir, moves}；json_esc 转义复用 + `+`
+    // 串接，moves 条目量 ≤ 工作区档数 P ≤ 200 稳定域[021 防线]；拒 = ""
+    // 哨兵零变化——前置白名单外全部拒径原样）。
+    var out str = "{\"dir\":\"" + json_esc(new_rel) + "\",\"moves\":["
+    var m int = 0
+    while m < moves_old.len() {
+        if m > 0 {
+            out = out + ","
+        }
+        // ⚠ D-20②：列表元素先拷局部变量再调方法。
+        var mo str = moves_old[m]
+        var mn str = moves_new[m]
+        out = out + "[\"" + json_esc(mo) + "\",\"" + json_esc(mn) + "\"]"
+        m = m + 1
+    }
+    out = out + "]}"
+    return out
 }
 
 // ===== 今日笔记（PLAN-015 T-02；上游 Time 解锁兑现批 back 半）——

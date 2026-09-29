@@ -257,31 +257,44 @@ pub fn rename_dir(path str, new_name str) str {
     return wsys.rename_dir_impl(path, new_name)
 }
 
-/// 移动目录（PLAN-018 第十六切片 + **PLAN-019 扩参 merge**——SD-1901，
-/// 013 set_page_meta 签名扩参先例二：唯一消费者 front 同批改；**工作区
-/// 三部曲收官 + 合并兑现**——目录：建[012]/重命名 [014]/删除 [014]/
-/// 移动 [018]/**合并 [本批]**；档四操作对称完备）：
+/// 移动目录（PLAN-018 第十六切片 + PLAN-019 扩参 merge + **PLAN-025 扩参
+/// strategy 三择 + moves 映射返回形**——SD-2501，019 扩参先例续：唯一
+/// 消费者 front 同批改；**工作区三部曲收官 + 合并兑现**——目录：建[012]/
+/// 重命名 [014]/删除 [014]/移动 [018]/**合并 [019]**/**合并三择 [本批]**；
+/// 档四操作对称完备）：
 /// **三联对照目录级第三案**——stem 不变 ⇒ 链接零改写零断链（SD-1201
 /// 档移动/SD-1401 目录重命名同判并表续：链接面纯 stem 解析对目录结构
-/// 完全无感）。POST 单事务五步（卫：dir_norm 非空[根拒] + .trash 域卫
-/// 双面[path/new_parent 任一涉回收站拒——条目唯一合法通道
-/// trash_restore；**F-R18-1 直证面**——018 执行期加护本批 probe 闭账]
-/// + is_dir×2 + **循环卫**[new_parent == path 或以其 `path + "/"` 起拒
-/// ——移入自身/后代结构性非法；先于合并分支] + **同父幂等**[返回归一
-/// path 零变化] + **目标冲突卫分支**[merge=false 拒——目标同名目录/
-/// 文件同判零变化；merge=true **并入径**——目标同名文件占位仍拒/同名
-/// 目录文件并入 + **冲突档 `{stem}--{n}.ad` 后缀保双份**[trash_target
-/// 同族规则——零数据丢失默认；冲突后缀档 = 新档，stem 变链接零改写
-/// 语义下如实换指口径 SD-1901 注记]] + 纯 .ad 卫；逐文件迁移循环
-/// [move_file 组合 + 双复核]；旧目录清理[嵌套逆序 + 顶层] + 复核）。
-/// 成功返回工作区根相对新目录路径（dirname 段原样——移动不改名；合并
-/// 径同返回目标 rel）；"" = 任一卫拒/迁移未生效。**POST 而非 GET**（
-/// D-19：目录路径 CJK 常态，body 传参——merge bool 参数 body 原生
-/// JSON 类型直通[back_proxy 按名绑定一手源实勘]）。
+/// 完全无感）。POST 单事务五步（卫：**策略白名单前置**[strategy ∉
+/// {"both","skip","overwrite"} → "" 拒 fail-closed——合法三值下拒径与
+/// strategy 零耦合] + dir_norm 非空[根拒] + .trash 域卫双面[path/
+/// new_parent 任一涉回收站拒——条目唯一合法通道 trash_restore；
+/// **F-R18-1 直证面**——018 执行期加护 019 probe 闭账] + is_dir×2 +
+/// **循环卫**[new_parent == path 或以其 `path + "/"` 起拒——移入自身/
+/// 后代结构性非法；先于合并分支] + **同父幂等**[返回 dir=path moves=[]
+/// 零变化] + **目标冲突卫分支**[merge=false 拒——目标同名目录/文件同判
+/// 零变化；merge=true **并入径**——目标同名文件占位仍拒/同名目录文件
+/// 并入 + **冲突档三择**[见下]] + 纯 .ad 卫；逐文件迁移循环[move_file
+/// 组合 + 双复核 + moves 收集随行]；旧目录清理[嵌套逆序 + 顶层] + 复核）。
+/// **合并冲突三择（零数据丢失三通道——strategy 仅作用于合并径冲突档，
+/// 卫语句族先于策略分支正交维持[拒径零变化]）**：`both` = 冲突档
+/// `{stem}--{n}.ad` 后缀保双份（v1 现行原样——trash_target 同族规则，
+/// 零数据丢失默认；冲突后缀档 = 新档，stem 变链接零改写语义下如实换指
+/// 口径 SD-1901 注记）；`skip` = 靶档保留原内容 + 源冲突档改道 .trash
+/// （源 rel 保结构——trash_restore 回源位）；`overwrite` = 靶旧档改道
+/// .trash（靶位 rel）+ 源档落靶位——改道均 move_file 字节整迁，trash_
+/// restore 通道可回滚[overwrite 占用期恢复受冲突卫拒，两步可回]。
+/// **返回形 JSON**：`{"dir":"<新目录 rel>","moves":[["old","new"],…]}`
+/// ——dir = dirname 段原样（移动不改名；合并径同返回目标 rel）；moves
+/// = 迁移映射平面（正常迁移/后缀/skip 改道恰一对，overwrite 双对[靶旧
+/// →.trash + 源→靶位]——映射完整性不变式：成功径每迁移档恰一对，改道
+/// 档新位 = .trash 域；同父幂等 moves=[]）；"" = 任一卫拒/迁移未生效
+/// （哨兵零变化）。**POST 而非 GET**（D-19：目录路径 CJK 常态，body
+/// 传参——merge bool/strategy str 参数 body 原生 JSON 类型直通[
+/// back_proxy 按名绑定一手源实勘]）。
 /// POST /api/move_dir
 #[api(method = "POST", path = "/api/move_dir")]
-pub fn move_dir(path str, new_parent str, merge bool) str {
-    return wsys.move_dir_impl(path, new_parent, merge)
+pub fn move_dir(path str, new_parent str, merge bool, strategy str) str {
+    return wsys.move_dir_impl(path, new_parent, merge, strategy)
 }
 
 /// 今日笔记（PLAN-015 第一切片；上游 Time 解锁兑现——back 侧 Date 独占

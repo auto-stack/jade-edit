@@ -1329,7 +1329,7 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await request.post('/api/create_dir', { data: { name: '合并靶' } })
   await request.post('/api/create_dir', { data: { name: 'MgBootE' } })
   await request.post('/api/write_wiki', { data: { path: 'MgBootE/靶档乙.ad', body: '# 靶档乙\n\n' } })
-  await request.post('/api/move_dir', { data: { path: 'MgBootE', new_parent: '合并靶', merge: false } })
+  await request.post('/api/move_dir', { data: { path: 'MgBootE', new_parent: '合并靶', merge: false, strategy: 'both' } })
   await request.post('/api/rename_dir', { data: { path: '合并靶/MgBootE', new_name: '目录己' } })
   await request.post('/api/create_dir', { data: { name: '目录己' } })
   await request.post('/api/create_page', { data: { title: '合并页' } })
@@ -1372,16 +1372,19 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   }
 
   // —— PLAN-019 目录合并交互弧线（素材已前置 daily 前——树新鲜度已由
-  // ⑰ 承载）：弹层双 input → 预览行现文 + 合并移动钮显[探针 G 定谳
-  // 双钮变体] → 磁盘并入（靶原档不变+源档字节整迁+源目录消）。——
+  // ⑰ 承载）：弹层双 input → 预览行现文 + 三择钮三显[PLAN-025 三钮分立
+  // ——D-36① 规避形态] → 保留双份钮 → 磁盘并入（靶原档不变+源档字节
+  // 整迁+源目录消）。——
   await page.getByText('文件', { exact: true }).click()
   await page.getByText('移动目录…', { exact: true }).click()
   await expect(dir3Dialog).toBeVisible({ timeout: 10_000 })
   await dir3Boxes.nth(0).fill('目录己')
   await dir3Boxes.nth(1).fill('合并靶')
   await expect(page.getByText('目标已有同名目录：合并靶/目录己（可用「合并移动」并入）', { exact: true })).toBeVisible({ timeout: 10_000 })
-  await expect(dir3Dialog.getByRole('button', { name: '合并移动', exact: true })).toBeVisible()
-  await dir3Dialog.getByRole('button', { name: '合并移动', exact: true }).click()
+  await expect(dir3Dialog.getByRole('button', { name: '合并·保留双份', exact: true })).toBeVisible()
+  await expect(dir3Dialog.getByRole('button', { name: '合并·跳过同名', exact: true })).toBeVisible()
+  await expect(dir3Dialog.getByRole('button', { name: '合并·覆盖同名', exact: true })).toBeVisible()
+  await dir3Dialog.getByRole('button', { name: '合并·保留双份', exact: true }).click()
   await expect(page.getByRole('heading', { name: '移动目录' })).toBeHidden({ timeout: 10_000 })
   await expect
     .poll(() => fs.existsSync(path.join(WORKSPACE, '合并靶', '目录己', '合并页.ad'))
@@ -1389,11 +1392,11 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
       && fs.existsSync(path.join(WORKSPACE, '合并靶', '目录己', '靶档乙.ad'))
       && !fs.existsSync(path.join(WORKSPACE, '目录己')), { timeout: 10_000 })
     .toBe(true)
-  console.log('[13 dir4] PASS — 目录合并弧线（预览行现文+合并移动钮显→磁盘并入 靶原档不变+源目录消——探针 G 定谳双钮变体真 DOM）')
+  console.log('[13 dir4] PASS — 目录合并弧线（预览行现文+三择钮三显→保留双份钮→磁盘并入 靶原档不变+源目录消——PLAN-025 三钮分立真 DOM）')
   // 拒径对素材 + 不合并拒径回归（「移动」钮 → 目标冲突卫拒）。
   await request.post('/api/create_dir', { data: { name: 'MgBootF' } })
   await request.post('/api/write_wiki', { data: { path: 'MgBootF/靶档丙.ad', body: '# 靶档丙\n\n' } })
-  await request.post('/api/move_dir', { data: { path: 'MgBootF', new_parent: '合并靶', merge: false } })
+  await request.post('/api/move_dir', { data: { path: 'MgBootF', new_parent: '合并靶', merge: false, strategy: 'both' } })
   await request.post('/api/rename_dir', { data: { path: '合并靶/MgBootF', new_name: '目录庚' } })
   await request.post('/api/create_dir', { data: { name: '目录庚' } })
   await request.post('/api/create_page', { data: { title: '源档丙' } })
@@ -1411,6 +1414,70 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await page.getByRole('button', { name: '取消', exact: true }).last().click()
   await expect(page.getByRole('heading', { name: '移动目录' })).toBeHidden({ timeout: 10_000 })
   console.log('[13 dir4] PASS — 不合并拒径回归（「移动」钮→弹层留置+磁盘零变化）')
+
+  // —— PLAN-025 三择/tab 重映射弧（F-R19-1 闭账 vue 轨真 DOM；锚纪律
+  // D-31③/D-39 触发域注记——弹层 heading 角色锚 + 按钮 exact 名）：素材
+  // POST 造同名对[MgR（MgRPg.ad=源标记）× MgT/MgR（MgRPg.ad=靶 twin），
+  // **ASCII 路径**——read_wiki GET query D-19 面，编辑器开档通道约束]→
+  // UI 建 MZ 触发树刷新（POST 造料零树刷新——dir3 先例口径）→ 树行开
+  // 源档 → 合并·跳过同名 → tab path=映射新位 .trash/MgR/MgRPg.ad（非靶
+  // 档 rel）+ 编辑器显源档内容（误映射[显靶档内容]形态消除直证）→ 磁盘
+  // twin 逐字节不动 + .trash 改道逐字节。⑩b 保存落回 .trash 原位（019
+  // §10.4 可看可编辑语义；D-17 键入通道 = 文档尾 type + blur 冲刷）。——
+  await request.post('/api/create_dir', { data: { name: 'MgR' } })
+  await request.post('/api/write_wiki', { data: { path: 'MgR/MgRPg.ad', body: '# MgRPg\n\n源冲突档标记：tab 跟随改道位。\n' } })
+  // 嵌套靶 twin back 通道建成（create_dir 清洗层 "/"→'-' 结构性不含分隔
+  // 符——SD-1201 v1 单层口径；dir4/probe_dir_ops mb 套路同款：create_dir
+  // + write_wiki + move_dir + rename_dir 五连）
+  await request.post('/api/create_dir', { data: { name: 'MgT' } })
+  await request.post('/api/create_dir', { data: { name: 'MgBootT' } })
+  await request.post('/api/write_wiki', { data: { path: 'MgBootT/MgRPg.ad', body: '# MgRPg\n\n靶 twin 档内容。\n' } })
+  await request.post('/api/move_dir', { data: { path: 'MgBootT', new_parent: 'MgT', merge: false, strategy: 'both' } })
+  await request.post('/api/rename_dir', { data: { path: 'MgT/MgBootT', new_name: 'MgR' } })
+  await explorerFolderPlus.click()
+  await expect(page.getByPlaceholder('目录名…')).toBeVisible({ timeout: 10_000 })
+  await page.getByPlaceholder('目录名…').fill('MZ')
+  await page.getByRole('button', { name: '创建', exact: true }).click()
+  await expect(page.getByText('新建目录')).toBeHidden({ timeout: 10_000 })
+  await expect(page.getByRole('button', { name: 'MgR', exact: true })).toBeVisible({ timeout: 10_000 })
+  await page.getByRole('button', { name: 'MgR', exact: true }).click()
+  // 树档行标签 = 纯档名（快开/面板行才是路径面——error-context aria 实勘）
+  await expect(page.getByRole('button', { name: 'MgRPg.ad', exact: true })).toBeVisible({ timeout: 10_000 })
+  await page.getByRole('button', { name: 'MgRPg.ad', exact: true }).click()
+  await expect(tabBtn('MgR/MgRPg')).toHaveCount(1, { timeout: 15_000 })
+  await expect(visibleEditor(page)).toContainText('源冲突档标记：tab 跟随改道位。', { timeout: 15_000 })
+  await page.getByText('文件', { exact: true }).click()
+  await page.getByText('移动目录…', { exact: true }).click()
+  await expect(dir3Dialog).toBeVisible({ timeout: 10_000 })
+  await dir3Boxes.nth(0).fill('MgR')
+  await dir3Boxes.nth(1).fill('MgT')
+  await dir3Dialog.getByRole('button', { name: '合并·跳过同名', exact: true }).click()
+  await expect(page.getByRole('heading', { name: '移动目录' })).toBeHidden({ timeout: 10_000 })
+  await expect
+    .poll(() => fs.existsSync(path.join(WORKSPACE, '.trash', 'MgR', 'MgRPg.ad'))
+      && fs.readFileSync(path.join(WORKSPACE, '.trash', 'MgR', 'MgRPg.ad'), 'utf8') === '# MgRPg\n\n源冲突档标记：tab 跟随改道位。\n'
+      && fs.readFileSync(path.join(WORKSPACE, 'MgT', 'MgR', 'MgRPg.ad'), 'utf8') === '# MgRPg\n\n靶 twin 档内容。\n'
+      && !fs.existsSync(path.join(WORKSPACE, 'MgR')), { timeout: 10_000 })
+    .toBe(true)
+  // F-R19-1 直证核：tab 跟随映射新位（.trash 改道位）——编辑器显源档
+  // 内容非靶档内容（v1 误映射形态消除）。
+  await expect(tabBtn('MgR/MgRPg')).toHaveCount(1, { timeout: 10_000 })
+  await expect(visibleEditor(page)).toContainText('源冲突档标记：tab 跟随改道位。', { timeout: 15_000 })
+  await expect(visibleEditor(page)).not.toContainText('靶 twin 档内容。', { timeout: 10_000 })
+  // .trash 落位可编辑 + 保存落回 .trash 原位（019 §10.4 语义直证）。
+  const skipContent = visibleEditor(page).locator('.autodown-editor-content')
+  await skipContent.click()
+  await page.keyboard.press('Control+End')
+  await page.keyboard.type('e2e skip 弧保存落回原位标记。', { delay: 25 })
+  await neutralBlur()
+  await page.locator('button[title="保存"]').click()
+  await expect
+    .poll(() => fs.readFileSync(path.join(WORKSPACE, '.trash', 'MgR', 'MgRPg.ad'), 'utf8').includes('e2e skip 弧保存落回原位标记。'), { timeout: 10_000 })
+    .toBe(true)
+  console.log('[13 dir5] PASS — PLAN-025 skip 三择 tab 重映射弧（三钮→跳过同名→tab 跟随 .trash 改道位显源档内容[F-R19-1 闭账]+磁盘 twin 不动+.trash 位保存落回原位）')
+  // 收尾：关 .trash 落位 tab + 磁盘复原（标记行剥离）
+  await page.locator('button:has(svg.lucide-xicon)').first().click()
+  await request.post('/api/write_wiki', { data: { path: '.trash/MgR/MgRPg.ad', body: '# MgRPg\n\n源冲突档标记：tab 跟随改道位。\n' } })
 
   // 14 meta（PLAN-008 T-04；vm 矩阵 check 14 同单——段内最后）：tags
   // 面板 + wanted 模式。执行序在 13 后（此位已知答案——e2e 13 删的是

@@ -611,6 +611,107 @@ fn rel_under(path str, dir str) str {
     return rest
 }
 
+// —— move_dir 返回 JSON 手工解包（PLAN-025 T-02；vue 轨安全通道——
+// D-20⑤ 实勘加固：gen-only 产出 `json.to_value(r)` identifier 实参
+// 发射恒等 `let m = r`[App.vue emitted]，仅 call-arg 形发射 JSON.parse
+// ——而 move_dir 变更型调用双取不可行[二次调用源目录已消返 ""]→ 纯
+// str 通道双轨同构，vm 轨 json native 不依赖）。**原语域纪律**：仅
+// split/starts_with/ends_with + 串接（⚠ split_once 无 ts_adapter 映射
+// ——vue 轨 TypeError；.replace 次数语义双轨未证——SD-501 注记；切片
+// D-20③/D-34① 禁）。格式 = back 装配定文 `{"dir":"<d>","moves":[
+// ["o","n"],…]}`（wsys json_esc 转义域 `\\`/`\"` 两态——split/rejoin
+// 镜像逆精确可逆）；结构引号恒随分隔模式消费：对内 `","`、对间
+// `"],["`、dir 尾 `","moves":[`——转义内容结构 性不现裸引号故分隔唯一
+// （档名清洗层无引号；病理性裸 `],[` 括号序列域外注记——v1 容忍口径
+// 同域）。——
+
+/// json_esc 逆：先 `\"`→`"` 后 `\\`→`\`（split/rejoin 全量替换——
+/// 次序即 esc 镜像，`\\\"`→`\"`、`\\\\`→`\\` 逐例可逆）。
+fn json_unesc(s str) str {
+    var parts = s.split("\\\"")
+    var out str = parts[0]
+    var i int = 1
+    while i < parts.len() {
+        // ⚠ D-20②：列表元素先拷局部变量再拼接。
+        var q str = parts[i]
+        out = out + "\"" + q
+        i = i + 1
+    }
+    var parts2 = out.split("\\\\")
+    var out2 str = parts2[0]
+    var j int = 1
+    while j < parts2.len() {
+        var bs str = parts2[j]
+        out2 = out2 + "\\" + bs
+        j = j + 1
+    }
+    return out2
+}
+
+/// dir 域抽取：`{"dir":"` 之后、`","moves":[` 之前的原文（unesc 还原）；
+/// 形外输入 = ""（守卫式——拒哨兵路径不触本通道）。
+fn move_json_dir(r str) str {
+    var p1 = r.split("{\"dir\":\"")
+    if p1.len() < 2 {
+        return ""
+    }
+    // ⚠ D-20②：列表元素先拷局部变量再调方法。
+    var seg1 str = p1[1]
+    var p2 = seg1.split("\",\"moves\":[")
+    if p2.len() < 2 {
+        return ""
+    }
+    var d str = p2[0]
+    return json_unesc(d)
+}
+
+/// moves 对抽取：`","moves":[` 后至尾 `]}` 前条目域 → 对间 `"],["`
+/// 分段 → 每段对内 `","` 二分 → 左元 `["` 前缀剥离[全形归一：前置
+/// `[` 后 split 首现——内容无裸引号故唯一]、右元 `"]` 尾缀剥离
+/// [ends_with 守卫 + split 首现] → 双串 unesc → {old,new} 行
+///（TabsRenamed/recents 消费面）；空域/形外 = 空清单。
+fn move_json_moves(r str) List {
+    var out List = []
+    var p1 = r.split("\",\"moves\":[")
+    if p1.len() < 2 {
+        return out
+    }
+    // ⚠ D-20②：列表元素先拷局部变量再调方法。
+    var seg1 str = p1[1]
+    var p2 = seg1.split("]}")
+    var body str = seg1
+    if p2.len() >= 2 {
+        body = p2[0]
+    }
+    if body == "" {
+        return out
+    }
+    var segs = body.split("],[")
+    var i int = 0
+    while i < segs.len() {
+        var seg str = segs[i]
+        var pair = seg.split("\",\"")
+        if pair.len() == 2 {
+            // 左元归一：前置 `[` 使 `"Z`/`["X` 两形统一为 `["` 首现
+            // 剥离（内容裸引号结构性不可现——首现即结构位）。
+            var leftw str = "[" + pair[0]
+            var lp = leftw.split("[\"")
+            // 右元：末段 `W"]` 形剥离（ends_with 守卫——非末段已随
+            // `"],["` 分隔净身）；其余原样。
+            var rightw str = pair[1]
+            if rightw.ends_with("\"]") {
+                var rp = rightw.split("\"]")
+                rightw = rp[0]
+            }
+            if lp.len() >= 2 {
+                out.push({ old: json_unesc(lp[1]), new: json_unesc(rightw) })
+            }
+        }
+        i = i + 1
+    }
+    return out
+}
+
 /// 悬空建页路径预览（PLAN-005 T-02）——back wsys.title_to_path 的 front
 /// 镜像纯函数（同一 while-contains 收敛惯用法 + dash-收敛空名探针）。
 /// **仅弹层显示用**：权威在 back（create_page 落盘名），漂移=观感非
@@ -1025,9 +1126,14 @@ widget App {
         // 净零——生成器组件路径 checked=状态引用 v-model 化一手源实勘，
         // ledger 记账]→ fallback「移动」/「合并移动」双钮——目标同名时
         // 合并钮显；旗标由双钮 handler 显式置位，MoveDirExec 统一消费）。
+        // **PLAN-025 扩**（SD-2501；基线 v20 变更面）：`dirmerge_strategy`
+        // str——合并三择态（"both"/"skip"/"overwrite"，缺省 "both"——
+        // ActMoveDir 弹层开即复位同 dirmerge_on 纪律；三钮 handler 显式
+        // 置位 + MoveDirExec 统一消费，v1 记账后缀保双份缺省语义）。
         var movedir_src str = ""
         var movedir_dst str = ""
         var dirmerge_on bool = false
+        var dirmerge_strategy str = "both"
         // —— 标签面板数据态（PLAN-008）：聚合行 {tag,label,paths}
         //（label 派生期拼接——双段 ${} 插值 avoidance，PLAN-003 先例）+
         // 单选展开态（"" = 全收，手风琴 v1）——find_q 同构不入 store
@@ -1915,14 +2021,26 @@ widget App {
                         style: "w-full h-7 px-2 text-[12px] border rounded bg-background"
                     }
                     text .movedir_preview { style: "text-[12px] text-muted-foreground px-1" }
-                    // 条件合并钮（探针 G 定谳双钮变体——⚠ 置于内容流而非
-                    // dialog-footer 内：footer 内 `if` 条件节点 vm 臂首跑
-                    // 未现（T-03 实勘——在册 dialog-footer 无条件节点先例
-                    // ，内容流 if 为大量在册形态）；行右对齐 ghost 钮。
+                    // 条件三择钮（PLAN-019 双钮 → **PLAN-025 三钮分立**
+                    // ——SD-2501；⚠ 置于内容流而非 dialog-footer 内：footer
+                    // 内 `if` 条件节点 vm 臂首跑未现（T-03 实勘——在册
+                    // dialog-footer 无条件节点先例，内容流 if 为大量在册
+                    // 形态）；行右对齐 ghost 钮。D-36① 规避声明：零
+                    // checkbox[①a vue 轨双写缺陷]、零视图字符串比较条件
+                    // [①b——三钮静态标签无策略感知视图分支]、钮居内容流
+                    // [①c 现役位维持]）。
                     if .movedir_conflict {
-                        row (style: "w-full items-center justify-end px-1") {
-                            button (text: "合并移动", variant: "ghost") {
-                                onclick: .MoveDirGoMerge
+                        row (style: "w-full items-center justify-end gap-1 px-1") {
+                            button (text: "合并·保留双份", variant: "ghost") {
+                                onclick: .MoveDirGoMergeBoth
+                                style: "h-7 px-3 text-[12px]"
+                            }
+                            button (text: "合并·跳过同名", variant: "ghost") {
+                                onclick: .MoveDirGoMergeSkip
+                                style: "h-7 px-3 text-[12px]"
+                            }
+                            button (text: "合并·覆盖同名", variant: "ghost") {
+                                onclick: .MoveDirGoMergeOver
                                 style: "h-7 px-3 text-[12px]"
                             }
                         }
@@ -3046,24 +3164,28 @@ widget App {
         // 无状态守卫（源/目标父 input 口径同 014 目录弹层族——目标经
         // 弹层 input 指定，ft_sel 不扩）；双 input 置空 + 开弹层。
         // MoveDirGo 流：①back 契约直调 move_dir（POST 单事务五步——
-        //   循环卫/合并拒/纯 .ad 卫/幂等全在 back；源/目标父空拒——输入
-        //   未落定弹层留置；**目标父空 = 合法弧线**[移入根]，空拒面只及
-        //   源）
-        // ②成功 = 关弹层 + tab 全量更新循环（**迁移前** ft_nodes 派生
-        //   paths_under——新旧路径对；余段 rel_under → 新路径逐 store.
-        //   TabsRenamed——stem 不变标题恒等）+ store.Reload（body 不变
-        //   ——重挂载播种链一致性，MoveGo/RenDirGo 同判）+ 刷新族：
-        //   LinksRefreshOf(new_active) + TagsRefresh + MentionsRefreshOf
-        //   (new_active) + TreeRefresh（树新位）+ ft_sel/active 属目录
-        //   remap（显式计算规避 handler 内 .store 陈旧投影）
-        // ③拒（""：循环卫/合并/纯 .ad/缺失）= console 注记 + 弹层留置
-        //   （006 v1 口径同判）。
+        //   策略白名单/循环卫/合并拒/纯 .ad 卫/幂等全在 back；源/目标父
+        //   空拒——输入未落定弹层留置；**目标父空 = 合法弧线**[移入根]，
+        //   空拒面只及源）
+        // ②成功 = 关弹层 + **moves 映射驱动重映射**（PLAN-025——返回
+        //   JSON {dir, moves} 消费：moves 查表逐对 store.TabsRenamed +
+        //   recents 置换——冲突档落映射新位[后缀档/.trash 位]非靶档内容
+        //   ，F-R19-1 误映射源结构性消除；stem 不变标题恒等）+ store.
+        //   Reload（body 不变——重挂载播种链一致性，MoveGo/RenDirGo 同
+        //   判）+ 刷新族：LinksRefreshOf(new_active) + TagsRefresh +
+        //   MentionsRefreshOf(new_active) + TreeRefresh（树新位）+
+        //   ft_sel/active 属目录 remap（.dir 驱动，显式计算规避 handler
+        //   内 .store 陈旧投影）
+        // ③拒（""：策略白名单/循环卫/合并/纯 .ad/缺失）= console 注记 +
+        //   弹层留置（006 v1 口径同判）。
         .ActMoveDir -> {
             .movedir_src = ""
             .movedir_dst = ""
             // PLAN-019：合并旗标复位（弹层每次开即默认不合并——拒径
-            // 缺省语义，G1）。
+            // 缺省语义，G1）。PLAN-025：三择态复位（缺省 "both"——v1
+            // 后缀保双份缺省语义，弹层开即复位同旗标纪律）。
             .dirmerge_on = false
+            .dirmerge_strategy = "both"
             store.MoveDirOpen()
         }
         .MoveDirSrc(v) -> {
@@ -3075,14 +3197,27 @@ widget App {
         .MoveDirCancel -> {
             store.MoveDirClose()
         }
-        // 双钮入口（PLAN-019；探针 G 定谳 fallback 形态——旗标显式置位
-        // + MoveDirExec 统一消费；handler 间调用直发在册[.Init →
-        // .TreeRefresh() 先例]）。
+        // 多钮入口（PLAN-019 双钮 → **PLAN-025 三钮分立**——SD-2501；
+        // 探针 G 定谳 fallback 形态续——旗标/策略显式置位 + MoveDirExec
+        // 统一消费；handler 间调用直发在册[.Init → .TreeRefresh() 先例]；
+        // 静态标签钮零 checkbox[D-36①a 规避]/零视图字符串比较条件
+        // [①b——三钮静态无策略感知视图分支]）。
         .MoveDirGo -> {
             .dirmerge_on = false
             .MoveDirExec()
         }
-        .MoveDirGoMerge -> {
+        .MoveDirGoMergeBoth -> {
+            .dirmerge_strategy = "both"
+            .dirmerge_on = true
+            .MoveDirExec()
+        }
+        .MoveDirGoMergeSkip -> {
+            .dirmerge_strategy = "skip"
+            .dirmerge_on = true
+            .MoveDirExec()
+        }
+        .MoveDirGoMergeOver -> {
+            .dirmerge_strategy = "overwrite"
             .dirmerge_on = true
             .MoveDirExec()
         }
@@ -3094,9 +3229,10 @@ widget App {
                 var r str = ""
                 var ok bool = true
                 try {
-                    // PLAN-019 三参接线（SD-1901——merge = 合并旗标；
-                    // 卫语句/幂等/冲突裁决全在 back）。
-                    r = move_dir(src, dir_trim(.movedir_dst), .dirmerge_on)
+                    // PLAN-025 四参接线（SD-2501——merge = 合并旗标 +
+                    // strategy 三择态；卫语句/幂等/冲突裁决全在 back；
+                    // 返回形 JSON {dir, moves}）。
+                    r = move_dir(src, dir_trim(.movedir_dst), .dirmerge_on, .dirmerge_strategy)
                 } catch (e) {
                     ok = false
                 }
@@ -3104,38 +3240,40 @@ widget App {
                     console_log("move_dir: failed")
                 }
                 if r != "" {
+                    // PLAN-025：JSON 消费 + **映射驱动重映射**（F-R19-1
+                    // 闭账——back moves 查表替换旧树 paths_under 派生 +
+                    // rest 拼接：冲突档 tab 落映射新位[后缀档/.trash 位]
+                    // 非靶档内容；.trash 落位 tab 跟随文件可看可编辑
+                    // ——019 §10.4 语义，保存落回 .trash 原位在册）。
+                    // 解包 = 手工通道（move_json_dir/moves——vue 轨安全：
+                    // D-20⑤ identifier 实参 to_value 恒等实勘，变更型
+                    // 调用双取不可行）。
                     store.MoveDirClose()
-                    // 迁移前清单派生 + tab 全量更新（014 TabsRenamed 循环
-                    // 同构——.ft_nodes 尚为旧树：paths_under 旧路径集）。
-                    // ⚠ 合并冲突后缀档 = 新档（stem 变）：tabs 循环按旧
-                    // 树 paths_under 仍覆盖（源档全部迁移——后缀档 rel 已
-                    // 变，store.TabsRenamed 以 r + "/" + rest 落新 rel 会
-                    // 错后缀档——合并冲突面 v1 记账：后缀档 tab 以新 rel
-                    // 重开承载，SD-1901 注记）。
-                    var files List = paths_under(.ft_nodes, src)
+                    var d str = move_json_dir(r)
+                    var moves = move_json_moves(r)
                     var i int = 0
-                    while i < files.len() {
-                        // ⚠ D-20②：列表元素先拷局部变量再调方法。
-                        var f str = files[i]
-                        if f.ends_with(".ad") {
-                            var rest str = rel_under(f, src)
-                            store.TabsRenamed(f, r + "/" + rest)
-                            // 最近打开旧键置换（PLAN-020——目录级同口径
-                            // 014 循环同款；合并冲突后缀档 v1 记账面同
-                            // SD-1901 注记——新档键不在册零扰动）
-                            .recent_paths = recents_rekey(.recent_paths, f, r + "/" + rest)
-                        }
+                    while i < moves.len() {
+                        // ⚠ D-20②：列表元素先拷局部变量再取字段。
+                        var pair = moves[i]
+                        var o str = pair.old
+                        var n str = pair.new
+                        store.TabsRenamed(o, n)
+                        // 最近打开旧键置换（PLAN-020 目录级同口径——映射
+                        // 查表随批升级，v1 rest 拼接记账面消除）。
+                        .recent_paths = recents_rekey(.recent_paths, o, n)
                         i = i + 1
                     }
                     // 循环置换毕持久化一次（PLAN-021——RenDirGo 同款循环尾
                     // 共享口单发；无命中 = 同内容幂等写）
                     .RecentsPersist()
-                    // active/ft_sel 属目录 remap（显式计算——.store 读
-                    // 陈旧投影规避，RenDirGo 同款）。
+                    // active/ft_sel 属目录 remap（.dir 驱动——映射循环后
+                    // active 已随 TabsRenamed 落映射新位，rel_under 归 ""
+                    // 零扰动；余留面 = ft_sel 目录选区——显式计算规避
+                    // handler 内 .store 陈旧投影，RenDirGo 同款）。
                     var new_active str = .store.active_path
                     var act_rest str = rel_under(new_active, src)
                     if act_rest != "" {
-                        new_active = r + "/" + act_rest
+                        new_active = d + "/" + act_rest
                     }
                     store.Reload()
                     .LinksRefreshOf(new_active)
@@ -3145,11 +3283,11 @@ widget App {
                     var sel str = .ft_sel
                     var sel_rest str = rel_under(sel, src)
                     if sel_rest != "" {
-                        .ft_sel = r + "/" + sel_rest
+                        .ft_sel = d + "/" + sel_rest
                     }
                 } else {
                     if ok {
-                        console_log("move_dir: rejected (cycle/merge/pure-.ad/missing)")
+                        console_log("move_dir: rejected (strategy/cycle/merge/pure-.ad/missing)")
                     }
                 }
             }
