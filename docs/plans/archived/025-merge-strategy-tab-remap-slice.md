@@ -1,10 +1,11 @@
 ---
 plan_id: PLAN-025
-status: reviewed
+status: archived
+completion_kind: delivered
 feature_name: 目录合并三择与 tab 重映射批（第二十三切片——微件池顺延）
 author: [agent]
 created_at: 2026-09-29T00:00:00Z
-updated_at: 2026-09-29T18:10:00Z
+updated_at: 2026-09-29T20:00:00Z
 plan_revision: 1
 current_step: 5
 total_steps: 5
@@ -565,6 +566,49 @@ PLAN-024 归档后的首个立项批。**立项路由依据**：README 仪表盘
     checkout 重放）。
   - `next: merge`（全工作流已由用户授权——review 后接
     auto-plan:merge；merge 基线 = d7748b4）。
+
+- **2026-09-29 merge（auto-plan:merge）**：
+  - `stage: merge`，PLAN-025:r1，`outcome: pass`——五 checkpoint 闭环。
+  - **prepared**：复审基线 r1 = d7748b4（reviewed——b2403ea 复审
+    记录 docs-only 后代）；canonical delta 已随实现落 main
+    （**直接 main 线性约定 001..024 在档惯例 + 三件知识库形
+    019..024 merge 先例承载**——本仓无 docs/specs/，canonical =
+    ARCHITECTURE/README/parity-ledger tracked 文件面，plan §4
+    声明 + 023/024 归档先例在册）：SD-2501@ARCH §5 第二十三切片段
+    [四参契约/三择三通道/moves 返回形/手工解包通道/三择 UI/链接
+    零扰动语义/验证链] + SD-2502@§6 heading+vm 矩阵行 dir4/dir5+
+    baseline v20 链+probe 段扩+e2e 行 + SD-2503@README 是什么
+    第二十三切片条目+Tests heading+仪表盘④收窄+留观面板续记 +
+    SD-2504@ledger H1 v29+D-36 处置更新+D-21 v29+D-20⑤ 扩记+
+    D-35 第六证。
+  - **landed**：main tip == b2403ea 含 d7748b4[直接 main 线性
+    约定无 worktree/dev 分支无 ff 动作；`git merge-base
+    --is-ancestor` ancestor-OK 线性无 merge commit 实证]；
+    **known-good smoke = 合并窗 fresh vm merged 16/16 ALL GREEN**
+    [当前 tip 实跑 e2e/.runtime/p25-merge-smoke.log——基线 v20
+    零漂移 PASS，含 [B baseline]/[13 dir4]/[13 dir5] 三锚位]。
+  - **ledger_refreshed**：v29@d7748b4 tracked 读回核验[H1 v29 恰
+    一 + D-36「PLAN-025 处置更新」恰一 + D-21「v29 扩记」现二处
+    [H1 changelog + 行内处置列]——无 live ledger 服务，tracked
+    文件面与 PLAN-001/022/023/024 同判]。
+  - **archived**：`git mv` → docs/plans/archived/025-merge-strategy
+    -tab-remap-slice.md + status archived + completion_kind
+    delivered[YAML 块内——675320f 遗漏教训同款随锁落位]。
+  - **cleaned**：无 worktree/dev 分支[git worktree list 单一主检出
+    核验@b2403ea] + 代码工作树零 WIP[git status clean] + 本批 A/B
+    判别链物料仓外即用即删复核[src 零 diff 强形无 archive 树；
+    一次性件居 ignored .runtime——bench150/p25-* log 存续先例同判
+    保留，值内嵌本 §9 可追溯]。
+  - **deployment 观察**（landing is not deployment）：gen/front/
+    vue/dist 复审窗 ✓built@14.59s[d7748b4 src 内容现势——b2403ea
+    归档簿记 docs-only 零后续变更] + 家族 exe auto-lang 所有[非本仓
+    工件——debug 09-28 15:02/release 09-28 15:17 时间戳实录在册]。
+  - **留观交接**：F-R17-1 split 双臂复跑[家族窗第九例——执行窗
+    ×4 + 复审窗复测 1 = 第 5 连同形；unblock 同前 = 家族 exe 稳定
+    后双臂复跑]/D-35② 复测条件维持观察[exe 时间戳未变第六证]/
+    T-03+D-39 挂账面维持/D-20⑤ unlock 维持上游供料[手工解包通道
+    本仓纪律规避先例——变更型调用双取不可行定谳入册]/试用反馈件
+    维持候选池首位。
 
 ## 10. 待澄清事项
 
