@@ -1,6 +1,6 @@
 ---
 plan_id: PLAN-024
-status: reviewed
+status: archived
 feature_name: mtime 键控缓存专项——watch 批免重 walk 本仓半（第二十二切片）
 author: [agent]
 created_at: 2026-09-29T00:00:00Z
@@ -15,6 +15,7 @@ touched_goals:
     缓存专项挂账，PLAN-023 §10.2「unlock = 专项立项」条目兑现）
   - docs/parity-ledger.md D-22 watch 批剩余面终账 + D-35② 驻留压力
     复核（P ≤ 200 稳定域口径随批实勘）
+completion_kind: delivered
 ---
 
 # PLAN-024：mtime 键控缓存专项——watch 批免重 walk 本仓半（第二十二切片）
@@ -599,6 +600,51 @@ D-35② P≤200 稳定域）产出 **go/no-go 判定表**——go 则 back 索�
     split-r2,build,e2e}.log（e2e/.runtime——临时件；判定值已内嵌本
     条可追溯）+ 分账/双探针重放值内嵌上文。
   - `next: merge`（merge 基线 = 1f5d9a5；用户已授权全链）。
+
+- **2026-09-29 merge（auto-plan:merge）——PLAN-024:r1 收口回执**：
+  - `stage: merge`，PLAN-024:r1，**outcome: pass（delivered 收口）**。
+  - `prepared`: 复审基线 r1@1f5d9a5[reviewed——2fa7411 复审记录
+    docs-only 后代]——canonical delta 已随实现落 main[SD-2401@ARCH
+    §5 第二十二切片段+SD-2402@§6 heading+README Tests heading+
+    SD-2403@README 是什么/Tests N 定谳/仪表盘/留观面板+SD-2404@
+    ledger v28——直接 main 线性约定 001..023 在档惯例+三件知识库形
+    019..023 merge 先例承载（canonical = ARCH/README/parity-ledger
+    非文档节外知识库——在档 reviewed precedent）]。
+  - `landed`: main tip == 2fa7411 含 1f5d9a5[直接 main 约定无
+    worktree/dev 分支无 ff 动作——merge-base --is-ancestor
+    ancestor-OK 线性无 merge commit] + **known-good smoke = 合并窗
+    fresh vm merged 16/16 ALL GREEN**（当前 tip 实跑
+    `p24-merge-smoke.log`——基线 v19 零漂移 PASS，09-28 exe 载体
+    跨批稳定第五证续）。
+  - `ledger_refreshed`: v28@1f5d9a5 tracked 读回核验[H1 字面 v28 +
+    D-40 新行恰一 + D-39 恰一 + PLAN-024 收口处置段（D-22/D-35）+
+    D-21 v28 + 复审窗漂移注记随 merge 窗补记（F-24-2）——无 live
+    ledger 服务，tracked 文件面 PLAN-001/022/023 同判]。
+  - `archived`: untracked→git mv→docs/plans/archived/
+    024-mtime-keyed-cache-slice.md + status archived +
+    completion_kind delivered。
+  - `cleaned`: 无 worktree/dev 分支[直接 main 约定 worktree 仅
+    main——git worktree list 单一主检出核验]+代码工作树零 WIP+
+    本批 A/B 判别链零物料[判别链 = src 零 diff 强形，无 archive
+    树；一次性件 p24-cache-proto/dbg-p24/dbg-p24b/p24-ws150/
+    probe-p24proto/probe-mtime 居 ignored .runtime——bench150 存续
+    先例同判保留，值已内嵌计划 §8.1 可追溯]。
+  - **deployment 面观察**（landing ≠ deployment）：gen/front/vue/
+    dist = 复审窗 ✓built@1f5d9a5 src[2fa7411/本归档 docs-only——
+    内容现势]；家族 exe = auto-lang 仓所有非本仓工件[debug/release
+    09-28 载体——本仓零涉]。jade-edit 无常驻生产进程面。
+  - **留观交接**（下游批次口径）：F-R17-1 split 双臂复跑[家族窗第
+    八例双位形续——022 第六例/023 第七例延续，unblock = 家族 exe
+    稳定后双臂复跑]；D-35② bulkalias 复测[exe 时间戳 09-28 载体
+    跨批稳定第五证——复测执行窗条件维持观察；P≤200 驻留压力面
+    已实测补勘[PLAN-024 p4]]；**T-03/D-39 挂账面**（双取形维持 +
+    dev-stack 竞态——unlock 三选随 ledger D-39/README 候选池③，
+    后批重推载体 = 023 §5.3+全链证据）；**fs 监听半终账**[mtime
+    键控缓存四面实测收益面否定关账——D-40 在册；上游亚秒粒度
+    fs.mtime_ms 供料候选随 D-40② unlock 注记]；试用反馈件维持候
+    选池首位（真实反馈缺席）。
+  - `next`: ——（PLAN-024 delivered 收口；下一批 = 试用驱动阶段候
+    选池首位序[README 仪表盘现势]）
 
 ## 10. 待澄清事项
 
