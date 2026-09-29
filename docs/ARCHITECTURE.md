@@ -1193,7 +1193,54 @@ src/back/api.at           /api 契约（自有 Auto 源，与实现同 commit—
   基线 **v20 计划内重锁**（App dirmerge_strategy 入 dump——store 新
   字段面第七例 + 三钮闭态渲染 id 序列）。
 
-## 6. 测试体系（双轨一致性门；PLAN-001 T-04 换基迁移；SD-402 find 扩单；SD-502 create 扩单；SD-602 rename 扩单；SD-702 file 扩单；SD-802 meta 扩单；SD-902 meta/link 扩单；SD-1002 link 扩单；SD-1102 meta 属性子步扩单；SD-1202 dir/alias 子步扩单；SD-1302 显示名子步扩单；SD-1402 目录二期/面板名化子步扩单；SD-1502 daily/updated_at 子步扩单；SD-1602 trash 子步扩单；SD-1702 四级解析/词边界/case-only 子步扩单；SD-1802 目录移动/depth 8 子步扩单；SD-1902 目录合并/trash 增强子步扩单；SD-2002 orphans/recents 子步扩单；SD-2102 持久化/防线子步扩单；SD-2202 零扩单——PLAN-022 纯内部性能片：行为零变化，既有断言域全量承载[vm 矩阵 16 组含 link ⑧ orphans 三语义面/meta 组 tags 面] + 基线 v19 零漂移[零重锁第三例] + 前后采逐字节门[tags_json 两语料 9 采点] + bench150 重放对拍门[tags ≤1.5s 过 246ms/孤页 ≤2.0s 越门 3.4s——非目标面残余记账，split 臂家族窗第六例口径续记]；SD-2302 续零扩单——PLAN-023 纯内部性能片（读面/取面收口，第三例）：行为零变化，既有断言域全量承载[vm 矩阵 16 组含 ⑧ orphans/wanted 语义面] + 基线 v19 零漂移[零重锁第四例] + 前后采逐字节门扩面[links_json/tags_json/search_json 三面×双语料 9 件 sha256 全等] + dbg 口径孤页门重推门[≤2.0s 过 891/841ms——F-1 兑现；bench ⑨ 降记录面] + 双取形消除挂账[SD-2301③——D-39 vue 轨竞态，split 臂家族窗第七例口径续记]；SD-2402 续零扩单——PLAN-024 有界调查批（探针定谳 no-go 关账）：probe_mtime.mjs 新增入库[契约语义双臂五案——probe 族 14→15 件] + 判定表/分量分账值内嵌 plan §8[.runtime 一次性件口径] + repo src 零 diff——矩阵/e2e 断言域零扩[既有保存点弧/fs 造档弧内建承载零涉]，基线 v19 零漂移续[零重锁第五例——src 零 diff 直证]；SD-2502 续——PLAN-025 功能切片（合并三择批）：probe_dir_ops 三择案组扩[s①..s⑩ 双臂——skip/overwrite 零数据丢失+卫正交+fail-closed+CJK+回滚弧+moves 完整性，既有 m①..mb⑨ 全案四参化零漂移承载，双臂 raw 字节等值升级] + probe_trash 回归续[18+15 案 fresh] + vm_matrix 13 file 组扩[dir4 三择钮面三显断言+保留双份钮续承合并弧线/dir5 tab 重映射弧——F-R19-1 直证：skip 改道位 tab path+源档内容+recents 置换+.trash 位保存落回] + e2e 同单[dir4 三钮三显+保留双份钮/dir5 skip 弧——ASCII 路径 D-19 口径] + **基线 v20 计划内重锁第七例**[App dirmerge_strategy 入 dump["both" 缺省——store 新字段面] + 移动目录弹层三钮[闭态恒渲染 D-23③]入 id 序列]）
+  **第二十四切片——上游回执复测批（SD-2601，纯回执验证 src 零
+  diff——PLAN-705/706 载体重建与四回执；blocked 出口形）**：
+  载体重建口径（015 旁路先例续）：上游 PLAN-705 交付簇（vm http
+  handler 异步生命周期——live-op 登记表/固定 async reqwest
+  executor/请求状态机四阶段段驱动 owner dispatch/REQUEST_SCOPES）
+  + 706 合并携带（aura_view_builder +971/vm_bridge +616/memo_deps
+  +155/vue.rs gallery display fixes）晚于本地双 exe（09-28
+  15:02/15:17）→ 本地重建载体（家族 master 66c9cac19 src 洁净实
+  勘；`cargo build -p auto` **双载体** release 80,972,800B@09-29
+  21:19/debug 128,110,080B@21:26——**`-p auto` 有界旁路适配**：全
+  量构建败于 auto-cosmic-demo 旁支 crate 预存编译断 E0061[09-23
+  PLAN-695 引入 `View::Text.selectable` 字段 demo 未随改——家族源
+  码面观察非本仓修域]；家族并行窗互斥观察——运行中 auto.exe 实例
+  映像锁归 `.wt/musk-093` 自携工作树，master 双 exe 无锁；全程
+  AUTO_EXE 显式指路）。**回执判据与双出口定文**：D-21 负载窗
+  （e2e ≥3+双臂矩阵 ≥2/臂+gate ≥1——HTTP 面签名[400 missing
+  param/ECONNRESET/ECONNREFUSED/进程死亡]零复现=处置升级/任一复
+  现=留观+形态实录；UI 节拍族[popover 内容窗 v11③]分野单列）/
+  F-R17-1（split fresh-green 判据——恢复=闭账/续现=第十例）/
+  D-35②（N=500 值完整锚判据——值完整=口径精化注记/损坏=口径维
+  持+实录）/D-19（源码 grep+四案复跑——负结果双确认）。**执行窗
+  实录（blocked 出口触发——非静默）**：merged 臂**脏标/确认弹层
+  交互面双载体确定性断裂 ×4**（debug=[7 tab] 标脏弧进程死亡 ×2
+  同点[基线 v20 PASS 后 MCP 控制通道进程死亡伴生 SocketError@
+  vm_matrix:673/674]/release=[7 tab]+[10 link] PASS 后 [10b] 脏关
+  弧弹层栈积 ×2 同点[:774——fail-snap 双叠「有未保存的修改」确认
+  弹层滞留=脏态泄漏形]；**A/B 判别链强形**：同矩阵同 fixture 旧
+  exe 09-29 19:42 merged 16/16 ALL GREEN 在库[p25-merge-smoke.log]
+  ——断裂=载体 delta 交互语义面[706 UI 输入层最邻域候选]，dump 结
+  构面完好[基线 v20 双载体 PASS]）→ 冒烟败形 §plans/026 §5.2/
+  §10.3 **blocked 出口**（src 零 diff 约束下不自修——r1 交裁：待
+  家族修复窗重入 or 断裂实录供料另立）；**split 臂结构性不可达**
+  （矩阵单跑先 merged 后 split——F-R17-1/D-39 复核轮 0/2）。**已
+  交付回执面**：D-35② 负结果维持（新载体 N=500 HTTP 200 整数
+  322 len=3——019 整数 500 同族形态变体，P≤200 口径不变）/D-19
+  负结果双确认（url_decode byte-as-char 原样 http_server.rs:527
+  +四案 g① body=0/g② len=0/g③/g④ 原绿——供料候选不变）/D-21 负
+  出口形态实录（进程死亡 ×2 + e2e ×3=2 绿+popover v11③ 族 1 例
+  重跑即绿+e2e 窗 HTTP 签名零复现——留观维持）/盘点三件维持候选
+  （checkbox vue.rs:13491 注释域在+gen 面 App.vue 零实例/menubar
+  memo 零发射/autoui_state 序列化零触——705/706 delta 零触定
+  谳）/build ✓built 20.23s（新 gen 面全链绿——SCHEMA_DRIFT_
+  GENERATE_AT=1 随窗路由，706 生成器变更对 jade 语料零破坏直
+  证）。**回执批形态注记**：src 零 diff（git diff adb9d8d -- src/
+  0 行——024 no-go 支路同判）；一次性复测件居 ignored
+  e2e/.runtime（p26-* 在档可追溯）。
+
+## 6. 测试体系（双轨一致性门；PLAN-001 T-04 换基迁移；SD-402 find 扩单；SD-502 create 扩单；SD-602 rename 扩单；SD-702 file 扩单；SD-802 meta 扩单；SD-902 meta/link 扩单；SD-1002 link 扩单；SD-1102 meta 属性子步扩单；SD-1202 dir/alias 子步扩单；SD-1302 显示名子步扩单；SD-1402 目录二期/面板名化子步扩单；SD-1502 daily/updated_at 子步扩单；SD-1602 trash 子步扩单；SD-1702 四级解析/词边界/case-only 子步扩单；SD-1802 目录移动/depth 8 子步扩单；SD-1902 目录合并/trash 增强子步扩单；SD-2002 orphans/recents 子步扩单；SD-2102 持久化/防线子步扩单；SD-2202 零扩单——PLAN-022 纯内部性能片：行为零变化，既有断言域全量承载[vm 矩阵 16 组含 link ⑧ orphans 三语义面/meta 组 tags 面] + 基线 v19 零漂移[零重锁第三例] + 前后采逐字节门[tags_json 两语料 9 采点] + bench150 重放对拍门[tags ≤1.5s 过 246ms/孤页 ≤2.0s 越门 3.4s——非目标面残余记账，split 臂家族窗第六例口径续记]；SD-2302 续零扩单——PLAN-023 纯内部性能片（读面/取面收口，第三例）：行为零变化，既有断言域全量承载[vm 矩阵 16 组含 ⑧ orphans/wanted 语义面] + 基线 v19 零漂移[零重锁第四例] + 前后采逐字节门扩面[links_json/tags_json/search_json 三面×双语料 9 件 sha256 全等] + dbg 口径孤页门重推门[≤2.0s 过 891/841ms——F-1 兑现；bench ⑨ 降记录面] + 双取形消除挂账[SD-2301③——D-39 vue 轨竞态，split 臂家族窗第七例口径续记]；SD-2402 续零扩单——PLAN-024 有界调查批（探针定谳 no-go 关账）：probe_mtime.mjs 新增入库[契约语义双臂五案——probe 族 14→15 件] + 判定表/分量分账值内嵌 plan §8[.runtime 一次性件口径] + repo src 零 diff——矩阵/e2e 断言域零扩[既有保存点弧/fs 造档弧内建承载零涉]，基线 v19 零漂移续[零重锁第五例——src 零 diff 直证]；SD-2502 续——PLAN-025 功能切片（合并三择批）：probe_dir_ops 三择案组扩[s①..s⑩ 双臂——skip/overwrite 零数据丢失+卫正交+fail-closed+CJK+回滚弧+moves 完整性，既有 m①..mb⑨ 全案四参化零漂移承载，双臂 raw 字节等值升级] + probe_trash 回归续[18+15 案 fresh] + vm_matrix 13 file 组扩[dir4 三择钮面三显断言+保留双份钮续承合并弧线/dir5 tab 重映射弧——F-R19-1 直证：skip 改道位 tab path+源档内容+recents 置换+.trash 位保存落回] + e2e 同单[dir4 三钮三显+保留双份钮/dir5 skip 弧——ASCII 路径 D-19 口径] + **基线 v20 计划内重锁第七例**[App dirmerge_strategy 入 dump["both" 缺省——store 新字段面] + 移动目录弹层三钮[闭态恒渲染 D-23③]入 id 序列]；SD-2602 续——PLAN-026 回执复测批（**blocked 出口**）：零扩单零新件（既有验证链复跑 + .runtime 一次性件——024 no-go 支路同判）；载体健康冒烟门注记（probe_sb 双载体/probe 15 件 fresh 双臂[debug 14 绿+receipt_d19 负结果一致；release 13 绿+probe_mtime 挂起 ×2]/merged 矩阵[本窗 blocked——新载体交互面断裂 ×4，A/B 锚在库]/build ✓built[release 路由]——基线 v20 双载体 PASS 零漂移续）
 
 | 门 | 命令 | 断言域 |
 | --- | --- | --- |
