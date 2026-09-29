@@ -1,6 +1,6 @@
 ---
 plan_id: PLAN-024
-status: execution_done
+status: reviewed
 feature_name: mtime 键控缓存专项——watch 批免重 walk 本仓半（第二十二切片）
 author: [agent]
 created_at: 2026-09-29T00:00:00Z
@@ -546,6 +546,59 @@ D-35② P≤200 稳定域）产出 **go/no-go 判定表**——go 则 back 索�
   - `blockers`: 无。
   - `next: review`（auto-plan:review——复审基线 = 本提交；合并窗
     known-good smoke 惯例随 merge 技能）。
+
+- **2026-09-29 review（auto-plan:review）**：
+  - `stage: review`，PLAN-024，revision 1，**outcome: pass**。
+  - 复审口径声明：与执行同会话（独立复审会话未授权）——裁值全部
+    工件独立重放重建，非执行期摘要采信。量化核心独立重放：dbg-
+    p24b 分账 walk 17-19ms / read×150 **12-14ms** / mtime×150 9ms /
+    lookup×150 104-107ms + 未缓存基线 277-284ms×5——**read 占比
+    4-5%、收益上限 ~12-14ms < 门需 ~110ms，no-go 裁定独立复算成
+    立**（与执行窗分账逐项带内）。probe_mtime 双臂重放五案绿（a/c/f
+    只读面跨窗逐字节全等 1789452217/-1/CJK 同值——确定性直证）+
+    p24-cache-proto 重放全绿（p3 174000|intact/驱逐/持久 + p4 ×10
+    轮 26458B 等值/热态 375-391ms 带内/152 行/跨进程零漂移/驱逐弧
+    fresh）+ probe 全族 15 件 fresh（14 RESULT 全绿双臂 +
+    probe_receipt_d19 负结果在册一致）+ merged 矩阵 16/16 ALL
+    GREEN 基线 v19 零漂移（零重锁第五例重放）+ e2e 1 passed 1.1m
+    + vue build ✓built 11.90s（release 路由+SCHEMA_DRIFT_GENERATE_
+    AT=1）+ 负向证七面全零重放 + AC-06 锚位全现读回。
+  - `reviewed_commit`: 1f5d9a5（=复审基线=实现提交——本记录提交为
+    docs-only 后代）；`base_commit`: 983cc0c；
+    `dependency_revisions`: 家族 exe debug 09-28 15:02/release
+    09-28 15:17 未变（第五证重放确认）；
+    `spec_inputs`: 本仓无 docs/specs/——canonical 三件
+    ARCHITECTURE/README/parity-ledger@v28@1f5d9a5[冻结哈希 sha256
+    前 16 位：01c665bfa21e0dbd / 05961841260b4c94 / 2e60b344fe0b6390]。
+  - `acceptance_results`: AC-01 pass[判定表四面重放+probe_mtime 绿
+    +压力件值复现]/AC-02 pass[no-go 支路注记兑现非静默移除——判定
+    表 §8.1 在档+src/api.at 零 diff+probe 全族]/AC-03 pass[no-go
+    支路注记——分账重放复算 no-go 成立]/AC-04 pass[merged 16/16+
+    基线 v19 零漂移+split 家族窗分段判绿（AC-04 明文许可路由——判
+    别链最强形随档）+e2e 1.1m+build 11.90s]/AC-05 pass[七面全零]/
+    AC-06 pass[锚位 [1]-[9] 全现+仪表盘文本与交付一致]。
+  - `findings`: **F-24-1 观察非阻断**——delta after 措辞演进：plan
+    SD-2401 draft 预期形「本仓不可达关账定文」（风险未勘前提）vs
+    落地「经济性关账/收益面结构性否定」（实测形态）——终态同形
+    [关账+残余两件]、同规则[负结果在册 probe_receipt_d19 同判形]，
+    证据升级如实记录于 §8.1/§9（work 技能「随实际更新 delta」兑现
+    ——无契约语义变化，不需 revision bump）。**F-24-2 观察非阻断**
+    ——家族窗第八例**形漂移**：执行窗 p24-matrix-split.log=[1 boot]
+    FAIL+wiki 树行不现 v23..v27 逐字同形；复审窗 p24-rev-matrix-
+    split(-r2).log=boot/tree PASS+check 3 open 弧（Hello World，
+    ASCII 无 D-19 面）10s 编辑器面未现 ×2 确定性（族内漂移 v25 先
+    例形态[check 11 UI 弧败/boot FAIL 短路两形在册]）——判别链最
+    强形承载[src 零 diff@983cc0c 受审树 ≡ known-good smoke 树+exe
+    未变+merged 16/16 同窗直证+e2e 同窗绿（同编辑器面 vue 轨）+
+    probe 族 15 件 split 臂同窗全绿（serve-back HTTP 面健康旁证）]；
+    F-R17-1 维持留观 unblock 同前；merge 窗 ledger 刷新时 D-21 v28
+    补漂移注记（review 期不动 live ledger）。**F-24-3 微末**——
+    dbg-p24b mtime_only 累加 int32 溢出显示负值（150×1.79e9 超
+    int32；计时字段不受影响，一次性件显示面，无裁定影响）。
+  - `evidence`: p24-rev-{probes,matrix-merged,matrix-split,matrix-
+    split-r2,build,e2e}.log（e2e/.runtime——临时件；判定值已内嵌本
+    条可追溯）+ 分账/双探针重放值内嵌上文。
+  - `next: merge`（merge 基线 = 1f5d9a5；用户已授权全链）。
 
 ## 10. 待澄清事项
 
