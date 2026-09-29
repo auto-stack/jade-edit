@@ -1,6 +1,6 @@
 ---
 plan_id: PLAN-025
-status: execution_done
+status: reviewed
 feature_name: 目录合并三择与 tab 重映射批（第二十三切片——微件池顺延）
 author: [agent]
 created_at: 2026-09-29T00:00:00Z
@@ -493,6 +493,78 @@ PLAN-024 归档后的首个立项批。**立项路由依据**：README 仪表盘
   - `next: review`（复审基线 = 本执行末态工作树；T-01..T-05 +
     AC-01..06 证据在册；§10 ①主题确认已由用户 work 入口追认，
     ②③④⑤ 维持 draft 推荐落地形——复审如裁改向按技能流程处理）。
+
+- **2026-09-29 review（auto-plan:review）**：
+  - `stage: review`，PLAN-025，revision 1，`outcome: pass`。
+  - `reviewed_commit`：d7748b440e54000f808caf14305c8510948418c1
+    （工作树 clean——受审树即提交树）；`base_commit`：99796ce；
+    diff = 11 files +1633/−213。`dependency_revisions`：auto exe
+    debug 09-28 15:02 / release 09-28 15:17（JADE_FIXTURE
+    wiki-demo 未变）；`spec_inputs`：本仓无 docs/specs/（023/024
+    同款声明）——canonical 三件（ARCHITECTURE/README/
+    parity-ledger@v29）@d7748b4。
+  - **独立性声明**：复审与执行同会话——按技能纪律不采信执行期
+    摘要，全部 AC 在复审基线上独立重放（fresh 跑 + 提交树工件
+    直证），非执行期日志转录。
+  - `acceptance_results`（逐 AC 独立重放）：
+    - **AC-01 pass**：probe_dir_ops fresh 重放 `RESULT: merged +
+      split 全案通过…双臂一致=true` 零 FAIL（p25-review-probe.log）
+      ——s①..s⑩ + m①..mb⑨ 四参化零漂移 + 双臂 raw 等值独立复现；
+      probe_trash fresh 0 FAIL 全案通过（p25-review-trash.log）。
+    - **AC-02 pass**：s⑩ moves 完整性七案形校重放绿 + merged
+      `[13 dir5] PASS`（tab path=.trash/MgR/MgRPg.ad 非靶档 rel +
+      active_body 源档内容——F-R19-1 直证）+ e2e `[13 dir5] PASS`
+      （vue 真 DOM + .trash 位保存落回）+ `[B baseline] PASS`
+      v20 零漂移。
+    - **AC-03 pass**：merged `[13 dir4] PASS`（三择钮三显+保留
+      双份钮+拒径留置）+ e2e dir4 三钮三显同单 + gen 发射面三钮
+      `MoveDirGoMergeBoth/Skip/Over` + dirmerge_strategy ref
+      （App.vue :2526-2527 执行期直证 + 复审 build regen 再生绿）。
+    - **AC-04 pass**：merged **16/16 checks passed ALL GREEN**
+      （p25-review-matrix.log）+ e2e **1 passed**（1.2m，
+      p25-review-e2e.log）+ `pnpm build` **✓built 14.59s**（
+      p25-review-build.log）+ split 臂家族窗第九例复审窗复测仍
+      FAIL（第 5 连同形）——**分段判绿路由复审确认**：判别链
+      重放 = probe_dir_ops/probe_trash split 臂（serve-back HTTP
+      真运输面）fresh 全绿 + e2e 全绿 + merged 全绿同窗；
+      clean-HEAD src 无关定谳（执行窗）维持有效。
+    - **AC-05 pass**：五面在提交树重放全零——api.at diff 恰
+      move_dir 契约面（单 hunk @@ -257,31，pub fn/±@api 恰 2 行）/
+      `.console` 写面 0/app.at diff 零 link_index 行[双取形 D-39
+      维持]/基线池唯一新增 structure-v20.txt（v1..v19 零触碰）/
+      gen·dist tracked 零触碰。
+    - **AC-06 pass**：四 delta 锚位 grep 全现恰一（ARCH §5
+      第二十三切片段+SD-2501/§6 heading+SD-2502+v20 链+dir5 弧/
+      README 是什么+Tests heading+仪表盘④已交付出池+留观第九例/
+      ledger v29+D-36 处置更新+v29 扩记）+ **delta-after 与落地
+      文本一致性抽核**（fail-closed 前置/零数据丢失三通道/完整性
+      不变式/moves 查表/D-36 处置三通道列/仪表盘出池文案 1:1
+      全等）。
+  - **语义独立核对**（提交树源读回 vs §5.1）：白名单前置函数头
+    直证；skip = trash_target(rel)+move_file(rel→t)+恰一对 ；
+    overwrite = trash_target(to_rel)+先出后入+双对；both 分支与
+    v1 逐行同形；卫语句族（merging 判定/循环卫/域卫/纯 .ad）全部
+    先于迁移循环；同父幂等 JSON {dir:p,moves:[]}（m⑤ 精确形承载）。
+    手工解包通道双轨行为等价独立复证（vm probe s 案 + vm 矩阵
+    dir5 + e2e dir5 浏览器真 DOM 三面）。
+  - `findings`（非阻断观察二件）：
+    - **F-25-1**：计划 §5.2 解析形态措辞（json.to_value「call-arg
+      形健康」）已被执行窗适配取代（§9 work 适配记录 1 + ledger
+      D-20⑤ 处置扩记）——受审语义契约（JSON 返回形/三择语义/
+      映射驱动重映射）零变化，落地 delta 文本（SD-2501）已按现势
+      描述；024 F-24-1「delta 措辞演进如实记录」先例同判，无需
+      revision 升版。
+    - **F-25-2**：split 臂家族窗第九例延续入复审窗（024 复审窗
+      曾开窗 boot PASS 本批未现）——分段判绿路由与 F-R17-1 留观
+      unblock 维持（家族 exe 稳定后双臂复跑），非本批回归面
+      （clean-HEAD 定谳）。
+  - `evidence`：p25-review-probe.log / p25-review-trash.log /
+    p25-review-matrix.log / p25-review-e2e.log / p25-review-build
+    .log（e2e/.runtime 一次性窗——本记录内嵌结果摘录为持久凭据）；
+    提交树工件 = d7748b4 本体（src/tests/docs/baseline 全部可
+    checkout 重放）。
+  - `next: merge`（全工作流已由用户授权——review 后接
+    auto-plan:merge；merge 基线 = d7748b4）。
 
 ## 10. 待澄清事项
 
