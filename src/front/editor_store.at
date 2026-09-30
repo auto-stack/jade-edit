@@ -15,7 +15,7 @@
 //     双轨合法消费面——PLAN-081 T-06 结论沿用：合并根状态裸读仅 vm
 //     成立；store computed 双轨皆坏，派生标量由 handler 就地重算）。
 
-use back.api: read_wiki, write_wiki, exists, env_str
+use back.api: read_wiki, write_wiki, exists, env_str, draft_begin, draft_alloc, draft_checkpoint, draft_settle
 
 // ".ad" 后缀剥离（tab 标题 = path 末段去扩展）。⚠ split 法（T-03 实勘）：
 // length+slice 在 CJK heap 串上字节/字符错位（.length 字节语义）——
@@ -121,12 +121,16 @@ store EditorStore {
         // tab key → 编辑器 key 变 = 重挂载播种（挂载期零发射——引擎
         // lastEmittedMd 预播种语义），echo 路径整体绕开，双轨同源。
         var reload_nonce int = 0
+        // —— 草稿检查点（PLAN-031 T-03）：会话代次（draft_begin 惰性取一
+        // 次持值复用——重复调用会续增，T-01 定谳）；0 = 未取。----
+        var draft_epoch int = 0
     }
 
     // msg 载荷单类型（编译器约束）：Open 单 map、Edit 单 str。
     msg {
         Open(map), Edit(str), Save, Reload,
         RequestReload, ReloadCancel, ReloadDiscard, ReloadReadOf,
+        DraftDrainOf(str), DraftSettleOf(str, int, str, int),
         CloseTab(int), RemoveAt(int), ConfirmClose, ConfirmCancel,
         TabActivate(int), ActNew, ActOpen, ActConsole, ActSwitchTab,
         ActUndo, ActRedo, ActCut, ActCopy, ActPaste, ActSelectAll, ActAbout,
@@ -187,6 +191,11 @@ store EditorStore {
                             body: body,
                             original_body: body,
                             dirty: false,
+                            doc_id: "",
+                            draft_erev: 0,
+                            draft_state: "",
+                            draft_seq: 0,
+                            draft_conf: 0,
                         })
                         found = .tabs.len() - 1
                         console_log("open: " + path)
@@ -204,62 +213,256 @@ store EditorStore {
         }
 
         // ---- Edit(text)：INPUT_TEXT 单参全文回写（041 同约定）——就地
-        // 变更 + 脏标重算 + 投影同步（active_body = content: 绑定的外部
-        // diff 臂）。tab 定位用 while 索引扫描（.find 闭包在 --no-merge
-        // split 形态硬崩——T-01 实勘；索引循环 = 基座/本计划 Open 同款
-        // 已证形态）。
+        // 变更 + 脏标重算 + 投影同步。tab 定位用 key+path 身份双查（
+        // PLAN-030 RequestReload 同形态——不依赖列表索引）。变更即递增
+        // 文档逻辑修订 draft_erev；脏 → 草稿检查点排水（PLAN-031 T-03：
+        // 每 keystroke 触发 drain——单在-flight 合并等待，merged 臂同步
+        // 完成即逐键落盘，vue/split 臂在-flight 期新输入只更新正文、由
+        // 排水循环收尾时续发最新——run-to-completion 语义下无迟到竞态
+        // 【await 悬窗外 handler 体原子】）；回原文（dirty 翻假）→ 结算
+        // 旧草稿 discarded（失败提示并保留恢复记录）。----
         .Edit(text) -> {
+            var j int = -1
             var i int = 0
             while i < .tabs.len() {
-                if .tabs[i].path == .active_path {
-                    if .tabs[i].body != text {
-                        .tabs[i].body = text
-                        .tabs[i].dirty = .tabs[i].body != .tabs[i].original_body
-                        .edits = .edits + 1
+                if .tabs[i].key == .active_key {
+                    if .tabs[i].path == .active_path {
+                        j = i
                     }
-                    .active_body = text
-                    .active_dirty = .tabs[i].dirty
                 }
                 i = i + 1
             }
+            if j >= 0 {
+                var changed bool = false
+                if .tabs[j].body != text {
+                    .tabs[j].body = text
+                    .tabs[j].dirty = .tabs[j].body != .tabs[j].original_body
+                    .tabs[j].draft_erev = .tabs[j].draft_erev + 1
+                    .edits = .edits + 1
+                    changed = true
+                }
+                .active_body = text
+                .active_dirty = .tabs[j].dirty
+                if changed {
+                    if .tabs[j].dirty {
+                        if .tabs[j].doc_id == "" {
+                            if .draft_epoch == 0 {
+                                .draft_epoch = draft_begin().parse_int()
+                            }
+                            .tabs[j].doc_id = draft_alloc()
+                        }
+                        if .tabs[j].doc_id != "" {
+                            if .tabs[j].draft_state != "sending" {
+                                store.DraftDrainOf(.tabs[j].doc_id)
+                            }
+                        } else {
+                            .save_note = "草稿身份分配失败——正文未保护"
+                            console_log("draft-error: alloc failed")
+                        }
+                    } else {
+                        if .tabs[j].doc_id != "" {
+                            if .tabs[j].draft_seq > 0 {
+                                store.DraftSettleOf(.tabs[j].doc_id, .tabs[j].draft_seq, "discarded", .tabs[j].draft_conf)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ---- 草稿检查点排水（PLAN-031 T-03；单文档单在-flight——调用
+        // 方 Edit 保证 state != "sending" 才入口）。身份定址（doc_id 扫
+        // 描重查——切页/关闭/改名期间稳定），合并等待写入：每次循环重取
+        // 最新正文/修订，回执后 draft_erev 已前进则续发（在-flight 期新
+        // 输入永不丢）；回执只结算其对应修订——旧成功回执不得覆盖新
+        // 状态。终态：saved（无更新输入）/ error（回执失败——保留待重
+        // 试，下次 Edit 再排水）。守卫 32 圈防病理性循环。----
+        .DraftDrainOf(doc_id) -> {
+            var guard int = 0
+            var stop bool = false
+            while guard < 32 {
+                if stop {
+                    guard = 32
+                } else {
+                    guard = guard + 1
+                    var f int = -1
+                    var i int = 0
+                    while i < .tabs.len() {
+                        if .tabs[i].doc_id == doc_id {
+                            f = i
+                        }
+                        i = i + 1
+                    }
+                    if f < 0 {
+                        stop = true
+                    } else {
+                        if !.tabs[f].dirty {
+                            stop = true
+                        } else {
+                            .tabs[f].draft_state = "sending"
+                            var erev int = .tabs[f].draft_erev
+                            var bodySnap str = .tabs[f].body
+                            var origSnap str = .tabs[f].original_body
+                            var r str = draft_checkpoint(doc_id, .draft_epoch, erev, .tabs[f].path, .tabs[f].title, bodySnap, origSnap)
+                            // 回执后身份重查（await 悬窗内切页/关闭/改名都可能）
+                            var g int = -1
+                            var k int = 0
+                            while k < .tabs.len() {
+                                if .tabs[k].doc_id == doc_id {
+                                    g = k
+                                }
+                                k = k + 1
+                            }
+                            if g < 0 {
+                                stop = true
+                            } else {
+                                var okhead bool = r.starts_with("ok:")
+                                if okhead {
+                                    var seqv int = r.substr(3, r.length - 3).parse_int()
+                                    .tabs[g].draft_seq = seqv
+                                    .tabs[g].draft_conf = erev
+                                    console_log("draft-saved: " + doc_id + ":" + erev.str())
+                                    if .tabs[g].key == .active_key {
+                                        .save_note = "草稿已保护"
+                                    }
+                                    if .tabs[g].draft_erev > erev {
+                                        // 等待期有新输入——继续排水最新（state 保持 sending）
+                                    } else {
+                                        .tabs[g].draft_state = "saved"
+                                        stop = true
+                                    }
+                                } else {
+                                    .tabs[g].draft_state = "error"
+                                    if .tabs[g].key == .active_key {
+                                        .save_note = "草稿保护失败：" + r
+                                    }
+                                    console_log("draft-error: " + doc_id + " " + r)
+                                    stop = true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ---- 草稿结算（PLAN-031 T-03；回到原文 discarded / 保存成功
+        // saved / 恢复副本确认 recovered[T-04]）。settle_erev = 结算目
+        // 标修订——晚到的旧检查点不复活。成功且无更新确认时清文档草稿
+        // 账（新确认已落地则保留其账）；失败提示并保留可追踪恢复记录
+        // （AC-09：结算失败不破坏正文/记录）。----
+        .DraftSettleOf(doc_id, seq, event, erev) -> {
+            var r str = draft_settle(doc_id, seq, event, "", erev)
+            if r == "ok" {
+                console_log("draft-settled: " + doc_id + ":" + seq.str() + " " + event)
+                var f int = -1
+                var i int = 0
+                while i < .tabs.len() {
+                    if .tabs[i].doc_id == doc_id {
+                        f = i
+                    }
+                    i = i + 1
+                }
+                if f >= 0 {
+                    if .tabs[f].draft_conf <= erev {
+                        .tabs[f].draft_seq = 0
+                        .tabs[f].draft_conf = 0
+                        .tabs[f].draft_state = ""
+                    }
+                }
+            } else {
+                .save_note = "草稿结算失败（已保留恢复记录）"
+                console_log("draft-settle-failed: " + doc_id + ":" + seq.str() + " " + r)
+            }
+            .console = console_lines()
         }
 
         // ---- Save：untitled 先落路径（AUTO_SAVE_PATH 旁路 → dialog_save）；
         // write_wiki 的 back 侧保 frontmatter（front 零 JsonAny）。
+        // PLAN-031 T-03 保存快照门：写入前捕获身份/路径/正文/修订四元
+        // 快照；写盘成功后**读回核验**（read_wiki == 提交正文——存在性
+        // 不再作为成功判据，AC-08）；核验通过才更新原文基准并重算脏标
+        // （较新输入经比较自动保持 dirty——旧成功不清新脏）；绑定结算
+        // saved（settle_erev = 保存快照修订——等待期新输入的检查点不被
+        // 结算）；取消/写失败/核验失败均保留编辑态与草稿。----
         .Save -> {
+            var j int = -1
             var i int = 0
             while i < .tabs.len() {
-                if .tabs[i].path == .active_path {
-                    if .tabs[i].path == "" {
-                        var p str = env_str("AUTO_SAVE_PATH")
-                        if p == "" {
-                            p = dialog_save("untitled.ad")
-                        }
-                        if p != "" {
-                            .tabs[i].path = p
-                            .tabs[i].key = p
-                            .tabs[i].title = strip_ad(p)
-                        }
+                if .tabs[i].key == .active_key {
+                    if .tabs[i].path == .active_path {
+                        j = i
                     }
-                    if .tabs[i].path != "" {
-                        var saved bool = write_wiki(.tabs[i].path, .tabs[i].body)
-                        if saved {
-                            .tabs[i].dirty = false
-                            .tabs[i].original_body = .tabs[i].body
-                            .save_note = "saved: " + .tabs[i].path
-                            console_log("saved: " + .tabs[i].path)
-                        } else {
-                            .save_note = "save-failed: " + .tabs[i].path
-                        }
-                    } else {
-                        .save_note = "save: cancelled"
-                    }
-                    .active_path = .tabs[i].path
-                    .active_key = .tabs[i].key
-                    .active_title = .tabs[i].title
-                    .active_dirty = .tabs[i].dirty
                 }
                 i = i + 1
+            }
+            if j >= 0 {
+                var save_doc str = .tabs[j].doc_id
+                var save_erev int = .tabs[j].draft_erev
+                var save_body str = .tabs[j].body
+                if .tabs[j].path == "" {
+                    var p str = env_str("AUTO_SAVE_PATH")
+                    if p == "" {
+                        p = dialog_save("untitled.ad")
+                    }
+                    if p != "" {
+                        .tabs[j].path = p
+                        .tabs[j].key = p
+                        .tabs[j].title = strip_ad(p)
+                    }
+                }
+                if .tabs[j].path != "" {
+                    var saved bool = write_wiki(.tabs[j].path, save_body)
+                    if saved {
+                        var back str = ""
+                        var okb bool = true
+                        try {
+                            back = read_wiki(.tabs[j].path)
+                        } catch (e) {
+                            okb = false
+                        }
+                        if okb {
+                            if back == save_body {
+                                // 读回一致 = 该快照保存成功：原文基准 = 提交快照，
+                                // 脏标重算（较新输入自动保持 dirty——AC-08）
+                                var k int = -1
+                                var m int = 0
+                                while m < .tabs.len() {
+                                    if .tabs[m].key == .active_key {
+                                        if .tabs[m].path == .tabs[j].path {
+                                            k = m
+                                        }
+                                    }
+                                    m = m + 1
+                                }
+                                if k >= 0 {
+                                    .tabs[k].original_body = save_body
+                                    .tabs[k].dirty = .tabs[k].body != .tabs[k].original_body
+                                    .active_path = .tabs[k].path
+                                    .active_key = .tabs[k].key
+                                    .active_title = .tabs[k].title
+                                    .active_body = .tabs[k].body
+                                    .active_dirty = .tabs[k].dirty
+                                    if .tabs[k].draft_seq > 0 {
+                                        store.DraftSettleOf(.tabs[k].doc_id, .tabs[k].draft_seq, "saved", save_erev)
+                                    }
+                                }
+                                .save_note = "saved: " + .tabs[j].path
+                                console_log("saved: " + .tabs[j].path)
+                            } else {
+                                .save_note = "save-verify-failed: " + .tabs[j].path
+                                console_log("save-verify-failed: " + .tabs[j].path)
+                            }
+                        } else {
+                            .save_note = "save-verify-failed: " + .tabs[j].path
+                            console_log("save-verify-failed: " + .tabs[j].path)
+                        }
+                    } else {
+                        .save_note = "save-failed: " + .tabs[j].path
+                    }
+                } else {
+                    .save_note = "save: cancelled"
+                }
             }
             .console = console_lines()
         }
@@ -496,7 +699,8 @@ store EditorStore {
             .confirm_idx = -1
         }
 
-        // ---- 新建 untitled（key 兜底通道——编辑器 key 变即重挂载播种） ----
+        // ---- 新建 untitled（key 兜底通道——编辑器 key 变即重挂载播种）。
+        // 草稿身份惰性分配（首次脏编辑时 draft_alloc——T-03）----
         .ActNew -> {
             .open_count = .open_count + 1
             .tabs.push({
@@ -506,6 +710,11 @@ store EditorStore {
                 body: "",
                 original_body: "",
                 dirty: false,
+                doc_id: "",
+                draft_erev: 0,
+                draft_state: "",
+                draft_seq: 0,
+                draft_conf: 0,
             })
             .tab_count = .tabs.len()
             store.TabActivate(.tab_count - 1)
