@@ -128,6 +128,23 @@ store EditorStore {
         // 行直读。0 = 无；>0 = 状态栏「待恢复草稿 N 条」入口提示——非模态
         // 不劫持（自动弹模态层被 T-04 实勘否决：劫持全应用点击面））。
         var recover_hint int = 0
+        // —— 正常离开目标快照（PLAN-031 T-05；§5.4 表）：身份+正文修订
+        // 快照取代 confirm_idx 索引依赖（异步流程中列表变化索引过期——
+        // 计划 §4.2）。close_* = 关闭弹层目标；quit_* = 退出弹层批量捕获
+        //（key 串行清单——身份定址逐项重查）。终态归零。----
+        var close_target_key str = ""
+        var close_target_path str = ""
+        var close_target_body str = ""
+        var close_target_doc str = ""
+        var quit_keys str = ""
+        // 重载放弃结算快照（PLAN-031 T-05；§5.4 表第八行）：请求期捕获
+        // 目标草稿账（doc/seq/conf）+ 是否脏发起——成功读回且目标仍匹配
+        // 时先结算被放弃草稿，**结算失败不提交正文替换**；取消/读取失
+        // 败/失效不结算。终态归零。----
+        var reload_target_doc str = ""
+        var reload_target_seq int = 0
+        var reload_target_conf int = 0
+        var reload_was_dirty bool = false
     }
 
     // msg 载荷单类型（编译器约束）：Open 单 map、Edit 单 str。
@@ -136,7 +153,8 @@ store EditorStore {
         RequestReload, ReloadCancel, ReloadDiscard, ReloadReadOf,
         DraftDrainOf(str), DraftSettleOf(str, int, str, int, str), DraftRecover(str, int, int, str, int),
         RecoverHint(int),
-        CloseTab(int), RemoveAt(int), ConfirmClose, ConfirmCancel,
+        CloseTab(int), RemoveAt(int), ConfirmClose, ConfirmCancel, ConfirmKeepClose,
+        QuitKeepClose,
         TabActivate(int), ActNew, ActOpen, ActConsole, ActSwitchTab,
         ActUndo, ActRedo, ActCut, ActCopy, ActPaste, ActSelectAll, ActAbout,
         ActQuit, ConsoleClear, CloseRequest, QuitDiscard, QuitSaveClose,
@@ -316,7 +334,16 @@ store EditorStore {
                             var erev int = .tabs[f].draft_erev
                             var bodySnap str = .tabs[f].body
                             var origSnap str = .tabs[f].original_body
-                            var r str = draft_checkpoint(doc_id, .draft_epoch, erev, .tabs[f].path, .tabs[f].title, bodySnap, origSnap)
+                            var r str = ""
+                            var rok bool = true
+                            try {
+                                r = draft_checkpoint(doc_id, .draft_epoch, erev, .tabs[f].path, .tabs[f].title, bodySnap, origSnap)
+                            } catch (e2) {
+                                rok = false
+                            }
+                            if !rok {
+                                r = "err:transport"
+                            }
                             // 回执后身份重查（await 悬窗内切页/关闭/改名都可能）
                             var g int = -1
                             var k int = 0
@@ -393,7 +420,16 @@ store EditorStore {
         // 账（新确认已落地则保留其账）；失败提示并保留可追踪恢复记录
         // （AC-09：结算失败不破坏正文/记录）。----
         .DraftSettleOf(doc_id, seq, event, erev, link_id) -> {
-            var r str = draft_settle(doc_id, seq, event, link_id, erev)
+            var r str = ""
+            var rok bool = true
+            try {
+                r = draft_settle(doc_id, seq, event, link_id, erev)
+            } catch (e) {
+                rok = false
+            }
+            if !rok {
+                r = "err:transport"
+            }
             if r == "ok" {
                 console_log("draft-settled: " + doc_id + ":" + seq.str() + " " + event)
                 var f int = -1
@@ -425,15 +461,26 @@ store EditorStore {
         // 本 body==original_body 不构成普通清洁判定吞没**——副本状态由
         // 来源结算链路独立追踪，AC-05）。读取失败不动现有 tab。----
         .DraftRecover(doc_id, seq, len, name, erev) -> {
-            var body str = draft_read(doc_id, seq)
-            var oklen bool = true
+            var body str = ""
+            var rok bool = true
+            try {
+                body = draft_read(doc_id, seq)
+            } catch (e8) {
+                rok = false
+            }
+            var oklen bool = rok
             if len > 0 {
                 if body == "" {
                     oklen = false
                 }
             }
             if oklen {
-                var orig str = draft_read_orig(doc_id, seq)
+                var orig str = ""
+                try {
+                    orig = draft_read_orig(doc_id, seq)
+                } catch (e9) {
+                    orig = ""
+                }
                 .open_count = .open_count + 1
                 var nm str = "recovered-" + .open_count.str()
                 var dt str = name
@@ -617,6 +664,10 @@ store EditorStore {
                         .reload_target_key = .tabs[found].key
                         .reload_target_path = .tabs[found].path
                         .reload_target_body = .tabs[found].body
+                        .reload_target_doc = .tabs[found].doc_id
+                        .reload_target_seq = .tabs[found].draft_seq
+                        .reload_target_conf = .tabs[found].draft_conf
+                        .reload_was_dirty = .tabs[found].dirty
                         if .tabs[found].dirty {
                             .reload_confirm_open = true
                         } else {
@@ -637,6 +688,10 @@ store EditorStore {
             .reload_target_key = ""
             .reload_target_path = ""
             .reload_target_body = ""
+            .reload_target_doc = ""
+            .reload_target_seq = 0
+            .reload_target_conf = 0
+            .reload_was_dirty = false
             console_log("reload: cancelled")
             .console = console_lines()
         }
@@ -720,16 +775,41 @@ store EditorStore {
                             console_log("reload: stale-target rejected")
                         }
                         if commit {
-                            .tabs[hit].body = body
-                            .tabs[hit].original_body = body
-                            .tabs[hit].dirty = false
-                            .reload_nonce = .reload_nonce + 1
-                            .tabs[hit].key = .tabs[hit].path + "#r" + .reload_nonce.str()
-                            .active_key = .tabs[hit].key
-                            .active_body = body
-                            .active_dirty = false
-                            .save_note = "reloaded: " + .reload_target_path
-                            console_log("reloaded: " + .reload_target_path)
+                            // 放弃发起的结算门（T-05）：成功读回+目标匹配后
+                            // 先结算被放弃草稿；**结算失败不提交正文替换**
+                            //（磁盘未动，正文/脏标保持——用户可重发起）。
+                            var settle_ok bool = true
+                            if .reload_was_dirty {
+                                if .reload_target_seq > 0 {
+                                    var sr str = ""
+                                    var sok bool = true
+                                    try {
+                                        sr = draft_settle(.reload_target_doc, .reload_target_seq, "discarded", "", .reload_target_conf)
+                                    } catch (e5) {
+                                        sok = false
+                                    }
+                                    if !sok {
+                                        sr = "err:transport"
+                                    }
+                                    if sr != "ok" {
+                                        settle_ok = false
+                                        .save_note = "草稿结算失败——重载未执行（正文保持）"
+                                        console_log("reload-settle-failed: " + .reload_target_doc + " " + sr)
+                                    }
+                                }
+                            }
+                            if settle_ok {
+                                .tabs[hit].body = body
+                                .tabs[hit].original_body = body
+                                .tabs[hit].dirty = false
+                                .reload_nonce = .reload_nonce + 1
+                                .tabs[hit].key = .tabs[hit].path + "#r" + .reload_nonce.str()
+                                .active_key = .tabs[hit].key
+                                .active_body = body
+                                .active_dirty = false
+                                .save_note = "reloaded: " + .reload_target_path
+                                console_log("reloaded: " + .reload_target_path)
+                            }
                         }
                     } else {
                         .save_note = "重载失败：读取异常 " + .reload_target_path
@@ -745,6 +825,10 @@ store EditorStore {
             .reload_target_key = ""
             .reload_target_path = ""
             .reload_target_body = ""
+            .reload_target_doc = ""
+            .reload_target_seq = 0
+            .reload_target_conf = 0
+            .reload_was_dirty = false
             .console = console_lines()
         }
 
@@ -772,9 +856,15 @@ store EditorStore {
                 .save_note = ""
             }
         }
+        // ---- 关闭 tab（PLAN-031 T-05 快照化）：脏 tab 捕获身份+正文修订
+        // 快照（key/path/body/doc——取代 confirm_idx 索引依赖：异步流程
+        // 中列表变化索引过期，计划 §4.2）；干净 tab 直除。----
         .CloseTab(i) -> {
             if .tabs[i].dirty {
-                .confirm_idx = i
+                .close_target_key = .tabs[i].key
+                .close_target_path = .tabs[i].path
+                .close_target_body = .tabs[i].body
+                .close_target_doc = .tabs[i].doc_id
                 .confirm_open = true
             } else {
                 store.RemoveAt(i)
@@ -782,18 +872,144 @@ store EditorStore {
             }
             .console = console_lines()
         }
+        // ---- 放弃修改并关闭（弹层明确钮；门挂快照非旗标——F-30-R1 在册
+        // 教训：AlertDialogAction 先关弹层再派发，旗标门恒 no-op）：身份
+        // 重查 + 正文等于快照（无新输入）→ 结算 discarded（settle_erev=
+        // 快照时确认修订；seq==0 = 从未保护过 → 无记录面如实移除）→ 结
+        // 算成功才移除；结算失败/目标过期 → 不移除+提示（AC-07/09）。
+        // ⚠ 取消不新增结算。----
         .ConfirmClose -> {
-            .confirm_open = false
-            if .confirm_idx >= 0 {
-                store.RemoveAt(.confirm_idx)
-                console_log("closed dirty tab; open=" + .tab_count.str())
+            if .close_target_key != "" {
+                var f int = -1
+                var i int = 0
+                while i < .tabs.len() {
+                    if .tabs[i].key == .close_target_key {
+                        if .tabs[i].path == .close_target_path {
+                            f = i
+                        }
+                    }
+                    i = i + 1
+                }
+                if f >= 0 {
+                    if .tabs[f].body == .close_target_body {
+                        var doc str = .tabs[f].doc_id
+                        var conf int = .tabs[f].draft_conf
+                        var seqv int = .tabs[f].draft_seq
+                        var ok bool = true
+                        if seqv > 0 {
+                            var r str = ""
+                            var rok bool = true
+                            try {
+                                r = draft_settle(doc, seqv, "discarded", "", conf)
+                            } catch (e3) {
+                                rok = false
+                            }
+                            if !rok {
+                                r = "err:transport"
+                            }
+                            if r != "ok" {
+                                ok = false
+                                .save_note = "草稿结算失败（已保留恢复记录）——未关闭"
+                                console_log("close-discard-failed: " + doc + " " + r)
+                            }
+                        }
+                        if ok {
+                            store.RemoveAt(f)
+                            console_log("closed dirty tab (discarded); open=" + .tab_count.str())
+                        }
+                    } else {
+                        .save_note = "文档已变化，请重新关闭"
+                        console_log("close: stale-target rejected")
+                    }
+                } else {
+                    console_log("close: target gone")
+                }
             }
-            .confirm_idx = -1
+            .confirm_open = false
+            .close_target_key = ""
+            .close_target_path = ""
+            .close_target_body = ""
+            .close_target_doc = ""
+            .console = console_lines()
+        }
+        // ---- 保留草稿并关闭（弹层新钮；§5.4 表第二行）：等最新正文检查
+        // 点成功（drain 单在-flight 循环——merged 同步收尾/vue 排水至收
+        // 束）→ state==saved 且无更新输入（draft_erev==draft_conf）→ 仅
+        // 移除该身份 tab（草稿记录保留——重启可恢复）；失败/新输入/目标
+        // 过期 → 不移除+提示（AC-07）。----
+        .ConfirmKeepClose -> {
+            if .close_target_key != "" {
+                var f int = -1
+                var i int = 0
+                while i < .tabs.len() {
+                    if .tabs[i].key == .close_target_key {
+                        if .tabs[i].path == .close_target_path {
+                            f = i
+                        }
+                    }
+                    i = i + 1
+                }
+                if f >= 0 {
+                    if .tabs[f].body == .close_target_body {
+                        var doc str = .tabs[f].doc_id
+                        if doc == "" {
+                            if .draft_epoch == 0 {
+                                .draft_epoch = draft_begin().parse_int()
+                            }
+                            .tabs[f].doc_id = draft_alloc()
+                            doc = .tabs[f].doc_id
+                        }
+                        if doc != "" {
+                            store.DraftDrainOf(doc)
+                            var g int = -1
+                            var k int = 0
+                            while k < .tabs.len() {
+                                if .tabs[k].doc_id == doc {
+                                    g = k
+                                }
+                                k = k + 1
+                            }
+                            if g >= 0 {
+                                if .tabs[g].draft_state == "saved" {
+                                    if .tabs[g].draft_erev == .tabs[g].draft_conf {
+                                        store.RemoveAt(g)
+                                        console_log("closed dirty tab (draft kept); open=" + .tab_count.str())
+                                    } else {
+                                        .save_note = "等待中出现新输入——未关闭（草稿继续保护）"
+                                        console_log("close-keep: newer input rejected")
+                                    }
+                                } else {
+                                    .save_note = "草稿检查点未确认——未关闭（正文保持）"
+                                    console_log("close-keep: checkpoint not confirmed")
+                                }
+                            } else {
+                                console_log("close-keep: target gone after drain")
+                            }
+                        } else {
+                            .save_note = "草稿身份分配失败——未关闭"
+                            console_log("close-keep: alloc failed")
+                        }
+                    } else {
+                        .save_note = "文档已变化，请重新关闭"
+                        console_log("close-keep: stale-target rejected")
+                    }
+                } else {
+                    console_log("close-keep: target gone")
+                }
+            }
+            .confirm_open = false
+            .close_target_key = ""
+            .close_target_path = ""
+            .close_target_body = ""
+            .close_target_doc = ""
             .console = console_lines()
         }
         .ConfirmCancel -> {
             .confirm_open = false
-            .confirm_idx = -1
+            .close_target_key = ""
+            .close_target_path = ""
+            .close_target_body = ""
+            .close_target_doc = ""
         }
 
         // ---- 新建 untitled（key 兜底通道——编辑器 key 变即重挂载播种）。
@@ -869,17 +1085,25 @@ store EditorStore {
             .console = console_lines()
         }
 
-        // ---- 退出/关窗确认（脏 tab 有路径的落盘，untitled 放弃） ----
+        // ---- 退出/关窗确认（PLAN-031 T-05）：脏 tab 存在 → 弹层；批量
+        // 捕获 key 串行清单（身份定址——处理中逐项重查，不依赖索引）。
+        // ----
         .CloseRequest -> {
             var any bool = false
+            var keys str = ""
             var i int = 0
             while i < .tabs.len() {
                 if .tabs[i].dirty {
                     any = true
+                    if keys != "" {
+                        keys = keys + "\u0001"
+                    }
+                    keys = keys + .tabs[i].key
                 }
                 i = i + 1
             }
             if any {
+                .quit_keys = keys
                 .quit_confirm_open = true
             } else {
                 console_log("quit")
@@ -890,24 +1114,213 @@ store EditorStore {
         .ActQuit -> { store.CloseRequest() }
         .QuitConfirmCancel -> {
             .quit_confirm_open = false
+            .quit_keys = ""
         }
-        .QuitSaveClose -> {
+        // ---- 保留草稿并退出（§5.4 表第四行）：捕获所有脏文档（含后台
+        // 和未命名）→ 逐个排水至最新确认 → 全部 saved 且无更新输入 →
+        // VM 退出；任一失败/新输入 → 保持应用+提示（AC-07）。vue 轨
+        // Process.exit no-op——验证处理结果态，真实退出由 vm 矩阵承载。
+        // ----
+        .QuitKeepClose -> {
+            var fail bool = false
+            var ks = .quit_keys.split("\u0001")
             var i int = 0
-            while i < .tabs.len() {
-                if .tabs[i].dirty {
-                    if .tabs[i].path != "" {
-                        write_wiki(.tabs[i].path, .tabs[i].body)
-                        .tabs[i].dirty = false
+            while i < ks.len() {
+                var k str = ks[i]
+                var f int = -1
+                var j int = 0
+                while j < .tabs.len() {
+                    if .tabs[j].key == k {
+                        f = j
+                    }
+                    j = j + 1
+                }
+                if f >= 0 {
+                    var doc str = .tabs[f].doc_id
+                    if doc == "" {
+                        if .draft_epoch == 0 {
+                            .draft_epoch = draft_begin().parse_int()
+                        }
+                        .tabs[f].doc_id = draft_alloc()
+                        doc = .tabs[f].doc_id
+                    }
+                    if doc == "" {
+                        fail = true
+                        .save_note = "草稿身份分配失败——保持应用"
+                        console_log("quit-keep: alloc failed " + k)
+                    } else {
+                        store.DraftDrainOf(doc)
+                        var g int = -1
+                        var m int = 0
+                        while m < .tabs.len() {
+                            if .tabs[m].doc_id == doc {
+                                g = m
+                            }
+                            m = m + 1
+                        }
+                        if g < 0 {
+                            fail = true
+                            console_log("quit-keep: target gone " + doc)
+                        } else {
+                            if .tabs[g].draft_state != "saved" {
+                                fail = true
+                                .save_note = "草稿检查点未全部确认——保持应用"
+                                console_log("quit-keep: not confirmed " + doc + " " + .tabs[g].draft_state)
+                            } else {
+                                if .tabs[g].draft_erev != .tabs[g].draft_conf {
+                                    fail = true
+                                    .save_note = "等待中出现新输入——保持应用"
+                                    console_log("quit-keep: newer input " + doc)
+                                }
+                            }
+                        }
                     }
                 }
                 i = i + 1
             }
-            console_log("quit: saved & exit")
-            Process.exit(0)
+            if !fail {
+                console_log("quit: drafts kept & exit")
+                Process.exit(0)
+            }
+            .quit_confirm_open = false
+            .quit_keys = ""
+            .console = console_lines()
         }
+        // ---- 保存并退出（§5.4 表第五行）：有路径逐项保存+读回核验；
+        // 未命名逐项 Save As（AUTO_SAVE_PATH 旁路首档适用——余档经
+        // dialog_save，取消 = 空返 → 停止退出保持应用）；写失败/读回不
+        // 一致 → 保持应用+如实标记（部分成功档如实已存——AC-08）。全部
+        // 当前修订保存成功才 VM 退出。----
+        .QuitSaveClose -> {
+            var fail bool = false
+            var ks = .quit_keys.split("\u0001")
+            var i int = 0
+            while i < ks.len() {
+                var k str = ks[i]
+                var f int = -1
+                var j int = 0
+                while j < .tabs.len() {
+                    if .tabs[j].key == k {
+                        f = j
+                    }
+                    j = j + 1
+                }
+                if f >= 0 {
+                    var body str = .tabs[f].body
+                    if .tabs[f].path == "" {
+                        var p str = ""
+                        if i == 0 {
+                            p = env_str("AUTO_SAVE_PATH")
+                        }
+                        if p == "" {
+                            p = dialog_save("untitled.ad")
+                        }
+                        if p == "" {
+                            fail = true
+                            .save_note = "另存取消——保持应用"
+                            console_log("quit-save: save-as cancelled " + k)
+                            i = ks.len()
+                        } else {
+                            .tabs[f].path = p
+                            .tabs[f].key = p
+                            .tabs[f].title = strip_ad(p)
+                        }
+                    }
+                    if !fail {
+                        if .tabs[f].path != "" {
+                            var saved bool = write_wiki(.tabs[f].path, body)
+                            var okb bool = saved
+                            if saved {
+                                var back str = ""
+                                try {
+                                    back = read_wiki(.tabs[f].path)
+                                } catch (e) {
+                                    okb = false
+                                }
+                                if back != body {
+                                    okb = false
+                                }
+                            }
+                            if okb {
+                                var seqv int = .tabs[f].draft_seq
+                                var conf int = .tabs[f].draft_conf
+                                var doc str = .tabs[f].doc_id
+                                if seqv > 0 {
+                                    try {
+                                        draft_settle(doc, seqv, "saved", "", conf)
+                                    } catch (e6) {
+                                        console_log("quit-save: settle failed " + doc)
+                                    }
+                                }
+                                .tabs[f].original_body = body
+                                .tabs[f].dirty = .tabs[f].body != body
+                                console_log("quit-save: saved " + .tabs[f].path)
+                            } else {
+                                fail = true
+                                .save_note = "保存核验未通过——保持应用"
+                                console_log("quit-save: verify failed " + .tabs[f].path)
+                            }
+                        }
+                    }
+                }
+                i = i + 1
+            }
+            if !fail {
+                console_log("quit: saved & exit")
+                Process.exit(0)
+            }
+            .quit_confirm_open = false
+            .quit_keys = ""
+            .console = console_lines()
+        }
+        // ---- 放弃修改并退出（§5.4 表第六行）：逐目标修订明确结算
+        //（seq==0 = 从未保护过 → 无记录面如实记成功）；全部成功才 VM
+        // 退出；任一失败 → 保持应用+提示（AC-09）。----
         .QuitDiscard -> {
-            console_log("quit: discard & exit")
-            Process.exit(0)
+            var fail bool = false
+            var ks = .quit_keys.split("\u0001")
+            var i int = 0
+            while i < ks.len() {
+                var k str = ks[i]
+                var f int = -1
+                var j int = 0
+                while j < .tabs.len() {
+                    if .tabs[j].key == k {
+                        f = j
+                    }
+                    j = j + 1
+                }
+                if f >= 0 {
+                    var doc str = .tabs[f].doc_id
+                    var seqv int = .tabs[f].draft_seq
+                    var conf int = .tabs[f].draft_conf
+                    if seqv > 0 {
+                        var r str = ""
+                        var rok bool = true
+                        try {
+                            r = draft_settle(doc, seqv, "discarded", "", conf)
+                        } catch (e7) {
+                            rok = false
+                        }
+                        if !rok {
+                            r = "err:transport"
+                        }
+                        if r != "ok" {
+                            fail = true
+                            .save_note = "草稿结算失败——保持应用"
+                            console_log("quit-discard-failed: " + doc + " " + r)
+                        }
+                    }
+                }
+                i = i + 1
+            }
+            if !fail {
+                console_log("quit: discard & exit")
+                Process.exit(0)
+            }
+            .quit_confirm_open = false
+            .quit_keys = ""
+            .console = console_lines()
         }
 
         // 反链面板开关（PLAN-003；数据刷新/行派生在 App 侧 ActBacklinks）。

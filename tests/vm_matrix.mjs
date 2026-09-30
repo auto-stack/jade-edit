@@ -23,7 +23,7 @@
 //             v14=PLAN-015 每日笔记、v13=PLAN-014、v12=PLAN-013、v11=
 //             PLAN-012 等留档）
 //   7 tab     tab 面：开两档 → 切换（active 断言 + 内容互换）→ dirty 档
-//             关闭走确认弹层两路（取消=档留；直接关闭=弃改落盘零写入）
+//             关闭走确认弹层两路（取消=档留；放弃修改并关闭=结算式弃改——PLAN-031 T-05 三动作化）
 //   8 editops 编辑操作族：段中回车/退格（C-5 整文构造——回车分段可见 +
 //             退格复原 + 脏标重算 body==original_body→false）
 //   10 link   链接索引+反链面板（PLAN-003）：link_index 已知答案（语料
@@ -183,7 +183,7 @@ const argOf = (name) => {
   return i >= 0 ? args[i + 1] : undefined
 }
 const ARM = argOf('--arm') ?? 'all' // all | merged | split
-const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v23.txt')
+const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v24.txt')
 const SAVE_BASELINE = argOf('--save-baseline')
 
 const EDIT_MARKER = 'jade-edit 冒烟标记：编辑回写可见。'
@@ -654,9 +654,9 @@ async function runArm(arm, port) {
       } else if (fs.existsSync(BASELINE)) {
         const raw = fs.readFileSync(BASELINE, 'utf8')
         const ok = raw === headerFor(BASELINE) + baselineBodyOf()
-        check('B', 'baseline', ok, ok ? '结构基线 v23 零漂移（state 逐字节 + id 序列）——PLAN-031 T-04 重锁（App 模型 recover_hint/recover_open/recover_rows 三字段入 dump + 恢复弹层闭态恒渲染子树 vnode id 序列移位——D-23③ 在册形态，diff 逐项解释在档）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
+        check('B', 'baseline', ok, ok ? '结构基线 v24 零漂移（state 逐字节 + id 序列）——PLAN-031 T-05 重锁（离开目标快照九标量入 dump：close_target_*/quit_keys/reload_target_doc·seq·conf/reload_was_dirty——diff 逐项解释在档）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
       } else {
-        console.log('  [baseline] structure-v23 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v23.txt')
+        console.log('  [baseline] structure-v24 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v24.txt')
       }
     }
 
@@ -688,11 +688,14 @@ async function runArm(arm, port) {
     // 直接关闭路：弃改关闭（磁盘零写入）→ 档数回落 + 激活回落 Hello World
     await pressActiveTabClose('Tasks')
     await stateIs('confirm_open', 'true')
-    await pressButton('直接关闭', { exact: true })
+    // PLAN-031 T-05 语义升级：直接关闭 → 「放弃修改并关闭」（结算式
+    // 放弃——tombstone 落 .jade 域，wiki 文件零写入断言不变；保留草稿
+    // 并关闭新弧 = T-06 矩阵承载）。
+    await pressButton('放弃修改并关闭', { exact: true })
     await stateIs('tab_count', '1')
     await stateIs('active_title', tabTitleOf(TARGET_LABEL))
     const tabDisk = fs.readFileSync(path.join(FIXTURE, 'wiki', TAB_LABEL), 'utf8')
-    check('7', 'tab', !tabDisk.includes(TAB_MARKER), `双档切换互换 + dirty 关闭确认两路（取消档留/直接关闭弃改，磁盘零写入=${!tabDisk.includes(TAB_MARKER)}）`)
+    check('7', 'tab', !tabDisk.includes(TAB_MARKER), `双档切换互换 + dirty 关闭确认两路（取消档留/放弃修改并关闭[结算式弃改——.jade 域墓碑]=${!tabDisk.includes(TAB_MARKER)}；保留草稿新弧=T-06）`)
 
     // 8 编辑操作族：段中回车/退格（C-5 整文构造达成同语义）。
     // state dump 中字符串换行以 \n 字面转义呈现——断言锚用转义形。
@@ -3231,7 +3234,7 @@ async function runArm(arm, port) {
     // 收尾：untitled 弃改关闭 → 回 Hello World（check 9 前置口径）。
     await pressActiveTabClose('未命名')
     await stateIs('confirm_open', 'true')
-    await pressButton('直接关闭', { exact: true })
+    await pressButton('放弃修改并关闭', { exact: true })
     await pressTab('Hello World')
     await stateIs('active_title', tabTitleOf(TARGET_LABEL))
     check('R', 'reload-safe', r1Ok && r2Ok && r4Ok && r5Ok && r5RecOk && r6Ok,

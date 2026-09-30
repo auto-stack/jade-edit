@@ -10,7 +10,7 @@
 //             + updated_at 自动维护——PLAN-015：已有键保存即更新值[当日形]）
 //   6 reload  重载可见（磁盘外改 → press 重载 → 编辑器见新内容）
 //   7 tab     tab 面：开两档 → 切换（active 断言 + 内容互换）→ dirty 档
-//             关闭确认两路（取消=档留；直接关闭=弃改落盘零写入）
+//             关闭确认两路（取消=档留；放弃修改并关闭=结算式弃改——PLAN-031 T-05）
 //   8 editops 编辑操作族：段中回车/退格（真键盘 + caret 定位达成同语义）
 //   10 link   链接索引+反链面板（PLAN-003；vm 矩阵 check 10/10b 同单——
 //             ASCII 路径导航；CJK 目标子步原 vm merged 专属（D-19——
@@ -149,6 +149,9 @@ import {
 } from './helpers'
 
 test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
+  // PLAN-031 T-05：套内与草稿套件共享工作区时逐键检查点+扩单负载实测
+  // 超 420s 全局预算（solo 1.2m 稳定）——本测级预算 600s，非断言放宽。
+  test.setTimeout(600_000)
   page.on('response', (r) => {
     if (r.url().includes('/api/')) {
       console.log(`    [api] ${r.status()} ${r.request().method()} …${r.url().slice(-45)}`)
@@ -244,22 +247,23 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   // 取消路：x → 确认弹层 → 取消 → 档留 + 脏标保（x 钮 = 活动档行的 lucide-xicon 图标钮——本版 lucide 图标名 kebab 化带 -icon 尾）
   const activeTabX = page.locator('button:has(svg.lucide-xicon)')
   await activeTabX.click()
-  await expect(page.getByText('关闭前要保存吗?')).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByText('关闭后此文档的编辑不再显示', { exact: false }).first()).toBeVisible({ timeout: 10_000 })
   await page.getByRole('button', { name: '取消', exact: true }).click()
-  await expect(page.getByText('关闭前要保存吗?')).toBeHidden({ timeout: 10_000 })
+  await expect(page.getByText('关闭后此文档的编辑不再显示', { exact: false }).first()).toBeHidden({ timeout: 10_000 })
   await expect(visibleEditor(page)).toContainText('原型设计', { timeout: 10_000 })
   await expect(page.getByText('未保存', { exact: true }).first()).toBeVisible()
   console.log('[7 tab] 确认弹层取消路 — 档留 + 脏标保')
   // 直接关闭路：弃改关闭（磁盘零写入）→ 档数回落 + 激活回落 Hello World
   await activeTabX.click()
-  await expect(page.getByText('关闭前要保存吗?')).toBeVisible({ timeout: 10_000 })
-  await page.getByRole('button', { name: '直接关闭', exact: true }).click()
-  await expect(page.getByText('关闭前要保存吗?')).toBeHidden({ timeout: 10_000 })
+  await expect(page.getByText('关闭后此文档的编辑不再显示', { exact: false }).first()).toBeVisible({ timeout: 10_000 })
+  // PLAN-031 T-05：直接关闭 → 放弃修改并关闭（结算式弃改——tombstone 在 .jade 域，wiki 文件零写入断言不变）
+  await page.getByRole('button', { name: '放弃修改并关闭', exact: true }).click()
+  await expect(page.getByText('关闭后此文档的编辑不再显示', { exact: false }).first()).toBeHidden({ timeout: 10_000 })
   await expect(tabBtn('Tasks')).toHaveCount(0, { timeout: 10_000 })
   await expect(visibleEditor(page)).toContainText('这是一段示例文本', { timeout: 15_000 })
   const tabDisk = fs.readFileSync(TARGET_FILE.replace('Hello World.ad', 'Tasks.ad'), 'utf8')
   expect(tabDisk, '弃改关闭 = 磁盘零写入').not.toContain(TAB_MARKER)
-  console.log('[7 tab] PASS — 双档切换互换 + dirty 关闭确认两路（取消档留/直接关闭弃改，磁盘零写入）')
+  console.log('[7 tab] PASS — 双档切换互换 + dirty 关闭确认两路（取消档留/放弃修改并关闭[结算式]，磁盘零写入；保留草稿弧=PLAN-031 T-06）')
 
   // 8 编辑操作族（vm 矩阵 check 8 同单）：段中编辑弧线——插入 → 脏标置真
   // → 退格复原 → 脏标重算 false，store 全程可证（vm 侧整文构造回车/退格
@@ -1030,7 +1034,8 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await expect(page.getByText('未保存', { exact: true }).first()).toBeVisible({ timeout: 10_000 })
   await page.getByText('文件', { exact: true }).click()
   await page.getByText('退出', { exact: true }).click()
-  await expect(page.getByText('退出前要保存吗?')).toBeVisible({ timeout: 10_000 })
+  // PLAN-031 T-05 退出弹层四动作化
+  await expect(page.getByText('退出前处理未保存的修改', { exact: false }).first()).toBeVisible({ timeout: 10_000 })
   await page.getByRole('button', { name: '保存并退出', exact: true }).click()
   await expect
     .poll(() => fs.readFileSync(TARGET_FILE, 'utf8').includes(QUIT_MARKER), { timeout: 15_000 })

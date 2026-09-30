@@ -27,12 +27,16 @@ export async function openApp(page: Page) {
   await expect(page.getByText('index.ad', { exact: true }).first()).toBeVisible()
 }
 
-/** 文档末尾追加文本（jade e2e appendToEditor 同款：click + Ctrl+End + 逐字）。 */
+/** 文档末尾追加文本（jade e2e appendToEditor 同款：click + Ctrl+End）。
+ *  **PLAN-031 T-05**：keyboard.type → insertText（单次 input 事件——粘贴
+ *  语义）——逐键检查点排水（vue 轨每 Edit 一 POST + 全 DOM 重渲染）在
+ *  套内累积 tab 数下把 UI 拖入秒级卡顿（矩阵套内 [11]/[13] 点击饿死实
+ *  勘），单事件化 = 一次 Edit 一次检查点；追加语义与断言面零变化。 */
 export async function appendToEditor(page: Page, text: string) {
   const content = visibleEditor(page).locator('.autodown-editor-content')
   await content.click()
   await page.keyboard.press('Control+End')
-  await page.keyboard.type(text, { delay: 25 })
+  await page.keyboard.insertText(text)
   await expect(visibleEditor(page)).toContainText(text)
 }
 

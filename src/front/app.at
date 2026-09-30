@@ -1053,6 +1053,7 @@ widget App {
         ActTrash, TrashRestore(str), TrashRestoreAll, TrashPurge, TrashPurgeGo, TrashPurgeCancel,
         RecentsPersist,
         RecoverOpen, RecoverClose, RecoverReload, RecoverCopy(str), RecoverDiscard(str),
+        ConfirmKeepClose, QuitKeepClose,
     }
 
     model {
@@ -1781,29 +1782,38 @@ widget App {
             }
 
             // —— 关闭脏 tab 确认（基座 Plan 420 P2 / 626 T-06 形态）——
+            // 关闭确认（PLAN-031 T-05 三动作化）：取消全保/放弃修改并
+            // 关闭[结算 discarded 成功才移除]/保留草稿并关闭[检查点确认
+            // 后移除——记录保留重启可恢复]。门挂快照非旗标（F-30-R1）。
             alert-dialog (open: .store.confirm_open) {
                 alert-dialog-content {
                     alert-dialog-header {
                         alert-dialog-title "有未保存的修改"
-                        alert-dialog-description "关闭前要保存吗?"
+                        alert-dialog-description "关闭后此文档的编辑不再显示——可保留草稿（重启后可恢复副本）或放弃修改"
                     }
                     alert-dialog-footer {
                         alert-dialog-cancel "取消" { onclick: .ConfirmCancel }
-                        alert-dialog-action "直接关闭" { onclick: .ConfirmClose }
+                        alert-dialog-action "放弃修改并关闭" { onclick: .ConfirmClose }
+                        alert-dialog-action "保留草稿并关闭" { onclick: .ConfirmKeepClose }
                     }
                 }
             }
 
             // —— 退出/关窗确认（窗口 X 与「退出」共用入口）——
+            // 退出确认（PLAN-031 T-05 四动作化）：取消/放弃修改并退出
+            //[逐档结算成功才退]/保存并退出[逐档保存+读回核验，未命名逐
+            // 项另存取消即停]/保留草稿并退出[全部最新检查点确认后退]。
+            // 任一失败保持应用（AC-07/08/09）。
             alert-dialog (open: .store.quit_confirm_open) {
                 alert-dialog-content {
                     alert-dialog-header {
                         alert-dialog-title "有未保存的修改"
-                        alert-dialog-description "退出前要保存吗?"
+                        alert-dialog-description "退出前处理未保存的修改——保存、保留草稿（重启后可恢复副本）或放弃"
                     }
                     alert-dialog-footer {
                         alert-dialog-cancel "取消" { onclick: .QuitConfirmCancel }
-                        alert-dialog-action "不保存退出" { onclick: .QuitDiscard }
+                        alert-dialog-action "放弃修改并退出" { onclick: .QuitDiscard }
+                        alert-dialog-action "保留草稿并退出" { onclick: .QuitKeepClose }
                         alert-dialog-action "保存并退出" { onclick: .QuitSaveClose }
                     }
                 }
@@ -2443,6 +2453,7 @@ widget App {
         .CloseTab(i) -> { store.CloseTab(i) }
         .ConfirmClose -> { store.ConfirmClose() }
         .ConfirmCancel -> { store.ConfirmCancel() }
+        .ConfirmKeepClose -> { store.ConfirmKeepClose() }
         .ActNew -> {
             store.ActNew()
             // 链接行重算（显式空 active——untitled 激活；不读 .store，两轨一致）
@@ -2501,6 +2512,7 @@ widget App {
             .MentionsRefreshOf(.store.active_path)
         }
         .ActQuit -> { store.ActQuit() }
+        .QuitKeepClose -> { store.QuitKeepClose() }
         .ActUndo -> { store.ActUndo() }
         .ActRedo -> { store.ActRedo() }
         .ActCut -> { store.ActCut() }

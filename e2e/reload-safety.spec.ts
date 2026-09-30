@@ -31,6 +31,41 @@ const SAFE_BODY = `# ReloadSafe 头
 安全重载正文锚一段。
 `
 const STALE_TEXT = '文档已变化，请重新发起重载'
+/** 草稿结算墓碑计数（drafts 下各 doc 的 s 序列 meta——⑦ 结算弧证据面）。 */
+function countSettlements(): number {
+  const root = path.join(WORKSPACE, '.jade', 'drafts', 'v1')
+  if (!fs.existsSync(root)) return 0
+  let n = 0
+  for (const d of fs.readdirSync(root)) {
+    for (const f of fs.readdirSync(path.join(root, d))) {
+      if (/^s\d{5}\.meta$/.test(f)) n += 1
+    }
+  }
+  return n
+}
+
+/** 任一检查点正文含标记（⑦ 磁盘前置——确认后再发起放弃）。 */
+function markerInCheckpoints(marker: string): boolean {
+  const root = path.join(WORKSPACE, '.jade', 'drafts', 'v1')
+  if (!fs.existsSync(root)) return false
+  for (const d of fs.readdirSync(root)) {
+    const dd = path.join(root, d)
+    for (const f of fs.readdirSync(dd)) {
+      if (/^c\d{5}\.body$/.test(f) && fs.readFileSync(path.join(dd, f), 'utf8').includes(marker)) return true
+    }
+  }
+  return false
+}
+
+async function waitFor(cond: () => boolean, label: string, timeoutMs = 10_000) {
+  const dl = Date.now() + timeoutMs
+  for (;;) {
+    if (cond()) return
+    if (Date.now() > dl) throw new Error(`timeout: ${label}`)
+    await new Promise((r) => setTimeout(r, 200))
+  }
+}
+
 /** 磁盘 .ad 文本 → body（frontmatter 剥离——vm_matrix bodyOf 同构造）。 */
 const bodyOfDisk = (disk: string) =>
   disk.split('---').length >= 3 ? disk.split('---').slice(2).join('---').replace(/^\n/, '') : disk
@@ -38,6 +73,9 @@ const bodyOfDisk = (disk: string) =>
 test('reload safety（PLAN-030 全弧）', async ({ page }) => {
   test.setTimeout(240_000)
   page.on('pageerror', (e) => console.log(`    [pageerror] ${String(e).slice(0, 200)}`))
+  page.on('response', (r) => {
+    if (r.url().includes('/api/draft_')) console.log(`    [draft-api] ${r.status()} ${r.request().method()} ${r.url().slice(-40)}`)
+  })
 
   // 素材：boot 前落位（树清单 boot 期装配）——专属目标档 + 空文素材。
   const emptyFile = path.join(WORKSPACE, 'wiki', 'ReloadEmpty.ad')
@@ -176,4 +214,32 @@ test('reload safety（PLAN-030 全弧）', async ({ page }) => {
   await expect(page.getByText(STALE_TEXT).first()).toBeVisible({ timeout: 10_000 })
   await expect(page.getByText('未保存', { exact: true }).first()).toBeVisible()
   await page.unroute('**/api/read_wiki')
+
+  // —— ⑦ 放弃重载的草稿结算成功弧（PLAN-031 T-05）：当前档（⑥ 的
+  // LATE 输入已脏）+ **磁盘前置**（标记已入检查点再发起——排除在途
+  // 竞态）；放弃并重载 → 结算被放弃草稿（墓碑 +1）→ 正文=磁盘新文、
+  // dirty 清（§5.4 表第八行正半）。切档后新编辑器实例键入不落地为上
+  // 游 remount/focus 边界（实勘），故本弧不切档。——
+  await waitFor(() => markerInCheckpoints('LATE迟到输入'), '⑥ 标记入检查点', 15_000)
+  const tombsBefore = countSettlements()
+  await page.keyboard.press('F5')
+  await expect(page.getByText(CONFIRM_TEXT)).toBeVisible({ timeout: 10_000 })
+  await page.getByRole('button', { name: '放弃修改并重载', exact: true }).click()
+  await expect(page.getByText('未保存', { exact: true }).first()).toBeHidden({ timeout: 15_000 })
+  await waitFor(() => countSettlements() >= tombsBefore + 1, '⑦ 墓碑+1', 15_000)
+
+  // —— ⑧ 结算失败不提交（T-05）：draft_settle 拦截失败 → 正文/脏标
+  // 保持、提示可见、不因结算失败假重载（§5.4 表第八行负半）。——
+  await appendToEditor(page, 'SETTLEFAIL探针')
+  await waitFor(() => markerInCheckpoints('SETTLEFAIL探针'), '⑧ 标记入检查点', 15_000)
+  await page.route('**/api/draft_settle', async (route) => {
+    await route.fulfill({ status: 500, body: 'settle blocked' })
+  })
+  await page.keyboard.press('F5')
+  await expect(page.getByText(CONFIRM_TEXT)).toBeVisible({ timeout: 10_000 })
+  await page.getByRole('button', { name: '放弃修改并重载', exact: true }).click()
+  await expect(page.getByText('草稿结算失败——重载未执行（正文保持）')).toBeVisible({ timeout: 15_000 })
+  await expect(visibleEditor(page)).toContainText('SETTLEFAIL探针', { timeout: 10_000 })
+  await expect(page.getByText('未保存', { exact: true }).first()).toBeVisible()
+  await page.unroute('**/api/draft_settle')
 })

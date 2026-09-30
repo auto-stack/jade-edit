@@ -19,8 +19,11 @@ export default defineConfig({
   // （D-03 切换面 0.5-1.2s/拍），单 test 预算 30s→90s；**PLAN-020 T-03
   // 再扩**（find 组 ⑧⑨ 弧线——12 开拾取循环菜单往返累加）：90s→240s
   //（150s 窗实录：⑬ 位 menubar popover 内容窗[D-21 v11③ 家族]×1 即触顶
-  // ——余量扩容非断言放宽）。
-  timeout: 240_000,
+  // ——余量扩容非断言放宽）。**PLAN-031 T-05 再扩**（240s→420s）：
+  // vue 轨逐键草稿检查点 POST 累加（PLAN-030 D-17 逐变更发射血统——
+  // 每 keystroke 排水面单 POST[在-flight 合并下界]，整测键入族数十次
+  // 往返实测 ~4x 时延增长，240s 于 [11 find] 前触顶）。
+  timeout: 420_000,
   workers: 1,
   retries: 0,
   reporter: [['list']],
