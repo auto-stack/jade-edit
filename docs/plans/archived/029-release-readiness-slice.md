@@ -1,6 +1,7 @@
 ---
 plan_id: PLAN-029
-status: reviewed
+status: archived
+completion_kind: delivered
 feature_name: v0.1.0 release 就绪批（第二十七切片——判据文档化+全量回归+tag 预案）
 author: [agent]
 created_at: 2026-09-30T00:00:00Z
@@ -522,6 +523,52 @@ probe_mtime release 挂起=D-41 仪器面——一致性核验通过（不发明
     （reviewed Spec delta 冻结面=本提交 1e3fab3 内容）`
   - `next: merge`（用户已授权 review→merge 连跑；merge 基线=1e3fab3
     +复审记录 docs-only 后代）。
+
+- **2026-09-30 merge pass（auto-plan:merge）——PLAN-029:r1 五
+  checkpoint 闭环归档（直接 main 线性惯例 001..028 在档承载）**：
+  - `prepared`：复审基线 r1@1e3fab3（reviewed——f1a89c1 复审记录
+    docs-only 后代，diff 1e3fab3..f1a89c1 恰计划件 85 行核验）——
+    **canonical delta 已随实现落 main**（SD-2901 RELEASE.md 新件+
+    SD-2902 ARCH §6/README Tests heading+SD-2903 README 是什么/
+    仪表盘 milestone 行+SD-2904 ledger v34——1e3fab3 五 docs 件面）
+    ；delivery commit 链=1e3fab3→f1a89c1→e655a65（merge 窗补正
+    ——F-29-R1 §4① 十二窗→十三窗/F-29-R2 §4① vue dist→集成单
+    命令形对齐/F-29-R3 §2 集成形运行注记+ledger v34 merge 窗补记
+    [D-15/R010 族 launcher regen 抹补件面全链+操作序纪律立案+
+    F-29-R4 dir_ops 自愈正面]——F-27-R1 先例续）。
+  - `landed`：main tip==e655a65（merge-base --is-ancestor 全链
+    ancestor-OK 线性无 merge commit；known-good smoke=合并窗 fresh
+    vm merged 臂 **22 PASS**（基线 v20 零漂移——终树 e655a65 实跑
+    p29-merge-smoke.log 一发过；split 臂 [1 boot] FAIL 主导形=预期
+    第十三窗形）；src 与 1e3fab3 零差异=docs-only 后代链直证）。
+  - `ledger_refreshed`：v34@1e3fab3+merge 窗补记@e655a65 tracked
+    读回核验（H1 v34 恰一+SD-2904 指针恰一+merge 窗补记恰一+
+    F-29-R3 恰一——无 live ledger 服务[.autoos/ 缺席实勘]，tracked
+    文件面 ledger=docs/parity-ledger.md，024..028 同判）。
+  - `archived`：git mv→docs/plans/archived/029-release-readiness-
+    slice.md + status archived + **completion_kind delivered**（YAML
+    块内——675320f 遗漏教训随锁落位）。
+  - `cleaned`：无 worktree/dev 分支（git worktree list 单一主检出
+    核验）+ 代码工作树零 WIP（status 恰本归档提交面）+ .auto/ 工具
+    链缓存清场（复审冒烟窗再生件——两度清场在录）+ 判别链物料复核
+    （src 零 diff 强形无 archive 树涉；一次性件居 ignored e2e/
+    .runtime——p29-*/p29-rev-*/p29-merge-smoke 日志+冒烟脚本族+
+    p29-manual-ws 语料在档可追溯）。
+  - deployment 观察：本批 src 零 diff→**零重建面**（家族双 exe
+    09-30 12:41/16:01 载体即部署面零变化；gen/dist 复审复原窗
+    ✓built@7.92s 补丁态现势——vue dist 载体现势）；批回归到期件=
+    无 .last-batch-regression.json（jade-edit 惯例外——024..028
+    同判；本批 T-02 六面 full gate+复审全链重放=批级回归门本体）。
+  - 留观交接：F-29-R3 操作序纪律（launcher regen 抹补件面——
+    RELEASE.md §2 注记+ledger D-15/R010 族在册）+ F-R17-1 第十三窗
+    （split 臂独立缺陷域——家族专项修复 unblock 不变）+ probe_
+    dir_ops MCP 口 pick_port 化（tests 面——供下批候选）+ **里程碑
+    交接=v0.1.0 tag-ready 态**（前置三件：①✅②**待用户试用 ≥1 轮
+    确认**[RELEASE.md §1 回执注记位]③receipt 在档——齐备后
+    `git tag -a v0.1.0` 一命令即达，tag 动作=用户自打或明示代打）。
+  - `outcome: pass`（delivery/derived view/archival/cleanup 全验）。
+  - `next: 无`（PLAN-029 delivered 收口；候选池首位=试用反馈件——
+    本批 RELEASE.md 试用指南即其供料）。
 
 ## 10. 待澄清事项
 
