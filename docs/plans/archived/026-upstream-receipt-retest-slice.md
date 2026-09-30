@@ -1,6 +1,7 @@
 ---
 plan_id: PLAN-026
-status: reviewed
+status: archived
+completion_kind: delivered
 feature_name: 上游回执复测批——PLAN-705 载体重建与四回执（第二十四切片）
 author: [agent]
 created_at: 2026-09-29T00:00:00Z
@@ -632,6 +633,41 @@ master 实勘）：
     v31+四文档锚位。
   - `next`：**merge**（用户已授权全工作流——review→merge 连跑；
     merge 基线=0204c8c）。
+
+- **2026-09-30 merge 收据（PLAN-026:r1）**：
+  - `prepared`：复审基线 r1@**0204c8c**（reviewed——b66f879 复审
+    记录 docs-only 后代，全 AC 独立重放 pass）——canonical delta
+    已随实现落 main（仓库惯例 019..025 先例续：SD-2601@ARCH §5
+    第二十四切片段+重入收口段[6243eb2+0204c8c]/SD-2602@§6
+    heading+README Tests heading/SD-2603@README 是什么第二十四切
+    片条目+重入收口+仪表盘③+留观面板/SD-2604@ledger v31 四行处
+    置+D-41 新行）。
+  - `landed`：main tip==**b66f879** 含 0204c8c（merge-base
+    --is-ancestor ancestor-OK——直接 main 线性约定 001..025 在档
+    惯例，无 worktree/dev 分支无 ff 动作无 merge commit）；
+    **known-good smoke=合并窗 fresh vm merged 22 PASS 16/16 ALL
+    GREEN**（基线 v20 零漂移在录——p26-merge-smoke.log 当前 tip
+    实跑；split [1 boot] FAIL=F-R17-1 第十例窗内同形，分段判绿
+    在档）。
+  - `ledger_refreshed`：v31@0204c8c tracked 读回核验（H1 v31 恰
+    一+D-41 新行恰一+D-21 处置升级语二处[changelog+行内]——无
+    live ledger 服务，tracked 文件面 024/025 同判）。
+  - `archived`：git mv→docs/plans/archived/026-upstream-receipt-
+    retest-slice.md+status: archived+completion_kind: delivered
+    （YAML 块内——675320f 遗漏教训随锁落位）。
+  - `cleaned`：无 worktree/dev 分支（git worktree list 单一主检出
+    核验）+代码工作树零 WIP+本批判别链物料复核（src 零 diff 强形
+    无 archive 树；一次性件居 ignored e2e/.runtime——bench150 先
+    例同判保留，值内嵌本计划 §8/§9 可追溯）。
+  - `deployment 观察`：gen/front/vue/dist 复审窗 ✓built@17.78s
+    （0204c8c src 内容现势——b66f879 docs-only 零变化）+家族双
+    exe=本批重建即部署面（release 81,313,280B@09-30 12:41/debug
+    128,245,248B@12:47@9fbf4ebd5）。
+  - `留观交接`：F-R17-1 第十例（unblock 更新=家族 split 臂专项
+    修复——706r2 已证独立缺陷域）/D-35② 双窗 CORRUPT 维持（P≤200
+    口径）/D-41 供料候选（probe_mtime release 独立缺陷）/T-03+
+    D-39 三选维持待裁/试用反馈件维持候选池首位。
+  - `outcome: pass`——PLAN-026 delivered 收口。
 
 ## 10. 待澄清事项
 
