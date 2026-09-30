@@ -1,12 +1,12 @@
 ---
 plan_id: PLAN-031
-status: executing
+status: execution_done
 feature_name: 草稿持久化与重启恢复（R-02 第一切片）
 author: [agent]
 created_at: 2026-09-30T14:37:05Z
 updated_at: 2026-09-30T15:45:00Z
 plan_revision: 1
-current_step: 6
+current_step: 7
 total_steps: 7
 supersedes_spec_components:
   - docs/specs/editor-safety.md
@@ -204,7 +204,7 @@ Store 新状态围绕每个文档保存修订、待发送最新快照、正在�
 - [x] **T-04 启动发现与恢复副本界面**。依赖：T-03。修改 src/front/app.at 根 Init 与根级恢复入口，Store 新增恢复薄委托；新增 e2e/draft-recovery.spec.ts 的恢复场景。实现可读状态、逐项来源／预览、独立副本、保留／明确放弃及复制中断关联。覆盖 AC-02/05/06/09，SD-02。验证：定向 Playwright 测试；恢复前后原文件全对照；未命名非空副本用播种验证，空文检查内容与状态，不宣称修复上游键入问题。[✅ 已完成] [2026-09-30] store 侧：tab 三新字段（recover_src_doc/seq/erev——来源标记）+msg DraftRecover(str,int,int,str,int)（恢复副本播种：draft_read/draft_read_orig 读回+len 核验拒损→独立身份新 tab path 空 original_body="" 非空恒 dirty 需另存+空文副本不被普通清洁判定吞没）+DraftSettleOf 扩第五参 link_id（恢复副本首检确认[first_ack=draft_seq==0]→来源 recovered 结算 link=副本身份；副本 Save As 成功同结算——幂等墓碑）+守卫圈耗尽出口修正（sending 残留降级 pending——后续 Edit 可重排）。app 侧：Init 尾 RecoverReload 挂钩（draft_pending 只读枚举+逐行来源实读状态[intact/changed/missing/untitled——exists+read_wiki 对照草稿正文，mtime 不作判据 AC-05]+状态栏非模态提示条数）+RecoverOpen/Close/Copy/Discard 处理器（行键字符串定址 ckey=doc:seq:len dkey=doc:seq:erev——单参 msg 载荷约束；关闭不丢记录+条数同刷）+视图 action+菜单项+恢复弹层（行=名/来源状态/路径/预览净化面/时间+双钮恢复副本·放弃草稿+空态行+关闭钮）——**自动弹模态层被实勘否决**（Init 模态劫持全应用点击面——matrix 240s 点击超时实证）改非模态状态栏提示+菜单入口。back 侧：drafts.at d_scan() 共享体重构+d_pending() 顶层数组端点（D-20④ 健康形状+D-20⑤ call-arg to_value 纪律——identifier 实参 vue 轨恒等发射实勘）+api.at draft_pending GET。e2e/draft-recovery.spec.ts 新三案（恢复副本全弧[面板发现→副本→编辑→来源 recovered 墓碑 link 直证+原文件全对照]/放弃+关闭保留[墓碑+余行+菜单重开 AC-06]/三态标注+空文副本[原文件零创建]）**3/3 两连绿**；开发期修正三件在录[App 上下文 .console 写面违 D-25① 致全局 console 覆盖——删/循环变量文本裸表达式形（插值字面量发射实勘）/visibleEditor page 参+seedDraft 目录清场（上轮墓碑隔离）]。回归：vm_matrix merged 17/17+v23 重锁（+App 三字段入 dump+弹层闭态 vnode id 序列移位——D-23③）+pnpm test:e2e 全量 5/5（draft-recovery 3+matrix+reload-safety——matrix 自产草稿互扰消除实证）+pnpm build 绿。
 - [x] **T-05 正常离开与手动重载结算**。依赖：T-03/T-04。修改 editor_store.at CloseTab/ConfirmClose/ConfirmCancel/CloseRequest/QuitSaveClose/QuitDiscard/ReloadReadOf 与 app.at 现有根确认弹层／薄委托，新增保留草稿动作。稳定目标快照取代关闭索引依赖，所有脏页正常退出建立屏障；考虑先关闭后派发、取消、超时、新输入。扩 reload-safety 的结算失败场景。覆盖 AC-07..10，SD-03/04。验证：定向 Playwright＋VM 真实存活/退出、保存失败／另存取消／重载失败与过期对照。[✅ 已完成] [2026-09-30] store：关闭流快照化（close_target_key/path/body/doc 四标量取代 confirm_idx——身份+正文修订，异步列表变化索引过期消除）+三动作（取消全保/放弃修改并关闭=门挂快照[F-30-R1 教训]+结算 discarded[seq==0=从未保护如实移除]成功才移除/保留草稿并关闭=drain 至 saved 且无新输入[draft_erev==draft_conf]才移除——记录保留重启可恢复）+msg ConfirmKeepClose；退出流批量捕获（quit_keys 身份串行清单——处理中逐项重查）+三结算式动作（放弃修改并退出=逐档 discarded 全成功才 exit[新增 msg QuitKeepClose=保留草稿并退出：逐档排水至最新确认全部 saved 且无新输入才 exit]/保存并退出=逐档保存+读回核验+未命名另存[取消即停保持应用]+任一失败保持应用+如实标记部分成功）；重载放弃结算门（快照补 reload_target_doc/seq/conf/was_dirty 四标量——成功读回+目标匹配**先结算再提交，结算失败不提交正文替换**；取消/读取失败/失效不结算）+全部新后端调用 try/catch 包裹（vue 轨 HTTP 500 中止 handler 面——drain 卡 sending/settle 无提示消除）。app：关闭弹层三钮+退出弹层四钮（文案明确化——保留草稿=重启可恢复副本语义）+薄委托两新。测试适配与扩展：vm_matrix [7 tab]/R6 按压改「放弃修改并关闭」+语义注释（§6.2 授权的旧断言适配）+基线 v24 重锁（离开快照九标量入 dump——diff 逐项解释）；e2e matrix.spec 弹层文案/按钮同语义适配+测试级预算 600s（套内与草稿套件共享工作区逐键检查点负载实测——solo 1.2m 稳定非断言放宽）+helpers appendToEditor 单事件化（keyboard.type→insertText——套内逐键 POST×全 DOM 重渲染把 [11]/[13] 点击饿死实勘）；reload-safety 扩 ⑦ 结算成功弧（磁盘前置 marker-in-checkpoint+墓碑相对计数+1）/⑧ 结算失败不提交弧（draft_settle 500 拦截→「草稿结算失败——重载未执行（正文保持）」+正文/脏标保持）——开发期实勘四件在录[自动弹模态否决延续/切档后新编辑器实例键入不落地=上游 remount/focus 边界（⑦ 不切档）/insertText 对引擎不可达（type 通道保留）/④c 删档后树行陈旧清单复用+exists 卫]。验证全绿：pnpm build ✓9.9s+vm_matrix merged 17/17 两轮+t03-smoke ALL GREEN+pnpm test:e2e **5/5 两连轮**（draft-recovery 3+matrix+reload-safety 含 ⑦⑧ 新弧——⑧ 500 拦截为断言面）+probe_draft_protocol 双臂全过（back 未动回归面）。
 - [x] **T-06 真重启、故障全弧及受影响回归**。依赖：T-02..05。新增 tests/draft_recovery_matrix.mjs；完成协议脚本与 e2e；扩 tests/vm_matrix.mjs，必要时新增 tests/baseline/structure-v22.txt 并逐项解释；scripts/serve-back.mjs 仅在专用恢复 harness 需要复用启动逻辑时做兼容扩展，默认旧重建配方保持。执行 §6 全部命令，所有 AC 行为留新证据，旧红对照归因不冒充通过。覆盖 AC-01..11，SD-05。验证：中断重启不得重拷 fixture，注入有效性和代码／载体 hash 在档。[✅ 已完成] [2026-10-01] tests/draft_recovery_matrix.mjs 新（真进程 kill/restart 矩阵——**种子前置装置**[草稿 fs 直种，写侧证据归 probe/t03-smoke/e2e——矩阵独占面 = 真进程 kill/重启×恢复 UI/退出弧；UI 键入每 boot ≤1 档]）：相位① 重启恢复全弧 12 断言[面板行齐 named×2+untitled 不漏/intact+changed 来源实读三态/副本逐字+题名/原文件字节不变/确认前零结算]全绿；相位② 恢复中断[副本确认前硬 kill→重启来源三行全在不丢不复活+磁盘原样]全绿；相位⑤ 保存并退出[真实 exit=0+读回核验落盘+已存档不在恢复清单]全绿；相位④ 恢复副本消费+放弃修改并退出[副本首检=来源 recovered 消费墓碑+副本放弃墓碑+乙/丙零伤]全绿；**双连轮 ALL GREEN 19/19**。矩阵开发期实勘两件在录：[a] 3+ 检查点后 AURA/MCP 面楔死（app 活但连接 RST、"编辑器"窗口冻结态——单文档独立序列恒过/多相位序列恒楔，D-21 邻域上游渲染层边界）→ 退出弧 UI 键入预算制+press 断连=成功路径口径（vm_matrix [9 quit] 同款）+SKIP-VM-WEDGE 显式降级不冒充通过；[b] matrix boot 的 initialize 走正规 MCP rpc（tools/call 形 = 畸形会话面——boot 即 RST 根因）。QuitKeepClose 补 draft_epoch 惰性初始化（副本排水 epoch=0 面——真实缺陷修复）。vm_matrix split 臂如实记录：[1 boot] FAIL = F-24-2 在册 boot 缺陷再现（同窗对照：后续 [2]..[8] 全 PASS 分段判绿含新语义 [7 tab] 放弃修改并关闭结算弧+磁盘墓碑；[10 link] 处 D-21 族超时中止——split 前端行为以 merged 臂+HTTP 协议 probe split 臂全过+vue e2e 同面证据综合判读，不记全绿）。§6 命令终态：pnpm build ✓/probe_draft_protocol 双臂全过/t03-smoke ALL GREEN/vm_matrix merged 17/17 ALL GREEN×多轮（v24）/pnpm test:e2e 5/5 两连轮（draft-recovery 3+matrix+reload-safety 含 ⑦⑧ 结算弧）/draft_recovery_matrix ALL GREEN ×2（19/19）/vm_matrix split 如上分段判绿。serve-back.mjs 零改（矩阵直 spawn 真进程——兼容扩展不需要）。注入有效性：矩阵种子=合法检查点记录（Node sha256/len/slen 三重对读+恢复副本逐字对照即注入有效性的行为面直证）；probe 协议层故障注入七类在档（截断/追加/坏 meta/删 body/杂件/越界/迟到）。载体：auto.exe debug（v0.4.2-2311-g7fcf913eb 族）零换档。
-- [ ] **T-07 规范、剩余范围与复审交接**。依赖：T-06。新增 docs/specs/draft-recovery.md，修改 docs/specs/editor-safety.md 的相关规则与非目标、必要的 ARCHITECTURE/README 局部指针；更新分析路线图 R-02a 结果但不标 R-02 完成；保留 R-02b 危险操作清单与重入条件。核对 SD-01..05/AC-01..12 全覆盖，记录真实验证 revision，交 auto-plan-review。覆盖 AC-11/12。验证：规范和源码一致、全部链接有效、记录 outcome 和 blockers；不自动 merge。
+- [x] **T-07 规范、剩余范围与复审交接**。依赖：T-06。新增 docs/specs/draft-recovery.md，修改 docs/specs/editor-safety.md 的相关规则与非目标、必要的 ARCHITECTURE/README 局部指针；更新分析路线图 R-02a 结果但不标 R-02 完成；保留 R-02b 危险操作清单与重入条件。核对 SD-01..05/AC-01..12 全覆盖，记录真实验证 revision，交 auto-plan-review。覆盖 AC-11/12。验证：规范和源码一致、全部链接有效、记录 outcome 和 blockers；不自动 merge。[✅ 已完成] [2026-10-01] docs/specs/draft-recovery.md 新（四节：§1 检查点协议 SD-01[存储布局/身份与修订/写确认四步/只读枚举 settle_erev 门/结算墓碑/三重校验/字符保真/原文件零触碰]；§2 恢复体验 SD-02[启动发现非模态/来源实读三态/恢复副本独立身份/空文不吞没/首检=来源消费/中断安全]；§3 离开退出保存快照门 SD-03[关闭三动作/退出三结算式/保存读回核验/重载放弃结算门——editor-safety §2 扩面]；§4 边界与验证 SD-05[非目标如实/上游边界四件在册/验证锚五面]）——editor-safety.md 修订（非目标 PLAN-031 更新：草稿恢复已交付指 draft-recovery §3+重载结算门；内部口分野补 R-02b 待立项态——历史不抹）——路线图进度更新 2026-10-01（031 execution_done 待复审/沉淀；R-02b 待立项+重入条件=消费草稿身份与协议）——SD-01..05/AC-01..12 全覆盖核对（SD-04 = editor-safety 非目标修订+draft-recovery 引用即本批双文件；AC-11 = e2e 全绿+split 分段判绿如实+probe 双臂+限制四件在册 draft-recovery §4；AC-12 = 本批规范链接/hash 可定位）。不自动 merge。
 
 T-01 的技术实现路径是执行期研究任务，不是假装已有结论。其验收目标不能降低；只允许目标不变的等价机制。跨仓供给、扩大并发／规模或修改恢复默认覆写策略均需修订契约与范围决策。
 
@@ -221,6 +221,16 @@ T-01 的技术实现路径是执行期研究任务，不是假装已有结论。
 - Spec delta: SD-01..SD-05（提案，未落 canonical）
 - 检查：任务覆盖全部 AC/SD；已有路径与符号已读；新文件标明新；现有命令与 package/scripts 已核对；新脚本验证命令需随创建核验；active 匹配、分配锁、唯一性与 0..10 结构由本次文件交付检查确认。
 - 与前序关系：PLAN-030 已 archived/delivered；其 AC 不删除、不降级。R-02b 明确保留，不能据本 Plan 扩写“全部文档生命周期安全”。
+
+### 2026-10-01 work：T-01..T-07 交棒
+
+- stage: work
+- plan_id: PLAN-031，plan_revision: 1
+- outcome: pass（T-01..T-07 全 [x]，current_step 7/7；AC-01..12 全覆盖映射随 checkbox；全部 §6 命令实录在案）
+- code_commit: 链 4cc5b0b(T-01)→67f2404(T-02)→068da9b(T-03)→6e97719(T-04)→a80980e(T-05)→3f9c736(T-06)→本批(T-07)——base=1e6ddf7 直接 main 线性（jade-edit 001..030 在册惯例）
+- evidence: probe_draft_protocol 双臂全案通过（协议七类故障+守卫+索引面+原文件不变）；t03-smoke ALL GREEN（真实 app 键入/保存/结算）；vm_matrix merged 17/17 ALL GREEN 多轮（基线 v21→v22→v23→v24 计划内四锁，diff 逐项解释随 commit）；e2e 全量 5/5 两连轮（draft-recovery 3 案+matrix+reload-safety 含 ⑦⑧ 结算双弧）；draft_recovery_matrix 双连 19/19 ALL GREEN（真进程 kill/重启×恢复 UI/退出弧）
+- blockers: 无阻塞。如实登记三项非阻断边界：[a] vm 合并轨 3+ 检查点后 AURA/MCP 楔死（上游渲染层边界——矩阵键入预算制+SKIP-VM-WEDGE 显式降级+跨轨 e2e 证据）；[b] vm split 臂 F-24-2 boot 缺陷再现（后续分段判绿+HTTP probe split 臂全过综合判读）；[c] Save As 取消/浏览器原生退出自动化不可达（dialog 桥/Process.exit no-op——plan §10 预期边界，代码路径在册）
+- next: review（复审基线 = 本批提交树）
 
 ## 10. 待澄清事项
 
