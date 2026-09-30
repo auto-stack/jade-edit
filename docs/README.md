@@ -245,6 +245,18 @@
   ——留观维持）+ 盘点三件维持候选（checkbox/menubar memo/
   autoui_state——705/706 delta 零触）+ build ✓built 20.23s（新
   gen 面全链绿——706 生成器变更对 jade 语料零破坏直证）。
+  **重入收口（2026-09-30，家族 706 rev2 修复落 master 后）**：
+  家族 bisect 定谳=**plan047 T-06 computed 信号网裸 Value 无 RC 堆
+  身份 UAF**（三面同根因——debug panic/release 弹层滞留/probe_
+  mtime 挂起；双守卫修复落 tip 9fbf4ebd5）→ 双载体重建重入**全
+  绿**：**merged 16/16 ALL GREEN 修复直证**（[7 tab]/[10b] 全过+
+  基线 v20 零漂移）+ e2e ×3 全绿 + gate merged 段过→split 短路
+  既定形 + probe 双电池（debug 14 绿/release 13 绿+receipt_d19 三
+  确认）+ **D-21 正出口**（HTTP 面签名全窗零复现——处置升级
+  receipt 在册）+ F-R17-1 **第十例续记**（split boot FAIL v23..
+  v27 同形 ×2——706r2 未触 split boot 域=独立缺陷域证实）+ D-35②
+  双窗 CORRUPT 同形（P≤200 维持加强）+ **D-41 新行**（probe_mtime
+  release 独立缺陷——家族证 old-carrier 同挂）。
   **第八切片 = 别名解析 + 提及转链接**（SD-1001，
   2026-09-23）：链接域二期——frontmatter `aliases:` block-list 只读解析（`page_fm_list`，解析序 stem 精确首现优先 → alias 精确首现，消费面 exists/target_path/反链/出链/wanted 全面对齐，检索/提及/改名不入面）+ `linkify_page` POST 契约（明区改写、frontmatter 逐字节保留、计数返回）+ 提及行「转为链接」钮（串联自派生刷新消除 vue 轨并发 fetch 竞态）+ F-R9-4 删除流提及刷新收口；图谱 tab 顺位后移——vm 轨组
   件面依赖上游），本仓零依赖其代码。
@@ -300,7 +312,7 @@ node tests/vm_matrix.mjs            # 双臂（merged+split）检查单 + 基线
 pnpm test:e2e                       # vue 检查单（同一检查单；serve-back 后端）
 ```
 
-## Tests（判绿口径，SD-204；SD-304/403 扩定；SD-503 再扩定；SD-603 再扩定；SD-703 再扩定；SD-803 再扩定；SD-903 再扩定；SD-1003 再扩定；SD-1103 再扩定；SD-1203 再扩定；SD-1303 再扩定；SD-1403 再扩定；SD-1503 再扩定；SD-1603 再扩定；SD-1703 再扩定；SD-1803 再扩定；SD-1903 再扩定；SD-2003 再扩定；SD-2103 再扩定；SD-2202 再扩定——PLAN-022 零扩单零子步：纯内部性能片既有断言域全量承载 + 前后采逐字节门 + bench150 重放对拍门；SD-2302 再扩定——PLAN-023 续零扩单零子步：读面/取面收口纯内部性能片第三例 + 前后采逐字节门扩三面×双语料 + dbg 口径孤页门重推门[≤2.0s 过]；SD-2402 再扩定——PLAN-024 有界调查批（探针定谳 no-go 关账）：probe_mtime.mjs 新增入库（契约语义双臂五案，probe 族 14→15 件）+ repo src 零 diff——矩阵/e2e 断言域零扩，基线 v19 零漂移续[零重锁第五例]；SD-2503 再扩定——PLAN-025 功能切片（合并三择批）：probe_dir_ops 三择案组扩（s①..s⑩ 双臂——skip/overwrite 零数据丢失/卫正交/fail-closed/CJK/trash_restore 回滚弧/moves 完整性，既有 m①..mb⑨ 全案四参化零漂移 + 双臂 raw 字节等值升级；probe 族件数 15 维持——扩案居既有件）+ vm_matrix 13 file 组 dir4 三择钮面/dir5 tab 重映射弧扩 + e2e dir4/dir5 同单 + **基线 v20 计划内重锁第七例**（dirmerge_strategy 入 dump——store 新字段面 + 三钮闭态渲染 id 序列）+ merged 16/16 ALL GREEN + e2e 全绿含新弧 + build ✓built；SD-2602 再扩定——PLAN-026 回执复测批（**blocked 出口**）：零扩单零新件（既有验证链复跑 + .runtime 一次性件——024 no-go 支路同判）；载体健康冒烟门注记（probe_sb 双载体绿/probe 15 件 fresh 双臂[debug 14 绿+receipt_d19 负结果在册一致；release 13 绿+probe_mtime 挂起 ×2=第三断裂面]/merged 矩阵[本窗 blocked——新载体脏标/弹层交互面断裂 ×4，A/B 锚旧 exe 全绿在库]/build ✓built 20.23s[release 路由+SCHEMA_DRIFT_GENERATE_AT=1 随窗路由]——**基线 v20 双载体 PASS 零漂移续**[采点先于断裂弧]）
+## Tests（判绿口径，SD-204；SD-304/403 扩定；SD-503 再扩定；SD-603 再扩定；SD-703 再扩定；SD-803 再扩定；SD-903 再扩定；SD-1003 再扩定；SD-1103 再扩定；SD-1203 再扩定；SD-1303 再扩定；SD-1403 再扩定；SD-1503 再扩定；SD-1603 再扩定；SD-1703 再扩定；SD-1803 再扩定；SD-1903 再扩定；SD-2003 再扩定；SD-2103 再扩定；SD-2202 再扩定——PLAN-022 零扩单零子步：纯内部性能片既有断言域全量承载 + 前后采逐字节门 + bench150 重放对拍门；SD-2302 再扩定——PLAN-023 续零扩单零子步：读面/取面收口纯内部性能片第三例 + 前后采逐字节门扩三面×双语料 + dbg 口径孤页门重推门[≤2.0s 过]；SD-2402 再扩定——PLAN-024 有界调查批（探针定谳 no-go 关账）：probe_mtime.mjs 新增入库（契约语义双臂五案，probe 族 14→15 件）+ repo src 零 diff——矩阵/e2e 断言域零扩，基线 v19 零漂移续[零重锁第五例]；SD-2503 再扩定——PLAN-025 功能切片（合并三择批）：probe_dir_ops 三择案组扩（s①..s⑩ 双臂——skip/overwrite 零数据丢失/卫正交/fail-closed/CJK/trash_restore 回滚弧/moves 完整性，既有 m①..mb⑨ 全案四参化零漂移 + 双臂 raw 字节等值升级；probe 族件数 15 维持——扩案居既有件）+ vm_matrix 13 file 组 dir4 三择钮面/dir5 tab 重映射弧扩 + e2e dir4/dir5 同单 + **基线 v20 计划内重锁第七例**（dirmerge_strategy 入 dump——store 新字段面 + 三钮闭态渲染 id 序列）+ merged 16/16 ALL GREEN + e2e 全绿含新弧 + build ✓built；SD-2602 再扩定——PLAN-026 回执复测批（**blocked 出口**）：零扩单零新件（既有验证链复跑 + .runtime 一次性件——024 no-go 支路同判）；载体健康冒烟门注记（probe_sb 双载体绿/probe 15 件 fresh 双臂[debug 14 绿+receipt_d19 负结果在册一致；release 13 绿+probe_mtime 挂起 ×2=第三断裂面]/merged 矩阵[本窗 blocked——新载体脏标/弹层交互面断裂 ×4，A/B 锚旧 exe 全绿在库]/build ✓built 20.23s[release 路由+SCHEMA_DRIFT_GENERATE_AT=1 随窗路由]——**基线 v20 双载体 PASS 零漂移续**[采点先于断裂弧]；重入收口 2026-09-30：冒烟门四腿全绿[merged 16/16 ALL GREEN 修复直证+probe_sb 双载体+probe 双电池 debug 14 绿/release 13 绿+receipt_d19 三确认+build ✓built 18.63s——基线 v20 新载体零重锁]）
 
 检查单（PLAN-002 T-01 扩定 + PLAN-003 T-04 link 扩单 + PLAN-004 T-04
 find 扩单 + PLAN-005 T-04 create 扩单 + PLAN-006 T-04 rename 扩单 +
@@ -797,10 +809,10 @@ archived/)；第十九切片 = 试用赋能批——recents 持久层 + P≤200 
    互斥发射、menubar memo 生成器化（8cb0a87 在册形态）、autoui_state
    大态序列化（D-38② 仪器面）——026 盘点三件 705/706 delta 零触
    维持候选；dev-stack 响应滞留竞态（D-39——三选维持待裁；026
-   split 面不可达注记）；**026 回执批 blocked 出口在案**（新载体
-   merged 臂交互面断裂——矩阵/split 判据面不可达，③收窄冻结待重
-   入）+ D-35② 复测负结果第三例（新载体整数 322 形态变体——P≤200
-   维持）；
+   split 面第十例续记注记）；**026 回执批收口**（blocked→重入全
+   绿：D-21 正出口 receipt 在册——③收窄解除冻结；D-35② 双窗负
+   结果维持[整数 322 双窗同形]；D-41 新行 probe_mtime release 独
+   立缺陷供料候选）；
 4. 微件池（反馈缺位时的顺延项）：大纲（anchor-reveal 解锁——十二片
    门控维持，上游 grep 定谳窗复核）、recents 全局化（r2 口——跨工作
    区共享清单）、Time front probe、NFKC、批量 restore（量级门控维持
@@ -810,21 +822,23 @@ archived/)；第十九切片 = 试用赋能批——recents 持久层 + P≤200 
    返回形 + 三择弹层 + 映射驱动 tab/recents 重映射——F-R19-1 闭账，
    skip/overwrite 零数据丢失 .trash 改道可回滚）。
 
-**留观项（跨批交接）**：**新载体 merged 臂脏标/确认弹层断裂**
-（PLAN-026 blocked 出口新立——debug 标脏弧进程死亡 ×2 同点/release
-脏关弹层栈积 ×2 同点，A/B 锚旧 exe 全绿在库，基线 v20 双载体
-PASS；unblock = 家族 706 UI 层域修复落 master 后重建 exe 复跑矩阵
-——706 aura_view_builder/vm_bridge 输入层最邻域候选）；split 臂 +
-gate 单命令 F-R17-1 第五批留观（D-21 v25——家族 exe 稳定后双臂复
-跑闭账；022 执行窗第六例、023 第七例、024 第八例、025 第九例续记
-[执行窗 boot FAIL 逐字同形 ×4 连跑 + clean-HEAD 复现 src 无关定谳
-——分段判绿路由 probe_dir_ops/probe_trash split 臂全绿 + e2e 全
-绿承载]；**026 split 面不可达**[merged 臂先断 ×4——复核轮 0/2，
-unblock 前置叠加新载体 merged 修复]）；D-35② bulkalias 复测
-（**026 实录：新载体 N=500 整数 322 形态变体**[019 整数 500 同族
-——值损坏族 705 后原样]——P≤200 稳定域口径维持；024 实录：exe
-时间戳未变 09-28 载体跨批稳定第五证；**P≤200 稳定域驻留压力面已
-实测补勘**[PLAN-024 p4：150 页全文本驻留 + ≥10 轮零损坏签名]）。
+**留观项（跨批交接）**：~~新载体 merged 臂脏标/确认弹层断裂~~
+——**已闭账**（PLAN-026 重入 2026-09-30：家族 706 rev2 UAF 双守
+卫修复兑现——plan047 T-06 computed 信号网定谳，merged 16/16 ALL
+GREEN 直证）；split 臂 + gate 单命令 F-R17-1 第五批留观（D-21
+v25——家族 exe 稳定后双臂复跑闭账；022 执行窗第六例、023 第七
+例、024 第八例、025 第九例、**026 重入第十例续记**[新载体
+706r2+708+709 上 split boot FAIL+wiki 树行不现 v23..v27 逐字同
+形 ×2+gate 短路——判别链强形：src 零 diff+merged 同窗 ×2+probe
+split 臂 HTTP 全绿；**定性更新：706r2 交互面修复未触 split boot
+域=独立缺陷域证实**，unblock 更新=家族 split 臂专项修复]）；
+D-35② bulkalias 复测（**026 双窗实录：整数 322 形态变体同形 ×2
+窗**[019 整数 500 同族——值损坏族跨载体原样]——P≤200 稳定域口
+径维持加强；024 实录：exe 时间戳未变 09-28 载体跨批稳定第五证；
+**P≤200 稳定域驻留压力面已实测补勘**[PLAN-024 p4：150 页全文
+本驻留 + ≥10 轮零损坏签名]）；D-41 probe_mtime release 载体挂
+起（026 新立——独立缺陷：debug 全绿/release 三跑同挂+家族证
+old-carrier release 同挂；供料候选记账）。
 
 ---
 

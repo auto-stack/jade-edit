@@ -1,12 +1,12 @@
 ---
 plan_id: PLAN-026
-status: executing
+status: execution_done
 feature_name: 上游回执复测批——PLAN-705 载体重建与四回执（第二十四切片）
 author: [agent]
 created_at: 2026-09-29T00:00:00Z
-updated_at: 2026-09-29T13:00:00Z
+updated_at: 2026-09-30T05:00:00Z
 plan_revision: 1
-current_step: 3
+current_step: 5
 total_steps: 5
 supersedes_spec_components: []
 new_spec_components: []
@@ -371,6 +371,28 @@ master 实勘）：
     最邻域；基线 v20 **双载体均 PASS**[采点在 [7 tab] 前——dump
     结构面完好]）。④**冒烟败形处置条款执行**：§5.2/§10.3 blocked
     出口（非静默）——src 零 diff 约束下不自修，r1 交裁。
+  - **【重入 2026-09-30，家族 706 rev2 修复落 master 后】冒烟门全
+    绿——blocked 解除**：①执行窗实勘——家族 master tip=**9fbf4ebd5**
+    （706 rev2 修复 ed81a3295+3776035e3 + 706 归档 c1e7a3e34/
+    9fbf4ebd5 + 708/709 多 T 落位；载体 delta 66c9cac19..9fbf4ebd5
+    =84 文件 +16K/−8K）；**家族定谳一手在档**：bisect first-bad=
+    **432068075（plan047 T-06 computed 信号网）**——裸 Value 无 RC
+    堆身份入网，脏档 TabActivate 状态替换释放旧对象后信号伪命中，
+    debug RC canary UAF panic / release id 复用错读 = 弹层滞留 +
+    probe_mtime 挂起**三面同根因**；修复=双守卫
+    [value_carries_heap_identity 准入拒收 + heap_dep_key_alive 死
+    键 miss 重求值]（定谳报告 auto-lang docs/plans/reports/706-
+    bisect-verdict.md——本批 §11.4 plan047 候选不预设的裁定被证实）。
+    ②双载体重建（release 已被家族 cleanup 移除→全新构建；`-p auto`
+    惯例续）：release 81,313,280B@09-30 12:41 / debug
+    128,245,248B@12:47。③冒烟门四腿：probe_sb 双载体绿；probe 15
+    双电池——debug 14 绿+receipt_d19 负一致 / release 13 绿+
+    receipt_d19 负+**probe_mtime release 仍挂（独立缺陷定谳维持
+    ——家族证 old-carrier release 同挂，非 706 域，另立 D-41）**；
+    **merged 矩阵 16/16 ALL GREEN（[7 tab]/[10b] 全过——706 r2
+    AC-10 消费者回执面兑现=修复验证直证；基线 v20 零漂移[新载体
+    零重锁]）**；build ✓built 18.63s（release 路由+SCHEMA_DRIFT_
+    GENERATE_AT=1 随窗）。→ **AC-01 复核 PASS**。
 - **T-02 D-21 负载窗复测（AC-02）**：e2e ≥3 轮 + 双臂矩阵 ≥2 轮/
   臂 + gate ≥1 + 签名对表与窗况记录。依赖：T-01。
   - **◐ 部分（blocked 窗况下可交付面已跑）**：e2e ×3 =
@@ -385,6 +407,19 @@ master 实勘）：
     （musk-093 侧）——并行窗如实记；断裂为确定性同点非负载散布形
     （旧 exe 同机全绿 A/B 锚在库）。判定：**负出口**（任一签名复
     现=进程死亡 ×2）——留观维持，不升级。
+  - **【重入 2026-09-30】全判据面补齐——正出口兑现**：①e2e
+    **×3 = 3/3 绿**（1.5m/1.6m/1.6m——p26r2-e2e.log；popover 内容
+    窗零现）；②双臂矩阵 ≥2 轮/臂 = **merged r1+r2 双 16/16 ALL
+    GREEN**（基线 v20 零漂移 ×2）+ split ×2 [1 boot] FAIL（F-R17-1
+    面——T-03 判据）；③gate ×1：merged 段过（22 PASS 含基线）→
+    split 段 boot FAIL 短路[build/e2e 段未达——019/020 既定形]
+    （p26r2-gate.log）。**HTTP 面签名全窗零复现**（400 missing
+    param/ECONNRESET/ECONNREFUSED/进程死亡——e2e 3 轮+merged 2 轮
+    +probe 双电池 30 件臂全零；blocked 窗进程死亡 ×2 归因闭账=706
+    r2 修复兑现）。窗况=家族并行窗（musk-093+lang-710 auto 实例在
+    飞）如实记。判定：**正出口——处置升级「705+706r2 后零复现
+    receipt 在册」**（单日单批样本限注记维持；结构性根修已由家族
+    706 r2 兑现——观测窗口径可收窄）。
 - **T-03 F-R17-1/D-39 split 双臂（AC-03）**：split ≥2 轮 + gate
   单命令 + 判别链装配（出口分岔）+ D-39 注记。依赖：T-01（与
   T-02 可并行——窗况一致性注记）。
@@ -394,6 +429,17 @@ master 实勘）：
     令同不可达。F-R17-1 维持留观（unblock 前置叠加：新载体 merged
     臂断裂修复后双臂复跑方有意义）；D-39 上游面观察注记照付
     （backend 生命周期已重做[705]——三选维持待裁不吞并）。
+  - **【重入 2026-09-30】续现出口定谳——第十例续记**：split 臂
+    ×2 轮 + gate ×1 = 三观测**同签名续现**（[1 boot] FAIL + `button
+    "wiki" not found`——v23..v27 逐字同形；p26r2-matrix-r1/r2.log
+    + p26r2-gate.log）。**判别链强形装配**：本批 src 零 diff@ee9e34c
+    + merged 同窗 16/16 ×2 直证 + probe 族 split 臂 serve-back HTTP
+    真运输面同窗全绿（双电池）——**分段判绿维持（018..025 先例
+    续）**。定性更新：706 r2 UAF 修复（交互语义面）**未触及 split
+    boot 面**——家族窗第十例在新载体（706r2+708+709）延续，证实
+   其为独立于交互回归的另一缺陷域（boot ready/UI chrome 弧）；F-
+    R17-1 维持留观，unblock 更新=家族 split 臂专项修复（T-03/D-39
+    重推载体条件继续等待）。D-39 三选维持待裁不变。
 - **T-04 D-35②/D-19 回执（AC-04）**：d35-retest 一次性件 +
   probe_receipt_d19 复跑 + 盘点 grep/gen 源检。依赖：T-01。
   - **[x] 已完成（双负出口 + 盘点定谳）**：①d35-retest（debug
@@ -411,6 +457,18 @@ master 实勘）：
     选维持）/menubar memo（生成器无 memo 发射 + 705/706 delta 零
     触——8cb0a87 在册形态不变，候选维持）/autoui_state（705/706
     delta 零触序列化面——D-38② 候选维持）。
+  - **【重入 2026-09-30】新载体复验——全负结果稳定**：①d35-retest
+    （新 debug 载体）：HTTP 200 + **body=整数 322（len=3）CORRUPT
+    ——双窗同形**（blocked 窗/重入窗两载体一致；p26r2-d35-retest
+    .log）→ P≤200 稳定域口径维持加强（UI 层修复与值损坏域无涉的
+    独立性旁证）。②receipt_d19 **三确认**（新载体 debug 臂：g③/g④
+    原绿+g① body=0/g② len=0——三载体三窗负结果一致）。③盘点三
+    件新 delta（66c9cac19..9fbf4ebd5）复核：checkbox/menubar/
+    autoui_state **仍零触**（708 parser/aura 面与 709 wins/
+    projection 面均不涉三候选域）——候选维持定谳加固；byte-as-
+    char 原样（http_server.rs:527）。④probe_mtime release=**D-41
+    新行登记**（独立缺陷——家族证 old-carrier release 同挂，非 706
+    回归域；AC-11 第二分支兑现）。
 - **T-05 文档落位（AC-05/06）**：负向证族 + SD-2601..2604 + 仪表盘
   ③/留观面板 + ledger v30 + §9 work 记录。依赖：T-02..T-04。
   - **[x] 已完成（blocked 形态落位）**：AC-05 负向证五面全零
@@ -423,6 +481,15 @@ master 实勘）：
     D-39 不可达注记）；README 是什么第二十四切片条目 + Tests
     heading + 仪表盘③收窄冻结注记 + 留观面板（新留观件：新载体
     merged 臂脏标/弹层断裂）；ARCH §5 第二十四切片段 + §6 heading。
+  - **【重入 2026-09-30】收口落位**：AC-05 负向证族复核全零（src
+    零 diff/tracked 零改/基线池零触碰/一次性件居 ignored/家族树面
+    零触碰——cargo 仅 target/）；ledger v30→v31（D-21 **处置升级
+    正出口**/D-35② 双窗确认/D-19 三确认/D-39 第十例/D-41 新行
+    [probe_mtime release 独立缺陷]）；README 是什么第二十四切片
+    条目重入收口 + Tests heading + 仪表盘③注记 + 留观面板更新
+    （merged 断裂留观件**闭账**[706 r2 修复兑现]；F-R17-1 第十例
+    续记）；ARCH §5/§6 重入增记。§9 交接 outcome=pass →
+    **execution_done**，next=review。
 
 ## 9. 复审记录
 
@@ -488,6 +555,30 @@ master 实勘）：
     修复未落）；重入序+补齐面全文见 §10.7 裁定注。下次
     `auto-plan:work` 调用驱动重入，等待期零动作。
 
+- **2026-09-30 work 收口（重入执行完成）**：
+  - `stage: work`，PLAN-026，revision 1，**outcome: pass →
+    execution_done**。
+  - `code_commit`：无实现提交（src 零 diff——回执批零代码路径；
+    本提交为收口簿记面）。
+  - `task_ids`：T-01 ✓（重入冒烟门四腿全绿——merged 16/16 修复
+    验证直证）/T-02 ✓（D-21 正出口：全判据面补齐+HTTP 面签名零
+    复现——处置升级）/T-03 ✓（F-R17-1 续现第十例——判别链强形+
+    D-39 三选维持）/T-04 ✓（双负结果新载体加固+盘点复核+D-41 登
+    记）/T-05 ✓（收口落位）——current_step=5/5。
+  - `evidence`（p26r2-* 全族在档）：双载体 @9fbf4ebd5（release
+    81,313,280B@09-30 12:41 / debug 128,245,248B@12:47）；merged
+    r1+r2 双 16/16 ALL GREEN（[7 tab]/[10b] 修复直证+基线 v20 零
+    漂移 ×2）；e2e ×3 全绿；gate merged 段过→split 短路（既定
+    形）；split [1 boot] FAIL ×2+gate=第十例 v23..v27 逐字同形；
+    probe 双电池 14+13 绿+receipt_d19 三确认+d35 双窗 CORRUPT 同
+    形（整数 322）；盘点三面新 delta 零触；家族定谳=plan047 T-06
+    computed 信号网 UAF（706 r2 bisect 报告在档）。
+  - `blockers`：无（blocked 已解除；F-R17-1/D-39/D-41 均为留观/
+    候选记账面，非本批 blocker）。
+  - `next`：**review**（auto-plan:review——本提交为复审基线；r1
+    裁定 (a) 闭环：706 r2 AC-10 兑现→重入→冒烟门全绿→全判据面
+    补齐→四回执处置落定）。
+
 ## 10. 待澄清事项
 
 1. **主题确认（draft 阶段出口）**：本 draft 按池序③首开路由择「上
@@ -543,3 +634,7 @@ master 实勘）：
    预设/零特性扩张]）。**重入触发条件随之精化** = 家族 PLAN-706
    rev2 T-09..T-11 修复落 master（AC-10 兑现即重入信号）；届时重
    入序同上段（重建 → 冒烟门 → T-02/T-03 补齐 → 收口）。
+   **【已闭环 2026-09-30】**：家族 706 rev2 修复落 master（tip
+   9fbf4ebd5，AC-10 消费者面家族自验+本批重入独立复验双绿）——
+   本项关闭，重入序已走完（见 §9 收口记录），outcome=pass →
+   execution_done。
