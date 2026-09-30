@@ -1,6 +1,6 @@
 ---
 plan_id: PLAN-027
-status: execution_done
+status: reviewed
 feature_name: 双取形消除重推——watch 批终面（第二十五切片）
 author: [agent]
 created_at: 2026-09-30T00:00:00Z
@@ -416,6 +416,62 @@ merged 全组 PASS 基线 v20 零漂移；bench150 双取段清偿 A/B 差值实
   2. split 臂本窗 F-24-2 族内漂移形（boot/tree PASS+[3 open] 编辑
      器面未现——024 复审窗先例同形），F-R17-1 第十一窗观察在册；
      unblock 同前=家族 split 臂专项修复。
+
+- **2026-09-30 复审 pass（auto-plan:review）**：
+  - `stage: review` | PLAN-027 | revision 1 | **outcome: pass** |
+    reviewed_commit=**1296ac3** | base_commit=04ce23b。
+  - **同会话复审声明**：本复审与执行同会话——裁定全部由工件独立
+    重放重建（非执行期摘要采信）。dependency_revisions=家族
+    auto-lang（exe 载体磁盘核验一致：debug 128,245,248B@09-30
+    12:47/release 81,313,280B@09-30 12:41——执行窗与复审窗同值）；
+    spec_inputs=ARCHITECTURE.md+README.md+parity-ledger.md@v32
+    （本仓无 docs/specs/——canonical 三件形 023..026 同判）。
+  - `acceptance_results`（1296ac3 树 fresh 重放）：
+    - **AC-01 pass**（改判「还原零漂移直证」重放）：git diff
+      04ce23b -- src/ = 0 行 + gen 源检现势重放（复审 build 重生
+      gen：App.vue :647+:649 双调 `JSON.parse(await link_index('',
+      8))`——023 在册现役形）+ 单取零残余 grep（json.parse(lj)/退
+      役注记 = 0；「to_value 双取形」原注记 :2350 现位）；执行窗
+      单取形证据在档（r2/r3 日志签名 grep 各 1 现+trace zip+
+      :649 JSON.parse(lj) 实录内嵌提交信息与计划 §8）。
+    - **AC-02 pass**：merged 矩阵 fresh 重放 **22 PASS 全组绿**
+      （[B baseline] v20 零漂移在录——p27-review-matrix.log）+
+      probe 抽检 4 件 fresh 重放（probe_trash/probe_dir_ops/
+      probe_mtime[debug 路由]全绿 exit=0+probe_receipt_d19[release]
+      守望形逐字一致 g① body=0/g② len=0/g③/g④ PASS=D-19 负结果
+      在册）+ 电池余量 reuse-with-reason[执行窗终态=复审树零 src
+      变化+同 exe+同配置——双电池 fresh 全录 exit 码在档 §8]+
+      api.at/wsys.at 零 diff（src 零 diff 蕴含）。
+    - **AC-03 pass**（回退出口臂）：e2e ×6 执行实录在档（p27-e2e-*
+      六日志+trace zip）+ 复审 e2e fresh 重放 **绿 1 passed 1.2m**
+      （HTTP 面签名全零 grep 直证）+ split 臂复审重放=[1 boot]
+      FAIL+`button "wiki" not found`=**v23..v27 在册主导形**（执行
+      窗 F-24-2 漂移形与复审主导形=同独立缺陷域两形并存——分段判
+      绿维持，判别链=src 零 diff+merged 22 PASS 同窗+probe split
+      臂 HTTP 全绿+e2e 同窗绿）。
+    - **AC-04 pass**（N/A 注记兑现重放）：§8 T-04 块在档（AC-04
+      非静默移除）。
+    - **AC-05 pass**：七面重放全零（src/e2e+scripts/基线池 diff 0
+      行×3+tracked 工作树零改+ignored check-ignore 直证）。
+    - **AC-06 pass**：锚位读回全现恰一（ARCH SD-2701/第二十五切
+      片/SD-2702 续；README SD-2701/SD-2702 再扩定/N 定谳/是什么条
+      目/仪表盘②维持/留观面板第十一窗观察 ×3 处；ledger v32 H1/
+      指针续/D-39 v32/D-20⑤/D-21 v32/D-35②/D-41 恰一×7）+ delta
+      after 回退出口形一致性抽核（SD-2701/2704 双出口文本对应兑现
+      ——SD-2703「量级实录」为收口臂措辞，落地走回退臂 A/B 对拍
+      非静默移除）。
+  - `findings`（二件非阻断观察）：
+    - **F-27-R1**：README「文档」节 ledger 指针滞留 v27（023 后
+      024..026 三批均未随批更新——SD-2703 授权面外；语义面=指向
+      件版本号漂移非内容错）；随 merge 窗补正或维持留观，交裁。
+    - **F-27-R2**：split 臂双形并存确认（执行窗 F-24-2 漂移形+
+      复审 boot FAIL 主导形——均在册先例形，零新缺陷；F-R17-1
+      第十一窗观察成立，unblock 同前=家族 split 臂专项修复）。
+  - `evidence`：p27-review-{matrix,e2e,build}.log+probe 抽检四日志
+    （ignored e2e/.runtime）；durable 面=计划 §8/§9+ledger
+    v32+四文档锚位+提交信息内嵌值。
+  - `next`：**merge**（用户已授权 review→merge 连跑；merge 基线=
+    1296ac3）。
 
 ## 10. 待澄清事项
 
