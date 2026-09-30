@@ -29,7 +29,7 @@ use find_panel: FindPanel
 use tags_panel: TagsPanel
 use bps.navigation.filetree.tree_util: flatten_tree, toggle_id
 use bps.navigation.filetree.tree_icon: TreeIcon
-use back.api: tree, ws_root, link_index, search_wiki, create_page, rename_page, delete_page, tags_index, linkify_page, page_meta, set_page_meta, create_dir, move_page, delete_dir, rename_dir, move_dir, daily_note, trash_list, trash_restore, trash_purge, recent_paths_get, recent_paths_set
+use back.api: tree, ws_root, link_index, search_wiki, create_page, rename_page, delete_page, tags_index, linkify_page, page_meta, set_page_meta, create_dir, move_page, delete_dir, rename_dir, move_dir, daily_note, trash_list, trash_restore, trash_purge, recent_paths_get, recent_paths_set, draft_pending, draft_read, exists, read_wiki
 
 style warn_label = "text-[12px] text-amber-400 mr-1"
 
@@ -1052,6 +1052,7 @@ widget App {
         ActMoveDir, MoveDirSrc(str), MoveDirDst(str), MoveDirGo, MoveDirGoMerge, MoveDirCancel,
         ActTrash, TrashRestore(str), TrashRestoreAll, TrashPurge, TrashPurgeGo, TrashPurgeCancel,
         RecentsPersist,
+        RecoverOpen, RecoverClose, RecoverReload, RecoverCopy(str), RecoverDiscard(str),
     }
 
     model {
@@ -1164,6 +1165,14 @@ widget App {
         // [计划 §2.3]，find/tags 数据态先例 D-20④ 同款裁定）。----
         var trash_rows List = []
         var trash_purge_open bool = false
+        // —— 待恢复草稿面板（PLAN-031 T-04）：行集 + 开态（App 模型——
+        // trash_purge_open 同族 D-20④ 裁定；行 = {ckey,dkey,doc,seq,erev,
+        // path,name,at,len,preview,state_text}，ckey=doc:seq:len 恢复键、
+        // dkey=doc:seq:erev 放弃键——单参 msg 载荷约束的字符串定址）。
+        // 来源状态 = 实际读取对比（intact/changed/missing/untitled——
+        // mtime 不作判据，AC-05 口径）。----
+        var recover_open bool = false
+        var recover_rows List = []
     }
 
     computed {
@@ -1260,6 +1269,7 @@ widget App {
         action (id: "view.switch-tab", handler: .ActSwitchTab,  title: "切换 Tab", shortcut: "Ctrl+D")
         action (id: "view.reload",    handler: .Reload,    title: "重载",  icon: "refresh-cw",
                 enabled_if: ".store.tab_count > 0")
+        action (id: "view.recover",   handler: .RecoverOpen, title: "待恢复草稿", icon: "history")
         action (id: "help.about",  handler: .ActAbout,  title: "关于 jade-edit")
 
         toolbar {
@@ -1346,6 +1356,7 @@ widget App {
                             menubar-checkbox-item (title: "孤页清单", checked: .store.find_open && .store.find_mode == "orphans", shortcut: "Ctrl+Shift+O") { onclick: .ActFindOrphans }
                             menubar-item (title: "切换 Tab", shortcut: "Ctrl+D") { onclick: .ActSwitchTab }
                             menubar-item (title: "重载", icon: "refresh-cw", shortcut: "F5", enabled: .store.tab_count > 0) { onclick: .Reload }
+                            menubar-item (title: "待恢复草稿", icon: "history") { onclick: .RecoverOpen }
                         }
                     }
                     menubar-menu (value: "help") {
@@ -1835,6 +1846,46 @@ widget App {
                 }
             }
 
+            // —— 待恢复草稿面板（PLAN-031 T-04；dialog 实例——启动发现
+            // 自动开[有待恢复项时] + 视图菜单「待恢复草稿」重开；关闭不丢
+            // 记录[下次启动仍列——AC-06]。行 = 来源名 + 来源状态[实读对
+            // 比——原文件未变/已变化/不存在/未命名] + 路径 + 正文预览
+            // [净化符号面] + 双钮：恢复副本 = 独立身份新 tab 需另存[来源
+            // 在副本确认检查点/另存后按协议结算消费]；放弃草稿 = 明确结
+            // 算[结算失败提示保留]。预览 = d_jesc 净化面（⏎/␍/⋅ 可见符
+            // 号——展示域）。----
+            dialog (open: .recover_open) {
+                dialog-content {
+                    dialog-header {
+                        dialog-title "待恢复草稿"
+                        dialog-description "上次会话未正常关闭的草稿——恢复为独立副本（不覆写原文件），放弃为明确结算"
+                    }
+                    if .recover_rows.len() == 0 {
+                        text "无待恢复草稿" { style: "text-[12px] text-muted-foreground" }
+                    }
+                    for r in .recover_rows {
+                        col (style: "gap-1 py-2 border-b") {
+                            row (style: "items-center gap-2") {
+                                text r.name { style: "text-[12px] font-medium" }
+                                text r.state_text { style: "text-[11px] text-amber-400" }
+                            }
+                            if r.path != "" {
+                                text r.path { style: "text-[11px] text-muted-foreground" }
+                            }
+                            text r.preview { style: "text-[11px] text-muted-foreground" }
+                            text r.at { style: "text-[10px] text-muted-foreground" }
+                            row (style: "gap-2") {
+                                button (text: "恢复副本", variant: "outline") { onclick: .RecoverCopy(r.ckey) }
+                                button (text: "放弃草稿", variant: "ghost") { onclick: .RecoverDiscard(r.dkey) }
+                            }
+                        }
+                    }
+                    dialog-footer {
+                        button (text: "关闭", variant: "outline") { onclick: .RecoverClose }
+                    }
+                }
+            }
+
             // —— 新建页面弹层（PLAN-007 第五切片；dialog 第四实例——
             // 内嵌 input，重命名弹层同构形态：双钮 = 普通 button[D-24④
             // 纪律]、闭态恒渲染 D-23③ 同判——测试定位锚内容制；声明位
@@ -2184,6 +2235,10 @@ widget App {
                 console_log("recents: load failed")
             }
             .recent_paths = recents_split(rp_raw)
+            // —— 草稿启动发现（PLAN-031 T-04）：draft_list 只读枚举（
+            // try/catch backend-offline 不炸 boot）→ 行集 + 来源实读状态；
+            // 有待恢复项自动开面板（关闭不丢记录——RecoverOpen 可重开）。
+            .RecoverReload()
         }
 
         // —— recents 持久化共享口（PLAN-021；SD-2101 保存半——变更即存，
@@ -2205,6 +2260,145 @@ widget App {
             }
             if !ok {
                 console_log("recents: save failed")
+            }
+        }
+
+        // —— 待恢复草稿（PLAN-031 T-04）：RecoverReload = draft_list 只读
+        // 枚举 + 逐行来源实读状态（path 档 exists→read_wiki 对照草稿正文；
+        // mtime 不作判据）。行键 = 字符串定址（单参 msg 载荷约束）：
+        // ckey=doc:seq:len（恢复副本）、dkey=doc:seq:erev（明确放弃）。
+        // RecoverOpen/Close 只翻开态（关闭不丢记录）；Copy/Discard 薄委
+        // 托 store 后行集即刷。----
+        .RecoverReload -> {
+            .recover_rows = []
+            var ok bool = true
+            var rows List = []
+            try {
+                // ⚠ call-arg 形（D-20⑤——identifier 实参 vue 轨恒等发射）
+                rows = json.to_value(draft_pending())
+            } catch (e) {
+                ok = false
+            }
+            if ok {
+                var i int = 0
+                while i < rows.len() {
+                    var r = rows[i]
+                    var d str = r.doc
+                    var q int = r.seq
+                    var ev int = r.erev
+                    var pth str = r.path
+                    var ln int = r.len
+                    var st str = "untitled"
+                    if pth != "" {
+                        st = "missing"
+                        var ex bool = false
+                        try {
+                            ex = exists(pth)
+                        } catch (e2) {
+                            ex = false
+                        }
+                        if ex {
+                            st = "changed"
+                            var dbody str = ""
+                            var dok bool = true
+                            try {
+                                dbody = draft_read(d, q)
+                            } catch (e3) {
+                                dok = false
+                            }
+                            if dok {
+                                var sbody str = ""
+                                var sok bool = true
+                                try {
+                                    sbody = read_wiki(pth)
+                                } catch (e4) {
+                                    sok = false
+                                }
+                                if sok {
+                                    if sbody == dbody {
+                                        st = "intact"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    var nm str = r.name
+                    if nm == "" {
+                        nm = "未命名"
+                    }
+                    var stx str = "未命名草稿"
+                    if st == "intact" {
+                        stx = "原文件未变"
+                    }
+                    if st == "changed" {
+                        stx = "原文件已变化"
+                    }
+                    if st == "missing" {
+                        stx = "原文件不存在"
+                    }
+                    .recover_rows.push({
+                        ckey: d + ":" + q.str() + ":" + ln.str(),
+                        dkey: d + ":" + q.str() + ":" + ev.str(),
+                        doc: d,
+                        seq: q,
+                        erev: ev,
+                        path: pth,
+                        name: nm,
+                        at: r.at,
+                        len: ln,
+                        preview: r.preview,
+                        state_text: stx,
+                    })
+                    i = i + 1
+                }
+                // 非模态提示（不自动弹层——T-04 实勘：Init 模态劫持全部
+                // 点击面）：条数入状态栏，入口 = 视图菜单「待恢复草稿」。
+                store.RecoverHint(.recover_rows.len())
+            } else {
+                console_log("recover: list failed")
+            }
+        }
+        .RecoverOpen -> {
+            .RecoverReload()
+            .recover_open = true
+            store.RecoverHint(0)
+        }
+        .RecoverClose -> {
+            .recover_open = false
+            // 关闭后行集即刷（放弃/恢复动作后提示条数同步）
+            .RecoverReload()
+        }
+        .RecoverCopy(k) -> {
+            var parts = k.split(":")
+            if parts.len() == 3 {
+                var d str = parts[0]
+                var q int = parts[1].parse_int()
+                var ln int = parts[2].parse_int()
+                var nm str = ""
+                var ev int = 0
+                var i int = 0
+                while i < .recover_rows.len() {
+                    var r = .recover_rows[i]
+                    if r.doc == d {
+                        if r.seq == q {
+                            nm = r.name
+                            ev = r.erev
+                        }
+                    }
+                    i = i + 1
+                }
+                store.DraftRecover(d, q, ln, nm, ev)
+                .RecoverReload()
+            }
+        }
+        .RecoverDiscard(k) -> {
+            var parts = k.split(":")
+            if parts.len() == 3 {
+                var d str = parts[0]
+                var q int = parts[1].parse_int()
+                var ev int = parts[2].parse_int()
+                store.DraftSettleOf(d, q, "discarded", ev, "")
+                .RecoverReload()
             }
         }
 

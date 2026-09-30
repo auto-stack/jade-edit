@@ -432,6 +432,16 @@ pub fn draft_list() str {
     return drafts.d_list()
 }
 
+/// 待恢复行集（draft_pending）：顶层数组 [{doc,seq,erev,epoch,path,
+/// name,at,len,preview}]——front App 消费面（D-20④ 顶层数组健康形状
+/// + call-arg to_value 纪律）。
+/// **GET 无参**。
+/// GET /api/draft_pending
+#[api(method = "GET", path = "/api/draft_pending")]
+pub fn draft_pending() str {
+    return drafts.d_pending()
+}
+
 /// 检查点正文读：len/slen/sha 复核通过才返回；不通过 ""（空文合法由
 /// 清单 len==0 区分——front 对照 pending 行消费）。
 /// **POST**（id CJK 无涉但归一 POST 形态）。

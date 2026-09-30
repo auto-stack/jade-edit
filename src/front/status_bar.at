@@ -31,6 +31,11 @@ widget StatusBar {
                 if .store.ws_warn != "" {
                     text .store.ws_warn { style: "text-[11px] text-amber-400" }
                 }
+                // 待恢复草稿入口提示（PLAN-031 T-04；非模态——视图菜单
+                // 「待恢复草稿」开面板；关闭面板后条数同刷）。
+                if .store.recover_hint > 0 {
+                    text "待恢复草稿（视图菜单查看）" { style: "text-[11px] text-amber-400" }
+                }
 
                 text "docs: ${.store.tab_count}" {
                     style: "text-[11px] text-muted-foreground ml-auto"

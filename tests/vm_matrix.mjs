@@ -183,7 +183,7 @@ const argOf = (name) => {
   return i >= 0 ? args[i + 1] : undefined
 }
 const ARM = argOf('--arm') ?? 'all' // all | merged | split
-const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v22.txt')
+const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v23.txt')
 const SAVE_BASELINE = argOf('--save-baseline')
 
 const EDIT_MARKER = 'jade-edit 冒烟标记：编辑回写可见。'
@@ -654,9 +654,9 @@ async function runArm(arm, port) {
       } else if (fs.existsSync(BASELINE)) {
         const raw = fs.readFileSync(BASELINE, 'utf8')
         const ok = raw === headerFor(BASELINE) + baselineBodyOf()
-        check('B', 'baseline', ok, ok ? '结构基线 v22 零漂移（state 逐字节 + id 序列）——PLAN-031 重锁（draft_epoch 新 store 字段入 dump + 检查4/5 键入·保存流的 draft-saved/draft-settled console 两行——tab 草稿五字段不入 dump 面，diff 逐项解释在档）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
+        check('B', 'baseline', ok, ok ? '结构基线 v23 零漂移（state 逐字节 + id 序列）——PLAN-031 T-04 重锁（App 模型 recover_hint/recover_open/recover_rows 三字段入 dump + 恢复弹层闭态恒渲染子树 vnode id 序列移位——D-23③ 在册形态，diff 逐项解释在档）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
       } else {
-        console.log('  [baseline] structure-v22 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v22.txt')
+        console.log('  [baseline] structure-v23 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v23.txt')
       }
     }
 

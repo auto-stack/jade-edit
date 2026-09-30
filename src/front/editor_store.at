@@ -15,7 +15,7 @@
 //     双轨合法消费面——PLAN-081 T-06 结论沿用：合并根状态裸读仅 vm
 //     成立；store computed 双轨皆坏，派生标量由 handler 就地重算）。
 
-use back.api: read_wiki, write_wiki, exists, env_str, draft_begin, draft_alloc, draft_checkpoint, draft_settle
+use back.api: read_wiki, write_wiki, exists, env_str, draft_begin, draft_alloc, draft_checkpoint, draft_settle, draft_list, draft_read, draft_read_orig
 
 // ".ad" 后缀剥离（tab 标题 = path 末段去扩展）。⚠ split 法（T-03 实勘）：
 // length+slice 在 CJK heap 串上字节/字符错位（.length 字节语义）——
@@ -124,13 +124,18 @@ store EditorStore {
         // —— 草稿检查点（PLAN-031 T-03）：会话代次（draft_begin 惰性取一
         // 次持值复用——重复调用会续增，T-01 定谳）；0 = 未取。----
         var draft_epoch int = 0
+        // 待恢复条数提示（PLAN-031 T-04；App Init 单写口——StatusBar 条件
+        // 行直读。0 = 无；>0 = 状态栏「待恢复草稿 N 条」入口提示——非模态
+        // 不劫持（自动弹模态层被 T-04 实勘否决：劫持全应用点击面））。
+        var recover_hint int = 0
     }
 
     // msg 载荷单类型（编译器约束）：Open 单 map、Edit 单 str。
     msg {
         Open(map), Edit(str), Save, Reload,
         RequestReload, ReloadCancel, ReloadDiscard, ReloadReadOf,
-        DraftDrainOf(str), DraftSettleOf(str, int, str, int),
+        DraftDrainOf(str), DraftSettleOf(str, int, str, int, str), DraftRecover(str, int, int, str, int),
+        RecoverHint(int),
         CloseTab(int), RemoveAt(int), ConfirmClose, ConfirmCancel,
         TabActivate(int), ActNew, ActOpen, ActConsole, ActSwitchTab,
         ActUndo, ActRedo, ActCut, ActCopy, ActPaste, ActSelectAll, ActAbout,
@@ -196,6 +201,9 @@ store EditorStore {
                             draft_state: "",
                             draft_seq: 0,
                             draft_conf: 0,
+                            recover_src_doc: "",
+                            recover_src_seq: 0,
+                            recover_src_erev: 0,
                         })
                         found = .tabs.len() - 1
                         console_log("open: " + path)
@@ -262,7 +270,7 @@ store EditorStore {
                     } else {
                         if .tabs[j].doc_id != "" {
                             if .tabs[j].draft_seq > 0 {
-                                store.DraftSettleOf(.tabs[j].doc_id, .tabs[j].draft_seq, "discarded", .tabs[j].draft_conf)
+                                store.DraftSettleOf(.tabs[j].doc_id, .tabs[j].draft_seq, "discarded", .tabs[j].draft_conf, "")
                             }
                         }
                     }
@@ -277,6 +285,11 @@ store EditorStore {
         // 输入永不丢）；回执只结算其对应修订——旧成功回执不得覆盖新
         // 状态。终态：saved（无更新输入）/ error（回执失败——保留待重
         // 试，下次 Edit 再排水）。守卫 32 圈防病理性循环。----
+        // 待恢复条数提示（App Init 单写口；DiscoverReload 行集变化后同刷）。
+        .RecoverHint(n) -> {
+            .recover_hint = n
+        }
+
         .DraftDrainOf(doc_id) -> {
             var guard int = 0
             var stop bool = false
@@ -319,11 +332,19 @@ store EditorStore {
                                 var okhead bool = r.starts_with("ok:")
                                 if okhead {
                                     var seqv int = r.substr(3, r.length - 3).parse_int()
+                                    var first_ack bool = .tabs[g].draft_seq == 0
                                     .tabs[g].draft_seq = seqv
                                     .tabs[g].draft_conf = erev
                                     console_log("draft-saved: " + doc_id + ":" + erev.str())
                                     if .tabs[g].key == .active_key {
                                         .save_note = "草稿已保护"
+                                    }
+                                    if first_ack {
+                                        if .tabs[g].recover_src_doc != "" {
+                                            // 恢复副本首检确认 → 结算来源（recovered +
+                                            // link=副本身份——来源条目按协议消费/去重）
+                                            store.DraftSettleOf(.tabs[g].recover_src_doc, .tabs[g].recover_src_seq, "recovered", .tabs[g].recover_src_erev, doc_id)
+                                        }
                                     }
                                     if .tabs[g].draft_erev > erev {
                                         // 等待期有新输入——继续排水最新（state 保持 sending）
@@ -344,6 +365,26 @@ store EditorStore {
                     }
                 }
             }
+            // 守卫圈耗尽出口修正：state 残留 sending 会让后续 Edit 永不
+            // 重排——尚有未确认修订时降级 pending（下次 Edit 再排水），
+            // 已追平则收 saved。
+            var f2 int = -1
+            var i2 int = 0
+            while i2 < .tabs.len() {
+                if .tabs[i2].doc_id == doc_id {
+                    f2 = i2
+                }
+                i2 = i2 + 1
+            }
+            if f2 >= 0 {
+                if .tabs[f2].draft_state == "sending" {
+                    if .tabs[f2].draft_erev > .tabs[f2].draft_conf {
+                        .tabs[f2].draft_state = "pending"
+                    } else {
+                        .tabs[f2].draft_state = "saved"
+                    }
+                }
+            }
         }
 
         // ---- 草稿结算（PLAN-031 T-03；回到原文 discarded / 保存成功
@@ -351,8 +392,8 @@ store EditorStore {
         // 标修订——晚到的旧检查点不复活。成功且无更新确认时清文档草稿
         // 账（新确认已落地则保留其账）；失败提示并保留可追踪恢复记录
         // （AC-09：结算失败不破坏正文/记录）。----
-        .DraftSettleOf(doc_id, seq, event, erev) -> {
-            var r str = draft_settle(doc_id, seq, event, "", erev)
+        .DraftSettleOf(doc_id, seq, event, erev, link_id) -> {
+            var r str = draft_settle(doc_id, seq, event, link_id, erev)
             if r == "ok" {
                 console_log("draft-settled: " + doc_id + ":" + seq.str() + " " + event)
                 var f int = -1
@@ -373,6 +414,57 @@ store EditorStore {
             } else {
                 .save_note = "草稿结算失败（已保留恢复记录）"
                 console_log("draft-settle-failed: " + doc_id + ":" + seq.str() + " " + r)
+            }
+            .console = console_lines()
+        }
+
+        // ---- 恢复副本播种（PLAN-031 T-04；App .RecoverCopy 薄委托）：
+        // draft_read/draft_read_orig 读回（len 对照——空文 len==0 合法，
+        // 读取失败/不一致拒绝播种）→ 独立身份新 tab（path 空 + 标记来源
+        // 三字段 + original_body="" → 非空副本恒 dirty 需另存；**空文副
+        // 本 body==original_body 不构成普通清洁判定吞没**——副本状态由
+        // 来源结算链路独立追踪，AC-05）。读取失败不动现有 tab。----
+        .DraftRecover(doc_id, seq, len, name, erev) -> {
+            var body str = draft_read(doc_id, seq)
+            var oklen bool = true
+            if len > 0 {
+                if body == "" {
+                    oklen = false
+                }
+            }
+            if oklen {
+                var orig str = draft_read_orig(doc_id, seq)
+                .open_count = .open_count + 1
+                var nm str = "recovered-" + .open_count.str()
+                var dt str = name
+                if dt == "" {
+                    dt = "未命名"
+                }
+                .tabs.push({
+                    key: nm,
+                    path: "",
+                    title: dt + "（恢复副本）",
+                    body: body,
+                    original_body: "",
+                    dirty: body != "",
+                    doc_id: "",
+                    draft_erev: 0,
+                    draft_state: "",
+                    draft_seq: 0,
+                    draft_conf: 0,
+                    recover_src_doc: doc_id,
+                    recover_src_seq: seq,
+                    recover_src_erev: erev,
+                })
+                .tab_count = .tabs.len()
+                store.TabActivate(.tab_count - 1)
+                console_log("recovered: " + doc_id + ":" + seq.str() + " -> " + nm)
+                if body == "" {
+                    .save_note = "已恢复空文副本（来源草稿仍保留，另存后消费）"
+                }
+            } else {
+                .save_note = "恢复失败：草稿读取未通过完整性核验"
+                console_log("recover-failed: " + doc_id + ":" + seq.str())
             }
             .console = console_lines()
         }
@@ -444,7 +536,12 @@ store EditorStore {
                                     .active_body = .tabs[k].body
                                     .active_dirty = .tabs[k].dirty
                                     if .tabs[k].draft_seq > 0 {
-                                        store.DraftSettleOf(.tabs[k].doc_id, .tabs[k].draft_seq, "saved", save_erev)
+                                        store.DraftSettleOf(.tabs[k].doc_id, .tabs[k].draft_seq, "saved", save_erev, "")
+                                    }
+                                    if .tabs[k].recover_src_doc != "" {
+                                        // 恢复副本 Save As 成功 = 内容已持久 → 来源结算
+                                        //（settle 幂等重写同墓碑——重复触发无害）
+                                        store.DraftSettleOf(.tabs[k].recover_src_doc, .tabs[k].recover_src_seq, "recovered", .tabs[k].recover_src_erev, .tabs[k].doc_id)
                                     }
                                 }
                                 .save_note = "saved: " + .tabs[j].path
@@ -715,6 +812,9 @@ store EditorStore {
                 draft_state: "",
                 draft_seq: 0,
                 draft_conf: 0,
+                recover_src_doc: "",
+                recover_src_seq: 0,
+                recover_src_erev: 0,
             })
             .tab_count = .tabs.len()
             store.TabActivate(.tab_count - 1)

@@ -658,11 +658,10 @@ fn d_prev_cut(body str, want int) str {
     return body.substr(0, want)
 }
 
-/// 恢复清单（draft_list，只读）：{"epoch":E,"pending":[{doc,seq,erev,
-/// epoch,path,name,at,len,preview}],"bad":[{file,err}]}——逐目录校验，
-/// settle_erev 门排除已结算域（迟到旧写入不复活），erev 最大有效者为
-/// pending；损坏/畸形入 bad 不删不重建；零写面（枚举不改盘）。
-pub fn d_list() str {
+/// 枚举扫描共享体（d_list/d_pending 组装源——单循环三产物）：逐目录
+/// 校验，settle_erev 门排除已结算域（迟到旧写入不复活），erev 最大有
+/// 效者为 pending；损坏/畸形入 bad 不删不重建；零写面（枚举不改盘）。
+pub fn d_scan() map {
     var root str = d_root()
     var epochv int = d_begin().parse_int()
     var pend str = ""
@@ -763,9 +762,25 @@ pub fn d_list() str {
         }
         i = i + 1
     }
-    var es str = "{\"epoch\":" + epochv.str()
-    es = es + ",\"pending\":[" + pend + "],\"bad\":[" + bads + "]}"
+    return { pend: pend, bads: bads, epoch: epochv }
+}
+
+/// 恢复清单（draft_list）：{"epoch":E,"pending":[…],"bad":[…]}——协议
+/// 完整面（测试/诊断消费；front 消费走 d_pending 顶层数组——D-20④
+/// 健康形状 + D-20⑤ call-arg to_value 纪律）。
+pub fn d_list() str {
+    var s map = d_scan()
+    var ep int = s.epoch
+    var es str = "{\"epoch\":" + ep.str()
+    es = es + ",\"pending\":[" + s.pend + "],\"bad\":[" + s.bads + "]}"
     return es
+}
+
+/// 待恢复行集（draft_pending）：顶层数组 [{doc,seq,erev,epoch,path,
+/// name,at,len,preview}]——front App RecoverReload 消费面。
+pub fn d_pending() str {
+    var s map = d_scan()
+    return "[" + s.pend + "]"
 }
 
 /// 检查点正文读（draft_read）：len/slen/sha 复核通过才返回；不通过
