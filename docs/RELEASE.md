@@ -64,6 +64,14 @@ git tag -a v0.1.0 -m "jade-edit v0.1.0 试用就绪——二十六切片/CJK 双
 > （vite 5.4.21 实测：preview 未应用 server.proxy——API 404）——vue
 > 形试用以集成单命令形承载；dist 独立 serve 通道 = 打包批（v0.2.0
 > 候选）一并收口。
+>
+> **集成形运行注记（F-29-R3）**：`auto run -r vue` 启动即再生
+> `gen/front/vue` 部分生成文件（工具链原生 run 语义）——会抹掉
+> `pnpm build`（regen-vue）铺设的运行期补件面（tabs splice + 垫片
+> no-op；D-15/R010 族在册）。**用户试用零影响**（工具链原生行为自
+> 洽）；**repo 验证链注意**：任何 `auto run -r vue` 之后跑 e2e/build
+> 前，先重跑 `pnpm build` 恢复补件态。vue 集成形下退出/终止面 =
+> 工具链原生语义（D-13 上游族在册）。
 
 **依赖**：
 
@@ -121,9 +129,10 @@ JADE_WORKSPACE=<你的 wiki 目录> auto run -r vue --server vm -B 8211 -F 4443
 ## 4. 已知限制（五件注记面——release notes 如实记载）
 
 1. **split 臂 boot 域**（`auto run -r vm --no-merge` 形态——dev/测试
-   通道）：boot FAIL+wiki 树行不现缺陷域在册（F-R17-1 留观第十二窗
-   ，上游家族独立缺陷——**交付形态 merged/vue dist 不涉**；split 臂
-   CJK 双臂化接线已就位，家族专项修复后即跑）。
+   通道）：boot FAIL+wiki 树行不现缺陷域在册（F-R17-1 留观第十三窗
+   ，上游家族独立缺陷——**交付形态 merged/vue 集成单命令形不涉**
+   [F-29-R2 补正——vue 形定形见 §2]；split 臂 CJK 双臂化接线已就位
+   ，家族专项修复后即跑）。
 2. **P ≤ 200 上限**（上游 VM 字符串池值损坏域——D-35②）：>200 页
    工作区 StatusBar 知情警示（「索引可能不稳定」——知情不禁用，
    纯显示面）；150 页实测健康（P≤200 稳定域驻留实测在册）。
