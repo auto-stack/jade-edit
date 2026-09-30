@@ -1,6 +1,6 @@
 ---
 plan_id: PLAN-028
-status: execution_done
+status: reviewed
 feature_name: CJK HTTP 面 POST 化适配批（第二十六切片——里程碑收口件）
 author: [agent]
 created_at: 2026-09-30T00:00:00Z
@@ -404,6 +404,46 @@ app.at 消费点 :2361/:2363 空根形一致；page_meta GET 降级注记 :175-1
     件全绿+e2e 1.2m）；ASCII 路径 POST 同绿（g③/g④+全族零漂移）。
   - `blockers: 无`。
   - `next: review`（复审基线=本提交）。
+
+- **2026-09-30 review pass（auto-plan:review）——全 AC 独立重放裁定
+  （同会话复审声明+工件重放口径：d1f1d4b 树 fresh 重放非执行期摘要
+  采信；工作树 clean 单检出=直接 main 惯例）**：
+  - `stage: review | plan_id: PLAN-028 | plan_revision: 1 | outcome: pass
+    | reviewed_commit: d1f1d4b | base_commit: eafdde5 | dependency_
+    revisions: auto-lang debug exe 09-30 12:47 载体（api.at 系解释数据
+    零重建）| spec_inputs: docs/ARCHITECTURE.md+docs/README.md+
+    docs/parity-ledger.md v33（本仓无 docs/specs/——canonical 三件）`
+  - **AC-01 pass（重放）**：src/ range diff 恰 api.at 21 行（三契约
+    面）+ wsys.at/app.at/editor_store.at 零 diff + 三契约 POST 注解
+    ×3/残留 GET 恰 7 在册意图契约 + gen 源检重放 POST ×3+query 残
+    留 0。
+  - **AC-02 pass（重放）**：本批改面四探针 fresh 重放全绿——receipt
+    ALL GREEN（g① body=1/g② len=513 逐字一致/g⑤ 404）+ trash
+    RESULT + dir_ops RESULT（p⑩ PASS→1）+ page_meta RESULT；其余
+    11 件 reuse-with-reason（同树 d1f1d4b+同 exe+同配置执行窗 fresh
+    全录——skill reuse 条款）。
+  - **AC-03 pass（重放）**：merged r3 **16/16 ALL GREEN**（[B
+    baseline] v20 零漂移；r1/r2 中断=D-21 v11③ popover 瞬态异位
+    ×2[:1306「新建」钮/:2731——重跑即绿]）+ split 签名重放 [1 boot]
+    FAIL+wiki 树行不现=F-24-2 主导形（分段判绿判别链四件在册）+
+    e2e r2/r3 **绿 1.2m** 含 15 cjk（r1 败形未捕获[tail 截断]——同
+    树重跑即绿例在录，非断言放宽）。
+  - **AC-04 pass（重放）**：build ✓ built **11.43s**（SCHEMA_DRIFT_
+    GENERATE_AT=1）+ ASCII 零漂移三面（probe 零漂移 11 件+merged
+    基线 v20+e2e 全绿）。
+  - **AC-05 pass（重放）**：range diff 恰 11 件=7 授权面+计划+3 文档
+    + 基线池零 diff + 三契约 GET 注解零残留 + gen/dist/e2e/.runtime
+    ignored 直证 + 树 clean。
+  - **AC-06 pass（重放）**：九锚位各恰一（ARCH 两+README 四+ledger
+    三）+ v32 字面零残留 + delta-after 一致性抽核全现（空根注记/收
+    窄语/转正语）。
+  - **观察二件非阻断**：F-R28-R1=复审窗负载面瞬态族 ×3（merged
+    popover ×2+e2e r1 未捕获形——全数重跑即绿 ≤3 上限内，D-21 族
+    口径）；F-R28-R2=split 臂 F-24-2 主导形续（独立缺陷域——unblock
+    =家族专项修复；本批双臂化接线就位，boot 修复后 split CJK 子步
+    即跑）。
+  - `findings: F-R28-R1/F-R28-R2（观察非阻断）`；`next: merge`（用户
+    已授权 review→merge 连跑）。
 
 ## 10. 待澄清事项
 
