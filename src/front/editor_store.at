@@ -20,7 +20,10 @@ use back.api: read_wiki, write_wiki, exists, env_str
 // ".ad" 后缀剥离（tab 标题 = path 末段去扩展）。⚠ split 法（T-03 实勘）：
 // length+slice 在 CJK heap 串上字节/字符错位（.length 字节语义）——
 // ends_with 判定 + split(".ad")[0] 剥尾（文件名内嵌 ".ad" 病理形态不支
-// 持——与 wsys stem 同限）。
+// 持——与 wsys stem 同限）。【PLAN-031 T-01 勘注 2026-09-30：现役工具链
+// .length/.char_at 已为字符（标量）语义（auto-lang PLAN-055，探针
+// "中中".length=2 实证）——split 法保留（行为等价且免 slice 语义纠缠），
+// 字节面需求走 fs.size（back 侧）；本注释历史形态不抹】。
 fn strip_ad(path str) str {
     if path.ends_with(".ad") {
         var parts = path.split(".ad")

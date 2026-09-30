@@ -6,7 +6,7 @@ author: [agent]
 created_at: 2026-09-30T14:37:05Z
 updated_at: 2026-09-30T15:45:00Z
 plan_revision: 1
-current_step: 1
+current_step: 2
 total_steps: 7
 supersedes_spec_components:
   - docs/specs/editor-safety.md
@@ -199,7 +199,7 @@ Store 新状态围绕每个文档保存修订、待发送最新快照、正在�
 ## 8. 执行步骤
 
 - [x] **T-01 协议能力原型与决策**。依赖：无。涉及只读 auto-lang native_catalog/native.rs、现有 back/API 与 frontend 接线；新增 docs/plans/attachments/031-draft-protocol.md。按 §5.1 一次原型＋一次故障复测，明确格式、完整字符、ID/修订、损坏保留、保存核验、消息等待及恢复中断语义。覆盖 AC-01/03/04/06/07/09/11，支撑 SD-01..05。验证：一次性脚本存 ignored e2e/.runtime/，命令和输出进入附件；关键机制不成立则 blocker/needs_replan，不开始依赖实施。[✅ 已完成] [2026-09-30] 探针装置 e2e/.runtime/p31/（drafts_probe.at 候选协议原型 + probe_app.at 相位 widget + t01.mjs 编排——merged 臂每相位一独立进程真重启 + split 臂同一 back 模块 HTTP，四隔离工作区）终态 **90 PASS / 0 FAIL ALL GREEN**，完整转录 p31/t01-transcript.log。定谳入附件：存储布局 .jade/drafts/v1/d%04d/{c%05d.body,.orig,.meta,s%05d.meta 墓碑}；写新 seq 直写从不覆盖（fs.rename 覆盖语义反证）；确认四步写-读回-三重校验（len 字符/slen 字节 fs.size/sha 文件面 file_sha256——Hash.sha256 str 面 Void 坑出局）；settle_erev 门迟到不复活（late=ok:3 实证）；坏件 bad[] 线索不删；恢复枚举零写面（29 文件 hash 前后对读）；空库 begin/list 不建目录；树/检索/反链零感知；200KB 检查点 ≈5ms → 离开屏障上限 3000ms；守卫十项返回码逐项对上；emoji/CRLF/tab/尾随换行双臂逐字节保真。工具链如实登记：str.length/char_at=字符语义（PLAN-055）、substr=(start,LEN)、Date.now() i32 截断负值（短窗差值可用）、replace 反斜杠替换串反直觉形态（r2/r4 原子）、json_esc 换行缺口。无 blocker，进 T-02。
-- [ ] **T-02 后端草稿协议与故障验证**。依赖：T-01 可行。新增 src/back/drafts.at，修改 src/back/api.at；仅必要的通用 IO 接线触及 src/back/wsys.at。实现经验证的 schema、检查点、只读枚举、关联／结算、损坏处理、路径边界和新记录读回核验；新增 tests/probe_draft_protocol.mjs。覆盖 AC-01/03/04/09，SD-01/05。验证：pnpm build；node tests/probe_draft_protocol.mjs 全绿，原文件逐字不变。
+- [x] **T-02 后端草稿协议与故障验证**。依赖：T-01 可行。新增 src/back/drafts.at，修改 src/back/api.at；仅必要的通用 IO 接线触及 src/back/wsys.at。实现经验证的 schema、检查点、只读枚举、关联／结算、损坏处理、路径边界和新记录读回核验；新增 tests/probe_draft_protocol.mjs。覆盖 AC-01/03/04/09，SD-01/05。验证：pnpm build；node tests/probe_draft_protocol.mjs 全绿，原文件逐字不变。[✅ 已完成] [2026-09-30] src/back/drafts.at 新（T-01 原型产品化：d_begin/d_alloc/d_ckpt/d_settle/d_list/d_read/d_read_orig 七契约实现 + d_* 私有面；T-01 定谳约束全 baked——三重校验/写新 seq 不覆盖/墓碑永留/settle_erev 门/bad[] 线索/预览净化反斜杠加倍）；api.at 契约族七端点（draft_begin/alloc GET 无参 + checkpoint/settle/read/read_orig POST body 通道 + list GET——全标量返回，use drafts 整模块限定 split 扁平面同 wsys 形）；wsys.at 零触及（协议自包含 resolve 走 wsys.root_dir）；editor_store.at 仅 strip_ad 历史注释追加 PLAN-055 勘注（.length 字符语义——不抹历史）。tests/probe_draft_protocol.mjs 新（提交版双臂回归：merged 三进程真重启[write→Node 故障注入→recover]+split HTTP 全字符语料+Node 独立校验器逐字段对读——①空库不建目录②逐字节+三重校验③身份单调+守卫④结算墓碑+清理+迟到不复活⑤截断/坏meta/删body/杂件→前序有效存活+枚举零写面+原文件逐字不变⑥索引面零感知）终态 merged+split 全案通过。§6 验证实录：pnpm build 绿（✓ built in 8.56s+regen OK——vue 轨吸收新契约面）+node tests/probe_draft_protocol.mjs 全绿+wiki 树 hash 写前/写后/枚举后三面对读恒等。
 - [ ] **T-03 Store 检查点与保存快照**。依赖：T-02。修改 src/front/editor_store.at 的 Edit/Save/ActNew/Open/TabActivate/RemoveAt 等实际消费符号；新增稳定 ID／修订与检查点消息（名称在 T-01 决策）。实现待发送最新快照、单文档在途限制、回执过期拒绝、保存读回核验与结算。RemoveAt 不自动删除草稿，保留内部调用边界。覆盖 AC-02/04/08/09/10，SD-01/03。验证：协议回执延迟／失败驱动 Store 与文件对照，pnpm build；不以活动页一次测试代替后台页。
 - [ ] **T-04 启动发现与恢复副本界面**。依赖：T-03。修改 src/front/app.at 根 Init 与根级恢复入口，Store 新增恢复薄委托；新增 e2e/draft-recovery.spec.ts 的恢复场景。实现可读状态、逐项来源／预览、独立副本、保留／明确放弃及复制中断关联。覆盖 AC-02/05/06/09，SD-02。验证：定向 Playwright 测试；恢复前后原文件全对照；未命名非空副本用播种验证，空文检查内容与状态，不宣称修复上游键入问题。
 - [ ] **T-05 正常离开与手动重载结算**。依赖：T-03/T-04。修改 editor_store.at CloseTab/ConfirmClose/ConfirmCancel/CloseRequest/QuitSaveClose/QuitDiscard/ReloadReadOf 与 app.at 现有根确认弹层／薄委托，新增保留草稿动作。稳定目标快照取代关闭索引依赖，所有脏页正常退出建立屏障；考虑先关闭后派发、取消、超时、新输入。扩 reload-safety 的结算失败场景。覆盖 AC-07..10，SD-03/04。验证：定向 Playwright＋VM 真实存活/退出、保存失败／另存取消／重载失败与过期对照。

@@ -27,6 +27,7 @@
 // （auto-edit T-03 实勘同款）。
 
 use wsys
+use drafts
 
 /// 工作区根（JADE_WORKSPACE 优先——fixture 隔离通道；AUTO_PROJECT_DIR
 /// 兜底；缺席 "."。T-00 ③：automan.rs:1435 无条件覆盖 AUTO_PROJECT_DIR，
@@ -374,4 +375,75 @@ pub fn recent_paths_get() str {
 #[api(method = "POST", path = "/api/recent_paths_set")]
 pub fn recent_paths_set(paths str) bool {
     return wsys.recent_paths_set_impl(paths)
+}
+
+// ---- 草稿协议契约（PLAN-031 T-02；实现 src/back/drafts.at，决策与
+// 实证 docs/plans/attachments/031-draft-protocol.md）。工作区本地
+// .jade/drafts/v1/ 检查点/恢复/结算协议——**原文件只由显式保存改写**，
+// 本契约族零 wiki 页面触碰。返回面全标量（str/int/bool 纪律）；CJK/
+// 正文经 POST body 通道（D-19 同族）。front 消费面见 editor_store.at
+//（T-03 接线）。----
+
+/// 会话代次分配：只读盘扫 max+1，空库 "1"；调用方一 session 一调用
+/// 持值复用。**GET 无参**（零 D-19 面；无目录时不建——只读）。
+/// GET /api/draft_begin
+#[api(method = "GET", path = "/api/draft_begin")]
+pub fn draft_begin() str {
+    return drafts.d_begin()
+}
+
+/// 稳定身份分配：盘扫 max+1 → d%04d 目录建立 + is_dir 复核；失败 ""。
+/// **GET 无参**（分配即建目录——首个草稿才落 .jade）。
+/// GET /api/draft_alloc
+#[api(method = "GET", path = "/api/draft_alloc")]
+pub fn draft_alloc() str {
+    return drafts.d_alloc()
+}
+
+/// 检查点写入：doc_id/epoch/erev/path/name/body/orig → "ok:<seq>" 或
+/// "err:<code>"（id/path/name/erev/nodir/body-readback/body-mismatch/
+/// orig-readback/orig-mismatch/size/meta-readback/meta-verify——守卫
+/// 十项返回码 T-01 cap 案逐项对上）。写新 seq 直写从不覆盖；确认四步
+/// 见 drafts.d_ckpt。
+/// **POST**（body CJK 常态，body 传参 D-19 免疫）。
+/// POST /api/draft_checkpoint
+#[api(method = "POST", path = "/api/draft_checkpoint")]
+pub fn draft_checkpoint(doc_id str, epoch int, erev int, path str, name str, body str, orig str) str {
+    return drafts.d_ckpt(doc_id, epoch, erev, path, name, body, orig)
+}
+
+/// 结算写入：event ∈ saved|discarded|recovered + settle_erev + link
+/// （恢复副本关联，"" = 无）→ 墓碑读回复核 → 清理 ≤seq 检查点三件组。
+/// "ok" / "err:<code>"。
+/// **POST**（无参动作族无 CJK 面——统一 POST 形态归一）。
+/// POST /api/draft_settle
+#[api(method = "POST", path = "/api/draft_settle")]
+pub fn draft_settle(doc_id str, seq int, event str, link_id str, erev int) str {
+    return drafts.d_settle(doc_id, seq, event, link_id, erev)
+}
+
+/// 恢复清单（只读枚举）：{"epoch":E,"pending":[{doc,seq,erev,epoch,
+/// path,name,at,len,preview}],"bad":[{file,err}]}——settle_erev 门排除
+/// 已结算域（迟到旧写入不复活）；损坏/畸形入 bad 线索不删；零写面。
+/// **GET 无参**。
+/// GET /api/draft_list
+#[api(method = "GET", path = "/api/draft_list")]
+pub fn draft_list() str {
+    return drafts.d_list()
+}
+
+/// 检查点正文读：len/slen/sha 复核通过才返回；不通过 ""（空文合法由
+/// 清单 len==0 区分——front 对照 pending 行消费）。
+/// **POST**（id CJK 无涉但归一 POST 形态）。
+/// POST /api/draft_read
+#[api(method = "POST", path = "/api/draft_read")]
+pub fn draft_read(doc_id str, seq int) str {
+    return drafts.d_read(doc_id, seq)
+}
+
+/// 检查点原文基准读（draft_read 同卫面——恢复侧完整基准往返）。
+/// POST /api/draft_read_orig
+#[api(method = "POST", path = "/api/draft_read_orig")]
+pub fn draft_read_orig(doc_id str, seq int) str {
+    return drafts.d_read_orig(doc_id, seq)
 }

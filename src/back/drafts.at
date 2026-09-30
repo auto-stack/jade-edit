@@ -1,0 +1,880 @@
+// back/drafts.at — 工作区本地草稿检查点协议（PLAN-031 T-02；自有源，
+// 自 T-01 原型 e2e/.runtime/p31/drafts_probe.at 产品化——决策与实证
+// 记录见 docs/plans/attachments/031-draft-protocol.md，90 PASS 实验批）。
+//
+// 职责分野（api.at 契约 = 本模块实现，013-todo 命名错开纪律：契约
+// draft_* ↔ 实现 d_*）：草稿文件格式与 IO 全部在后端；front 零 fs 面
+// （ARCHITECTURE 双轨纪律）。原文件只由显式保存改写——本模块**从不**
+// 触碰 wiki 页面（write_body/read_body 零调用），草稿库 = 工作区本地
+// `.jade/drafts/v1/`（点前缀目录 walk 忽略——D-33①，T-01 实证树/检索/
+// 反链/页面数零感知）。
+//
+// 记录方案（T-01 定谳，§3 决策表）：
+//   d%04d/           稳定文档身份一目录（盘扫 max+1 分配；与编辑器 key/
+//                    nonce/tab 索引无涉——PLAN-030 reload nonce 改 key
+//                    不影响草稿身份）
+//     c%05d.body     检查点正文（原始字节直写，零转义层）
+//     c%05d.orig     原文基准（original_body——恢复侧需完整基准往返）
+//     c%05d.meta     行式 k=v：schema/event=checkpoint/epoch/erev/
+//                    len(字符)+slen(字节)/sha(file_sha256)+leno/sleno/
+//                    shao/path/name/at
+//     s%05d.meta     结算墓碑（永留）：event=saved|discarded|recovered
+//                    + settle_erev + link（恢复副本关联）+ at
+//
+//   写 = 新 seq 直写（盘扫 max+1，c* 三件组 + s* 墓碑全计——半写残件与
+//   已结算 seq 均占号，从不覆盖既有名）→ 读回比对 → 三重校验入 meta →
+//   meta 读回复核 → 才回执。恢复 = 逐目录校验取 erev 最大有效未结算
+//   检查点；settle_erev 门排除已结算域（迟到旧写入不复活）；损坏/畸形
+//   文件保留原样入 bad[] 线索，不删不重建（AC-03）。结算读回复核通过
+//   后清理 ≤seq 检查点三件组（best-effort——残留被门双保险排除）。
+//
+// 原语纪律（T-01 定谳约束）：str.length/char_at = 字符语义（PLAN-055；
+// 字节面走 fs.size）；substr = (start, LEN)；Hash.file_sha256 文件面
+// （Hash.sha256 str 面 Void 型坑出局）；Date.now() i32 截断——绝对
+// 毫秒不可用，展示戳走 Date.format，时延测量只用短窗差值；replace 替换
+// 串避免「反斜杠+转义字母」相邻形态；json.to_value 不用（back 侧未证
+// 面）——read_dir JSON 手工剥壳（记录名域受限 [a-z0-9_.]）。
+
+use wsys
+
+// ---- 基础面 ----
+
+/// 草稿库根（工作区本地；.jade 点前缀 = 索引族零感知）
+fn d_root() str {
+    return wsys.root_dir() + "/.jade/drafts/v1"
+}
+
+/// 左补零（seq 五位 / doc id 四位）
+fn d_pad(n int, width int) str {
+    var s str = n.str()
+    while s.length < width {
+        s = "0" + s
+    }
+    return s
+}
+
+/// 纯数字判定（char_at 字符语义——id/seq 记录名全 ASCII 等价）
+fn d_digits(s str) bool {
+    if s == "" {
+        return false
+    }
+    var i int = 0
+    while i < s.length {
+        var c int = s.char_at(i)
+        if c < 48 {
+            return false
+        }
+        if c > 57 {
+            return false
+        }
+        i = i + 1
+    }
+    return true
+}
+
+/// 稳定身份形状：d + 纯数字（d0001 起；d10000 五位自然生长仍合法）
+fn d_valid_id(id str) bool {
+    if !id.starts_with("d") {
+        return false
+    }
+    if id.length < 5 {
+        return false
+    }
+    return d_digits(id.substr(1, id.length - 1))
+}
+
+/// 来源路径卫：""（untitled）合法；否则工作区相对——换行/..盘符反斜杠
+/// 前导斜杠一律拒（防越界；CJK/空格合法）。引号由 Windows 文件名规则
+/// 结构性排除（meta 行式 + list JSON 双面安全，T-01 如实边界）
+fn d_valid_src(p str) bool {
+    if p == "" {
+        return true
+    }
+    if p.contains("\n") {
+        return false
+    }
+    if p.contains("..") {
+        return false
+    }
+    if p.contains(":") {
+        return false
+    }
+    if p.contains("\\") {
+        return false
+    }
+    if p.starts_with("/") {
+        return false
+    }
+    return true
+}
+
+/// 文件 SHA256（字节面——三重校验的权威面）
+fn d_file_sha(path str) str {
+    var out str = ""
+    var ok bool = true
+    try {
+        out = Hash.file_sha256(path)
+    } catch (e) {
+        ok = false
+    }
+    if !ok {
+        return ""
+    }
+    return out
+}
+
+/// 文件字节数（fs.size——T-01 定谳可调；异常 = -1 由调用方判）
+fn d_file_size(path str) int {
+    var v int = -1
+    var ok bool = true
+    try {
+        v = fs.size(path)
+    } catch (e) {
+        ok = false
+    }
+    if !ok {
+        return -1
+    }
+    return v
+}
+
+/// 展示时间戳（Date 宿主桥——daily_note 同源；不可达 = ""，展示域容错）
+fn d_now() str {
+    var out str = ""
+    var ok bool = true
+    try {
+        out = Date.format(Date.now(), "yyyy-MM-dd HH:mm:ss")
+    } catch (e) {
+        ok = false
+    }
+    if !ok {
+        return ""
+    }
+    return out
+}
+
+/// 预览净化（展示域）：反斜杠加倍（JSON 合法性——裸反斜杠是唯一让
+/// 二次 parse 硬炸的字符，T-01 定谳）+ LF/CR/TAB→可见符号 + 引号→
+/// 单引号。替换串形态经 r2 原子实证（"\\\\" → 两反斜杠可靠；避免
+/// 反斜杠+转义字母相邻形态——r1 反证）。正文本体走独立文件零转义。
+fn d_jesc(s str) str {
+    var out str = s
+    out = out.replace("\\", "\\\\")
+    out = out.replace("\n", " ⏎ ")
+    out = out.replace("\r", "␍")
+    out = out.replace("\t", " ⋅ ")
+    out = out.replace("\"", "'")
+    return out
+}
+
+/// 行式 meta 取键（首个 = 切分；缺键 ""；无 = 行跳过）
+fn d_meta_get(text str, key str) str {
+    var lines = text.split("\n")
+    var i int = 0
+    while i < lines.len() {
+        var ln str = lines[i]
+        if ln.contains("=") {
+            var kv = ln.split_once("=")
+            if kv.len() == 2 {
+                var k str = kv[0]
+                if k == key {
+                    var v str = kv[1]
+                    return v
+                }
+            }
+        }
+        i = i + 1
+    }
+    return ""
+}
+
+/// 目录条目清单（read_dir JSON ["a","b"] 手工剥壳——名字域受限无逗号
+/// 引号；目录缺失/异常 = 空清单不炸——空库 begin/list 不建目录）
+fn d_names(dir str) List {
+    var out List = []
+    var raw str = ""
+    var ok bool = true
+    try {
+        raw = fs.read_dir(dir)
+    } catch (e) {
+        ok = false
+    }
+    if !ok {
+        return out
+    }
+    if raw.length < 2 {
+        return out
+    }
+    var inner str = raw.substr(1, raw.length - 2)
+    inner = inner.replace("\"", "")
+    var parts = inner.split(",")
+    var i int = 0
+    while i < parts.len() {
+        var n str = parts[i]
+        if n != "" {
+            out.push(n)
+        }
+        i = i + 1
+    }
+    return out
+}
+
+/// 记录名 → seq（c/s 前缀 + 五位数字 + .meta/.body/.orig 五字符后缀，
+/// 名总长恰 11；形状不合 = -1）
+fn d_seq_of(n str) int {
+    var base int = -1
+    if n.starts_with("c") {
+        base = 1
+    }
+    if n.starts_with("s") {
+        base = 1
+    }
+    if base < 0 {
+        return -1
+    }
+    var sufok bool = false
+    if n.ends_with(".meta") {
+        sufok = true
+    }
+    if n.ends_with(".body") {
+        sufok = true
+    }
+    if n.ends_with(".orig") {
+        sufok = true
+    }
+    if !sufok {
+        return -1
+    }
+    if n.length != 11 {
+        return -1
+    }
+    var mid str = n.substr(1, 5)
+    if !d_digits(mid) {
+        return -1
+    }
+    return mid.parse_int()
+}
+
+/// 文档 id 升序清单（is_dir 过滤 + 数字序冒泡——read_dir 序不定）
+fn d_dir_ids() List {
+    var out List = []
+    var names List = d_names(d_root())
+    var i int = 0
+    while i < names.len() {
+        var n str = names[i]
+        if d_valid_id(n) {
+            if File.is_dir(d_root() + "/" + n) {
+                out.push(n)
+            }
+        }
+        i = i + 1
+    }
+    var k int = 0
+    while k < out.len() {
+        var m int = 0
+        while m < out.len() - 1 - k {
+            var a str = out[m]
+            var b str = out[m + 1]
+            var an int = a.substr(1, a.length - 1).parse_int()
+            var bn int = b.substr(1, b.length - 1).parse_int()
+            if an > bn {
+                out[m] = b
+                out[m + 1] = a
+            }
+            m = m + 1
+        }
+        k = k + 1
+    }
+    return out
+}
+
+/// 目录内最大已占 seq（c* 三件组 + s* 墓碑全计——半写残件与已结算
+/// seq 均占号：从不覆盖既有名 + 号序即史序）
+fn d_max_seq(ddir str) int {
+    var maxn int = 0
+    var names List = d_names(ddir)
+    var i int = 0
+    while i < names.len() {
+        var n str = names[i]
+        if n.starts_with("c") {
+            var sq int = d_seq_of(n)
+            if sq > maxn {
+                maxn = sq
+            }
+        }
+        if n.starts_with("s") {
+            var sq2 int = d_seq_of(n)
+            if sq2 > maxn {
+                maxn = sq2
+            }
+        }
+        i = i + 1
+    }
+    return maxn
+}
+
+// ---- 契约实现（api.at draft_* 委托面） ----
+
+/// 会话代次分配（draft_begin）：只读盘扫 c*.meta epoch max+1；空库 = 1。
+/// 调用方一 session 一调用持值复用（无模块级状态——重复调用会续增）。
+/// 跨进程单调实证（T-01：1→2→3，无新检查点不续增）。
+pub fn d_begin() str {
+    var maxe int = 0
+    var ids List = d_dir_ids()
+    var i int = 0
+    while i < ids.len() {
+        var id str = ids[i]
+        var names List = d_names(d_root() + "/" + id)
+        var j int = 0
+        while j < names.len() {
+            var n str = names[j]
+            var take bool = false
+            if n.starts_with("c") {
+                if n.ends_with(".meta") {
+                    take = true
+                }
+            }
+            if take {
+                var mtext str = ""
+                var mok bool = true
+                try {
+                    mtext = File.read_text(d_root() + "/" + id + "/" + n)
+                } catch (e) {
+                    mok = false
+                }
+                if mok {
+                    var ev str = d_meta_get(mtext, "epoch")
+                    if d_digits(ev) {
+                        var v int = ev.parse_int()
+                        if v > maxe {
+                            maxe = v
+                        }
+                    }
+                }
+            }
+            j = j + 1
+        }
+        i = i + 1
+    }
+    var nxt int = maxe + 1
+    return nxt.str()
+}
+
+/// 稳定身份分配（draft_alloc）：盘扫 max+1 → 建目录（递归语义）→
+/// is_dir 复核。失败 ""。
+pub fn d_alloc() str {
+    var root str = d_root()
+    var maxn int = 0
+    var names List = d_names(root)
+    var i int = 0
+    while i < names.len() {
+        var n str = names[i]
+        if d_valid_id(n) {
+            var v int = n.substr(1, n.length - 1).parse_int()
+            if v > maxn {
+                maxn = v
+            }
+        }
+        i = i + 1
+    }
+    var nid int = maxn + 1
+    var id str = "d" + d_pad(nid, 4)
+    var ok bool = true
+    try {
+        File.create_dir(root)
+        File.create_dir(root + "/" + id)
+    } catch (e) {
+        ok = false
+    }
+    if !ok {
+        return ""
+    }
+    if !File.is_dir(root + "/" + id) {
+        return ""
+    }
+    return id
+}
+
+/// 检查点写入（draft_checkpoint）：卫（id/path/name/erev/目录在）→
+/// 新 seq → body 写+读回比对 → orig 写+读回比对 → 三重校验面（len
+/// 字符/slen 字节/sha 字节摘要）→ meta 写+读回解析复核 → "ok:<seq>"。
+/// 任一步失败 = "err:<code>"，残件留盘不删（该 seq 已占号，前序有效
+/// 记录不受影响）。
+pub fn d_ckpt(id str, epoch int, erev int, path str, name str, body str, orig str) str {
+    if !d_valid_id(id) {
+        return "err:id"
+    }
+    if !d_valid_src(path) {
+        return "err:path"
+    }
+    if name.contains("\n") {
+        return "err:name"
+    }
+    if erev < 1 {
+        return "err:erev"
+    }
+    var ddir str = d_root() + "/" + id
+    if !File.is_dir(ddir) {
+        return "err:nodir"
+    }
+    var seqv int = d_max_seq(ddir) + 1
+    var stem str = ddir + "/c" + d_pad(seqv, 5)
+    File.write_text(stem + ".body", body)
+    var rb str = ""
+    var ok bool = true
+    try {
+        rb = File.read_text(stem + ".body")
+    } catch (e) {
+        ok = false
+    }
+    if !ok {
+        return "err:body-readback"
+    }
+    if rb != body {
+        return "err:body-mismatch"
+    }
+    File.write_text(stem + ".orig", orig)
+    try {
+        rb = File.read_text(stem + ".orig")
+    } catch (e) {
+        ok = false
+    }
+    if !ok {
+        return "err:orig-readback"
+    }
+    if rb != orig {
+        return "err:orig-mismatch"
+    }
+    var sha str = d_file_sha(stem + ".body")
+    var shao str = d_file_sha(stem + ".orig")
+    var slen int = d_file_size(stem + ".body")
+    var sleno int = d_file_size(stem + ".orig")
+    if slen < 0 {
+        return "err:size"
+    }
+    if sleno < 0 {
+        return "err:size"
+    }
+    var meta str = "schema=1\ndoc=" + id + "\nevent=checkpoint\n"
+    meta = meta + "epoch=" + epoch.str() + "\nerev=" + erev.str() + "\n"
+    meta = meta + "len=" + body.length.str() + "\nleno=" + orig.length.str() + "\n"
+    meta = meta + "slen=" + slen.str() + "\nsleno=" + sleno.str() + "\n"
+    meta = meta + "sha=" + sha + "\nshao=" + shao + "\n"
+    meta = meta + "path=" + path + "\nname=" + name + "\nat=" + d_now() + "\n"
+    File.write_text(stem + ".meta", meta)
+    var rm str = ""
+    try {
+        rm = File.read_text(stem + ".meta")
+    } catch (e) {
+        ok = false
+    }
+    if !ok {
+        return "err:meta-readback"
+    }
+    if d_meta_get(rm, "doc") != id {
+        return "err:meta-verify"
+    }
+    if d_meta_get(rm, "len") != body.length.str() {
+        return "err:meta-verify"
+    }
+    if d_meta_get(rm, "slen") != slen.str() {
+        return "err:meta-verify"
+    }
+    if d_meta_get(rm, "sha") != sha {
+        return "err:meta-verify"
+    }
+    var okseq str = "ok:" + seqv.str()
+    return okseq
+}
+
+/// 结算写入（draft_settle）：墓碑 s%05d.meta（event=saved|discarded|
+/// recovered + settle_erev + link）写→读回复核→清理 ≤seq 检查点三件组
+/// （best-effort——残留被 settle_erev 门双保险排除）。墓碑永留 = 重启
+/// 不复活的持久凭据。
+pub fn d_settle(id str, seq int, event str, link_id str, erev int) str {
+    if !d_valid_id(id) {
+        return "err:id"
+    }
+    var evok bool = false
+    if event == "saved" {
+        evok = true
+    }
+    if event == "discarded" {
+        evok = true
+    }
+    if event == "recovered" {
+        evok = true
+    }
+    if !evok {
+        return "err:event"
+    }
+    if link_id != "" {
+        if !d_valid_id(link_id) {
+            return "err:link"
+        }
+    }
+    var ddir str = d_root() + "/" + id
+    if !File.is_dir(ddir) {
+        return "err:nodir"
+    }
+    var spath str = ddir + "/s" + d_pad(seq, 5) + ".meta"
+    var smeta str = "schema=1\ndoc=" + id + "\nevent=" + event + "\n"
+    smeta = smeta + "seq=" + seq.str() + "\nsettle_erev=" + erev.str() + "\n"
+    smeta = smeta + "link=" + link_id + "\nat=" + d_now() + "\n"
+    File.write_text(spath, smeta)
+    var rm str = ""
+    var ok bool = true
+    try {
+        rm = File.read_text(spath)
+    } catch (e) {
+        ok = false
+    }
+    if !ok {
+        return "err:settle-readback"
+    }
+    if d_meta_get(rm, "event") != event {
+        return "err:settle-verify"
+    }
+    if d_meta_get(rm, "settle_erev") != erev.str() {
+        return "err:settle-verify"
+    }
+    var names List = d_names(ddir)
+    var i int = 0
+    while i < names.len() {
+        var n str = names[i]
+        if n.starts_with("c") {
+            var sq int = d_seq_of(n)
+            if sq >= 0 {
+                if sq <= seq {
+                    var f str = ddir + "/" + n
+                    File.delete(f)
+                }
+            }
+        }
+        i = i + 1
+    }
+    return "ok"
+}
+
+/// 单检查点校验（len/slen/sha + orig 面）——"ok" 或错误线索码
+fn d_validate(id str, mtext str, ddir str, seqv int) str {
+    if d_meta_get(mtext, "schema") != "1" {
+        return "schema-invalid"
+    }
+    if d_meta_get(mtext, "doc") != id {
+        return "doc-mismatch"
+    }
+    if !d_digits(d_meta_get(mtext, "erev")) {
+        return "erev-invalid"
+    }
+    if !d_digits(d_meta_get(mtext, "len")) {
+        return "len-invalid"
+    }
+    var stem str = ddir + "/c" + d_pad(seqv, 5)
+    if !File.exists(stem + ".body") {
+        return "body-missing"
+    }
+    var body str = ""
+    var ok bool = true
+    try {
+        body = File.read_text(stem + ".body")
+    } catch (e) {
+        ok = false
+    }
+    if !ok {
+        return "body-unreadable"
+    }
+    if body.length.str() != d_meta_get(mtext, "len") {
+        return "len-mismatch"
+    }
+    var slens str = d_meta_get(mtext, "slen")
+    if slens != "" {
+        var szv int = d_file_size(stem + ".body")
+        if szv < 0 {
+            return "size-unreadable"
+        }
+        if szv.str() != slens {
+            return "slen-mismatch"
+        }
+    }
+    var sha str = d_meta_get(mtext, "sha")
+    if sha != "" {
+        if d_file_sha(stem + ".body") != sha {
+            return "sha-mismatch"
+        }
+    }
+    var leno str = d_meta_get(mtext, "leno")
+    if leno != "" {
+        if !File.exists(stem + ".orig") {
+            return "orig-missing"
+        }
+        var orig str = ""
+        var ok2 bool = true
+        try {
+            orig = File.read_text(stem + ".orig")
+        } catch (e) {
+            ok2 = false
+        }
+        if !ok2 {
+            return "orig-unreadable"
+        }
+        if orig.length.str() != leno {
+            return "leno-mismatch"
+        }
+        var slenos str = d_meta_get(mtext, "sleno")
+        if slenos != "" {
+            var szo int = d_file_size(stem + ".orig")
+            if szo < 0 {
+                return "size-unreadable"
+            }
+            if szo.str() != slenos {
+                return "sleno-mismatch"
+            }
+        }
+        var shao str = d_meta_get(mtext, "shao")
+        if shao != "" {
+            if d_file_sha(stem + ".orig") != shao {
+                return "shao-mismatch"
+            }
+        }
+    }
+    return "ok"
+}
+
+/// bad 线索行装配（逗号分隔 JSON 行累加）
+fn d_push_bad(acc str, file str, err str) str {
+    var row str = "{\"file\":\"" + d_jesc(file) + "\",\"err\":\"" + d_jesc(err) + "\"}"
+    if acc != "" {
+        acc = acc + ","
+    }
+    return acc + row
+}
+
+/// 预览截断（字符语义直切——展示域；正文完整性由三重校验保证）
+fn d_prev_cut(body str, want int) str {
+    if body.length <= want {
+        return body
+    }
+    return body.substr(0, want)
+}
+
+/// 恢复清单（draft_list，只读）：{"epoch":E,"pending":[{doc,seq,erev,
+/// epoch,path,name,at,len,preview}],"bad":[{file,err}]}——逐目录校验，
+/// settle_erev 门排除已结算域（迟到旧写入不复活），erev 最大有效者为
+/// pending；损坏/畸形入 bad 不删不重建；零写面（枚举不改盘）。
+pub fn d_list() str {
+    var root str = d_root()
+    var epochv int = d_begin().parse_int()
+    var pend str = ""
+    var bads str = ""
+    var ids List = d_dir_ids()
+    var i int = 0
+    while i < ids.len() {
+        var id str = ids[i]
+        var ddir str = root + "/" + id
+        var settled_erev int = 0
+        var names List = d_names(ddir)
+        var j int = 0
+        while j < names.len() {
+            var n str = names[j]
+            if n.starts_with("s") {
+                if n.ends_with(".meta") {
+                    var mtext str = ""
+                    var mok bool = true
+                    try {
+                        mtext = File.read_text(ddir + "/" + n)
+                    } catch (e) {
+                        mok = false
+                    }
+                    if mok {
+                        var ev str = d_meta_get(mtext, "settle_erev")
+                        if d_digits(ev) {
+                            var v int = ev.parse_int()
+                            if v > settled_erev {
+                                settled_erev = v
+                            }
+                        }
+                    }
+                }
+            }
+            j = j + 1
+        }
+        var best_seq int = -1
+        var best_erev int = -1
+        var best_meta str = ""
+        var best_body str = ""
+        j = 0
+        while j < names.len() {
+            var n str = names[j]
+            if n.starts_with("c") {
+                if n.ends_with(".meta") {
+                    var seqv int = d_seq_of(n)
+                    var mtext str = ""
+                    var mok bool = true
+                    try {
+                        mtext = File.read_text(ddir + "/" + n)
+                    } catch (e) {
+                        mok = false
+                    }
+                    if !mok {
+                        bads = d_push_bad(bads, id + "/" + n, "meta-unreadable")
+                    } else {
+                        if seqv < 0 {
+                            bads = d_push_bad(bads, id + "/" + n, "name-unparsable")
+                        } else {
+                            var chk str = d_validate(id, mtext, ddir, seqv)
+                            if chk == "ok" {
+                                var erevs str = d_meta_get(mtext, "erev")
+                                var erev int = erevs.parse_int()
+                                if erev > settled_erev {
+                                    if erev > best_erev {
+                                        best_erev = erev
+                                        best_seq = seqv
+                                        best_meta = mtext
+                                        best_body = File.read_text(ddir + "/c" + d_pad(seqv, 5) + ".body")
+                                    }
+                                }
+                            } else {
+                                bads = d_push_bad(bads, id + "/" + n, chk)
+                            }
+                        }
+                    }
+                }
+            } else {
+                if !n.starts_with("s") {
+                    bads = d_push_bad(bads, id + "/" + n, "foreign-file")
+                }
+            }
+            j = j + 1
+        }
+        if best_seq >= 0 {
+            var row str = "{\"doc\":\"" + id + "\",\"seq\":" + best_seq.str()
+            row = row + ",\"erev\":" + d_meta_get(best_meta, "erev")
+            row = row + ",\"epoch\":" + d_meta_get(best_meta, "epoch")
+            row = row + ",\"path\":\"" + d_jesc(d_meta_get(best_meta, "path")) + "\""
+            row = row + ",\"name\":\"" + d_jesc(d_meta_get(best_meta, "name")) + "\""
+            row = row + ",\"at\":\"" + d_jesc(d_meta_get(best_meta, "at")) + "\""
+            row = row + ",\"len\":" + d_meta_get(best_meta, "len")
+            row = row + ",\"preview\":\"" + d_jesc(d_prev_cut(best_body, 120)) + "\"}"
+            if pend != "" {
+                pend = pend + ","
+            }
+            pend = pend + row
+        }
+        i = i + 1
+    }
+    var es str = "{\"epoch\":" + epochv.str()
+    es = es + ",\"pending\":[" + pend + "],\"bad\":[" + bads + "]}"
+    return es
+}
+
+/// 检查点正文读（draft_read）：len/slen/sha 复核通过才返回；不通过
+/// = ""——空文合法由清单 len==0 区分（调用方对照 pending 行）。
+pub fn d_read(id str, seq int) str {
+    if !d_valid_id(id) {
+        return ""
+    }
+    var stem str = d_root() + "/" + id + "/c" + d_pad(seq, 5)
+    if !File.exists(stem + ".meta") {
+        return ""
+    }
+    var mtext str = ""
+    var ok bool = true
+    try {
+        mtext = File.read_text(stem + ".meta")
+    } catch (e) {
+        ok = false
+    }
+    if !ok {
+        return ""
+    }
+    if !File.exists(stem + ".body") {
+        return ""
+    }
+    var body str = ""
+    try {
+        body = File.read_text(stem + ".body")
+    } catch (e) {
+        ok = false
+    }
+    if !ok {
+        return ""
+    }
+    if body.length.str() != d_meta_get(mtext, "len") {
+        return ""
+    }
+    var slens str = d_meta_get(mtext, "slen")
+    if slens != "" {
+        var szv int = d_file_size(stem + ".body")
+        if szv < 0 {
+            return ""
+        }
+        if szv.str() != slens {
+            return ""
+        }
+    }
+    var sha str = d_meta_get(mtext, "sha")
+    if sha != "" {
+        if d_file_sha(stem + ".body") != sha {
+            return ""
+        }
+    }
+    return body
+}
+
+/// 检查点原文基准读（draft_read_orig，同上卫面）
+pub fn d_read_orig(id str, seq int) str {
+    if !d_valid_id(id) {
+        return ""
+    }
+    var stem str = d_root() + "/" + id + "/c" + d_pad(seq, 5)
+    if !File.exists(stem + ".meta") {
+        return ""
+    }
+    var mtext str = ""
+    var ok bool = true
+    try {
+        mtext = File.read_text(stem + ".meta")
+    } catch (e) {
+        ok = false
+    }
+    if !ok {
+        return ""
+    }
+    if !File.exists(stem + ".orig") {
+        return ""
+    }
+    var orig str = ""
+    try {
+        orig = File.read_text(stem + ".orig")
+    } catch (e) {
+        ok = false
+    }
+    if !ok {
+        return ""
+    }
+    var leno str = d_meta_get(mtext, "leno")
+    if leno == "" {
+        return orig
+    }
+    if orig.length.str() != leno {
+        return ""
+    }
+    var slenos str = d_meta_get(mtext, "sleno")
+    if slenos != "" {
+        var szo int = d_file_size(stem + ".orig")
+        if szo < 0 {
+            return ""
+        }
+        if szo.str() != slenos {
+            return ""
+        }
+    }
+    var shao str = d_meta_get(mtext, "shao")
+    if shao != "" {
+        if d_file_sha(stem + ".orig") != shao {
+            return ""
+        }
+    }
+    return orig
+}
