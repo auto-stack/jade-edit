@@ -1122,6 +1122,9 @@ store EditorStore {
         // Process.exit no-op——验证处理结果态，真实退出由 vm 矩阵承载。
         // ----
         .QuitKeepClose -> {
+            if .draft_epoch == 0 {
+                .draft_epoch = draft_begin().parse_int()
+            }
             var fail bool = false
             var ks = .quit_keys.split("\u0001")
             var i int = 0
