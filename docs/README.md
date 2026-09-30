@@ -309,6 +309,15 @@
   族]/bench150 四点带内）+ **tag 预案**（annotated tag 命令+message
   草案+前置三件清单——**tag 不打**，状态 tag-ready 待用户试用确认，
   git tag 保持 0）+ 仪表盘首个 milestone 状态行（下方）。
+  **第二十八切片 = 安全手动重载批**（SD-3001，2026-09-30，
+  路线图 R-01 首批——功能片）：**F5/菜单/工具栏三入口统一确认流**
+  （脏档先确认「重载会放弃此文档未保存的修改」，取消不变、明确放弃
+  才读盘；干净直入；未命名提示不读空路径；缺档/读取异常/迟到结果
+  不清用户正文——editor-safety 语义首件 [specs/editor-safety.md](specs/editor-safety.md)
+  SD-01..03）+ F5 移 bind 层（编辑器焦点内可达+preventDefault）+ 
+  nonce 重挂载提交形（D-43 回声污染防御）。验证：e2e 
+  reload-safety 九段全弧 + vm_matrix R 组六弧 + 基线 v21 计划内重锁
+  第八例 + merged 17/17 + e2e 2/2（[plans/030](plans/030-safe-manual-reload.md)）。
   **第八切片 = 别名解析 + 提及转链接**（SD-1001，
   2026-09-23）：链接域二期——frontmatter `aliases:` block-list 只读解析（`page_fm_list`，解析序 stem 精确首现优先 → alias 精确首现，消费面 exists/target_path/反链/出链/wanted 全面对齐，检索/提及/改名不入面）+ `linkify_page` POST 契约（明区改写、frontmatter 逐字节保留、计数返回）+ 提及行「转为链接」钮（串联自派生刷新消除 vue 轨并发 fetch 竞态）+ F-R9-4 删除流提及刷新收口；图谱 tab 顺位后移——vm 轨组
   件面依赖上游），本仓零依赖其代码。
@@ -364,7 +373,7 @@ node tests/vm_matrix.mjs            # 双臂（merged+split）检查单 + 基线
 pnpm test:e2e                       # vue 检查单（同一检查单；serve-back 后端）
 ```
 
-## Tests（判绿口径，SD-204；SD-304/403 扩定；SD-503 再扩定；SD-603 再扩定；SD-703 再扩定；SD-803 再扩定；SD-903 再扩定；SD-1003 再扩定；SD-1103 再扩定；SD-1203 再扩定；SD-1303 再扩定；SD-1403 再扩定；SD-1503 再扩定；SD-1603 再扩定；SD-1703 再扩定；SD-1803 再扩定；SD-1903 再扩定；SD-2003 再扩定；SD-2103 再扩定；SD-2202 再扩定——PLAN-022 零扩单零子步：纯内部性能片既有断言域全量承载 + 前后采逐字节门 + bench150 重放对拍门；SD-2302 再扩定——PLAN-023 续零扩单零子步：读面/取面收口纯内部性能片第三例 + 前后采逐字节门扩三面×双语料 + dbg 口径孤页门重推门[≤2.0s 过]；SD-2402 再扩定——PLAN-024 有界调查批（探针定谳 no-go 关账）：probe_mtime.mjs 新增入库（契约语义双臂五案，probe 族 14→15 件）+ repo src 零 diff——矩阵/e2e 断言域零扩，基线 v19 零漂移续[零重锁第五例]；SD-2503 再扩定——PLAN-025 功能切片（合并三择批）：probe_dir_ops 三择案组扩（s①..s⑩ 双臂——skip/overwrite 零数据丢失/卫正交/fail-closed/CJK/trash_restore 回滚弧/moves 完整性，既有 m①..mb⑨ 全案四参化零漂移 + 双臂 raw 字节等值升级；probe 族件数 15 维持——扩案居既有件）+ vm_matrix 13 file 组 dir4 三择钮面/dir5 tab 重映射弧扩 + e2e dir4/dir5 同单 + **基线 v20 计划内重锁第七例**（dirmerge_strategy 入 dump——store 新字段面 + 三钮闭态渲染 id 序列）+ merged 16/16 ALL GREEN + e2e 全绿含新弧 + build ✓built；SD-2602 再扩定——PLAN-026 回执复测批（**blocked 出口**）：零扩单零新件（既有验证链复跑 + .runtime 一次性件——024 no-go 支路同判）；载体健康冒烟门注记（probe_sb 双载体绿/probe 15 件 fresh 双臂[debug 14 绿+receipt_d19 负结果在册一致；release 13 绿+probe_mtime 挂起 ×2=第三断裂面]/merged 矩阵[本窗 blocked——新载体脏标/弹层交互面断裂 ×4，A/B 锚旧 exe 全绿在库]/build ✓built 20.23s[release 路由+SCHEMA_DRIFT_GENERATE_AT=1 随窗路由]——**基线 v20 双载体 PASS 零漂移续**[采点先于断裂弧]；重入收口 2026-09-30：冒烟门四腿全绿[merged 16/16 ALL GREEN 修复直证+probe_sb 双载体+probe 双电池 debug 14 绿/release 13 绿+receipt_d19 三确认+build ✓built 18.63s——基线 v20 新载体零重锁]）；SD-2702 再扩定——PLAN-027 重推批（**回退出口**）：零扩单零新件（单取形重推→D-39 签名 2/2 复现→app.at 还原——**e2e ×6 轮 A/B 执行实录**[单取形 2/2 败@:820/:821 域+双取形 2/2 绿+D-21 族瞬态 3 例重跑即绿] + gen 源检两形在录[单取 :649 JSON.parse(lj)→还原后双取 :647+:649] + 基线 v20 零重锁续例[merged 22 PASS——src 零 diff 强形] + probe 双电池[debug 15 路由/release 14 路由 mtime skip——D-41 纪律] + build ✓built 18.54s[SCHEMA_DRIFT_GENERATE_AT=1]）；SD-2802 再扩定——PLAN-028 CJK POST 化适配批（里程碑收口件）：probe_receipt_d19 翻新形五案（**POST CJK 翻绿直证 g①/g②——015/026 三窗负结果转正** + ASCII 回归 g③/g④ + **GET 下线负证 g⑤ 404**——probe 族 15 件 fresh 全绿）+ probe_trash b 族 split 三案 skip 解除（exists POST 形全案双臂）+ probe_dir_ops p⑩ 随校翻绿（CJK exists POST→1）+ vm_matrix CJK 导航子步双臂化（link 面板行/10c 播种/tags 展开/meta 属性目标/find 拾取/file 新页导航/删除预览/激活落点/tab 重开——tab 序两臂同构[HW,index,CAP,首页,…]）+ e2e **15 cjk 新弧**（树行点击开档 read_wiki POST 语料锚+属性预填 page_meta POST 已知答案+保存往返 write_wiki POST frontmatter 存续——vue 轨此前 D-19 回避口径结构性不可测弧首测，e2e 全绿 1.2m）+ **基线 v20 零重锁续例**（零 store 字段面——契约注解翻转不触 store/dump 域）+ build ✓built 10.97s[SCHEMA_DRIFT_GENERATE_AT=1；regen 窗 16.88s]）；SD-2902 再扩定——PLAN-029 release 就绪批（第二十七切片——**零扩单零新件**，026/027 docs+验证形同判）：回归门六面复跑 receipt（merged 22 PASS 基线 v20 零漂移[新载体 debug 16:01 v0.4.2-2311 实跑]/split 臂 F-24-2 主导形分段判绿[第十三窗]/e2e 全量 1.2m 首跑绿含 15 cjk/build ✓built 15.81s[SCHEMA_DRIFT_GENERATE_AT=1]/probe 15 件 fresh[14 绿+probe_dir_ops 9362 临时源端口碰撞环境项 triage——D-31④ 族]/bench150 四点带内[tags 233ms ≤1.5s 门续]）+ dist ✓built@tip 现势（assert-dist-fresh 通道随 build 链）+ 双形冒烟指南命令实走（merged r4 全绿/vue 集成单命令形 r2 全绿——「指南即验证」）+ **基线 v20 零重锁续例**（src 零 diff 强形））
+## Tests（判绿口径，SD-204；SD-304/403 扩定；SD-503 再扩定；SD-603 再扩定；SD-703 再扩定；SD-803 再扩定；SD-903 再扩定；SD-1003 再扩定；SD-1103 再扩定；SD-1203 再扩定；SD-1303 再扩定；SD-1403 再扩定；SD-1503 再扩定；SD-1603 再扩定；SD-1703 再扩定；SD-1803 再扩定；SD-1903 再扩定；SD-2003 再扩定；SD-2103 再扩定；SD-2202 再扩定——PLAN-022 零扩单零子步：纯内部性能片既有断言域全量承载 + 前后采逐字节门 + bench150 重放对拍门；SD-2302 再扩定——PLAN-023 续零扩单零子步：读面/取面收口纯内部性能片第三例 + 前后采逐字节门扩三面×双语料 + dbg 口径孤页门重推门[≤2.0s 过]；SD-2402 再扩定——PLAN-024 有界调查批（探针定谳 no-go 关账）：probe_mtime.mjs 新增入库（契约语义双臂五案，probe 族 14→15 件）+ repo src 零 diff——矩阵/e2e 断言域零扩，基线 v19 零漂移续[零重锁第五例]；SD-2503 再扩定——PLAN-025 功能切片（合并三择批）：probe_dir_ops 三择案组扩（s①..s⑩ 双臂——skip/overwrite 零数据丢失/卫正交/fail-closed/CJK/trash_restore 回滚弧/moves 完整性，既有 m①..mb⑨ 全案四参化零漂移 + 双臂 raw 字节等值升级；probe 族件数 15 维持——扩案居既有件）+ vm_matrix 13 file 组 dir4 三择钮面/dir5 tab 重映射弧扩 + e2e dir4/dir5 同单 + **基线 v20 计划内重锁第七例**（dirmerge_strategy 入 dump——store 新字段面 + 三钮闭态渲染 id 序列）+ merged 16/16 ALL GREEN + e2e 全绿含新弧 + build ✓built；SD-2602 再扩定——PLAN-026 回执复测批（**blocked 出口**）：零扩单零新件（既有验证链复跑 + .runtime 一次性件——024 no-go 支路同判）；载体健康冒烟门注记（probe_sb 双载体绿/probe 15 件 fresh 双臂[debug 14 绿+receipt_d19 负结果在册一致；release 13 绿+probe_mtime 挂起 ×2=第三断裂面]/merged 矩阵[本窗 blocked——新载体脏标/弹层交互面断裂 ×4，A/B 锚旧 exe 全绿在库]/build ✓built 20.23s[release 路由+SCHEMA_DRIFT_GENERATE_AT=1 随窗路由]——**基线 v20 双载体 PASS 零漂移续**[采点先于断裂弧]；重入收口 2026-09-30：冒烟门四腿全绿[merged 16/16 ALL GREEN 修复直证+probe_sb 双载体+probe 双电池 debug 14 绿/release 13 绿+receipt_d19 三确认+build ✓built 18.63s——基线 v20 新载体零重锁]）；SD-2702 再扩定——PLAN-027 重推批（**回退出口**）：零扩单零新件（单取形重推→D-39 签名 2/2 复现→app.at 还原——**e2e ×6 轮 A/B 执行实录**[单取形 2/2 败@:820/:821 域+双取形 2/2 绿+D-21 族瞬态 3 例重跑即绿] + gen 源检两形在录[单取 :649 JSON.parse(lj)→还原后双取 :647+:649] + 基线 v20 零重锁续例[merged 22 PASS——src 零 diff 强形] + probe 双电池[debug 15 路由/release 14 路由 mtime skip——D-41 纪律] + build ✓built 18.54s[SCHEMA_DRIFT_GENERATE_AT=1]）；SD-2802 再扩定——PLAN-028 CJK POST 化适配批（里程碑收口件）：probe_receipt_d19 翻新形五案（**POST CJK 翻绿直证 g①/g②——015/026 三窗负结果转正** + ASCII 回归 g③/g④ + **GET 下线负证 g⑤ 404**——probe 族 15 件 fresh 全绿）+ probe_trash b 族 split 三案 skip 解除（exists POST 形全案双臂）+ probe_dir_ops p⑩ 随校翻绿（CJK exists POST→1）+ vm_matrix CJK 导航子步双臂化（link 面板行/10c 播种/tags 展开/meta 属性目标/find 拾取/file 新页导航/删除预览/激活落点/tab 重开——tab 序两臂同构[HW,index,CAP,首页,…]）+ e2e **15 cjk 新弧**（树行点击开档 read_wiki POST 语料锚+属性预填 page_meta POST 已知答案+保存往返 write_wiki POST frontmatter 存续——vue 轨此前 D-19 回避口径结构性不可测弧首测，e2e 全绿 1.2m）+ **基线 v20 零重锁续例**（零 store 字段面——契约注解翻转不触 store/dump 域）+ build ✓built 10.97s[SCHEMA_DRIFT_GENERATE_AT=1；regen 窗 16.88s]）；SD-2902 再扩定——PLAN-029 release 就绪批（第二十七切片——**零扩单零新件**，026/027 docs+验证形同判）：回归门六面复跑 receipt（merged 22 PASS 基线 v20 零漂移[新载体 debug 16:01 v0.4.2-2311 实跑]/split 臂 F-24-2 主导形分段判绿[第十三窗]/e2e 全量 1.2m 首跑绿含 15 cjk/build ✓built 15.81s[SCHEMA_DRIFT_GENERATE_AT=1]/probe 15 件 fresh[14 绿+probe_dir_ops 9362 临时源端口碰撞环境项 triage——D-31④ 族]/bench150 四点带内[tags 233ms ≤1.5s 门续]）+ dist ✓built@tip 现势（assert-dist-fresh 通道随 build 链）+ 双形冒烟指南命令实走（merged r4 全绿/vue 集成单命令形 r2 全绿——「指南即验证」）+ **基线 v20 零重锁续例**（src 零 diff 强形））；SD-3002 再扩定——PLAN-030 安全手动重载批（第二十八切片——**功能批扩单**）：vm_matrix **R 组六弧**（确认开未读盘/取消全保/放弃落盘/干净直入/缺档保文+按 tab 正文复原/untitled 提示——弹层钮区域锚消歧）+ **e2e/reload-safety.spec.ts 新件**（九段全弧：立即输入后 F5/取消/工具栏+菜单/放弃对账/干净直入/untitled/合法空文/缺档/迟到拦截——read_wiki 拦截臂承载迟到门；专属 ReloadSafe.ad 隔离 matrix 删除弧线）+ rename 组①脏档复原弧随新语义适配（确认+放弃——vm_matrix/matrix.spec 两处）+ **基线 v20→v21 计划内重锁第八例**（reload_* 五字段入 dump + 重载确认弹层 vnode 扩——store 新字段面）+ merged 17/17 ALL GREEN + pnpm test:e2e 2/2 + build ✓built 8.24s + split 臂 F-24-2 第十四窗分段判绿（stash A/B 对照基线 src 同形）+ 复审全链重放（review-ac06 探针切页/关档条款 live 补证）
 
 检查单（PLAN-002 T-01 扩定 + PLAN-003 T-04 link 扩单 + PLAN-004 T-04
 find 扩单 + PLAN-005 T-04 create 扩单 + PLAN-006 T-04 rename 扩单 +
@@ -834,7 +843,7 @@ e2e 同单（断言域 = 结构/文本/磁盘字节，非像素）。
 - [plans/attachments/081-t00-rulings.md](plans/attachments/081-t00-rulings.md) —
   T-00 三勘定决策档（auto-down PLAN-081 附件；双轨机制 / actions-vue
   现状 / 后端选型）
-- [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v32（SD-2704 指针；
+- [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v35（SD-3004 指针；
   三十九项三分类；**PLAN-023 增补 D-39**[vue 轨 LinksRefreshOf 单取形
   触发 dev-stack 树响应滞留竞态——T-03 执行窗实勘立案：恢复弧
   search_wiki/tree 响应同毫秒完成→浏览器侧 fetch 200+ 秒未落[后端已
@@ -848,7 +857,7 @@ e2e 同单（断言域 = 结构/文本/磁盘字节，非像素）。
   D-19/D-21/D-35/D-37 处置随行；v28..v31 随批[024/025/026 记账——指
   针未随批滞留至 v27]；**PLAN-027 v32**[D-39 第十一例——「705 后竞态
   续在」三选落回①维持+D-21 v32 负载窗三例+D-20⑤ 退役挂起]；v27 字
-  面滞留随批校正[F-27-R1——F-R16-1 先例续]）
+  面滞留随批校正[F-27-R1——F-R16-1 先例续]；v33/v34 随批[028/029 记账——指针未随批滞留至 v32]；**PLAN-030 v35**[D-42 弹层动作钮先关后派发/D-43 引擎 round-trip 回声污染 nonce 形/D-44 空文档零落点块三发现入册 + D-21 v35 扩记——安全手动重载批账面]）
 - [upstream/2026-09-jade-supply.md](upstream/2026-09-jade-supply.md) —
   上游供料包（D-16 预热 / D-15 残余 / D-17 键入发射 / D-18 投影双态，
   期望形态+复验条件+回执方式）
@@ -872,6 +881,11 @@ archived/)；第十九切片 = 试用赋能批——recents 持久层 + P≤200 
 三件齐备后 `git tag -a v0.1.0` 一命令即达（命令+message 草案+前置
 清单见 RELEASE.md §1 判据节）；当前 `git tag` = **0**（tag=对外
 承诺动作——用户试用确认后自打，或明示后代打）。
+
+**路线图 R-01 已交付**（PLAN-030 安全手动重载批，2026-09-30——工作门
+M-A「误重载受保护」首项兑现；编辑器安全语义首件
+[specs/editor-safety.md](specs/editor-safety.md) 落位）。候选池下一项
+= R-02 草稿与生命周期保护（立项前按惯例重核对代码与依赖）。
 
 **下一步（候选池，首位在前；②已出池交付[残余面挂账在册]）**：
 
