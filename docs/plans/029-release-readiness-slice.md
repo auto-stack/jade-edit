@@ -1,6 +1,6 @@
 ---
 plan_id: PLAN-029
-status: execution_done
+status: reviewed
 feature_name: v0.1.0 release 就绪批（第二十七切片——判据文档化+全量回归+tag 预案）
 author: [agent]
 created_at: 2026-09-30T00:00:00Z
@@ -438,6 +438,90 @@ probe_mtime release 挂起=D-41 仪器面——一致性核验通过（不发明
   - `blockers: 无`。
   - `next: review`（复审基线=本提交；RELEASE.md §1 判据 r1 草案
     交裁面随 review 流——§10.2 ①②③）。
+
+- **2026-09-30 review pass（auto-plan:review）——全 AC 独立重放裁定
+  （同会话复审声明+工件重放口径：1e3fab3 树 fresh 重放非执行期
+  摘要采信；工作树 clean 单检出=直接 main 惯例）**：
+  - `stage: review | plan_id: PLAN-029 | plan_revision: 1 | outcome: pass
+    | reviewed_commit: 1e3fab3 | base_commit: 618edc4 | dependency_
+    revisions: debug exe 09-30 16:01 v0.4.2-2311-g7fcf913eb + release
+    exe 09-30 12:41（复审窗全程未再变）| spec_inputs: docs/ARCHITECTURE
+    .md + docs/README.md + docs/parity-ledger.md v34 + docs/RELEASE.md
+    （本批新增——本仓无 docs/specs/，canonical 四件）`
+  - **AC-01 pass（重放）**：五节锚位 grep 读回全现（§1..§5——
+    `^## [1-5]\. ` ×5）+ 判据三收口件与 028 §4.3 提案逐项一致
+    （①CJK 开档✅ 028 收口/②真实试用 ≥1 轮待用户[回执注记位]/③
+    release 批 receipt）+ 已知限制五件与在册逐一对表（split=F-R17-1
+    第十三窗/P≤200=D-35② 知情警示/D-39 双取形/大纲行:列图谱=D-12
+    /probe_mtime=D-41 仪器面——不发明不漏记）+ 切片摘要 28 行
+    （`^\| 0xx \|` grep 计数）。
+  - **AC-02 pass（重放）**：六面 fresh——①矩阵 merged **22 PASS
+    全组绿** 基线 v20 零漂移（**复审窗 r1 一次成型**——执行窗 r1
+    popover 瞬态未再现；p29-rev-matrix-r1.log）②split 臂 boot FAIL
+    主导形同形复现（F-24-2 第十三窗续证——分段判绿判别链同前）
+    ③e2e **r3 1 passed 1.2m 全绿**（r1=gen 漂移败形→F-29-R3 归因+
+    标准 build 通道复原后重放；r2=reload ready 窗 15s 超时 D-21 族
+    瞬态重跑即绿；p29-rev-e2e-r1/r2/r3.log）④build ✓ built 15.81s
+    （重放）+ 复原窗 ✓ built 7.92s ⑤probe **15/15 fresh ALL GREEN**
+    （**probe_dir_ops 复审窗翻绿**——9362 环境碰撞窗口间自愈，执行
+    窗 triage 归因获直证；receipt_d19 守望形 g①/g②/g⑤ 全绿；
+    p29-rev-probe-*.log）⑥bench150 带内（link 279/search 50/tags
+    244ms 门续/boot-ready 2698 记录面；p29-rev-bench150.log）。
+  - **AC-03 pass（重放）**：merged 形冒烟 ALL GREEN（boot-ready+树行
+    ASCII+CJK+状态面——p29-rev-smoke-merged.log）+ vue 集成形冒烟
+    ALL GREEN（front serve/代理链/CJK exists POST→1/read_wiki len=
+    547 语料锚/工具链窗 Init 链——p29-rev-smoke-vue.log）+ dist
+    ✓built@tip（执行窗 15.81s + 复审复原窗 7.92s——assert-dist-fresh
+    通道随链）+ 指南命令实走对账维持。
+  - **AC-04 pass（重放）**：RELEASE.md §1 tag 命令+message 草案+
+    前置三件清单锚位在 + 仪表盘 milestone 行在（README :867）+
+    **`git tag -l | wc -l` == 0**（复审末复核）。
+  - **AC-05 pass（重放）**：`git diff 618edc4 -- src/` 0 行 +
+    package.json 0 行 + tests/baseline/ 0 行 + tracked 面=五 docs 件
+    + gen/dist check-ignore ignored + 复审末复核维持全零（复审冒烟
+    再生的 .auto/ 缓存已清场）。
+  - **AC-06 pass（重放）**：SD-2901（RELEASE.md 新件+README 文档节
+    指针）/SD-2902（ARCH §6 + README Tests heading 双锚 grep 各 1）
+    /SD-2903（是什么第二十七切片条目+仪表盘 milestone 行）
+    /SD-2904（ledger H1 v34+SD-2904 指针+D-35②/D-41 行随批）——
+    锚位读回全现 + delta after 与落地文本一致性核验通过。
+  - **发现四件**（非阻断——pass 裁定不受涉）：
+    - **F-29-R3（medium——复审窗实勘新知，操作序纪律缺口感）**：
+      T-03 vue 集成形冒烟的 launcher（`auto run -r vue`）**启动即
+      再生 gen 部分文件、抹掉 regen-vue 运行期补件面**（tabs.remove
+      →splice + store __vmOnly no-op 双面——store mtime 17:31=冒烟
+      窗实证；:245 remove 裸奔 + :319 throw 桩复原双证）→ 复审 e2e
+      r1 [7 tab] 直接关闭路 pageerror（`tabs.value.remove is not a
+      function`）。**非受审提交缺陷**（src 零 diff+dist 17:19 补丁态
+      构建=✓built@tip 主张不受损+执行窗 e2e 17:18 补丁态在窗绿先于
+      冒烟）；复审窗标准 build 通道复原（补件重铺+✓ built 7.92s）后
+      e2e r3 绿=因果闭环。**处置=merge 窗随批**：ledger D-15/R010
+      族记账（launcher regen 抹补件面——e2e/build 须在任何 `auto run
+      -r vue` 之后重跑 regen-vue 的操作序纪律）+ RELEASE.md §2 集成
+      形注记补「运行即再生 gen——repo 验证链随后需重跑 `pnpm build`
+      恢复补件面；vue 集成形=工具链原生 run 语义（无运行期垫片，
+      D-13 终止面行为差异在册）」。
+    - **F-29-R1（low——docs 陈旧交叉引用）**：RELEASE.md §4①「留观
+      第十二窗」——本批已续记第十三窗。→ merge 窗补正（F-27-R1
+      先例）。
+    - **F-29-R2（low——docs 文内一致性别扭）**：RELEASE.md §4①「交
+      付形态 merged/vue dist 不涉」——§2 已定形 vue=集成单命令形
+      （T-03 等效调整），dist=构建物非 serve 形。→ merge 窗补正
+      （F-27-R1 先例）。
+    - **F-29-R4（info——正面观察）**：probe_dir_ops 9362 环境碰撞
+      窗口间自愈——复审窗 15/15 fresh 绿直证「环境瞬态非产品」
+      triage 归因；release 就绪判定强化（probe 面 review 窗满编）。
+  - **观察二件非阻断**：①复审 e2e r2 reload ready 窗 15s 超时
+    （D-21 族瞬态——r3 重跑即绿在册惯例）；②复审窗矩阵 r1 一次
+    成型（执行窗 r1 popover 瞬态未再现——D-21 单日单批样本限注记
+    续）。
+  - `findings: F-29-R1/R2（low docs 补正→merge 窗）+ F-29-R3（medium
+    操作序纪律+记账→merge 窗随批）+ F-29-R4（info 正面）`
+  - `evidence: e2e/.runtime/p29-rev-*.log（复审窗 fresh 重放全录——
+    ignored 一次性件惯例，关键值已内嵌本记录）+ docs/RELEASE.md
+    （reviewed Spec delta 冻结面=本提交 1e3fab3 内容）`
+  - `next: merge`（用户已授权 review→merge 连跑；merge 基线=1e3fab3
+    +复审记录 docs-only 后代）。
 
 ## 10. 待澄清事项
 
