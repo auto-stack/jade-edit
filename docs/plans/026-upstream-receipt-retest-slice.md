@@ -1,6 +1,6 @@
 ---
 plan_id: PLAN-026
-status: execution_done
+status: reviewed
 feature_name: 上游回执复测批——PLAN-705 载体重建与四回执（第二十四切片）
 author: [agent]
 created_at: 2026-09-29T00:00:00Z
@@ -578,6 +578,60 @@ master 实勘）：
   - `next`：**review**（auto-plan:review——本提交为复审基线；r1
     裁定 (a) 闭环：706 r2 AC-10 兑现→重入→冒烟门全绿→全判据面
     补齐→四回执处置落定）。
+
+- **2026-09-30 复审（auto-plan:review）**：
+  - `stage: review` | `plan_id: PLAN-026` | `plan_revision: 1` |
+    `outcome: pass`。
+  - `reviewed_commit: 0204c8c5d6ad28350d27025befc02c98359a8a7f`；
+    `base_commit: adb9d8d`（批起点）；工作树 clean、单一主检出
+    （直接 main 线性惯例 001..025 在档先例续——无 worktree 面）。
+  - `dependency_revisions`：auto-lang **9fbf4ebd5**（载体构建基
+    ——release 81,313,280B@09-30 12:41/debug 128,245,248B@12:47
+    磁盘现势核验一致）；注记：master 复审窗已前移 8d917c46（执行
+    窗后家族活动——回执绑定载体工件非 live master，不失效）。
+  - **独立声明**：实现会话内复审——全部判定由工件独立重放（p26rev-
+    * 重放族），非执行期摘要采信。
+  - `acceptance_results`（全 AC 独立重放）：
+    - **AC-01 pass**：exe 档磁盘核验一致；probe_sb 双载体重放绿
+      （SBD=0/SBR=0）；merged 矩阵重放 **22 PASS 全组绿**（[7
+      tab]/[10b]/[B baseline v20 零漂移] 在录）+ split [1 boot]
+      FAIL 同形续现；build 重放 ✓built 17.78s。
+    - **AC-02 pass**：e2e 重放 1 passed（1.3m）；签名零复现 grep
+      直证（execution 窗 matrix r1/r2+e2e ×3 全零 ECONNRESET/
+      ECONNREFUSED/400 missing param/SocketError）；执行窗全判据
+      面在档（e2e ×3+双臂 ×2/臂+gate ×1）。
+    - **AC-03 pass**：split 败形重放与第九例在库件逐字对表
+      （[1 boot] FAIL+`button "wiki" not found`——p25-review-split
+      .log vs p26rev-matrix.log 同形）；判别链三件齐（src 零 diff
+      +merged 同窗重放直证+probe split 臂 HTTP 电池在档）。
+    - **AC-04 pass**：d35 重放 CORRUPT 同形（HTTP 200 len=3 整数
+      322）；receipt_d19 重放四案在册形（g③=1/g④=0 原绿+g①=0/
+      g② len=0 负结果）；盘点三面 grep 重放零触+byte-as-char 在
+      位（http_server.rs:527）。
+    - **AC-05 pass**：src 零 diff（vs adb9d8d 与 ee9e34c 双基 0
+      行）+tracked 恰四文档+基线池零触碰+一次性件居 ignored
+      e2e/.runtime+家族树面零触碰。
+    - **AC-06 pass**：锚位 grep 全现（第二十四切片/SD-2602/v31/
+      D-41/第十例/execution_done）；落地面与 delta after 文本一
+      致性抽核 1:1（D-21 升级语/③收窄解除/留观闭账/ARCH 重入段
+      逐字对应）。
+  - `spec_inputs`：本仓无 docs/specs/（023..025 同款声明在册）——
+    canonical=ARCHITECTURE.md+README.md+parity-ledger.md@v31@0204c8c；
+    supersedes/new_spec_components 空有写明解释（§4）。
+  - `findings`：
+    - **F-26-R1（观察，非阻断）**：依赖 master 复审窗前移
+      （9fbf4ebd5→8d917c46）——回执绑定载体工件（exe 时间戳在
+      档）非 live master，零失效；无动作。
+    - **F-26-R2（观察，非阻断）**：probe_mtime release 挂起=D-41
+      在册独立缺陷（家族证 old-carrier 同挂）——供料候选记账完
+      整，无未verified 必需判据被记债（AC-11 第二分支兑现）。
+  - `evidence`：p26rev-{matrix,build,e2e,d35,d19,sb-dbg,sb-rel}
+    .log（重放族）+p26r2-{matrix-r1/r2,gate,e2e,d35-retest,probe-
+    all-dbg/rel,build}（执行族）+p26-*（blocked 窗族）——均居
+    ignored e2e/.runtime 可追溯；durable 面=计划 §8/§9+ledger
+    v31+四文档锚位。
+  - `next`：**merge**（用户已授权全工作流——review→merge 连跑；
+    merge 基线=0204c8c）。
 
 ## 10. 待澄清事项
 
