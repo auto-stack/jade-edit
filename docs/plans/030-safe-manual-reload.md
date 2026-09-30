@@ -1,6 +1,6 @@
 ---
 plan_id: PLAN-030
-status: execution_done
+status: reviewed
 feature_name: 安全手动重载（可信试用首切片）
 author: [agent]
 created_at: 2026-09-30T12:29:31Z
@@ -180,6 +180,32 @@ node tests/vm_matrix.mjs --arm split
 状态变更按 work/review 流；合入、正式规范沉淀和归档另由 merge 技能处理。
 
 ## 9. 复审记录
+
+### 2026-09-30 复审（auto-plan:review）
+
+- stage: review
+- plan: PLAN-030
+- revision: 1
+- outcome: pass
+- reviewed_commit: a5a1d64449b034057889b60c1cac7b1f3fbf1d89（工作树 clean；本记录为 docs-only 后代）
+- base_commit: 9ab1b5790cf2c564f5e606a0d7ded3abc83b3252
+- dependency_revisions: auto.exe debug 09-30 16:01 = v0.4.2-2311-g7fcf913eb（与 work 窗零换档）；@autodown/engine 0.5.0（gen/front/vue/node_modules）
+- spec_inputs: docs/specs/editor-safety.md（新 75 行——本批 canonical 首件）；docs/ARCHITECTURE.md §6 heading SD-3002 扩单注记（局部 delta）；本 Plan §5 规范增量 SD-01..03 逐条对实勘行为核对一致
+- 独立性声明：同实现会话复审——裁定基于工件独立重放（§6 门 fresh 重跑 + 提交树 diff 实勘 + 追加复审探针），不采信执行期摘要
+- acceptance_results（全数重放）：
+  - **AC-01 pass**：范围实勘（back/ 零 diff、gen/dist 零 tracked diff、内部四口 `store.Reload()` 零触及——唯一改动行即用户口薄委托）+ build ✓（✓built 8.24s strict OK）+ reload-safety 定向重放 1 passed（7.2s：①a 立即 F5 弹层/①c 工具栏/①d 菜单）
+  - **AC-02 pass**：e2e ①b 重放（取消后正文/脏标/磁盘逐字节保持）+ merged 臂 R2
+  - **AC-03 pass**：e2e ③ 重放（放弃后正文=磁盘、磁盘字节不动）+ merged 臂 R3
+  - **AC-04 pass**：e2e ④a/④b/④c 重放（干净直入/untitled 提示/合法空文）+ merged 臂 R4/R6
+  - **AC-05 pass**：e2e ⑤ 重放（缺档保文）+ merged 臂 R5
+  - **AC-06 pass**：e2e ⑥ 重放（新输入+延迟回执拒覆盖）+ **本窗补证探针** e2e/.runtime/p30-probe/review-ac06.mjs（review-ac06-result.txt）——切页条款（S：在途切 tab → stale 提示 + 目标正文无磁盘标记）与关档条款（C：在途关档 → tab 不复活 + 重开正文净）live 直证，读后门三布尔子句全数有 run-time 证据
+  - **AC-07 pass**：merged 臂 **17/17 ALL GREEN** fresh 重放 + pnpm test:e2e **2/2 passed**（matrix 1.2m + reload-safety 7.0s）+ rename 组①适配两处 diff 实勘（vm_matrix:2171/matrix.spec:930——确认+放弃路径，语义同向）+ 基线 v21 diff 逐项解释复核
+  - **AC-08 pass**：单源实现核验（src/front/*.at 两文件，gen/dist 零手改——build 链再生成）+ SD-01..03 落档与行为一致抽查（untitled 文案/弹层文案/双失败提示源锚各恰）+ 非目标如实（无草稿持久恢复/内部事务保护承诺）
+- findings：
+  - **F-30-R4（info，非阻断）**：复审补证探针首轮 S 支「FAIL」定性为探针装置竞态——read_wiki 拦截器把切页目标自身开档 read 一并延迟，回执落地时 TabActivate 未达（active_key 仍=目标页），门判提交为正确行为；装置纪律（切页走 tab 钮零 HTTP）已修正后 S/C 双 PASS。零产品代码缺陷、零改动。
+  - split 臂 boot FAIL 维持 F-24-2 第十四窗登记（work 窗 stash A/B 对照在档：基线 src 同窗同点同形）——既有分段判绿口径续用，非新发现。
+- evidence: 本记录内嵌命令/结果摘要 + e2e/.runtime/p30-probe/（review-ac06.mjs/result.txt 等，ignored 一次性件——值已内嵌可追溯）；规范增量冻结面 = docs/specs/editor-safety.md@本提交树
+- next: merge（用户已授权 work→review→merge 连跑）
 
 ### 2026-09-30 草案交接
 
