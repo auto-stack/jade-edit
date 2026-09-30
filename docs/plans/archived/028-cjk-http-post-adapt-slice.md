@@ -1,6 +1,7 @@
 ---
 plan_id: PLAN-028
-status: reviewed
+status: archived
+completion_kind: delivered
 feature_name: CJK HTTP 面 POST 化适配批（第二十六切片——里程碑收口件）
 author: [agent]
 created_at: 2026-09-30T00:00:00Z
@@ -444,6 +445,43 @@ app.at 消费点 :2361/:2363 空根形一致；page_meta GET 降级注记 :175-1
     即跑）。
   - `findings: F-R28-R1/F-R28-R2（观察非阻断）`；`next: merge`（用户
     已授权 review→merge 连跑）。
+
+- **2026-09-30 merge 归档（auto-plan:merge）——五 checkpoint 闭环**：
+  - `stage: merge | PLAN-028:r1 | outcome: pass | delivery_commit:
+    d1f1d4b（实现+canonical delta）+ fdaaddd（复审记录 docs-only
+    后代）`
+  - `prepared`=复审基线 r1@d1f1d4b（reviewed——fdaaddd 复审记录
+    docs-only 后代，全 AC 独立重放 pass）——canonical delta 已随实现
+    落 main[SD-2801@ARCH §5 第二十六切片段/SD-2802@§6 heading+README
+    Tests heading/SD-2803@README 是什么+Tests N 定谳+仪表盘③收窄+
+    F-R17-1 第十二窗/SD-2804@ledger v32→v33——直接 main 线性约定
+    001..027 在档惯例+三件知识库形 019..027 merge 先例承载；本仓无
+    docs/specs/，canonical=ARCH+README+parity-ledger tracked 面]。
+  - `landed`=main tip==本归档提交，含 fdaaddd 含 d1f1d4b[merge-base
+    --is-ancestor ancestor-OK 线性无 merge commit；d1f1d4b..fdaaddd
+    src/tests/e2e 零差异=docs-only 后代链直证]+known-good smoke=合并
+    窗 fresh vm merged 臂 **16/16 ALL GREEN**[终树 fdaaddd 实跑——基
+    线 v20 零漂移在录；一发过]。
+  - `ledger_refreshed`=v33@d1f1d4b tracked 读回核验[H1 v33 恰一+SD-2804
+    指针续+D-19 处置大更新恰一+D-21 v33 扩记+D-35② exe 档各恰一——
+    无 live ledger 服务 tracked 文件面 024/025/026/027 同判]。
+  - `archived`=git mv→docs/plans/archived/028-cjk-http-post-adapt-
+    slice.md+status archived+completion_kind delivered[YAML 块内——
+    675320f 遗漏教训随锁落位]。
+  - `cleaned`=无 worktree/dev 分支[git worktree list 单一主检出核验]
+    +代码工作树零 WIP+判别链物料复核[src 零 diff 强形无 archive 树；
+    一次性件居 ignored e2e/.runtime——r1..r3 复审窗物料值内嵌本计划
+    §9 可追溯]。
+  - deployment 观察=本批 src 面仅 api.at（解释数据）→引擎零重建面
+    [家族双 exe 09-30 12:41/12:47 载体即部署面零变化+gen/dist 复审窗
+    ✓built@11.43s d1f1d4b src 现势——vue dist 现势载体]；批回归到期
+    件=无 .last-batch-regression.json[jade-edit 惯例外——024..027
+    同判]；留观交接=F-R28-R2 split 臂 F-24-2 主导形[unblock=家族
+    split 臂专项修复——双臂化接线已就位 boot 修复即跑]/D-19 处置
+    收口[url_decode 转纵深备援]/里程碑提案 §4.3 交裁待用户[v0.1.0
+    「试用就绪」三收口件——本批 CJK 件已收口，余试用反馈 ≥1 轮+
+    release 批]/D-39 三选①维持/D-21 v33 负载窗实录/试用反馈件维持
+    候选池首位。
 
 ## 10. 待澄清事项
 
