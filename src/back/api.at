@@ -46,8 +46,10 @@ pub fn tree(path str, depth int) str {
 }
 
 /// 读 wiki 文档 body（frontmatter 剥离；无 frontmatter 文件直通全文）
-/// GET /api/read_wiki?path=..
-#[api(method = "GET", path = "/api/read_wiki")]
+/// **POST 而非 GET**（D-19：path CJK 常态——开档弧主承面，body 传参
+/// [SD-401 同款；PLAN-028 适配]——GET 端点随本批下线）。
+/// POST /api/read_wiki
+#[api(method = "POST", path = "/api/read_wiki")]
 pub fn read_wiki(path str) str {
     return wsys.read_body(path)
 }
@@ -61,8 +63,10 @@ pub fn write_wiki(path str, body str) bool {
 }
 
 /// 路径存在性（目录节点不命中 → 静默忽略语义）
-/// GET /api/exists?path=..
-#[api(method = "GET", path = "/api/exists")]
+/// **POST 而非 GET**（D-19：path CJK 常态——开档守卫/双复核族承面，
+/// body 传参[SD-401 同款；PLAN-028 适配]——GET 端点随本批下线）。
+/// POST /api/exists
+#[api(method = "POST", path = "/api/exists")]
 pub fn exists(path str) bool {
     return wsys.path_exists(path)
 }
@@ -172,10 +176,11 @@ pub fn linkify_page(path str, stem str) str {
 /// [{key,value}]（D-20④ 顶层数组唯一健康形状；缺席键项不装配——title
 /// 空值同判；装配序 title,tags,aliases），value = 单行值[title，引号壳
 /// 剥离]/逗号连接串[tags/aliases]。
-/// GET 通道（path CJK 面 = D-19 同款口径：split 臂 CJK 路径降级空态，
-/// merged/进程内全量可用——v1 记账 §10）。
-/// GET /api/page_meta?path=..
-#[api(method = "GET", path = "/api/page_meta")]
+/// **POST 而非 GET**（D-19：path CJK 常态——属性弹层预填主承面，body
+/// 传参[SD-401 同款；PLAN-028 适配]——GET 端点随本批下线；split 臂
+/// CJK 降级空态口径随批解除——双臂全量可用）。
+/// POST /api/page_meta
+#[api(method = "POST", path = "/api/page_meta")]
 pub fn page_meta(path str) str {
     return wsys.page_meta_json(path)
 }

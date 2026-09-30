@@ -637,8 +637,13 @@ async function runSplitArm() {
       }
     }
     const getMeta = async (p) => {
-      const res = await fetch(`${back.url}/api/page_meta?path=${encodeURIComponent(p)}`)
-      if (!res.ok) throw new Error(`GET page_meta -> HTTP ${res.status}`)
+      // PLAN-028：page_meta GET→POST 随批（端点下线——body 传参）
+      const res = await fetch(`${back.url}/api/page_meta`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: p }),
+      })
+      if (!res.ok) throw new Error(`POST page_meta -> HTTP ${res.status}`)
       const text = await res.text()
       try {
         const v = JSON.parse(text)

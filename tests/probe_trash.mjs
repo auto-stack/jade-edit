@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 // probe_trash.mjs — PLAN-016 T-01 回收站四组案 + CJK 全弧直证（双臂）+
-// 嵌套目录保结构案（merged 探针域）+ 悬空自愈翻转回。
+// 嵌套目录保结构案（merged 探针域）+ 悬空自愈翻转回。PLAN-028 T-02：
+// b8/b11/b12 split 侧 exists CJK 三案 D-19 口径 skip 解除（POST 形断言
+// ——全案双臂；015 回执 g① 翻绿同源）。
 //
 //   merged 臂  临时探针工程（e2e/.runtime/probe-trash/，脚本生成——pac.at
 //              render vm + src/back 整树拷贝 + probe_support.at[嵌套目录
@@ -84,9 +86,9 @@ const RET_FIELD = {
   'r13-dotdot': 'r13', 'r14-missing': 'r14', 'r15-restore-cjk': 'r15',
   'r19-restore-bytes': 'r19', 'r17-purge': 'r17', 'r18-purge-idem': 'r18',
 }
-// 存在性翻转对（b* 字段；nested = merged 探针域期望；splitSkip = exists
-// GET query CJK 面——D-19 同款口径，merged 专属断言，split 侧由磁盘终态
-// 断言承载）
+// 存在性翻转对（b* 字段；nested = merged 探针域期望。PLAN-028 T-02：
+// b8/b11/b12 exists GET CJK 三案 D-19 口径 skip 解除——POST 形断言，
+// 全案双臂）
 const BOOLS = [
   { id: 'b1-trash-bytes', field: 'b1', merged: true, split: true },
   { id: 'b2-trash-trasha', field: 'b2', merged: true, split: true },
@@ -95,11 +97,11 @@ const BOOLS = [
   { id: 'b5-trash-deep-nested', field: 'b5', merged: true, split: false },
   { id: 'b6-trash-suffix', field: 'b6', merged: true, split: true },
   { id: 'b7-trash-plain', field: 'b7', merged: true, split: true },
-  { id: 'b8-trash-cjk', field: 'b8', merged: true, splitSkip: true },
+  { id: 'b8-trash-cjk', field: 'b8', merged: true, split: true },
   { id: 'b9-trash-entry-gone', field: 'b9', merged: false, split: false },
   { id: 'b10-root-back', field: 'b10', merged: true, split: true },
-  { id: 'b11-trash-cjk-gone', field: 'b11', merged: false, splitSkip: true },
-  { id: 'b12-root-cjk-back', field: 'b12', merged: true, splitSkip: true },
+  { id: 'b11-trash-cjk-gone', field: 'b11', merged: false, split: false },
+  { id: 'b12-root-cjk-back', field: 'b12', merged: true, split: true },
   { id: 'b13-trash-gone', field: 'b13', merged: false, split: false },
   { id: 'b14-no-evil', field: 'b14', merged: false, split: false },
   { id: 'b15-root-b-back', field: 'b15', merged: true, split: true },
@@ -466,49 +468,49 @@ async function runSplitArm() {
     if (await post('create_page', { title: '中文回收' }) !== '中文回收.ad') throw new Error('setup 中文回收 failed')
     // ① 改道
     await exec('r0-del-bytes', 'delete_page', { path: 'Bytes.ad' })
-    bools['b1-trash-bytes'] = boolOf(await get('exists', { path: '.trash/Bytes.ad' }))
+    bools['b1-trash-bytes'] = boolOf(await post('exists', { path: '.trash/Bytes.ad' }))
     await exec('r1-del-page', 'delete_page', { path: 'TrashA.ad' })
-    bools['b2-trash-trasha'] = boolOf(await get('exists', { path: '.trash/TrashA.ad' }))
-    bools['b3-root-gone'] = boolOf(await get('exists', { path: 'TrashA.ad' }))
+    bools['b2-trash-trasha'] = boolOf(await post('exists', { path: '.trash/TrashA.ad' }))
+    bools['b3-root-gone'] = boolOf(await post('exists', { path: 'TrashA.ad' }))
     const links = { l1: await get('link_index', { path: '', depth: '4' }) }
     await exec('r2-del-dir', 'delete_dir', { path: 'BoxDel' })
-    bools['b4-trash-boxpage'] = boolOf(await get('exists', { path: '.trash/BoxDel/BoxPage.ad' }))
-    bools['b5-trash-deep-nested'] = boolOf(await get('exists', { path: '.trash/BoxDel/sub/Deep.ad' }))
+    bools['b4-trash-boxpage'] = boolOf(await post('exists', { path: '.trash/BoxDel/BoxPage.ad' }))
+    bools['b5-trash-deep-nested'] = boolOf(await post('exists', { path: '.trash/BoxDel/sub/Deep.ad' }))
     // ② 冲突后缀
     await exec('r3-del-b1', 'delete_page', { path: 'TrashB.ad' })
     await exec('r4-recreate', 'create_page', { title: 'TrashB' })
     await exec('r5-del-b2', 'delete_page', { path: 'TrashB.ad' })
-    bools['b6-trash-suffix'] = boolOf(await get('exists', { path: '.trash/TrashB--1.ad' }))
-    bools['b7-trash-plain'] = boolOf(await get('exists', { path: '.trash/TrashB.ad' }))
+    bools['b6-trash-suffix'] = boolOf(await post('exists', { path: '.trash/TrashB--1.ad' }))
+    bools['b7-trash-plain'] = boolOf(await post('exists', { path: '.trash/TrashB.ad' }))
     // ⑤ CJK 删（POST body）
     await exec('r6-del-cjk', 'delete_page', { path: '中文回收.ad' })
-    // b8 存在性 split 侧跳过（exists GET query CJK——D-19 口径）
-    bools['b8-trash-cjk'] = '(skip)'
+    // b8 存在性（PLAN-028：POST 形断言——skip 解除，双臂全案）
+    bools['b8-trash-cjk'] = boolOf(await post('exists', { path: '.trash/中文回收.ad' }))
     // 清单（GET 无参）
     const lists = { r7: await get('trash_list', {}) }
     // ③ restore
     await exec('r8-restore', 'trash_restore', { entry: '.trash/TrashA.ad' })
-    bools['b9-trash-entry-gone'] = boolOf(await get('exists', { path: '.trash/TrashA.ad' }))
-    bools['b10-root-back'] = boolOf(await get('exists', { path: 'TrashA.ad' }))
+    bools['b9-trash-entry-gone'] = boolOf(await post('exists', { path: '.trash/TrashA.ad' }))
+    bools['b10-root-back'] = boolOf(await post('exists', { path: 'TrashA.ad' }))
     links.l2 = await get('link_index', { path: '', depth: '4' })
     await exec('r9-restore-suffix', 'trash_restore', { entry: '.trash/TrashB--1.ad' })
-    bools['b15-root-b-back'] = boolOf(await get('exists', { path: 'TrashB.ad' }))
+    bools['b15-root-b-back'] = boolOf(await post('exists', { path: 'TrashB.ad' }))
     await exec('r10-conflict', 'trash_restore', { entry: '.trash/TrashB.ad' })
     await exec('r11-no-prefix', 'trash_restore', { entry: 'TrashA.ad' })
     await exec('r12-dotdot-trash', 'trash_restore', { entry: '.trash/../evil.ad' })
     await exec('r13-dotdot', 'trash_restore', { entry: '../evil.ad' })
     await exec('r14-missing', 'trash_restore', { entry: '.trash/no-such.ad' })
     await exec('r15-restore-cjk', 'trash_restore', { entry: '.trash/中文回收.ad' })
-    // b11/b12 存在性 split 侧跳过（exists GET query CJK——D-19 口径）
-    bools['b11-trash-cjk-gone'] = '(skip)'
-    bools['b12-root-cjk-back'] = '(skip)'
+    // b11/b12 存在性（PLAN-028：POST 形断言——skip 解除，双臂全案）
+    bools['b11-trash-cjk-gone'] = boolOf(await post('exists', { path: '.trash/中文回收.ad' }))
+    bools['b12-root-cjk-back'] = boolOf(await post('exists', { path: '中文回收.ad' }))
     await exec('r19-restore-bytes', 'trash_restore', { entry: '.trash/Bytes.ad' })
     // ④ purge
     lists.r16 = await get('trash_list', {})
     await exec('r17-purge', 'trash_purge', {})
-    bools['b13-trash-gone'] = boolOf(await get('exists', { path: '.trash' }))
+    bools['b13-trash-gone'] = boolOf(await post('exists', { path: '.trash' }))
     await exec('r18-purge-idem', 'trash_purge', {})
-    bools['b14-no-evil'] = boolOf(await get('exists', { path: 'evil.ad' }))
+    bools['b14-no-evil'] = boolOf(await post('exists', { path: 'evil.ad' }))
     return {
       returns, bools, lists, links, nested: false,
       diskCheck: (failures) => diskAsserts(back.workspace, 'split', failures, { nested: false }),
@@ -543,13 +545,13 @@ console.log('[probe-trash] 存在性翻转对逐案对读：')
 const normBool = (v) => (v === '1' ? 'true' : v === '0' ? 'false' : v)
 for (const b of BOOLS) {
   const m = normBool(merged.bools[b.id])
-  const s = b.splitSkip ? '(skip)' : normBool(split.bools[b.id])
+  const s = normBool(split.bools[b.id])
   const em = b.merged ? 'true' : 'false'
-  const es = b.splitSkip ? '(skip)' : (b.split ? 'true' : 'false')
-  const ok = m === em && (b.splitSkip || s === es)
-  // agree 只跟踪双臂应相等的案（b5 嵌套/b8/b11/b12 D-19 口径 arm-variant 除外）
-  if (!b.splitSkip && b.merged === b.split && m !== s) agree = false
-  console.log(`  [${b.id}] ${ok ? 'PASS' : 'FAIL'} — merged=${m}（expect ${em}） split=${s}（expect ${es}${b.splitSkip ? '——exists GET CJK D-19 口径' : b.merged !== b.split ? '——嵌套造档通道探针域' : ''}）`)
+  const es = b.split ? 'true' : 'false'
+  const ok = m === em && s === es
+  // agree 只跟踪双臂应相等的案（b5 嵌套造档通道探针域 arm-variant 除外）
+  if (b.merged === b.split && m !== s) agree = false
+  console.log(`  [${b.id}] ${ok ? 'PASS' : 'FAIL'} — merged=${m}（expect ${em}） split=${s}（expect ${es}${b.merged !== b.split ? '——嵌套造档通道探针域' : ''}）`)
   if (!ok) failures.push(`bool ${b.id}: merged=${m}/${em} split=${s}/${es}`)
 }
 console.log('[probe-trash] 清单 contains 对读：')

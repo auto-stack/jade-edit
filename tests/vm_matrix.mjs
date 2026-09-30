@@ -50,12 +50,12 @@
 //             World」口径——子步收尾复原该态）
 //   10c create 悬空建页弧线（PLAN-005）：悬空行点击 → 确认弹层 → 取消
 //             零落盘 → 创建 → 落盘 + 链接翻转（触发集 v2）→ 树新行
-//             （G3）→ 行翻转；CJK 开档播种子步仅 merged 臂（D-19 同款
-//             口径——split 以磁盘/翻转面断言替代）。子步不占检查位
+//             （G3）→ 行翻转；CJK 开档播种子步双臂（PLAN-028——三契约
+//             POST 化收口，split 同单）。子步不占检查位
 //             （组数不变 12），fail 即臂败
 //   11 find   查找面板双模式（PLAN-004）：快开（Ctrl+P·files——开面板/
 //             input 锚/type_text 过滤[Pro→Projects 独行 + CJK 定理→CAP
-//             独行；CJK 拾取导航子步仅 merged 臂——D-19 同款口径]）+
+//             独行 + CJK 拾取导航子步双臂——PLAN-028 POST 化收口]）+
 //             全文检索（Ctrl+Shift+F·text——切模式/未运行提示/CJK 查询
 //             「任务列表」[POST 通道——D-19 面无，双臂同跑]/行导航面板
 //             保持开/运行后空态）+ **alias 检索子步（PLAN-012——fs 造
@@ -88,8 +88,8 @@
 //             面无；CJK 改名/自链/清洗/冲突/缺失案由 tests/probe_rename
 //             .mjs 八案双臂直证覆盖）。执行序在 11 后 9 前
 //   13 file   树文件管理全弧线（PLAN-007；八子步——新建 index[ASCII 根
-//             落位]/同名幂等/取消零落盘/CJK 新页[merged 导航 + split 磁
-//             盘，D-19 口径]/删除预览+取消[3 处入链已知答案——index/
+//             落位]/同名幂等/取消零落盘/CJK 新页[导航断言双臂——PLAN-028
+//             POST 化收口]/删除预览+取消[3 处入链已知答案——index/
 //             Tasks/Hello World，T-03 实勘校正]/删除弧线[磁盘消失+
 //             tab 关闭邻档+树行消失]/悬空翻转[开 index 出链行 CAP 定
 //             理（悬空）——PLAN-003 已知答案反向]/未选中 no-op。删除
@@ -127,14 +127,14 @@
 //             probe_dir_ops m①..mb⑨ 双臂直证覆盖）**
 //   14 meta   标签面板+wanted 模式八子步 + inline tag 子步 + 属性子步
 //             六案（PLAN-008 + PLAN-009 + **PLAN-011**；多件同组——find
-//             组先例。属性子步：untitled no-op/预填回显[目标页双臂异位
-//             merged=CAP 定理/split=Tasks，D-19]/取消零落盘[磁盘零泄漏
+//             组先例。属性子步：untitled no-op/预填回显[目标页双臂同单
+//             CAP 定理——PLAN-028 POST 化收口]/取消零落盘[磁盘零泄漏
 //             面]/tags 保存+面板即时刷/alias 帽烟别名 exists 翻转
 //             [links_json 双臂]/删值弧线[全空白=删键]/保存流互作
 //             [frontmatter 存续]；弹层定位=标题锚 content 子树——D-27④
 //             同款纪律）。tags 子步：面板开 7 tag
 //             行[语料实勘全集——执行期校正：7 非计划记的 6，Hello
-//             World.ad 实有 demo]/展开导航 ASCII 双臂+CJK 仅 merged[D-19]/
+//             World.ad 实有 demo]/展开导航双臂[CJK CAP 案 PLAN-028 双臂化]/
 //             Save 刷新外造新行。wanted 子步：模式入口无 input 行无检索
 //             钮/语料已知答案页面名（1）【执行期校正：悬空全集=首页+页
 //             面名，首页已被 10c 消缺故不在此位】+外造 Wanted Target（1）/
@@ -728,7 +728,7 @@ async function runArm(arm, port) {
     const panelOk = panelText1.includes('首页（悬空）') && panelText1.includes('CAP 定理')
     check('10', 'link', panelOk, `link_index 已知答案（首页悬空存在判）+ 面板反链三源显示名（首页/CAP 定理/Tasks——PLAN-014 反链行名化 ⑤）+ 出链段恒 target 文本（CAP 定理钮/首页悬空——⑥ 零变化面）=${panelOk}`)
     // 点击反链行 → 开来源档 index.ad（ASCII 路径——HTTP 通道可导航；
-    // CJK 路径 GET query 解码缺口见 D-19，CJK 导航子步仅 merged 臂）
+    // CJK 导航子步 PLAN-028 双臂化——三契约 POST 化收口）
     await callTool('autoui_action', { element_id: blBtn1Id, action: 'press' })
     await stateIs('active_title', 'wiki/index')
     await stateHas('active_body', 'Jade Garden 测试知识库')
@@ -742,18 +742,16 @@ async function runArm(arm, port) {
       await sleep(300)
     }
     // 出链行点击（ASCII 目标 Hello World——两轨同单；**区域锚**：树行
-    // 显示名同名后 pressPanelRow 消歧——PLAN-013）；随后 CJK 目标子步
-    // 仅 merged（D-19 上游缺口：HTTP GET query UTF-8 不解码，CJK 路径
-    // exists/read_wiki 全败——先在缺口，vue/split 轨点 CJK 树行同败，
-    // 本切片首测暴露；unlock = 上游 HTTP 层解码修复）
+    // 显示名同名后 pressPanelRow 消歧——PLAN-013）；CJK 目标子步
+    // PLAN-028 双臂化（三契约 POST 化——D-19 GET query 缺口 repo 侧收口
+    // ，split 臂 CJK exists/read_wiki 走 body 免疫域在册，receipt g①/g②
+    // 翻绿直证同源）
     await pressPanelRow('Hello World')
     await stateIs('active_title', tabTitleOf(TARGET_LABEL))
     await stateHas('active_body', PARA_ANCHOR)
-    if (arm === 'merged') {
-      await pressPanelRow('CAP 定理')
-      await stateIs('active_title', 'wiki/CAP 定理')
-      await stateHas('active_body', 'CAP 定理指出')
-    }
+    await pressPanelRow('CAP 定理')
+    await stateIs('active_title', 'wiki/CAP 定理')
+    await stateHas('active_body', 'CAP 定理指出')
     // 空态（无激活档）：文件→新建（untitled，path 空 → 行集空）→ 双空态
     // 文本（stateIs 通过后视图渲染滞后一拍——轮询快照，同上款）
     await pressButton('文件', { exact: true })
@@ -879,7 +877,9 @@ async function runArm(arm, port) {
     await pressActiveTabClose('Mention A')
     await pressTab('Tasks')
     await pressActiveTabClose('Tasks')
-    await stateIs('tab_count', arm === 'merged' ? '3' : '2')
+    // tab_count=3 两臂同单（PLAN-028：CAP tab 由 check 10 CJK 导航子步
+    // 双臂开档——[HW,index,CAP] tab 序两臂同构，check 13 已知答案同基）
+    await stateIs('tab_count', '3')
     await pressTab('Hello World')
     await stateIs('active_title', tabTitleOf(TARGET_LABEL))
 
@@ -1072,8 +1072,8 @@ async function runArm(arm, port) {
     // 10c 建页弧线（PLAN-005 T-04；子步不占检查位——组数不变 12）：悬空行
     // 点击 → 确认弹层（create_confirm_open/create_target 态）→ 取消零落盘
     // → 创建 → 落盘 → 链接翻转（触发集 v2）→ 树新行（G3）→ 行翻转；
-    // CJK 开档导航子步仅 merged 臂（D-19 同款口径——split 以磁盘/翻转面
-    // 断言替代，active 保持 Hello World）。取消路前置（创建后行翻转为可
+    // CJK 开档导航子步 PLAN-028 双臂化（三契约 POST 化收口——split 同单
+    // ，原 D-19 磁盘/翻转面替代口径消缺）。取消路前置（创建后行翻转为可
     // 点击钮——同一悬空行素材先走取消路）。弹层按钮 press = 「创建」钮
     // （全树唯一）父 footer 行兄弟域（三弹恒渲染 + 弹层根匿名 col——T-02
     // 实勘）。
@@ -1126,9 +1126,9 @@ async function runArm(arm, port) {
     // 激活语义）。
     await pressTab('Hello World')
     await stateIs('active_title', tabTitleOf(TARGET_LABEL))
-    // 翻转断言：悬空钮消失 + 面板行钮在（'首页' 与 tab 题钮同名[merged 新
-    // 档 tab 在]——计数消歧：merged ≥2[tab+行]、split ≥1[行]；行钮 = 快照
-    // 序最后一个——tab 条先于右面板渲染）。
+    // 翻转断言：悬空钮消失 + 面板行钮在（'首页' 与 tab 题钮同名[创建成
+    // 功即开新档 tab——PLAN-028 双臂：split 开档随 POST 化可达]——计数
+    // ≥2[tab+行]；行钮 = 快照序最后一个——tab 条先于右面板渲染）。
     let treeRowOk = false
     let flipBtnOk = false
     let homeBtnsN = 0
@@ -1154,15 +1154,15 @@ async function runArm(arm, port) {
         collectTree(exr)
       }
       treeRowOk = homeTreeBtns >= 2
-      flipBtnOk = !t.includes('首页（悬空）') && homeBtns.length >= (arm === 'merged' ? 2 : 1)
+      flipBtnOk = !t.includes('首页（悬空）') && homeBtns.length >= 2
       if (treeRowOk && flipBtnOk) break
       if (Date.now() > dl) break
       await sleep(300)
     }
-    let navNote = ''
-    if (arm === 'merged') {
-      // CJK 导航子步：press 面板翻转行（快照序最后一个 '首页' 钮）→ 开档
-      // + 播种模板断言。
+    // CJK 开档导航子步（PLAN-028 双臂化——三契约 POST 化收口，split
+    // 开档随 exists/read_wiki body 通道可达）：press 面板翻转行（快照序
+    // 最后一个 '首页' 钮）→ 开档 + 播种模板断言。
+    {
       const t = await snapshot()
       const homeBtns = []
       const collect = (n) => {
@@ -1175,15 +1175,9 @@ async function runArm(arm, port) {
       if (!/status: ok/.test(res)) throw new Error(`press 首页 row not ok: ${res}`)
       await stateIs('active_title', '首页')
       await stateHas('active_body', '# 首页')
-      navNote = '/CJK 开档播种（merged）'
-    } else {
-      // split 臂 D-19 口径：CJK 开档导航全败（GET query 不解码）——active
-      // 保持 Hello World（Open not-found 落 save_note；弹层已闭/重取已翻）。
-      await stateIs('active_title', tabTitleOf(TARGET_LABEL))
-      navNote = '/CJK 开档仅 merged（D-19；split 以磁盘+翻转断言替代）'
     }
     const createOk = cancelOk && createDiskOk && treeRowOk && flipBtnOk
-    console.log(`  [10c create] ${createOk ? 'PASS' : 'FAIL'} — 建页弧线（取消零落盘/创建落盘/链接翻转/树新行/行翻转${navNote}）`)
+    console.log(`  [10c create] ${createOk ? 'PASS' : 'FAIL'} — 建页弧线（取消零落盘/创建落盘/链接翻转/树新行/行翻转/CJK 开档播种导航双臂[PLAN-028]）`)
     if (!createOk) {
       results.push({ id: '10c', name: 'create', ok: false })
       throw new Error('10c 建页弧线断言失守')
@@ -1210,18 +1204,17 @@ async function runArm(arm, port) {
     const metaTagLabels = ['tasks · 1', 'distributed-systems · 1', 'theory · 1', 'demo · 1', 'project-management · 1', 'index · 1', 'jade-garden · 1']
     const metaTagsOk = metaTagLabels.every((l) => metaTagsSnap.includes(`"${l}"`))
     if (!metaTagsOk) throw new Error('tags 面板 7 tag 行不全（已知答案失守）')
-    // tags ②：展开页行 + 导航（ASCII tasks 双臂；CJK CAP 仅 merged——
-    // D-19 口径，check 10 同款；单选手风琴换选语义随在）
+    // tags ②：展开页行 + 导航（双臂——CJK CAP 子步 PLAN-028 双臂化：
+    // page_meta/read_wiki/exists POST 化收口，split 臂 CJK 开档可达；
+    // 单选手风琴换选语义随在）
     await pressButton('tasks · 1', { exact: true })
     await stateIs('tag_expanded', 'tasks')
     await pressButton('wiki/Tasks.ad', { exact: true })
     await stateIs('active_title', 'wiki/Tasks')
-    if (arm === 'merged') {
-      await pressButton('distributed-systems · 1', { exact: true })
-      await stateIs('tag_expanded', 'distributed-systems')
-      await pressButton('wiki/CAP 定理.ad', { exact: true })
-      await stateIs('active_title', 'wiki/CAP 定理')
-    }
+    await pressButton('distributed-systems · 1', { exact: true })
+    await stateIs('tag_expanded', 'distributed-systems')
+    await pressButton('wiki/CAP 定理.ad', { exact: true })
+    await stateIs('active_title', 'wiki/CAP 定理')
     // tags ③：空态不设运行时断言（§6——v1 以「面板开+行集非空」为常态
     // 断言，空态走 wanted ⑦ 同判口径）
     // tags ④：Save 后刷新——外造带 tag 档 → 保存 → 面板新行（List<map>
@@ -1262,9 +1255,9 @@ async function runArm(arm, port) {
     if (!metaInlineBaselineOk) throw new Error('inline ⑧ 语料基线漂移（7 tag 行不全或 block-project-a 入集）')
     // meta 属性子步（PLAN-011 T-04；组内子步不占检查位）：页面属性弹层
     // 六子步弧线（untitled no-op/预填回显/改值保存+tags 面板即时刷/alias
-    // 解析 exists 翻转/取消零落盘/删值弧线/保存流互作）。目标页双臂异位
-    //（merged=CAP 定理[tags ② 已开档]/split=Tasks[D-19 CJK 开档缺——tags
-    // ② 同款口径]）。弹层内定位 = 标题锚「页面属性」→ content 子树扫
+    // 解析 exists 翻转/取消零落盘/删值弧线/保存流互作）。目标页双臂同单
+    //（CAP 定理——PLAN-028 双臂化[page_meta POST 化收口]；tags ② 已开
+    // 档两臂同构）。弹层内定位 = 标题锚「页面属性」→ content 子树扫
     //（各闭态弹层恒渲染 D-23③——全树首匹配会误中他弹层按钮/input，
     // F-R10-1 修复窗同款纪律）。预置：Hello World body 尾 fs 直写
     // [[帽烟别名]]（悬空相位素材——MetaGo 刷新族 LinksRefreshOf 收口）。
@@ -1297,12 +1290,14 @@ async function runArm(arm, port) {
       const res = await callTool('autoui_action', { element_id: elementIdOf(btn), action: 'press' })
       if (!/status: ok/.test(res)) throw new Error(`press ${buttonText}(meta) not ok: ${res}`)
     }
-    const metaTargetTitle = arm === 'merged' ? 'wiki/CAP 定理' : 'wiki/Tasks'
-    const metaTargetRel = arm === 'merged' ? 'wiki/CAP 定理.ad' : 'wiki/Tasks.ad'
-    const metaTargetTags0 = arm === 'merged' ? 'distributed-systems,theory' : 'tasks'
-    const metaTargetTab = arm === 'merged' ? 'CAP 定理' : 'Tasks'
+    // 属性弹层目标 PLAN-028 双臂化（page_meta POST——split 臂 CJK 目标
+    // 解除 D-19 降级，两臂同单 wiki/CAP 定理[语料已知答案]）
+    const metaTargetTitle = 'wiki/CAP 定理'
+    const metaTargetRel = 'wiki/CAP 定理.ad'
+    const metaTargetTags0 = 'distributed-systems,theory'
+    const metaTargetTab = 'CAP 定理'
     const metaTargetTitle0 = metaTargetTab
-    const metaTargetTitleNew = arm === 'merged' ? 'CAP 定理日志' : 'Tasks 日志'
+    const metaTargetTitleNew = 'CAP 定理日志'
     const hwBodyPath = path.join(FIXTURE, 'wiki', 'Hello World.ad')
     fs.writeFileSync(hwBodyPath, fs.readFileSync(hwBodyPath, 'utf8') + '\n[[帽烟别名]]\n', 'utf8')
     // ①a untitled no-op：ActNew → 未命名 → 入口 press → meta_open 恒 false
@@ -1522,7 +1517,7 @@ async function runArm(arm, port) {
     await pressButton('切换反链', { exact: true })
     await stateIs('backlinks_open', 'true')
     check('14', 'meta', metaTagsOk && metaSaveOk && metaInlineOk && metaInlineBaselineOk && wantedNoInput && wantedKnown && wantedRowOk && wantedCancelOk && wantedFlipOk && wantedGoneOk && wantedDiskOk && wantedEmptyOk && metaPrefillOk && metaTitlePrefillOk && metaCancelOk && metaSaveOk2 && metaAliasOk && metaDelDiskOk && metaInterOk && metaTitleDiskOk && metaTitleTreeOk && metaTitleClearDiskOk && metaTitleFallOk,
-      `meta 组八子步 + inline 子步 + 属性子步（tags：面板开 7 tag 行[语料实勘全集]/展开导航 ASCII 双臂+CJK 仅 merged[D-19]/Save 刷新外造新行；inline：body #inline-meta 档保存后面板新行+语料基线零漂移回归[忽略面负向无 block-project-a]；wanted：模式入口无 input 行无检索钮/语料已知答案 页面名（1）+外造 Wanted Target（1）/取消零落盘/创建开档+消缺+exists 翻转+模板逐字节/空态闭环（无悬空链接）；属性[PLAN-011+013]：untitled no-op/预填回显[tags+title 位首]/title 编辑弧线[磁盘 title 行受控改写+树行显示即时刷新]+清空回落[删键回 stem 显示]/取消零落盘/tags 保存+面板即时刷/alias 帽烟别名 exists 翻转[links_json 双臂]/删值弧线[空空白=删键]/保存流互作[frontmatter 存续]——目标页双臂异位 merged=CAP 定理/split=Tasks[D-19]）`)
+      `meta 组八子步 + inline 子步 + 属性子步（tags：面板开 7 tag 行[语料实勘全集]/展开导航双臂+CJK CAP 案[PLAN-028 双臂化]/Save 刷新外造新行；inline：body #inline-meta 档保存后面板新行+语料基线零漂移回归[忽略面负向无 block-project-a]；wanted：模式入口无 input 行无检索钮/语料已知答案 页面名（1）+外造 Wanted Target（1）/取消零落盘/创建开档+消缺+exists 翻转+模板逐字节/空态闭环（无悬空链接）；属性[PLAN-011+013]：untitled no-op/预填回显[tags+title 位首]/title 编辑弧线[磁盘 title 行受控改写+树行显示即时刷新]+清空回落[删键回 stem 显示]/取消零落盘/tags 保存+面板即时刷/alias 帽烟别名 exists 翻转[links_json 双臂]/删值弧线[空空白=删键]/保存流互作[frontmatter 存续]——目标页双臂同单 CAP 定理[PLAN-028 POST 化收口]）`)
 
     // —— 弹层/结构锚助手族（PLAN-012/014 纪律修订形态；**PLAN-016 前移
     // **——check 11 trash 子步先用[＋新建/删除弹层]，声明位从 check 13
@@ -1680,8 +1675,8 @@ async function runArm(arm, port) {
     // 恒为臂内最后一项）；先关反链面板（check 10 开着）——find 行断言免
     // 反链行 .ad 路径文本重叠。快开：input 锚 + 空 q 全量 5 行 + 过滤
     //（Pro→Projects 独行；CJK 定理→CAP 独行——纯前端 casefold contains
-    // 双臂同跑）+ 拾取即关（Projects[ASCII 双臂]；CAP[CJK 导航——仅
-    // merged 臂，D-19 同款口径：HTTP GET query CJK 不解码 split 全败]）。
+    // 双臂同跑）+ 拾取即关（Projects/CAP——CJK 拾取导航子步 PLAN-028
+    // 双臂化：三契约 POST 化收口，split 同单）。
     // 检索：text 切模式 + 未运行提示 + CJK 查询「任务列表」（POST 通道
     // ——D-19 面无，双臂同跑）→ Hello World 行（ASCII 路径导航双臂）+
     // 面板保持开 + 运行后空态。
@@ -1718,7 +1713,8 @@ async function runArm(arm, port) {
     await pressPanelRow('Projects')
     await stateIs('active_title', 'wiki/Projects')
     await stateIs('find_open', 'false')
-    // CJK 文件名过滤（重开面板；行断言双臂，拾取导航子步仅 merged）
+    // CJK 文件名过滤（重开面板；行断言 + 拾取导航子步双臂——PLAN-028
+    // 三契约 POST 化收口）
     await pressButton('视图', { exact: true })
     await pressButton('快速打开', { exact: true })
     const findTree1 = await snapshot()
@@ -1728,11 +1724,9 @@ async function runArm(arm, port) {
     const cjkRows = await panelRowTexts()
     const cjkFilterOk = cjkRows.includes('CAP 定理') && !cjkRows.includes('Projects')
     if (!cjkFilterOk) throw new Error('CJK 文件名过滤「定理」未隔离 CAP 定理')
-    if (arm === 'merged') {
-      await pressPanelRow('CAP 定理')
-      await stateIs('active_title', 'wiki/CAP 定理')
-      await stateIs('find_open', 'false')
-    }
+    await pressPanelRow('CAP 定理')
+    await stateIs('active_title', 'wiki/CAP 定理')
+    await stateIs('find_open', 'false')
     // 检索子步（text 模式）
     await pressButton('视图', { exact: true })
     await pressButton('全文检索', { exact: true })
@@ -2106,7 +2100,7 @@ async function runArm(arm, port) {
     await pressButton('收起', { exact: true })
     await stateIs('find_open', 'false')
     check('11', 'find', recentsReplacedOk && proOk && cjkFilterOk && notRanOk && hitOk && emptyFindOk && aliasHitOk && trashCopyOk && trashRerouteOk && trashRowOk && purgeCopyOk && purgeCancelOk && trashEmptyOk && purgeDiskOk && trashRows2Ok && trashTreeInvisibleOk && trashSaveBackOk && restoreAllEmptyOk && restoreAllDiskOk && orphNoInput && orphListedOk && orphClearedOk && orphDanglingOk && recAccumOk && recOrderOk && recDedupOk && recCapOk && recDiskOk && snapNoJade,
-      `快开（input 锚/空q recents 替换面[PLAN-020 断言修订——最近段+已开档行+未开档排除]/Pro→Projects 独行拾取即关/定理→CAP 独行${arm === 'merged' ? '+CJK 拾取开档' : '（CJK 拾取仅 merged 臂 D-19）'}）+ 检索（text 切换/未运行提示/CJK「任务列表」POST 双臂命中/行导航面板保持开/运行后空态）+ alias 检索（PLAN-012——fs 造档→搜「检别名」→AliasTgt.ad 行→拾取开档双臂）+ trash 模式[PLAN-016 ⑥：＋新建 TrashMe→菜单删除 弹层文案「将移入回收站」+改道磁盘面→回收站第四模式 清单行→清空强确认[M=1 派生+取消留置零落盘]→清空→空态闭环+磁盘 .trash 消]+ **trash 增强 ⑦[PLAN-019：双条目清单→行点击预览[.trash 路径 tab 开 active_title=.trash/TrashR1+树不可见]+保存落回 .trash 原位[磁盘标记直证——可编辑口径]+恢复全部[循环 restore→清单空态+磁盘双档回根字节保真]]+ **⑧ orphans 第五模式[PLAN-020：无 input 负向面+fs 造纯孤页档入列[back walk 零树依赖]+行点击开档+造链清孤[ActSave 顺产重算行消]+悬空出链计入出链度[OrphanD 非孤——resolved 面直证]]+ ⑨ recents 弧线[PLAN-020：清 q[type_text 空]→「最近」段累积态→3 开[index/Tasks/Hello World ASCII 拾取]→头 3 行逆序→拾取即关→去重置顶[重拾 Tasks 头位]→容量截断[RecCap×12+ActDaily 树刷新→12 开→10 行 头 RecCap12 尾 RecCap3]]+ **⑩ 持久化逐行验[PLAN-021：⑨ 弧终态 ↔ .jade/recents.txt 磁盘逐行一致+快照免索引负向]**`)
+      `快开（input 锚/空q recents 替换面[PLAN-020 断言修订——最近段+已开档行+未开档排除]/Pro→Projects 独行拾取即关/定理→CAP 独行+CJK 拾取开档双臂[PLAN-028 POST 化收口]）+ 检索（text 切换/未运行提示/CJK「任务列表」POST 双臂命中/行导航面板保持开/运行后空态）+ alias 检索（PLAN-012——fs 造档→搜「检别名」→AliasTgt.ad 行→拾取开档双臂）+ trash 模式[PLAN-016 ⑥：＋新建 TrashMe→菜单删除 弹层文案「将移入回收站」+改道磁盘面→回收站第四模式 清单行→清空强确认[M=1 派生+取消留置零落盘]→清空→空态闭环+磁盘 .trash 消]+ **trash 增强 ⑦[PLAN-019：双条目清单→行点击预览[.trash 路径 tab 开 active_title=.trash/TrashR1+树不可见]+保存落回 .trash 原位[磁盘标记直证——可编辑口径]+恢复全部[循环 restore→清单空态+磁盘双档回根字节保真]]+ **⑧ orphans 第五模式[PLAN-020：无 input 负向面+fs 造纯孤页档入列[back walk 零树依赖]+行点击开档+造链清孤[ActSave 顺产重算行消]+悬空出链计入出链度[OrphanD 非孤——resolved 面直证]]+ ⑨ recents 弧线[PLAN-020：清 q[type_text 空]→「最近」段累积态→3 开[index/Tasks/Hello World ASCII 拾取]→头 3 行逆序→拾取即关→去重置顶[重拾 Tasks 头位]→容量截断[RecCap×12+ActDaily 树刷新→12 开→10 行 头 RecCap12 尾 RecCap3]]+ **⑩ 持久化逐行验[PLAN-021：⑨ 弧终态 ↔ .jade/recents.txt 磁盘逐行一致+快照免索引负向]**`)
 
     // 12 rename（PLAN-006 T-04）：重命名+反链改写全弧线（七子步——组内
     // 子步不占检查位，fail 即臂败，10c 同款）。素材 Projects.ad（ASCII
@@ -2323,8 +2317,8 @@ async function runArm(arm, port) {
     await pressInNewDialog('取消')
     await stateIs('new_open', 'false')
     const ghostOk = !fs.existsSync(path.join(FIXTURE, `${FILE_GHOST_NAME}.ad`))
-    // ⑷ CJK 新建：merged 导航断言 / split 磁盘断言（D-19 口径——CJK
-    // 开档 exists GET query 不解码，Open 落 not-found 不入 tab）
+    // ⑷ CJK 新建（PLAN-028 双臂化——导航断言两臂同单：exists/read_wiki
+    // POST 化收口，Open 入 tab 两臂可达）
     await pressExplorerPlus()
     await stateIs('new_open', 'true')
     await typeIntoNewInput(FILE_CJK_NAME)
@@ -2333,38 +2327,24 @@ async function runArm(arm, port) {
     let cjkNavOk = false
     for (const dl = Date.now() + 8000; ; ) {
       if (fs.existsSync(fileCjkPageFile)) {
-        if (arm === 'merged') {
-          let bodyOk = false
-          try { bodyOk = fs.readFileSync(fileCjkPageFile, 'utf8') === `# ${FILE_CJK_NAME}\n\n` } catch {}
-          cjkNavOk = bodyOk
-        } else {
-          cjkNavOk = true
-        }
+        let bodyOk = false
+        try { bodyOk = fs.readFileSync(fileCjkPageFile, 'utf8') === `# ${FILE_CJK_NAME}\n\n` } catch {}
+        cjkNavOk = bodyOk
       }
       if (cjkNavOk || Date.now() > dl) break
       await sleep(300)
     }
-    if (arm === 'merged') {
-      await stateIs('active_title', FILE_CJK_NAME)
-    } else {
-      await stateIs('active_title', FILE_NEW_NAME)
-    }
-    // ⑸ 删除预览 + 取消：树行点击 = 打开+选中。D-19 口径分野（10c/11
-    // 同款）：merged 树行开 CJK 档成功（激活既有 CAP tab——check 10
-    // 开过）→ 预览「1 个标签页将关闭」；split CJK 开档全败（exists
-    // GET query 不解码——Open 落 not-found 不入 tab）→ active 保持
-    // index、预览「无打开标签页」。ft_sel 两臂同置（OpenFile 前置）。
+    await stateIs('active_title', FILE_CJK_NAME)
+    // ⑸ 删除预览 + 取消：树行点击 = 打开+选中（PLAN-028 双臂化——树行
+    // 开 CJK 档两臂可达，激活既有 CAP tab[check 10 开过]——预览「1 个
+    // 标签页将关闭」两臂同单）。ft_sel 两臂同置（OpenFile 前置）。
     await pressTree('CAP 定理')
     await stateIs('ft_sel', FILE_DEL_REL)
-    if (arm === 'merged') {
-      await stateIs('active_title', 'wiki/CAP 定理')
-    } else {
-      await stateIs('active_title', FILE_NEW_NAME)
-    }
+    await stateIs('active_title', 'wiki/CAP 定理')
     await pressButton('文件', { exact: true })
     await pressButton('删除…', { exact: true })
     await stateIs('delete_open', 'true')
-    const delTabsLine = arm === 'merged' ? '1 个标签页将关闭，未保存修改将丢弃' : '无打开标签页'
+    const delTabsLine = '1 个标签页将关闭，未保存修改将丢弃'
     let delDlgOk = false
     let delDlgSnap = ''
     for (const dl = Date.now() + 8000; ; ) {
@@ -2379,21 +2359,16 @@ async function runArm(arm, port) {
     await stateIs('delete_open', 'false')
     const delCancelOk = fs.existsSync(path.join(FIXTURE, FILE_DEL_REL))
     // ⑥ 删除弧线：确认 → 磁盘消失 + tab 关闭面 + ft_sel 清空 + 树行
-    // 消失。激活落点两臂异位（实勘）：merged CAP 已开（tab 序
-    // [HW,index,CAP,首页,PX]）删 CAP(2) 同位保持→首页；split CAP 未
-    // 开（D-19）active 不变=index，CloseTabsOf 零关闭=零 tab 面分支
-    // （RemoveAt 修正两形态各证其一，互补）。
+    // 消失。激活落点两臂同单（PLAN-028 双臂化——CAP tab 两臂已开
+    // [tab 序同构]，删 CAP 同位保持→首页；RemoveAt 同位保持形态两臂
+    // 同证[原 split 零关闭分支随 D-19 分野消缺]）。
     await pressButton('文件', { exact: true })
     await pressButton('删除…', { exact: true })
     await stateIs('delete_open', 'true')
     await pressInDeleteDialog('删除')
     await stateIs('delete_open', 'false')
     await stateIs('ft_sel', '')
-    if (arm === 'merged') {
-      await stateIs('active_title', '首页')
-    } else {
-      await stateIs('active_title', FILE_NEW_NAME)
-    }
+    await stateIs('active_title', '首页')
     const capGone = !fs.existsSync(path.join(FIXTURE, FILE_DEL_REL))
     const tabCountFinal = parseInt((await stateText('tab_count')).match(/tab_count:\s*(\d+)/)?.[1] ?? '-1', 10)
     // ⑦ 悬空翻转：tab 题钮开 index（树行 index.ad 双行同名歧义——根
@@ -2456,16 +2431,13 @@ async function runArm(arm, port) {
     await stateHas('links_json', '{\\"target\\":\\"CAP 定理\\",\\"anchor\\":\\"\\",\\"exists\\":true')
     const dump18 = await callTool('autoui_state', {})
     const capFalseGoneOk = !dump18.includes('{\\"target\\":\\"CAP 定理\\",\\"anchor\\":\\"\\",\\"exists\\":false')
-    // 树行回（双臂——显示名行走 back walk 面）+ tab 可重开（**merged 臂
-    // **——pressTree CJK 开档 GET query D-19 口径，split 以 ft_sel/磁盘/
-    // links_json 翻转承载）
+    // 树行回（双臂——显示名行走 back walk 面）+ tab 可重开（PLAN-028
+    // 双臂化——pressTree CJK 开档 POST 化收口，两臂同单）
     const t18 = await snapshot()
     const exr18 = explorerRegion(t18)
     const capTreeBackOk = !!exr18 && !!findFirst(exr18, (n) => n.head.startsWith('button ') && elementIdOf(n) && ownText(n) === 'CAP 定理')
-    if (arm === 'merged') {
-      await pressTree('CAP 定理')
-      await stateIs('active_title', 'wiki/CAP 定理')
-    }
+    await pressTree('CAP 定理')
+    await stateIs('active_title', 'wiki/CAP 定理')
     // 收尾：关 find 面板 + 复原 Hello World（⑨ backlinks 面板语义前置）
     await pressButton('收起', { exact: true })
     await stateIs('find_open', 'false')
@@ -3162,7 +3134,7 @@ async function runArm(arm, port) {
       console.log(`  [13 dbg] ${JSON.stringify(fileParts)} tabPre=${JSON.stringify(tabCountPre)} tabPost=${JSON.stringify(tabCountPost)}`)
     }
     check('13', 'file', Object.values(fileParts).every((v) => v) && tabCountFinal >= 0,
-      `file 组八子步+F-R9-4 案+目录面四子步+目录二期三子步+今日笔记弧线[PLAN-015 ⑰ 开档+树新行+磁盘双时间戳+重入幂等]+trash 改道/恢复弧线[PLAN-016 ⑱ 清单见 .trash/wiki/CAP 定理.ad→行恢复→空态+磁盘回+exists 翻转回双向态+树行回+tab 重开]（新建 index 模板逐字节+树新行/同名幂等 tab+磁盘不变/取消零落盘/CJK 新页${arm === 'merged' ? '导航断言' : '磁盘断言[D-19]'}＋删除预览 3 处入链已知答案+tab 面「${delTabsLine}」+取消零落盘/删除弧线 磁盘消失+ft_sel 清空+激活${arm === 'merged' ? '落邻档首页[同位保持]' : '保持 index[CloseTabsOf 零关闭面，D-19]'}/悬空翻转 出链行 CAP 定理（悬空）/未选中 no-op/F-R9-4 删后提及刷新/PLAN-012：⊕新建目录[树新行+磁盘在]→Project X 移动[预填 wiki/tab 全量${DIR_BOX}/Project X/字节整迁/面板快照零变化/links_json 定向 diff 归一]→取消零落盘→冲突拒[弹层留置+磁盘零变化]；PLAN-014：重命名目录 弧线[双 input 弹层+预览 将移动 1 个 .ad 页+tab 全量路径变标题恒+磁盘整迁+面板零变化+links_json 归一 diff——三联对照目录级]/取消零落盘两形/删除目录[预览计数+悬空警示→tab 全关计数-1+树行消+悬空翻转 Project X（悬空）]——键程 menubar 共口；**PLAN-018：目录移动四子步[弹层双 input 弧线——磁盘整迁/旧目录消/tab 全量标题恒/面板零变化/links_json 归一——三联对照移动级三部曲收官+取消零落盘+循环卫拒弹层留置+5 层深档快开命中——depth 8 收口]**）`)
+      `file 组八子步+F-R9-4 案+目录面四子步+目录二期三子步+今日笔记弧线[PLAN-015 ⑰ 开档+树新行+磁盘双时间戳+重入幂等]+trash 改道/恢复弧线[PLAN-016 ⑱ 清单见 .trash/wiki/CAP 定理.ad→行恢复→空态+磁盘回+exists 翻转回双向态+树行回+tab 重开]（新建 index 模板逐字节+树新行/同名幂等 tab+磁盘不变/取消零落盘/CJK 新页导航断言双臂[PLAN-028 POST 化收口]＋删除预览 3 处入链已知答案+tab 面「${delTabsLine}」+取消零落盘/删除弧线 磁盘消失+ft_sel 清空+激活落邻档首页[同位保持双臂]/悬空翻转 出链行 CAP 定理（悬空）/未选中 no-op/F-R9-4 删后提及刷新/PLAN-012：⊕新建目录[树新行+磁盘在]→Project X 移动[预填 wiki/tab 全量${DIR_BOX}/Project X/字节整迁/面板快照零变化/links_json 定向 diff 归一]→取消零落盘→冲突拒[弹层留置+磁盘零变化]；PLAN-014：重命名目录 弧线[双 input 弹层+预览 将移动 1 个 .ad 页+tab 全量路径变标题恒+磁盘整迁+面板零变化+links_json 归一 diff——三联对照目录级]/取消零落盘两形/删除目录[预览计数+悬空警示→tab 全关计数-1+树行消+悬空翻转 Project X（悬空）]——键程 menubar 共口；**PLAN-018：目录移动四子步[弹层双 input 弧线——磁盘整迁/旧目录消/tab 全量标题恒/面板零变化/links_json 归一——三联对照移动级三部曲收官+取消零落盘+循环卫拒弹层留置+5 层深档快开命中——depth 8 收口]**）`)
 
     // 9 退出存盘：dirty → 文件菜单退出 → 确认弹层 → QuitSaveClose →
     // 磁盘三验 + 进程退出。恒为臂内最后一项（Process.exit 杀进程）。

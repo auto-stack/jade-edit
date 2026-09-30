@@ -57,9 +57,9 @@
 //                     深档（L1/L2/L3/L4/Deep5.ad——ws_join）→ depth 8 含/
 //                     depth 4 不含（**4→8 覆盖收窄收口直证**）+ search
 //                     内部 8 walk 命中
-//   p⑩ url_decode     split 臂 GET exists?path=<CJK 百分号序列> →
-//                     in-register 期望 false（D-19 维持则绿；翻 true =
-//                     上游已修——fail 即信号，probe+ledger 随改）
+//   p⑩ CJK exists     split 臂 POST exists{path:归档夹/中文乙.ad} → 1
+//                     （PLAN-028 翻绿随校——017 GET query D-19 立案面随三
+//                     契约 POST 化收口；0 = 免疫通道破——fail 即信号）
 //
 // **PLAN-019 T-01 扩**（SD-1901——move_dir 扩参 merge 九案；双臂）：
 //   mb① 合并基础       DirMg（MgA.ad）→ MgTgt/DirMg（MgB.ad 已在）merge=true
@@ -1177,12 +1177,11 @@ async function runSplitArm() {
       rs8c: await post('move_page', { path: 'OvT/OvA/OvP.ad', dir: 'UkD' }),
       rs8d: await post('trash_restore', { entry: '.trash/OvT/OvA/OvP.ad' }),
     }
-    // p⑩ url_decode 重勘（017 §10.6——家族重建窗后复测一次；in-register
-    // 期望 false[D-19：GET query 百分号序列不解码]。翻 true = 上游已修
-    // ——fail 即信号，probe+ledger 随改）。
-    const urlDecode = await get('exists', { path: '归档夹/中文乙.ad' })
+    // p⑩ CJK exists 随校（PLAN-028 翻新——017 GET query D-19 立案面随
+    // 三契约 POST 化收口：POST body 直通免疫域，期望 1 翻绿）。
+    const cjkExistsPost = await post('exists', { path: '归档夹/中文乙.ad' })
     return {
-      returns, links, nested: false, depth, deepSearch, linksM, linksMb, linksOv, restores, urlDecode,
+      returns, links, nested: false, depth, deepSearch, linksM, linksMb, linksOv, restores, cjkExistsPost,
       diskCheck: (failures) => diskAsserts(back.workspace, 'split', failures, { nested: false }),
     }
   } finally {
@@ -1324,17 +1323,18 @@ if (!ovLinkOk) failures.push('s9-link-net: overwrite 径 link_index 归一 diff 
   if (!deepOk) failures.push('p9-depth8: depth 8 统一断言失守')
 }
 
-// p⑩ url_decode 重勘（split 臂——in-register D-19 期望 0[GET bool 序列化
-// 裸 1/0——实勘：ASCII 路径 exists → 1]；百分号序列不解码 → CJK 路径
-// exists → 0。翻 1 = 上游已修——fail 即信号，probe+ledger 随改）。
+// p⑩ CJK exists POST 随校（PLAN-028 T-02——017 立案 GET query D-19 面
+// 随三契约 POST 化收口：POST body 直通免疫域，期望 1 翻绿[bool 序列化
+// 裸 1/0；015 回执 g① 同源]。0 = 免疫通道破——fail 即信号，probe+ledger
+// 随改）。
 {
-  const udOk = split.urlDecode === '0'
-  console.log(`  [p10-url-decode] ${udOk ? 'PASS' : 'FAIL'} — GET exists?path=归档夹/中文乙.ad → ${split.urlDecode}（D-19 维持 = 0——GET query 百分号序列不解码；翻 1 = 上游已修，probe+ledger 随改）`)
-  if (!udOk) failures.push(`p10-url-decode: 期望 0（D-19 在册——GET bool 序列化裸 1/0），实际 ${split.urlDecode}——上游 GET query 解码面疑似已修，probe+ledger 需随改`)
+  const udOk = split.cjkExistsPost === '1'
+  console.log(`  [p10-cjk-exists-post] ${udOk ? 'PASS' : 'FAIL'} — POST exists{path:归档夹/中文乙.ad} → ${split.cjkExistsPost}（D-19 repo 侧收口 = 1 翻绿——GET query 缺口随 POST 化免疫；0 = 免疫通道破，probe+ledger 随改）`)
+  if (!udOk) failures.push(`p10-cjk-exists-post: 期望 1（POST body CJK 翻绿——D-19 repo 侧收口），实际 ${split.cjkExistsPost}`)
 }
 
 if (failures.length > 0) {
   console.error(`\n[probe-dir-ops] FAIL（${failures.length} 项）:\n  - ${failures.join('\n  - ')}`)
   process.exit(1)
 }
-console.log(`\n[probe-dir-ops] RESULT: merged + split 全案通过（probe C 定谳[remove_dir 族可调]+delete_dir 六案+rename_dir 六案+嵌套案[merged]+链接零扰动归一 diff[r⑧+m⑦+mb⑨+s⑨]+磁盘逐字节/双复核/副作用圈定+双臂一致=${agree}；**PLAN-018：move_dir 六案+循环卫后代形/合并拒同名目录形[merged]+depth 8 统一[三深度采+5 层深档收口直证+search 8 walk]+url_decode 重勘[D-19 维持]；PLAN-019：move_dir merge 九案[合并基础/冲突后缀保双份/merge=false 拒径回归/循环卫先于合并/文件占位仍拒/.trash 域卫双面直证——F-R18-1 闭账/CJK 合并/无冲突链接零扰动]+mb② 冲突档=新档磁盘承载；PLAN-025：move_dir 四参三择+moves 映射返回形[dir 抽取随校全案四参化 both 零漂移+双臂 raw 字节等值升级/s②③ skip 零数据丢失[靶 twin 逐字节不动+源冲突档 .trash 改道+序号续接]/s④ overwrite 零数据丢失[靶旧改道+源落位+双映射对]/s⑤ 策略×卫正交八案/s⑥ fail-closed 白名单前置/s⑦ CJK skip/s⑧ trash_restore 回滚弧[去后缀名回源位+exists 卫拒+两步可回]/s⑨ 三择径链接零扰动/s⑩ moves 完整性[精确形+集形+幂等空对]]**）`)
+console.log(`\n[probe-dir-ops] RESULT: merged + split 全案通过（probe C 定谳[remove_dir 族可调]+delete_dir 六案+rename_dir 六案+嵌套案[merged]+链接零扰动归一 diff[r⑧+m⑦+mb⑨+s⑨]+磁盘逐字节/双复核/副作用圈定+双臂一致=${agree}；**PLAN-018：move_dir 六案+循环卫后代形/合并拒同名目录形[merged]+depth 8 统一[三深度采+5 层深档收口直证+search 8 walk]+url_decode 重勘面随 PLAN-028 收口[p⑩ CJK exists POST 翻绿]；PLAN-019：move_dir merge 九案[合并基础/冲突后缀保双份/merge=false 拒径回归/循环卫先于合并/文件占位仍拒/.trash 域卫双面直证——F-R18-1 闭账/CJK 合并/无冲突链接零扰动]+mb② 冲突档=新档磁盘承载；PLAN-025：move_dir 四参三择+moves 映射返回形[dir 抽取随校全案四参化 both 零漂移+双臂 raw 字节等值升级/s②③ skip 零数据丢失[靶 twin 逐字节不动+源冲突档 .trash 改道+序号续接]/s④ overwrite 零数据丢失[靶旧改道+源落位+双映射对]/s⑤ 策略×卫正交八案/s⑥ fail-closed 白名单前置/s⑦ CJK skip/s⑧ trash_restore 回滚弧[去后缀名回源位+exists 卫拒+两步可回]/s⑨ 三择径链接零扰动/s⑩ moves 完整性[精确形+集形+幂等空对]]**）`)

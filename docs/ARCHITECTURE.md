@@ -1304,7 +1304,46 @@ src/back/api.at           /api 契约（自有 Auto 源，与实现同 commit—
   载体零变化）；一次性件居 ignored e2e/.runtime（p27-* 在档可追溯，
   trace 解包件即用即删）。
 
-## 6. 测试体系（双轨一致性门；PLAN-001 T-04 换基迁移；SD-402 find 扩单；SD-502 create 扩单；SD-602 rename 扩单；SD-702 file 扩单；SD-802 meta 扩单；SD-902 meta/link 扩单；SD-1002 link 扩单；SD-1102 meta 属性子步扩单；SD-1202 dir/alias 子步扩单；SD-1302 显示名子步扩单；SD-1402 目录二期/面板名化子步扩单；SD-1502 daily/updated_at 子步扩单；SD-1602 trash 子步扩单；SD-1702 四级解析/词边界/case-only 子步扩单；SD-1802 目录移动/depth 8 子步扩单；SD-1902 目录合并/trash 增强子步扩单；SD-2002 orphans/recents 子步扩单；SD-2102 持久化/防线子步扩单；SD-2202 零扩单——PLAN-022 纯内部性能片：行为零变化，既有断言域全量承载[vm 矩阵 16 组含 link ⑧ orphans 三语义面/meta 组 tags 面] + 基线 v19 零漂移[零重锁第三例] + 前后采逐字节门[tags_json 两语料 9 采点] + bench150 重放对拍门[tags ≤1.5s 过 246ms/孤页 ≤2.0s 越门 3.4s——非目标面残余记账，split 臂家族窗第六例口径续记]；SD-2302 续零扩单——PLAN-023 纯内部性能片（读面/取面收口，第三例）：行为零变化，既有断言域全量承载[vm 矩阵 16 组含 ⑧ orphans/wanted 语义面] + 基线 v19 零漂移[零重锁第四例] + 前后采逐字节门扩面[links_json/tags_json/search_json 三面×双语料 9 件 sha256 全等] + dbg 口径孤页门重推门[≤2.0s 过 891/841ms——F-1 兑现；bench ⑨ 降记录面] + 双取形消除挂账[SD-2301③——D-39 vue 轨竞态，split 臂家族窗第七例口径续记]；SD-2402 续零扩单——PLAN-024 有界调查批（探针定谳 no-go 关账）：probe_mtime.mjs 新增入库[契约语义双臂五案——probe 族 14→15 件] + 判定表/分量分账值内嵌 plan §8[.runtime 一次性件口径] + repo src 零 diff——矩阵/e2e 断言域零扩[既有保存点弧/fs 造档弧内建承载零涉]，基线 v19 零漂移续[零重锁第五例——src 零 diff 直证]；SD-2502 续——PLAN-025 功能切片（合并三择批）：probe_dir_ops 三择案组扩[s①..s⑩ 双臂——skip/overwrite 零数据丢失+卫正交+fail-closed+CJK+回滚弧+moves 完整性，既有 m①..mb⑨ 全案四参化零漂移承载，双臂 raw 字节等值升级] + probe_trash 回归续[18+15 案 fresh] + vm_matrix 13 file 组扩[dir4 三择钮面三显断言+保留双份钮续承合并弧线/dir5 tab 重映射弧——F-R19-1 直证：skip 改道位 tab path+源档内容+recents 置换+.trash 位保存落回] + e2e 同单[dir4 三钮三显+保留双份钮/dir5 skip 弧——ASCII 路径 D-19 口径] + **基线 v20 计划内重锁第七例**[App dirmerge_strategy 入 dump["both" 缺省——store 新字段面] + 移动目录弹层三钮[闭态恒渲染 D-23③]入 id 序列]；SD-2602 续——PLAN-026 回执复测批（**blocked 出口**）：零扩单零新件（既有验证链复跑 + .runtime 一次性件——024 no-go 支路同判）；载体健康冒烟门注记（probe_sb 双载体/probe 15 件 fresh 双臂[debug 14 绿+receipt_d19 负结果一致；release 13 绿+probe_mtime 挂起 ×2]/merged 矩阵[本窗 blocked——新载体交互面断裂 ×4，A/B 锚在库]/build ✓built[release 路由]——基线 v20 双载体 PASS 零漂移续；重入收口 2026-09-30：冒烟门四腿全绿[merged 16/16 ALL GREEN 修复直证——706r2 AC-10 兑现+probe_sb 双载体+probe 双电池+build ✓built 18.63s——基线 v20 新载体零重锁]）；SD-2702 续——PLAN-027 重推批（**回退出口**）：零扩单零新件续例（单取形已还原——src 零 diff，e2e ×6 轮 A/B 加强面执行实录在册[单取形 2/2 败@:820/双取形 2/2 绿] + gen 源检两形在录[单取 :649 JSON.parse(lj) 执行窗实录→还原后双取 :647+:649] + 基线 v20 零重锁续例[merged 22 PASS 零 diff 强形] + probe_mtime debug 载体路由纪律[D-41 注记]）
+  **第二十六切片——CJK HTTP 面 POST 化适配批（SD-2801，里程碑收
+  口件）**：用户里程碑测距问询（2026-09-30）测距出「tag 前收口件
+  = CJK 开档 vue 轨」——repo 侧 POST 化适配（不待上游 url_decode
+  修复——SD-401 search_wiki GET→POST 先例原样复刻，传输面单点零
+  逻辑变更）：**三契约 method 翻转**——`read_wiki`/`exists`/
+  `page_meta` `#[api(method = "GET")]` → `"POST"` + 各契约文档块
+  D-19 免疫注记（「POST 而非 GET——档名 CJK 常态，body 传参[SD-401
+  同款；PLAN-028 适配]」write_wiki 注释族同款文风）；**back 实现
+  零变化**（wsys.at 零 diff——method 系传输面注解，进程内 CALL 双
+  轨语义零变化）；**GET 端点随批下线**（无外部消费方——api.at 唯
+  一出口在册；receipt g⑤ 404 直证）。**消费面勘定（空根 GET 维持
+  注记）**：tree/link_index/tags_index 三子树形契约 front 恒空根
+  `""` 调用（LinksRefreshOf `link_index("", 8)` app.at:2361/:2363
+  + 树/tags 面板同族实勘）——CJK 子树形态零消费，上游 url_decode
+  修复后备援纵深面注记（env_str ASCII 环境键同判 GET 维持）。
+  **regen 客户端自动翻转**：ts_adapter 按 `#[api]` method 生成
+  fetch 形——三契约客户端 GET query → POST body（`:method: 'POST'`
+  + `body: JSON.stringify({ path })`——gen 源检 ×3 + GET query 残
+  留零；app.at/editor_store.at 调用点零变化——传输面封装在生成层
+  ；merged 臂进程内直调无传输面=零变化直证）。**split 臂 CJK 降
+  级口径随批解除**（page_meta「split 臂 CJK 路径降级空态」v1 记
+  账注记退役——双臂全量可用）。**CJK 双臂化达成**：矩阵 CJK 导航
+  子步双臂化（link 面板行/10c 播种/tags 展开/meta 属性目标/find 拾
+  取/file 新页/删除预览/激活落点/tab 重开——tab 序两臂同构[HW,
+  index,CAP,首页,…]）+ e2e vue CJK 开档新弧（15 cjk——树行点击开
+  档 read_wiki POST 语料锚显形 + 属性弹层预填 page_meta POST 已知
+  答案 + 保存往返 write_wiki POST frontmatter 存续——vue 轨此前结
+  构性不可测弧首测）。判绿面：probe receipt_d19 翻新形 ALL GREEN
+  （g①/g② POST CJK 翻绿直证——015/026 三窗负结果转正 + g③/g④
+  ASCII 回归 + g⑤ GET 下线 404）+ probe 全族 15 件 fresh + merged
+  矩阵 16/16 ALL GREEN（基线 v20 零漂移——零重锁续例）+ e2e 全绿
+  1.2m 含新弧 + build ✓built 10.97s（SCHEMA_DRIFT_GENERATE_AT=1
+  ；regen 窗 16.88s）；split 臂 boot FAIL ×2=F-24-2 主导形在册
+  （独立缺陷域——分段判绿惯例，判别链=merged 同窗全绿+probe split
+  臂 HTTP 全绿+e2e 同一 serve-back 面绿）。exe 载体 09-30 12:41/
+  12:47 未重建（api.at 系解释数据——引擎零重建面）。里程碑提案
+  （v0.1.0「试用就绪」三收口件+可带病注记面）交裁——release 批
+  另立（plans/028 §4.3）。
+
+## 6. 测试体系（双轨一致性门；PLAN-001 T-04 换基迁移；SD-402 find 扩单；SD-502 create 扩单；SD-602 rename 扩单；SD-702 file 扩单；SD-802 meta 扩单；SD-902 meta/link 扩单；SD-1002 link 扩单；SD-1102 meta 属性子步扩单；SD-1202 dir/alias 子步扩单；SD-1302 显示名子步扩单；SD-1402 目录二期/面板名化子步扩单；SD-1502 daily/updated_at 子步扩单；SD-1602 trash 子步扩单；SD-1702 四级解析/词边界/case-only 子步扩单；SD-1802 目录移动/depth 8 子步扩单；SD-1902 目录合并/trash 增强子步扩单；SD-2002 orphans/recents 子步扩单；SD-2102 持久化/防线子步扩单；SD-2202 零扩单——PLAN-022 纯内部性能片：行为零变化，既有断言域全量承载[vm 矩阵 16 组含 link ⑧ orphans 三语义面/meta 组 tags 面] + 基线 v19 零漂移[零重锁第三例] + 前后采逐字节门[tags_json 两语料 9 采点] + bench150 重放对拍门[tags ≤1.5s 过 246ms/孤页 ≤2.0s 越门 3.4s——非目标面残余记账，split 臂家族窗第六例口径续记]；SD-2302 续零扩单——PLAN-023 纯内部性能片（读面/取面收口，第三例）：行为零变化，既有断言域全量承载[vm 矩阵 16 组含 ⑧ orphans/wanted 语义面] + 基线 v19 零漂移[零重锁第四例] + 前后采逐字节门扩面[links_json/tags_json/search_json 三面×双语料 9 件 sha256 全等] + dbg 口径孤页门重推门[≤2.0s 过 891/841ms——F-1 兑现；bench ⑨ 降记录面] + 双取形消除挂账[SD-2301③——D-39 vue 轨竞态，split 臂家族窗第七例口径续记]；SD-2402 续零扩单——PLAN-024 有界调查批（探针定谳 no-go 关账）：probe_mtime.mjs 新增入库[契约语义双臂五案——probe 族 14→15 件] + 判定表/分量分账值内嵌 plan §8[.runtime 一次性件口径] + repo src 零 diff——矩阵/e2e 断言域零扩[既有保存点弧/fs 造档弧内建承载零涉]，基线 v19 零漂移续[零重锁第五例——src 零 diff 直证]；SD-2502 续——PLAN-025 功能切片（合并三择批）：probe_dir_ops 三择案组扩[s①..s⑩ 双臂——skip/overwrite 零数据丢失+卫正交+fail-closed+CJK+回滚弧+moves 完整性，既有 m①..mb⑨ 全案四参化零漂移承载，双臂 raw 字节等值升级] + probe_trash 回归续[18+15 案 fresh] + vm_matrix 13 file 组扩[dir4 三择钮面三显断言+保留双份钮续承合并弧线/dir5 tab 重映射弧——F-R19-1 直证：skip 改道位 tab path+源档内容+recents 置换+.trash 位保存落回] + e2e 同单[dir4 三钮三显+保留双份钮/dir5 skip 弧——ASCII 路径 D-19 口径] + **基线 v20 计划内重锁第七例**[App dirmerge_strategy 入 dump["both" 缺省——store 新字段面] + 移动目录弹层三钮[闭态恒渲染 D-23③]入 id 序列]；SD-2602 续——PLAN-026 回执复测批（**blocked 出口**）：零扩单零新件（既有验证链复跑 + .runtime 一次性件——024 no-go 支路同判）；载体健康冒烟门注记（probe_sb 双载体/probe 15 件 fresh 双臂[debug 14 绿+receipt_d19 负结果一致；release 13 绿+probe_mtime 挂起 ×2]/merged 矩阵[本窗 blocked——新载体交互面断裂 ×4，A/B 锚在库]/build ✓built[release 路由]——基线 v20 双载体 PASS 零漂移续；重入收口 2026-09-30：冒烟门四腿全绿[merged 16/16 ALL GREEN 修复直证——706r2 AC-10 兑现+probe_sb 双载体+probe 双电池+build ✓built 18.63s——基线 v20 新载体零重锁]）；SD-2702 续——PLAN-027 重推批（**回退出口**）：零扩单零新件续例（单取形已还原——src 零 diff，e2e ×6 轮 A/B 加强面执行实录在册[单取形 2/2 败@:820/双取形 2/2 绿] + gen 源检两形在录[单取 :649 JSON.parse(lj) 执行窗实录→还原后双取 :647+:649] + 基线 v20 零重锁续例[merged 22 PASS 零 diff 强形] + probe_mtime debug 载体路由纪律[D-41 注记]）；SD-2802 续——PLAN-028 CJK POST 化适配批：**扩单**（probe_receipt_d19 翻新形五案[POST CJK 翻绿直证 g①/g②——015/026 三窗负结果转正 + ASCII 回归 g③/g④ + GET 下线负证 g⑤ 404] + probe_trash b 族 split 三案 skip 解除[exists POST 形全案双臂] + probe_dir_ops p⑩ 随校翻绿[CJK exists POST→1] + vm_matrix CJK 导航子步双臂化[link 面板行/10c 播种/tags 展开/meta 属性目标/find 拾取/file 新页导航/删除预览/激活落点/tab 重开——tab 序两臂同构] + e2e 15 cjk 新弧[树行点击开档/属性预填/保存往返闭环]）+ **基线 v20 零重锁续例**（零 store 字段面——契约注解翻转不触 store/dump 域）
 
 | 门 | 命令 | 断言域 |
 | --- | --- | --- |

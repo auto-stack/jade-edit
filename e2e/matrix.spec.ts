@@ -13,8 +13,9 @@
 //             关闭确认两路（取消=档留；直接关闭=弃改落盘零写入）
 //   8 editops 编辑操作族：段中回车/退格（真键盘 + caret 定位达成同语义）
 //   10 link   链接索引+反链面板（PLAN-003；vm 矩阵 check 10/10b 同单——
-//             ASCII 路径导航；CJK 目标子步 vm merged 专属（HTTP GET query
-//             UTF-8 解码缺口 D-19，vue 轨同败故跳过）
+//             ASCII 路径导航；CJK 目标子步原 vm merged 专属（D-19——
+//             vue 轨同败故跳过），PLAN-028 POST 化收口后由 15 cjk 新弧
+//             承载 vue 面 CJK 开档全弧）
 //   10c create 悬空建页弧线（PLAN-005；vm 矩阵 10c 同单）：ASCII 悬空源
 //             档测试内造（write_wiki POST——语料悬空目标 CJK 受 D-19 开档
 //             面，ASCII 造档 = 全弧线全臂可跑，零语料改动）——悬空行点击
@@ -116,6 +117,13 @@
 //             在 13 后（段内最后——13 已定删除面，此位已知答案成立；
 //             inline 子步：write_wiki 外造 body #inline-e2e 档 → 保存 →
 //             面板新行（PLAN-009 T-04，vm 矩阵 meta 组子步同单））。
+//   15 cjk    CJK 开档全弧新弧（PLAN-028；三契约 POST 化收口后 vue 轨
+//             首测——此前 D-19 回避口径结构性不可测）：CJK 树行点击开档
+//             （read_wiki/exists POST——语料 wiki/CAP 定理.ad 语料锚显形）
+//             → 属性弹层预填（page_meta POST——title/tags CJK 已知答案
+//             ，取消零落盘保语料）→ 保存回写往返（write_wiki 既有 POST
+//             ——frontmatter 逐字存续，全弧闭环）。锚纪律 D-31③（heading
+//             /角色锚；回收站弧零触碰）。执行序在 14 后（段内最后）。
 //
 // D-17 冲刷机制（vue 轨特有，7/8/9 共用）：切档重挂载后的编辑器实例，
 // 键入只进引擎模型、update:modelValue 门控至 blur——中性 blur（点
@@ -393,7 +401,7 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await page.getByRole('button', { name: '转为链接', exact: true }).first().click()
   await expect(page.getByText('（无未链接提及）', { exact: true })).toBeVisible({ timeout: 10_000 })
   await expect(page.getByRole('button', { name: 'Mention Source', exact: true }).last()).toBeVisible({ timeout: 10_000 })
-  const rRes = await request.get('/api/read_wiki?path=Mention Source.ad')
+  const rRes = await request.post('/api/read_wiki', { data: { path: 'Mention Source.ad' } })
   expect(rRes.ok()).toBe(true)
   expect(await rRes.text()).toContain('[[Hello World]]')
 
@@ -474,7 +482,7 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await page.getByRole('button', { name: '转为链接', exact: true }).first().click()
   await expect(page.getByText('（无未链接提及）', { exact: true })).toBeVisible({ timeout: 10_000 })
   await expect(page.getByRole('button', { name: 'Mention D', exact: true }).last()).toBeVisible({ timeout: 10_000 })
-  const dRead = await request.get('/api/read_wiki?path=Mention D.ad')
+  const dRead = await request.post('/api/read_wiki', { data: { path: 'Mention D.ad' } })
   expect(dRead.ok()).toBe(true)
   // read_wiki 响应 = JSON 字符串壳——json() 解析后逐字节比对
   expect(await dRead.json(), '⑧ 词边界磁盘逐字节（仅独立位包裹）').toBe(
@@ -1684,4 +1692,43 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await expect(page.getByRole('button', { name: 'Hello World', exact: true }).last()).toBeVisible({ timeout: 10_000 })
   await expect(page.getByText('Hello World（悬空）', { exact: true })).toHaveCount(0)
   console.log('[14 meta] PASS — meta 组（tags 面板+wanted 模式建页闭环+exists 翻转）')
+
+  // 15 cjk — CJK 开档全弧新弧（PLAN-028；三契约 POST 化收口后 vue 轨
+  // 首测——此前 D-19 回避口径结构性不可测）：树行点击开档（read_wiki/
+  // exists POST——语料 wiki/CAP 定理.ad 已知答案）→ 属性弹层预填
+  //（page_meta POST——title/tags CJK 已知答案）→ 保存回写往返（write_wiki
+  // 既有 POST——frontmatter 存续，全弧闭环）。锚纪律 D-31③。
+  // 前置：关 find 面板（wanted 末态——收起钮面板壳锚，双壳同名取first）
+  // + 反链面板（14 末开态——'CAP 定理' 树行 getByText 免面板出链行同名
+  // 钮重叠）；闭态卸载面以 wanted 空态文本消隐为面板关闭代理。
+  await page.getByRole('button', { name: '收起', exact: true }).first().click()
+  await expect(page.getByText('（无悬空链接）', { exact: true })).toHaveCount(0, { timeout: 10_000 })
+  await page.getByText('视图', { exact: true }).click()
+  await page.getByText('切换反链', { exact: true }).click()
+  // ① 树行点击开 CJK 档（read_wiki/exists POST——vue 轨首次）
+  await page.getByText('CAP 定理', { exact: true }).first().click()
+  await expect(visibleEditor(page)).toContainText('CAP 定理指出', { timeout: 15_000 })
+  console.log('[15 cjk] 树行点击开档 — read_wiki POST body 语料锚显形')
+  // ② 属性弹层预填（page_meta POST）→ 取消零落盘
+  await page.getByRole('menuitem', { name: '文件' }).click()
+  await page.getByText('页面属性…', { exact: true }).click()
+  await expect(page.getByText('页面属性', { exact: true })).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByPlaceholder('标题…')).toHaveValue('CAP 定理', { timeout: 10_000 })
+  await expect(page.getByPlaceholder('标签（逗号分隔）…')).toHaveValue('distributed-systems,theory', { timeout: 10_000 })
+  await page.getByRole('button', { name: '取消', exact: true }).click()
+  await expect(page.getByText('页面属性', { exact: true })).toBeHidden({ timeout: 10_000 })
+  console.log('[15 cjk] 属性弹层预填 — page_meta POST CJK 已知答案 + 取消零落盘')
+  // ③ 保存回写往返（write_wiki 既有 POST——全弧闭环）：编辑器追加标记
+  // → 保存 → 磁盘字节含标记 + frontmatter（title/tags）逐字存续
+  const capE2eFile = path.join(WORKSPACE, 'wiki', 'CAP 定理.ad')
+  await appendToEditor(page, ' CJK 弧标记。')
+  await neutralBlur()
+  await page.locator('button[title="保存"]').click()
+  await expect
+    .poll(() => fs.readFileSync(capE2eFile, 'utf8').includes('CJK 弧标记'), { timeout: 10_000 })
+    .toBe(true)
+  const capAfter = fs.readFileSync(capE2eFile, 'utf8')
+  expect(capAfter.includes('title: CAP 定理'), 'frontmatter title 存续').toBe(true)
+  expect(capAfter.includes('distributed-systems'), 'frontmatter tags 存续').toBe(true)
+  console.log('[15 cjk] PASS — CJK 开档全弧（树行点击开档/属性预填/保存往返闭环——PLAN-028 vue 面）')
 })
