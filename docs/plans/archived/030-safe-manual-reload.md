@@ -1,10 +1,11 @@
 ---
 plan_id: PLAN-030
-status: reviewed
+status: archived
+completion_kind: delivered
 feature_name: 安全手动重载（可信试用首切片）
 author: [agent]
 created_at: 2026-09-30T12:29:31Z
-updated_at: 2026-09-30T21:45:00Z
+updated_at: 2026-09-30T22:30:00Z
 plan_revision: 1
 current_step: 5
 total_steps: 5
@@ -180,6 +181,22 @@ node tests/vm_matrix.mjs --arm split
 状态变更按 work/review 流；合入、正式规范沉淀和归档另由 merge 技能处理。
 
 ## 9. 复审记录
+
+### 2026-09-30 merge（auto-plan:merge）——PLAN-030:r1 收口 receipt
+
+- stage: merge
+- plan: PLAN-030（r1）
+- outcome: pass——delivered 收口
+- **prepared**：复审基线 = a5a1d64（实现批——12 文件 +1393：src 两文件/tests 两件/e2e 新件/基线 v21/canonical 规范首件 docs/specs/editor-safety.md[SD-3001 实体]/ARCH §6 heading SD-3002/Plan+attachment/roadmap）；复审 pass = 7447e68（docs-only 后代——实现/依赖零变化已核）；canonical delta 冻结面 = editor-safety.md@7447e68；投影目标 = docs/specs/（在册）+ README（SD-3003）+ parity-ledger（SD-3004）
+- **landed**：main tip == 0294a2a（沉淀批），链 a5a1d64 → 7447e68 → 0294a2a 全数 `merge-base --is-ancestor` ancestor-OK（直接 main 线性约定——001..029 在册惯例，无 worktree/dev 分支、零 merge commit）；known-good smoke = 合并窗终树实跑 merged 臂 **17/17 ALL GREEN** 一发过（含基线 v21 零漂移 B + R 组六弧 + quit + bootAgain）
+- **ledger_refreshed**：docs/parity-ledger.md v34→v35@0294a2a（tracked 派生视图——本仓无 live ledger 服务/.autoos 缺席，024..029 同判口径；store 中介写不适用=无 store 面）——表头 PLAN-030 增补段+SD-3004 指针、D-42/D-43/D-44 三新行（F-30-R1/R2/R3 实勘集）、D-21 v35 扩记（RecCap 瞬态 v11③ 续 + F-24-2 第十四窗）；tracked 读回核验=表头 v35 恰一/三 D 行各恰一/SD-3004 恰一
+- **archived**：git mv → docs/plans/archived/030-safe-manual-reload.md + status archived + completion_kind delivered（YAML 块内）
+- **cleaned**：无 worktree/dev 分支（git worktree list 单一主检出——直接 main 线性约定，无清理面）；代码工作树零 WIP；一次性件居 ignored e2e/.runtime（p30-probe 探针族+脚本在档可追溯）
+- **canonical/spec 核验**：docs/specs/editor-safety.md 在 main（a5a1d64 落位，reviewed_commit 树与 tip 树内容一致——后续提交零触及）；ARCHITECTURE §6 SD-3002 注记在 main；README SD-3003 四面 + ledger SD-3004 在 main
+- **deployment 观察**（landing ≠ deployment）：gen/front/vue/dist = 复审窗 ✓built@8.24s（regen 链随 build——src 现势构建物）；载体 = auto.exe debug 09-30 16:01（v0.4.2-2311-g7fcf913eb，本批 src 为解释数据零重建面，与 029 记录同档）；jade-edit 无常驻生产进程面；家族 exe 零涉
+- **批回归到期件**：无 docs/plans/.last-batch-regression.json（jade-edit 惯例外——024..029 同判；本批 §6 全量门 + 复审全链重放 + merge 窗终树 smoke = 批级回归门本体）
+- **留观交接**：D-42 上游供料候选（弹层动作钮事件序）/D-43 上游 round-trip 保真化纵深候选/D-44 空文档首块注入候选（R-03 轨道）/F-24-2 第十四窗维持家族 split 专项域/R-02 草稿与生命周期保护 = 候选池下一项（立项前重核对）
+- next： delivered 终态；候选池首位维持试用反馈件（R-02 立项走 new 流程重勘）
 
 ### 2026-09-30 复审（auto-plan:review）
 
