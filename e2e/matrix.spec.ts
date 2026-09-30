@@ -928,6 +928,10 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await page.getByText('重命名…', { exact: true }).click()
   await expect(page.getByText('重命名页面')).toBeHidden({ timeout: 5_000 })
   await page.locator('button[title="重载"]').click()
+  // PLAN-030：手动重载对脏档先确认——弃改复原走确认+放弃（原直读形为
+  // 旧无守卫行为；新语义下同为用户口设计路径）。
+  await expect(page.getByText('重载会放弃此文档未保存的修改')).toBeVisible({ timeout: 10_000 })
+  await page.getByRole('button', { name: '放弃修改并重载', exact: true }).click()
   await expect(page.getByText('未保存', { exact: true })).toHaveCount(0, { timeout: 10_000 })
   console.log('[12 rename] 脏档禁用 — 弹层不开 + 重载复原')
   // ② 弹层内容锚：开 Projects.ad → 入口 → 弹层（预填 Projects + 预览

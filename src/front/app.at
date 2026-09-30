@@ -1027,6 +1027,7 @@ fn dir_conflict_of(nodes List, src str, dst str) bool {
 widget App {
     msg {
         Init, FtToggle(str), OpenFile(str), Reload,
+        ReloadCancel, ReloadDiscard,
         Edit(str), TabActivate(int), CloseTab(int),
         ConfirmClose, ConfirmCancel,
         ActNew, ActOpen, ActSave, ActQuit,
@@ -1257,7 +1258,7 @@ widget App {
         action (id: "view.find-orphans", handler: .ActFindOrphans, title: "孤页清单", shortcut: "Ctrl+Shift+O",
                 checked_if: ".store.find_open && .store.find_mode == \"orphans\"")
         action (id: "view.switch-tab", handler: .ActSwitchTab,  title: "切换 Tab", shortcut: "Ctrl+D")
-        action (id: "view.reload",    handler: .Reload,    title: "重载",  icon: "refresh-cw",   shortcut: "F5",
+        action (id: "view.reload",    handler: .Reload,    title: "重载",  icon: "refresh-cw",
                 enabled_if: ".store.tab_count > 0")
         action (id: "help.about",  handler: .ActAbout,  title: "关于 jade-edit")
 
@@ -1271,6 +1272,15 @@ widget App {
             item (action: "edit.undo")
             item (action: "edit.redo")
         }
+    }
+
+    // F5 键位（PLAN-030 T-01 等价调整①）：移交 bind 层（widget 级块——
+    // 464 T2）。actions 层守卫在编辑器焦点内让位一切无修饰键（F5 死键，
+    // 探针 B 实测）；bind 层仅让位会进文本的键（单字符/Backspace）且命中
+    // 即 preventDefault（同时压掉浏览器 F5 整页刷新面）。action 不再挂
+    // shortcut——双层并存会焦点外双派发。menubar-item 的 F5 仅为显示标签。
+    bind {
+        "F5" -> .Reload
     }
 
     view {
@@ -1806,6 +1816,25 @@ widget App {
                 }
             }
 
+            // —— 手动重载确认（PLAN-030；alert-dialog 在册族第四实例）：
+            // 未保存文档经 F5/菜单/工具栏发起重载时先确认（开态与目标快照
+            // 在 store——RequestReload 置位）。取消钮在前 = 初始焦点安全
+            // 默认（vue 探针 D 实测 Enter=取消；vm Modal Esc/外点不关）。
+            // vue 轨 Escape 经 v-model 清开态——快照残置惰性，重发起时
+            // 重快照覆盖（editor-safety §边界）。文案不承诺版本恢复。——
+            alert-dialog (open: .store.reload_confirm_open) {
+                alert-dialog-content {
+                    alert-dialog-header {
+                        alert-dialog-title "重载「${.store.active_title}」？"
+                        alert-dialog-description "重载会放弃此文档未保存的修改"
+                    }
+                    alert-dialog-footer {
+                        alert-dialog-cancel "取消" { onclick: .ReloadCancel }
+                        alert-dialog-action "放弃修改并重载" { onclick: .ReloadDiscard }
+                    }
+                }
+            }
+
             // —— 新建页面弹层（PLAN-007 第五切片；dialog 第四实例——
             // 内嵌 input，重命名弹层同构形态：双钮 = 普通 button[D-24④
             // 纪律]、闭态恒渲染 D-23③ 同判——测试定位锚内容制；声明位
@@ -2212,7 +2241,11 @@ widget App {
         }
 
         .TabActivate(i) -> { store.TabActivate(i) }
-        .Reload -> { store.Reload() }
+        // 手动重载用户口（PLAN-030——F5/菜单/工具栏三入口共口薄委托；
+        // 受保护流在 store，内部业务同步仍走 store.Reload 原边界）。
+        .Reload -> { store.RequestReload() }
+        .ReloadCancel -> { store.ReloadCancel() }
+        .ReloadDiscard -> { store.ReloadDiscard() }
         .CloseTab(i) -> { store.CloseTab(i) }
         .ConfirmClose -> { store.ConfirmClose() }
         .ConfirmCancel -> { store.ConfirmCancel() }

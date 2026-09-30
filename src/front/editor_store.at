@@ -102,11 +102,28 @@ store EditorStore {
         // 计划 §4.2 落定位）。"" = 无警示（现行语料恒空——纯显示面，功
         // 能路径零影响）。
         var ws_warn str = ""
+        // —— 手动重载受保护流（PLAN-030）：确认开态 + 发起时目标快照
+        // 三标量。快照只在请求期间保留（取消/成功/失败/失效终态归零；
+        // vue 轨 Escape 关闭走 v-model 只清开态——残置标量惰性，下次
+        // RequestReload 重快照覆盖，editor-safety §边界注记）。本体仍由
+        // tabs 管理，零第二份文档权威。----
+        var reload_confirm_open bool = false
+        var reload_target_key str = ""
+        var reload_target_path str = ""
+        var reload_target_body str = ""
+        // 提交 nonce（PLAN-030 T-04 开发期实勘）：vue 轨引擎 round-trip 非
+        // 字节保真（如正文首空行规范化剥除）——commit 写磁盘原文经
+        // replaceDoc → onChange → emitUpdate(规范化文) 回声 .Edit，原文
+        // ≠规范化文 → dirty 翻真（echo 污染）。commit 递增 nonce 改写
+        // tab key → 编辑器 key 变 = 重挂载播种（挂载期零发射——引擎
+        // lastEmittedMd 预播种语义），echo 路径整体绕开，双轨同源。
+        var reload_nonce int = 0
     }
 
     // msg 载荷单类型（编译器约束）：Open 单 map、Edit 单 str。
     msg {
         Open(map), Edit(str), Save, Reload,
+        RequestReload, ReloadCancel, ReloadDiscard, ReloadReadOf,
         CloseTab(int), RemoveAt(int), ConfirmClose, ConfirmCancel,
         TabActivate(int), ActNew, ActOpen, ActConsole, ActSwitchTab,
         ActUndo, ActRedo, ActCut, ActCopy, ActPaste, ActSelectAll, ActAbout,
@@ -245,6 +262,9 @@ store EditorStore {
         }
 
         // ---- Reload：强制重读激活 tab（六检查「保存落盘 → 重载可见」通道）。
+        // ⚠ 内部业务同步口（改名/移动/目录迁移流在册调用边界，PLAN-030 起
+        // 与用户手动口分野——用户 F5/菜单/工具栏走 RequestReload 受保护
+        // 流，不得误接回此口）。----
         .Reload -> {
             var i int = 0
             while i < .tabs.len() {
@@ -267,6 +287,162 @@ store EditorStore {
                 }
                 i = i + 1
             }
+        }
+
+        // ---- 手动重载受保护流（PLAN-030；三用户入口共口——F5/菜单/工具
+        // 栏经 App .Reload 薄委托到此）：未保存先确认（开态+目标快照，
+        // 不读盘）；干净直入受保护读盘。身份 = tab key+path（不依赖列表
+        // 索引）。等待/读盘期间的新输入、切页、关档一律拒绝旧结果覆盖。
+        // 终态（取消/成功/失败/失效）快照归零。----
+        .RequestReload -> {
+            if !.reload_confirm_open {
+                var i int = 0
+                var found int = -1
+                while i < .tabs.len() {
+                    if .tabs[i].key == .active_key {
+                        if .tabs[i].path == .active_path {
+                            found = i
+                        }
+                    }
+                    i = i + 1
+                }
+                if found >= 0 {
+                    if .tabs[found].path == "" {
+                        .save_note = "请先保存此文档（未命名），再重载"
+                        console_log("reload: untitled rejected")
+                    } else {
+                        .reload_target_key = .tabs[found].key
+                        .reload_target_path = .tabs[found].path
+                        .reload_target_body = .tabs[found].body
+                        if .tabs[found].dirty {
+                            .reload_confirm_open = true
+                        } else {
+                            store.ReloadReadOf()
+                        }
+                    }
+                } else {
+                    console_log("reload: no active document")
+                }
+            }
+            .console = console_lines()
+        }
+
+        // ---- 取消确认（弹层取消钮）：仅结请求——正文/原文基准/脏标/
+        // 磁盘全保持。----
+        .ReloadCancel -> {
+            .reload_confirm_open = false
+            .reload_target_key = ""
+            .reload_target_path = ""
+            .reload_target_body = ""
+            console_log("reload: cancelled")
+            .console = console_lines()
+        }
+
+        // ---- 明确放弃并重载（弹层放弃钮）：关确认 → 前置复核（目标仍
+        // 为活动页且正文等于快照）→ 受保护读盘。复核不过不动正文。
+        // ⚠ 门挂快照非开态旗标——vue 轨 AlertDialogAction 内部先关弹层
+        // （DialogClose → v-model 写 flag=false）再派发 @click（T-04 开发
+        // 期实勘），旗标门会恒 no-op；快照在关弹层写不触及，且闲触/
+        // Escape 残置下 armed 门兜底。----
+        .ReloadDiscard -> {
+            if .reload_target_path != "" {
+                .reload_confirm_open = false
+                store.ReloadReadOf()
+            }
+            .console = console_lines()
+        }
+
+        // ---- 受保护读盘（RequestReload 干净直入 / ReloadDiscard 确认后
+        // 共口）：读前+读后双复核（vue/split 臂 read_wiki await 悬窗内
+        // Edit/TabActivate/CloseTab 照常派发——迟到结果不得覆盖新输入；
+        // merged 臂同步完成，门共享同源）。缺档（exists 守卫）、读取异
+        // 常（try/catch）均失败提示且不动正文/脏标；空文为合法读回。
+        // ReloadReadOf 亦可被弹层族先例外的路径误触——无快照时 no-op。----
+        .ReloadReadOf -> {
+            var armed bool = .reload_target_path != ""
+            if armed {
+                if .active_key != .reload_target_key {
+                    armed = false
+                }
+                if .active_path != .reload_target_path {
+                    armed = false
+                }
+                if .active_body != .reload_target_body {
+                    armed = false
+                }
+            }
+            if armed {
+                var proceed bool = true
+                if !exists(.reload_target_path) {
+                    .save_note = "重载失败：文件已不存在 " + .reload_target_path
+                    console_log("reload: not-found " + .reload_target_path)
+                    proceed = false
+                }
+                if proceed {
+                    var body str = ""
+                    var ok bool = true
+                    try {
+                        body = read_wiki(.reload_target_path)
+                    } catch (e) {
+                        ok = false
+                    }
+                    if ok {
+                        var j int = 0
+                        var hit int = -1
+                        while j < .tabs.len() {
+                            if .tabs[j].key == .reload_target_key {
+                                if .tabs[j].path == .reload_target_path {
+                                    hit = j
+                                }
+                            }
+                            j = j + 1
+                        }
+                        var commit bool = false
+                        var stale bool = false
+                        if hit >= 0 {
+                            if .tabs[hit].body == .reload_target_body {
+                                if .active_key == .reload_target_key {
+                                    commit = true
+                                } else {
+                                    stale = true
+                                }
+                            } else {
+                                stale = true
+                            }
+                        } else {
+                            stale = true
+                        }
+                        if stale {
+                            .save_note = "文档已变化，请重新发起重载"
+                            console_log("reload: stale-target rejected")
+                        }
+                        if commit {
+                            .tabs[hit].body = body
+                            .tabs[hit].original_body = body
+                            .tabs[hit].dirty = false
+                            .reload_nonce = .reload_nonce + 1
+                            .tabs[hit].key = .tabs[hit].path + "#r" + .reload_nonce.str()
+                            .active_key = .tabs[hit].key
+                            .active_body = body
+                            .active_dirty = false
+                            .save_note = "reloaded: " + .reload_target_path
+                            console_log("reloaded: " + .reload_target_path)
+                        }
+                    } else {
+                        .save_note = "重载失败：读取异常 " + .reload_target_path
+                        console_log("reload: read-failed " + .reload_target_path)
+                    }
+                }
+            } else {
+                if .reload_target_path != "" {
+                    .save_note = "文档已变化，请重新发起重载"
+                    console_log("reload: stale-request rejected")
+                }
+            }
+            .reload_target_key = ""
+            .reload_target_path = ""
+            .reload_target_body = ""
+            .console = console_lines()
         }
 
         // ---- 关闭 tab：脏 tab 先确认（基座 Plan 420 P2 弹层） ----

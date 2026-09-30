@@ -10,7 +10,7 @@
 //   5 save    保存落盘（toolbar 保存 → 脏标清 + 磁盘字节含标记 + frontmatter 保留
 //             + updated_at 自动维护——PLAN-015：已有键保存即更新值[当日形]）
 //   6 reload  重载可见（磁盘外改 → toolbar 重载 → 编辑器见新内容）
-//   B base    结构基线 v20 零漂移（仅 merged 臂；必须在 1-6 后、扩单前采集
+//   B base    结构基线 v21 零漂移（仅 merged 臂；必须在 1-6 后、扩单前采集
 //             ——v20 锁的是六检查终态，扩单不漂移基线；v20=PLAN-025 目录
 //             合并三择批[App dirmerge_strategy 入 dump——"both" 缺省 + 移动
 //             目录弹层三钮闭态渲染；v19 留档]；v19=PLAN-021 试用
@@ -183,7 +183,7 @@ const argOf = (name) => {
   return i >= 0 ? args[i + 1] : undefined
 }
 const ARM = argOf('--arm') ?? 'all' // all | merged | split
-const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v20.txt')
+const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v21.txt')
 const SAVE_BASELINE = argOf('--save-baseline')
 
 const EDIT_MARKER = 'jade-edit 冒烟标记：编辑回写可见。'
@@ -221,6 +221,12 @@ const DIR_BOX = 'DirBox'
 const DIR_REN2 = 'DirBox2'
 // tab 重映射弧（PLAN-025 T-03）——skip 改道位保存标记（F-R19-1 直证）
 const SKIP_EDIT_MARKER = 'skip 弧保存标记：.trash 位落盘。'
+// 安全手动重载组（PLAN-030 T-04）——确认/取消/放弃/直入/缺档/untitled 六弧
+const RELOAD_DIRTY_MARKER = '安全重载脏标：未保存确认弧。'
+const RELOAD_DISK_MARKER = '安全重载磁盘外改：放弃弧。'
+const RELOAD_DISK2_MARKER = '安全重载磁盘外改二：干净直入弧。'
+const RELOAD_DIRTY2_MARKER = '安全重载缺档弧脏标。'
+const RELOAD_CONFIRM_TEXT = '重载会放弃此文档未保存的修改'
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
@@ -611,7 +617,7 @@ async function runArm(arm, port) {
       const stateDump = (await callTool('autoui_state', {})).trim()
       const snapIds = JSON.stringify([...(await snapshotText()).matchAll(/#(vnode_\d+)/g)].map((m) => m[1]))
       const headerFor = (file) =>
-        `// jade-edit vm 结构基线 v20（PLAN-025 T-03 重锁；v19=PLAN-021 T-03、v18=PLAN-020
+        `// jade-edit vm 结构基线 v21（PLAN-030 T-04 重锁；v20=PLAN-025 T-03、v19=PLAN-021 T-03、v18=PLAN-020
 ` +
         `// T-03、v17=PLAN-019
 ` +
@@ -619,25 +625,25 @@ async function runArm(arm, port) {
 ` +
         `// T-04、v15=PLAN-016 T-04[头注字面 v14 系 v15 重锁窗漏改——016 教训同款，v16 随锁已
 ` +
-        `// 校正]、v14=PLAN-015、v13=PLAN-014、v12=PLAN-013、v11=PLAN-012 等 20 版均留档）。
+        `// 校正]、v14=PLAN-015、v13=PLAN-014、v12=PLAN-013、v11=PLAN-012 等 21 版均留档）。
 ` +
-        `// 重锁因由：目录合并三择与 tab 重映射批（PLAN-025——move_dir 四参三择 + moves 映射
+        `// 重锁因由：安全手动重载批（PLAN-030）——store reload_* 五字段入 dump（reload_confirm_open/
 ` +
-        `// 返回形）——App 模型 dirmerge_strategy 入 dump（计划内重锁第七例——store 新字段面
+        `// reload_target_key/reload_target_path/reload_target_body/reload_nonce）+ 重载确认弹层
 ` +
-        `// ["both" 缺省]；移动目录弹层三钮分立[合并·保留双份/跳过/覆盖]——闭态恒渲染
+        `//（alert-dialog 在册族第四实例——闭态恒渲染 D-23③ → snapshot vnode id 序列随批扩；
 ` +
-        `// D-23③ → snapshot vnode id 序列随批扩）。
+        `// F5 移 bind 层零视觉面）。计划内重锁第八例——store 新字段面。
 ` +
-        `// 仪器同 v2..v19：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态
+        `// 仪器同 v2..v20：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态
 ` +
         `//（chrome 全套 + Hello World.ad 开；查找面板/建页弹层/新建弹层/属性弹层/新建目录
 ` +
         `// 弹层/移动弹层/删除目录弹层/重命名目录弹层/移动目录弹层/重命名弹层/删除弹层/标签
 ` +
-        `// 面板/反链面板未开——find_*/create_*/new_*/meta_*/dir_*/move_*/movedir_*/deldir_*/
+        `// 面板/反链面板/重载确认弹层未开——find_*/create_*/new_*/meta_*/dir_*/move_*/movedir_*/deldir_*/
 ` +
-        `// rendir_*/rename_*/delete_*/tags_*/mention_rows 全为默认值入 dump）。
+        `// rendir_*/rename_*/delete_*/tags_*/mention_rows/reload_* 全为默认值入 dump）。
 ` +
         `// 再生成：node tests/vm_matrix.mjs --save-baseline ${path.relative(repoRoot, file).replace(/\\\\/g, '/')}\n`
       const baselineBodyOf = () => `## state\n${stateDump}\n\n## snapshot-ids\n${snapIds}\n`
@@ -648,9 +654,9 @@ async function runArm(arm, port) {
       } else if (fs.existsSync(BASELINE)) {
         const raw = fs.readFileSync(BASELINE, 'utf8')
         const ok = raw === headerFor(BASELINE) + baselineBodyOf()
-        check('B', 'baseline', ok, ok ? '结构基线 v20 零漂移（state 逐字节 + id 序列）——PLAN-025 重锁（dirmerge_strategy 入 dump + 移动目录弹层三钮）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
+        check('B', 'baseline', ok, ok ? '结构基线 v21 零漂移（state 逐字节 + id 序列）——PLAN-030 重锁（reload_* 五字段入 dump + 重载确认弹层）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
       } else {
-        console.log('  [baseline] structure-v20 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v20.txt')
+        console.log('  [baseline] structure-v21 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v21.txt')
       }
     }
 
@@ -2161,6 +2167,10 @@ async function runArm(arm, port) {
     await pressButton('重命名…', { exact: true })
     await stateIs('rename_open', 'false')
     await pressButton('重载')
+    // PLAN-030：手动重载对脏档先确认——此处弃改恢复干净态走确认+放弃
+    //（原直读形为旧无守卫行为；新语义下同为用户口设计路径）。
+    await stateIs('reload_confirm_open', 'true')
+    await pressReloadDialogButton('放弃修改并重载')
     await stateIs('active_dirty', 'false')
     // ② 弹层内容锚（D-23③ 纪律）：开 Projects → 入口 → rename_open +
     // rename_q 预填 + 影响面预览行（「将改写 2 页 2 处链接」——index/CAP
@@ -3135,6 +3145,97 @@ async function runArm(arm, port) {
     }
     check('13', 'file', Object.values(fileParts).every((v) => v) && tabCountFinal >= 0,
       `file 组八子步+F-R9-4 案+目录面四子步+目录二期三子步+今日笔记弧线[PLAN-015 ⑰ 开档+树新行+磁盘双时间戳+重入幂等]+trash 改道/恢复弧线[PLAN-016 ⑱ 清单见 .trash/wiki/CAP 定理.ad→行恢复→空态+磁盘回+exists 翻转回双向态+树行回+tab 重开]（新建 index 模板逐字节+树新行/同名幂等 tab+磁盘不变/取消零落盘/CJK 新页导航断言双臂[PLAN-028 POST 化收口]＋删除预览 3 处入链已知答案+tab 面「${delTabsLine}」+取消零落盘/删除弧线 磁盘消失+ft_sel 清空+激活落邻档首页[同位保持双臂]/悬空翻转 出链行 CAP 定理（悬空）/未选中 no-op/F-R9-4 删后提及刷新/PLAN-012：⊕新建目录[树新行+磁盘在]→Project X 移动[预填 wiki/tab 全量${DIR_BOX}/Project X/字节整迁/面板快照零变化/links_json 定向 diff 归一]→取消零落盘→冲突拒[弹层留置+磁盘零变化]；PLAN-014：重命名目录 弧线[双 input 弹层+预览 将移动 1 个 .ad 页+tab 全量路径变标题恒+磁盘整迁+面板零变化+links_json 归一 diff——三联对照目录级]/取消零落盘两形/删除目录[预览计数+悬空警示→tab 全关计数-1+树行消+悬空翻转 Project X（悬空）]——键程 menubar 共口；**PLAN-018：目录移动四子步[弹层双 input 弧线——磁盘整迁/旧目录消/tab 全量标题恒/面板零变化/links_json 归一——三联对照移动级三部曲收官+取消零落盘+循环卫拒弹层留置+5 层深档快开命中——depth 8 收口]**）`)
+
+    // R 安全手动重载（PLAN-030 T-04；AC-01..05 vm 轨行为面）。迟到/异常门
+    // 由 vue 拦截臂承载（§6 口径：不为读取异常写生产故障注入；vm Modal 弹
+    // 层期间交互整吞——目标变化门 UI 不可达，e2e reload-safety ⑥ 实测）。
+    // 此处覆盖：确认开/取消/放弃/干净直入/缺档/untitled 六弧。弹层钮区域
+    // 锚消歧（多弹层「取消」并存——闭态恒渲染 D-23③ 家族）。
+    async function pressReloadDialogButton(label) {
+      const tree = await snapshot()
+      const desc = findFirst(tree, (n) => ownText(n) === RELOAD_CONFIRM_TEXT)
+      if (!desc) throw new Error('reload confirm dialog not open')
+      let cur = findParent(tree, desc)
+      let panel = null
+      while (cur) {
+        if (findFirst(cur, (n) => n.head.startsWith('button ') && ownText(n) === '放弃修改并重载')) { panel = cur; break }
+        cur = findParent(tree, cur)
+      }
+      if (!panel) throw new Error('reload dialog panel not found')
+      const btn = findFirst(panel, (n) => n.head.startsWith('button ') && elementIdOf(n) && ownText(n) === label)
+      if (!btn) throw new Error(`button "${label}" not found in reload dialog`)
+      const res = await callTool('autoui_action', { element_id: elementIdOf(btn), action: 'press' })
+      if (!/status: ok/.test(res)) throw new Error(`press reload-dialog "${label}" not ok: ${res}`)
+    }
+    // R1 未保存确认：弄脏 → toolbar 重载 → 确认开 + 正文/脏标不动 + 未读盘
+    const reloadDisk0 = fs.readFileSync(targetFile, 'utf8')
+    await typeWholeDoc(`${bodyOf(reloadDisk0)}\n\n${RELOAD_DIRTY_MARKER}`)
+    await stateIs('active_dirty', 'true')
+    await pressButton('重载')
+    await stateIs('reload_confirm_open', 'true')
+    await stateHas('active_body', RELOAD_DIRTY_MARKER)
+    await stateIs('active_dirty', 'true')
+    const r1Ok = fs.readFileSync(targetFile, 'utf8') === reloadDisk0
+    // R2 取消：弹层关 + 正文/脏标/磁盘全保持
+    await pressReloadDialogButton('取消')
+    await stateIs('reload_confirm_open', 'false')
+    await stateIs('active_dirty', 'true')
+    await stateHas('active_body', RELOAD_DIRTY_MARKER)
+    const r2Ok = fs.readFileSync(targetFile, 'utf8') === reloadDisk0
+    // R3 明确放弃：磁盘外改 → 确认 → 放弃 → 正文=磁盘新文 + dirty 清
+    fs.appendFileSync(targetFile, `\n${RELOAD_DISK_MARKER}\n`)
+    await pressButton('重载')
+    await stateIs('reload_confirm_open', 'true')
+    await pressReloadDialogButton('放弃修改并重载')
+    await stateHas('active_body', RELOAD_DISK_MARKER, 8000)
+    await stateIs('active_dirty', 'false')
+    // R4 干净直入：再外改 → 重载 → 无确认直读
+    fs.appendFileSync(targetFile, `\n${RELOAD_DISK2_MARKER}\n`)
+    await pressButton('重载')
+    await stateHas('active_body', RELOAD_DISK2_MARKER, 8000)
+    let r4Ok = true
+    try { await stateIs('reload_confirm_open', 'false', 1200) } catch { r4Ok = false }
+    // R5 缺档保文：弄脏 → 删档 → 确认 → 放弃 → 失败提示 + 正文/脏标保持
+    const reloadDiskAtR5 = fs.readFileSync(targetFile, 'utf8')
+    await typeWholeDoc(`${bodyOf(reloadDiskAtR5)}\n\n${RELOAD_DIRTY2_MARKER}`)
+    await stateIs('active_dirty', 'true')
+    fs.rmSync(targetFile)
+    await pressButton('重载')
+    await stateIs('reload_confirm_open', 'true')
+    await pressReloadDialogButton('放弃修改并重载')
+    await stateHas('save_note', '重载失败：文件已不存在', 8000)
+    await stateHas('active_body', RELOAD_DIRTY2_MARKER)
+    await stateIs('active_dirty', 'true')
+    const r5Ok = !fs.existsSync(targetFile)
+    // R5 恢复：按 tab 已知正文重建磁盘（fm 前缀 + ③后正文）→ 放弃重载 →
+    // 干净（check 9 前置态复原——磁盘存在 + frontmatter 在）。
+    const reloadFmPart = reloadDisk0.slice(0, reloadDisk0.indexOf(bodyOf(reloadDisk0)))
+    fs.writeFileSync(targetFile, reloadFmPart + bodyOf(reloadDiskAtR5) + `\n\n${RELOAD_DIRTY2_MARKER}`)
+    await pressButton('重载')
+    await stateIs('reload_confirm_open', 'true')
+    await pressReloadDialogButton('放弃修改并重载')
+    await stateHas('active_body', RELOAD_DIRTY2_MARKER, 8000)
+    await stateIs('active_dirty', 'false')
+    const r5RecOk = fs.existsSync(targetFile) && fs.readFileSync(targetFile, 'utf8').includes('title: Hello World')
+    // R6 untitled 提示不读盘：新建 → INPUT_TEXT 弄脏（空档引擎键入无落点
+    // ——上游空文档渲染行为；vm 经 INPUT_TEXT 口覆盖脏 untitled 形）→
+    // 重载 → 无确认弹层 + 可读提示 + 正文保。
+    await pressButton('新建')
+    await typeWholeDoc('安全重载untitled草稿')
+    await stateIs('active_dirty', 'true')
+    await pressButton('重载')
+    let r6Ok = true
+    try { await stateIs('reload_confirm_open', 'false', 1200) } catch { r6Ok = false }
+    await stateHas('save_note', '请先保存此文档', 8000)
+    await stateHas('active_body', '安全重载untitled草稿')
+    // 收尾：untitled 弃改关闭 → 回 Hello World（check 9 前置口径）。
+    await pressActiveTabClose('未命名')
+    await stateIs('confirm_open', 'true')
+    await pressButton('直接关闭', { exact: true })
+    await pressTab('Hello World')
+    await stateIs('active_title', tabTitleOf(TARGET_LABEL))
+    check('R', 'reload-safe', r1Ok && r2Ok && r4Ok && r5Ok && r5RecOk && r6Ok,
+      `安全手动重载六弧（R1 确认开 未读盘=${r1Ok}/R2 取消全保=${r2Ok}/R3 放弃落盘正文=磁盘新文/R4 干净直入 无确认=${r4Ok}/R5 缺档保文 磁盘未建=${r5Ok}+按 tab 正文复原 fm 在=${r5RecOk}/R6 untitled 提示不读 无弹层=${r6Ok}——迟到/异常门 vue 拦截臂承载 e2e reload-safety ⑥；弹层钮区域锚消歧）`)
 
     // 9 退出存盘：dirty → 文件菜单退出 → 确认弹层 → QuitSaveClose →
     // 磁盘三验 + 进程退出。恒为臂内最后一项（Process.exit 杀进程）。
