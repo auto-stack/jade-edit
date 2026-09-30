@@ -1,10 +1,11 @@
 ---
 plan_id: PLAN-027
-status: reviewed
+status: archived
 feature_name: 双取形消除重推——watch 批终面（第二十五切片）
 author: [agent]
 created_at: 2026-09-30T00:00:00Z
-updated_at: 2026-09-30T15:30:00Z
+updated_at: 2026-09-30T16:10:00Z
+completion_kind: delivered
 plan_revision: 1
 current_step: 5
 total_steps: 5
@@ -472,6 +473,50 @@ merged 全组 PASS 基线 v20 零漂移；bench150 双取段清偿 A/B 差值实
     v32+四文档锚位+提交信息内嵌值。
   - `next`：**merge**（用户已授权 review→merge 连跑；merge 基线=
     1296ac3）。
+
+- **2026-09-30 merge 收据（PLAN-027:r1）**：
+  - `prepared`：复审基线 r1@**1296ac3**（reviewed——c1c6330 复审
+    记录 docs-only 后代，全 AC 独立重放 pass）——canonical delta
+    已随实现落 main（仓库惯例 019..026 先例续：SD-2701@ARCH §5
+    第二十五切片段[回退出口形]/SD-2702@§6 heading+README Tests
+    heading/SD-2703@README 是什么第二十五切片条目+Tests N 定谳+
+    仪表盘②维持注记+留观面板三处/SD-2704@ledger v32 四行处置
+    ——直接 main 线性约定 001..026 在档惯例+三件知识库形
+    019..026 merge 先例承载）。
+  - `landed`：main tip==本归档提交 含 c1c6330 含 **1296ac3**
+    （merge-base --is-ancestor ancestor-OK——直接 main 线性约定
+    001..026 在档惯例，无 worktree/dev 分支无 ff 动作无 merge
+    commit）；**known-good smoke=合并窗 fresh vm merged 臂 ALL
+    GREEN 22 PASS**（本批终树实跑 p27-merge-smoke.log——基线 v20
+    零漂移在录；src 内容与 c1c6330 零差异=docs-only 后代链）。
+  - `ledger_refreshed`：v32@1296ac3 tracked 读回核验（H1 v32 恰
+    一+「表头版本 v31→v32（SD-2704 指针续）」恰一+D-39 v32 第十
+    一例恰一+D-20⑤/D-21 v32/D-35② 续证/D-41 注记各恰一——无
+    live ledger 服务，tracked 文件面 024/025/026 同判）。
+  - `F-27-R1 补正`：README「文档」节 ledger 指针 v27→v32（SD-2304
+    →SD-2704 指针+v28..v31 滞留注记+027 v32 处置随行——F-R16-1
+    先例续；随本归档提交落位，复审窗交裁「补正」支兑现）。
+  - `archived`：git mv→docs/plans/archived/027-single-fetch-repush-
+    slice.md+status: archived+completion_kind: delivered（YAML 块
+    内——675320f 遗漏教训随锁落位）。
+  - `cleaned`：无 worktree/dev 分支（git worktree list 单一主检出
+    核验）+代码工作树零 WIP+本批判别链物料复核（src 零 diff 强形
+    无 archive 树；一次性件居 ignored e2e/.runtime——p27-* 六 e2e
+    日志+trace zip+矩阵/build/probe 日志在档可追溯，trace 解包件
+    即用即删已执行）。
+  - `deployment 观察`：本批 src 零 diff（回退出口——与 026 复审树
+    同内容）→ **零重建面**（家族双 exe 09-30 12:41/12:47 载体即
+    部署面，与本批零变化；gen/front/vue/dist 复审窗 ✓built@11.80s
+    ——c1c6330 src 内容现势）。批回归到期件：无
+    .last-batch-regression.json（jade-edit 惯例外——024..026
+    merge 收据无此步，本批同判）。
+  - `留观交接`：F-R17-1 第十一窗观察（unblock=家族 split 臂专项
+    修复——双形并存[F-24-2 漂移形/boot FAIL 主导形]在册）/D-39
+    三选①维持（重推载体=023 §5.3+本批 trace 簇+双树 A/B 供③上
+    游修复证据链；②基建授权修待用户明示）/D-21 v32 负载窗三例
+    （单日单批样本限注记强化）/D-35② P≤200 口径维持/D-41 供料
+    候选/试用反馈件维持候选池首位。
+  - `outcome: pass`——PLAN-027 delivered 收口。
 
 ## 10. 待澄清事项
 

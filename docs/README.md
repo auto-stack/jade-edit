@@ -797,7 +797,7 @@ e2e 同单（断言域 = 结构/文本/磁盘字节，非像素）。
 - [plans/attachments/081-t00-rulings.md](plans/attachments/081-t00-rulings.md) —
   T-00 三勘定决策档（auto-down PLAN-081 附件；双轨机制 / actions-vue
   现状 / 后端选型）
-- [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v27（SD-2304 指针；
+- [parity-ledger.md](parity-ledger.md) — 双轨差异登记表 v32（SD-2704 指针；
   三十九项三分类；**PLAN-023 增补 D-39**[vue 轨 LinksRefreshOf 单取形
   触发 dev-stack 树响应滞留竞态——T-03 执行窗实勘立案：恢复弧
   search_wiki/tree 响应同毫秒完成→浏览器侧 fetch 200+ 秒未落[后端已
@@ -808,7 +808,10 @@ e2e 同单（断言域 = 结构/文本/磁盘字节，非像素）。
   取形挂账] + D-21 v27 扩记[家族窗第七例——split 臂落点树同签名
   git-archive pre-change 判别链零接触定谳续] + D-35 处置更新[exe 时间
   戳实录 09-28 载体跨批稳定]；v25/v26 字面滞留随批校正[F-R16-1 先例]；
-  D-19/D-21/D-35/D-37 处置随行）
+  D-19/D-21/D-35/D-37 处置随行；v28..v31 随批[024/025/026 记账——指
+  针未随批滞留至 v27]；**PLAN-027 v32**[D-39 第十一例——「705 后竞态
+  续在」三选落回①维持+D-21 v32 负载窗三例+D-20⑤ 退役挂起]；v27 字
+  面滞留随批校正[F-27-R1——F-R16-1 先例续]）
 - [upstream/2026-09-jade-supply.md](upstream/2026-09-jade-supply.md) —
   上游供料包（D-16 预热 / D-15 残余 / D-17 键入发射 / D-18 投影双态，
   期望形态+复验条件+回执方式）
