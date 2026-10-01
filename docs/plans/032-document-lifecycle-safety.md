@@ -1,6 +1,6 @@
 ---
 plan_id: PLAN-032
-status: execution_done
+status: reviewed
 feature_name: 多文档文件操作保护（R-02b）
 author: [agent]
 created_at: 2026-10-01T06:23:09Z
@@ -221,6 +221,20 @@ Store 捕获操作身份、每个受影响实例的 tab_uid/path/key/doc_id/body
 - [x] **T-07 规范与复审交接**。依赖：T-06。新增 docs/specs/document-lifecycle.md，局部修改 editor-safety/draft-recovery，必要时 README/ARCHITECTURE/parity-ledger 指针；更新分析路线图与R-02实际完成门。映射 SD-01..05/AC-01..13 并绑定实施 revision，交 auto-plan-review。覆盖 AC-12/13。验证：规范、兼容、剩余边界与实现一致，链接/hash 可查；本次规划不自动执行或合并。
 
 ## 9. 复审记录
+
+### 2026-10-01 review：r1 全量复审（review 独立复跑门）
+
+- stage: review
+- plan: PLAN-032，plan_revision: 1
+- outcome: pass
+- reviewed_commit: 0f05f5d（工作树零 WIP；链 c8700af→5a934eb→2b25cef→f4faf91→0f05f5d 直接 main 线性 ancestor-OK，单一主检出）
+- base_commit: c8700af（031 归档后 tip）
+- dependency_revisions: auto-lang debug 载体（本会话恢复构建，target/debug）；auto-down engine dist=F-31-R1 上游漂移在案（gen 链+契约断言过，非本树缺陷）；无跨仓写入
+- spec_inputs: docs/specs/document-lifecycle.md（新，0f05f5d）+ editor-safety.md/draft-recovery.md 修订（0f05f5d）+ 附件 032-lifecycle-protocol.md（5a934eb）；canonical 三件随实现批落 main（jade-edit 在册惯例 031 先例）
+- acceptance_results: **AC-01..13 全 pass**。复审独立复跑门：①probe_lifecycle 双臂 ALL GREEN（exit 0）；②回归五探针 rename/dir_ops/trash/alias_linkify/draft_protocol 全过（merged+split，wsys pub 化/linkify 抽取零漂移）；③e2e 九测：全跑 8/9+⑩ trash 单测重跑绿（D-21 menubar popover flake 家族，flake 协议在册）→ 9/9 有效；④vm merged：21 组 PASS（1-8/B baseline v25/10/10b/10m/10c/14/11/12/13dir4·dir5·dir3·file[conflictHold·mvCycle 修复后绿]/R）+LC1/LC2 弧绿（lc-blocked→cancelled→lc-ok rename+synced 双档，console 转储在录）；⑤vm split：boot OK（F-24-2 本轮未现）+9 组 PASS+10m linkify UI 子步红（见 F-32-R4）；⑥pnpm build 生成链契约断言过（F-31-R1 dist 卫兵=上游在案）。AC-08/AC-11 的 vm 原生补充弧 = F-32-R2 边界（安全终态在案），主承载 = e2e⑥ vue 用户路径 + probe late/sync 双分支——按计划 §4.3/§6 预定义 fallback 口径判 pass
+- findings: **F-32-R2**（upstream 非阻塞）：auto-lang VM 帧槽跨调用别名蔓延至前端 handler 命名局部（LC3-DBG console 转储在录：kind 跨操作残留）→ vm 臂 LC3-delete 弧 reject 安全终态（零磁盘变更+弹层留置+save_note 如实）；bundle 单参+模型驱动漂移循环已结构性规避调用面，残留面=vm 长会话多 op 深分支，转上游证据+ledger 候选。**F-32-R3**（cosmetic 非阻塞）：tests/baseline/structure-v25.txt 头注仍为 v21/PLAN-030 文案（内容为 v25 现势 dump）——下次基线重锁顺修。**F-32-R4**（记录性非阻塞）：vm split 臂非全绿（10m linkify UI 子步红），按计划 §6 fallback 以 probe-split ALL GREEN+e2e vue 同面证据承载，不记全绿。**F-32-R1**（031 既有面非阻塞，随 T-07 入 spec §3）：ConfirmKeepClose vue 臂排水竞态——安全终态档留+草稿保护，ledger 候选
+- evidence: probe=rv-probe.log（exit 0 ALL GREEN）；回归五探针=rv-reg-*.log（全过）；e2e=rv-e2e.log（8/9）+rv-e2e-t10.log（⑩ 重跑绿）；vm merged=rv-vm.log（21 组 PASS+LC3-DBG 转储）；vm split=rv-vm-split.log（9 组 PASS+10m 红）；规范三件+附件在工作树 0f05f5d 可查；执行期转录=p32-*.log/probe-lifecycle-run/（e2e/.runtime ignored 在档）
+- next: auto-plan-merge（F-32-R2/R3/R4 随合并批登记 ledger/顺修；LC3-in-vm 弧边界随 merge 备案）
 
 ### 2026-10-01 work：T-06 余项收口 + T-07 规范与复审交接（r1 第 6-7/7 步，execution_done）
 
