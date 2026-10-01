@@ -222,6 +222,21 @@ Store 捕获操作身份、每个受影响实例的 tab_uid/path/key/doc_id/body
 
 ## 9. 复审记录
 
+### 2026-10-01 merge：PLAN-032:r1 合并回执（五 checkpoint）
+
+- stage: merge
+- plan: PLAN-032，plan_revision: 1
+- **prepared**：复审基线 0f05f5d 实现批（T-01..T-07 四批链 5a934eb→2b25cef→f4faf91→0f05f5d 直接 main 线性）+80ca045 复审 pass docs-only 后代——canonical 规范三件已随实现批落 main（document-lifecycle.md 新+editor-safety/draft-recovery 修订——jade-edit 在册惯例：规范随 work 批落位，031 先例）；投影目标=docs/parity-ledger.md v37（SD-3201..3205+D-47/D-48/D-49）
+- **landed**：main tip==交付批（直接 main 线性约定 001..031 在册惯例，无 worktree/dev 分支——git worktree list 单一主检出核验）；合并窗终树 smoke=复审独立复跑门全绿（probe 双臂 ALL GREEN+回归五探针全过+e2e 9/9[⑩ D-21 flake 单测重跑绿]+vm merged 21 组 PASS——80ca045/ledger 批为 docs-only 后代，代码态与 0f05f5d 恒等）
+- **ledger_refreshed**：docs/parity-ledger.md v36→v37（tracked 文件面——jade-edit 无 live ledger 服务，.autoos 缺席实勘同 031；无 store 中介写适用）——SD-3201..3205 指针各行恰一+D-47/D-48/D-49 三新行各恰一+D-45/D-46 历史保留+表头版本恰一（读回核验在案）
+- **archived**：git mv→docs/plans/archived/032-document-lifecycle-safety.md+status archived+completion_kind delivered（YAML 块内）
+- **cleaned**：无 worktree/dev 分支清理面（直接 main 线性惯例；git worktree list 单一主检出）+代码工作树零 WIP+一次性件居 ignored e2e/.runtime[p32 探针族+dbg 件在档可追溯]
+- **deployment 观察**：jade-edit 无常驻生产进程/发布二进制面（应用=auto.exe 伴生加载 src）；gen/dist 复审窗 ✓built 现势[build31 契约断言过；engine dist 上游漂移 F-31-R1 非本树缺陷维持]；载体 auto.exe debug=本会话恢复构建（10-01）
+- **批回归到期件**：无 .last-batch-regression.json[jade-edit 惯例 024..031 同判——本批 §6 全量门+复审独立复跑+合并窗 smoke=批级回归门本体]
+- **留观交接**：F-32-R2（VM 帧槽别名——上游 auto-lang 供料候选，LC3-in-vm 弧安全终态在案）/F-32-R1（031 ConfirmKeepClose vue 排水竞态——031-impl 修复候选）/F-32-R3（v25 头注顺修）/R-02 完成声明待本回执+复审 pass 支撑——候选池下一项按路线图默认序=R-03 或独立 R-04[立项走 new 流程重勘]
+- outcome: pass（delivery/derived view/archival/cleanup 逐项核验）
+- next: 复审归档批提交后收口
+
 ### 2026-10-01 review：r1 全量复审（review 独立复跑门）
 
 - stage: review
