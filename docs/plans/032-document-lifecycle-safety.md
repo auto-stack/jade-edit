@@ -4,9 +4,9 @@ status: executing
 feature_name: 多文档文件操作保护（R-02b）
 author: [agent]
 created_at: 2026-10-01T06:23:09Z
-updated_at: 2026-10-01T08:05:00Z
+updated_at: 2026-10-01T10:00:00Z
 plan_revision: 1
-current_step: 1
+current_step: 2
 total_steps: 7
 supersedes_spec_components:
   - docs/specs/editor-safety.md
@@ -213,7 +213,7 @@ Store 捕获操作身份、每个受影响实例的 tab_uid/path/key/doc_id/body
 ## 8. 执行步骤
 
 - [x] **T-01 影响与协调协议原型**。依赖：无。只读核对 app.at 十入口、editor_store.at Edit/Save/Reload/CloseTabsOf/TabsRenamed、wsys.at 相关实现和031协议；新增 attachments/032-lifecycle-protocol.md。一原型＋一次故障复测，明确分析／提交契约、tab_uid、快照门、部分回执和迟到输入／保存冲突出口。覆盖 AC-01/04/05/08/09/10/12，支撑 SD-01..05。验证：临时装置只在 ignored e2e/.runtime/，附件记录真实命令／结果；不可满足核心门则 blocker，不降验收。[✅ 已完成]（2026-10-01）探针装置 e2e/.runtime/p32/（lifecycle_probe.at 候选契约 rename+movedir 双代表 kind + probe_app.at 七相位 + t01.mjs 编排）**连跑两轮各 60 PASS/0 FAIL ALL GREEN**（原型＋失败面复测，转录 t01-transcript.log）；三个关键门全过（非活动脏引用源阻断/等待期输入保留/合并部分失败如实回执——真 icacls deny-delete 注入）；受检契约 LP1/RC1 位置记录文法+basis 全清单指纹冻结；工具链新实勘四件在案（deny 下 file_sha256 抛错但基线闭环/只读属性对 File.delete 无效/**跨模块调用参数槽位覆写→受检函数入口参数快照硬纪律**/前端调用块内局部拷贝）；无 blocker 进 T-02。
-- [ ] **T-02 后端受检操作与真实回执**。依赖：T-01 可行。新增 src/back/lifecycle.at、修改 api.at 受检接口与 wsys.at 共享分析／纯转换／核验提交件；保留旧契约。新增 tests/probe_lifecycle.mjs。实现十类分析、指纹重查、完整复制后删源、逐项结果和部分完成，覆盖 AC-01/04/05/09，SD-01/02。验证：pnpm build、node tests/probe_lifecycle.mjs 双臂全绿；旧 rename/dir/trash/linkify 协议回归保持。
+- [x] **T-02 后端受检操作与真实回执**。依赖：T-01 可行。新增 src/back/lifecycle.at、修改 api.at 受检接口与 wsys.at 共享分析／纯转换／核验提交件；保留旧契约。新增 tests/probe_lifecycle.mjs。实现十类分析、指纹重查、完整复制后删源、逐项结果和部分完成，覆盖 AC-01/04/05/09，SD-01/02。验证：pnpm build、node tests/probe_lifecycle.mjs 双臂全绿；旧 rename/dir/trash/linkify 协议回归保持。[✅ 已完成]（2026-10-01）lifecycle.at 十类全实装（分析纯读/基线复核/逐项核验/partial 如实；全程参数入口快照纪律）；wsys.at 九件 pub 化+linkify_split 纯计算单点抽取（linkify_page_impl 改纯计算消费——行为零变化）；api.at 追加 /api/lc_plan+ /api/lc_commit（旧原始 API 签名原样保留）；probe_lifecycle.mjs 双臂（merged 十相位+split HTTP）**连跑两轮各 97 PASS ALL GREEN**；回归五探针全绿（rename/dir_ops/trash/alias_linkify/draft_protocol——wsys pub 化与 linkify 重构零行为漂移）；pnpm build 生成链通过（api.ts 契约断言过+vue 客户端含 lc_*）+engine dist 新鲜度卫兵失败=F-31-R1 在案环境漂移（上游义务，非本树缺陷）+lifecycle.rs/drafts.rs rust 转译跳过同族（try/catch 面 031 先例，vm 轨无涉）。执行期新实勘两件在案：deny ACL 下 read_text 返空串→**divert 增尺寸核验**（复制未核验前不删源强化——短写/空副本残件清除+源保留）；restore_all 冲突条目入整批方案（门域覆盖被占用目标，commit 期逐条复核如实 error）。
 - [ ] **T-03 Store 前置保护与定向协调**。依赖：T-02。修改 editor_store.at Open/ActNew/DraftRecover 初始化会话内 tab_uid；新增生命周期消息／状态（名称 T-01 冻结），实现全部实例快照门、仅受影响同步、未知结果／正文差异保存门。移除业务收尾对无守卫 Reload/CloseTabsOf 的依赖，低层 RemoveAt 不毁草稿。覆盖 AC-02/03/06/07/08/10，SD-03。验证：Store 与磁盘对照，延迟／重开／晚输入故障，不以索引定位。
 - [ ] **T-04 十类入口与保护提示接线**。依赖：T-03。修改 app.at RenameGo/MoveGo/DeleteGo/DelDirGo/RenDirGo/MoveDirExec/LinkifyGo/TrashRestore/TrashRestoreAll/TrashPurgeGo，参数快照、统一受检调用与阻断文档列表；成功刷新族／recents 按实际回执更新。新增 e2e/lifecycle-safety.spec.ts。覆盖 AC-01/02/03/06/07/09/10，SD-01/02/03。验证：定向 Playwright，十类操作都经过门；未保护的旧 API 调用不得留作旁路。
 - [ ] **T-05 草稿上下文与晚输入保留出口**。依赖：T-03/T-04。修改 editor_store.at 的路径协调、DraftDrainOf、Save/QuitSaveClose 等对应状态门；必要时 back/drafts.at 仅补可验证消费接口，不迁 schema v1、不原位改旧记录。实现同 doc_id 上下文修订、.trash/ 路径、删除后保留副本、未知／外改的另存或核验出口。覆盖 AC-08/10/11/12，SD-03/04。验证：旧回执晚到／检查点失败、部分合并后恢复、不清库真重启；失败不结算最新草稿。
@@ -221,6 +221,17 @@ Store 捕获操作身份、每个受影响实例的 tab_uid/path/key/doc_id/body
 - [ ] **T-07 规范与复审交接**。依赖：T-06。新增 docs/specs/document-lifecycle.md，局部修改 editor-safety/draft-recovery，必要时 README/ARCHITECTURE/parity-ledger 指针；更新分析路线图与R-02实际完成门。映射 SD-01..05/AC-01..13 并绑定实施 revision，交 auto-plan-review。覆盖 AC-12/13。验证：规范、兼容、剩余边界与实现一致，链接/hash 可查；本次规划不自动执行或合并。
 
 ## 9. 复审记录
+
+### 2026-10-01 work：T-02 后端受检操作与真实回执（r1 第 2/7 步）
+
+- stage: work
+- plan: PLAN-032，plan_revision: 1
+- outcome: pass（T-02 单步；整体仍 executing）
+- code_commit: 本批（直接 main 线性，base=5a934eb）
+- task_ids: T-02
+- evidence: lifecycle.at 十类全实装+probe_lifecycle.mjs 双臂连跑两轮各 97 PASS ALL GREEN+回归五探针全绿（wsys pub 化与 linkify_split 抽取零行为漂移）+pnpm build 生成链通过（api.ts 契约断言过）；执行期新实勘两件：deny ACL read_text 返空串→divert 尺寸核验强化、restore_all 冲突条目入整批方案（门域覆盖被占用目标）；dev 期修复 10 轮在录（deldir 空壳嵌套清理、同父幂等卫、嵌套模块调用展平、ACL 残件核验、fixture 口径族）
+- blockers: 无（engine dist 新鲜度卫兵失败=F-31-R1 上游漂移在案归因，非本树缺陷）
+- next: T-03 Store 前置保护与定向协调（editor_store.at tab_uid+快照门+定向同步）
 
 ### 2026-10-01 work：T-01 影响与协调协议原型（r1 第 1/7 步）
 

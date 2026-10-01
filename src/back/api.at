@@ -28,6 +28,7 @@
 
 use wsys
 use drafts
+use lifecycle
 
 /// 工作区根（JADE_WORKSPACE 优先——fixture 隔离通道；AUTO_PROJECT_DIR
 /// 兜底；缺席 "."。T-00 ③：automan.rs:1435 无条件覆盖 AUTO_PROJECT_DIR，
@@ -456,4 +457,30 @@ pub fn draft_read(doc_id str, seq int) str {
 #[api(method = "POST", path = "/api/draft_read_orig")]
 pub fn draft_read_orig(doc_id str, seq int) str {
     return drafts.d_read_orig(doc_id, seq)
+}
+
+// ---- 受检生命周期契约（PLAN-032 T-02；实现 src/back/lifecycle.at，决策
+// 与实证 docs/plans/attachments/032-lifecycle-protocol.md）。R-02b 多文档
+// 文件操作保护：分析纯读零写面 + 基线复核 + 逐项核验提交 + 真实回执——
+// 旧原始 API（rename_page/move_page/delete_page/delete_dir/rename_dir/
+// move_dir/linkify_page/trash_restore/trash_purge）签名与语义原样保留以
+// 承载既有调用与协议测试；应用内十类入口改走本受检路径（T-04 接线）。
+// 返回面 = 位置记录（LP1/RC1 文法见附件 §3——NTFS 非法字符分隔，front
+// 手工 split 解析）。**POST**（路径 CJK 常态，body 传参 D-19 免疫）。----
+
+/// 受检生命周期分析（纯读零写面）：kind 分派见 lifecycle.at 头注；返回
+/// LP1 记录（status ∈ ok|reject；basis=基线串——前端持为不透明原样回传）。
+/// POST /api/lc_plan
+#[api(method = "POST", path = "/api/lc_plan")]
+pub fn lc_plan(kind str, a str, b str, c str) str {
+    return lifecycle.lc_plan_impl(kind, a, b, c)
+}
+
+/// 受检生命周期提交：基线复核（失配 → stale 零变更）→ 受检执行 → RC1
+/// 回执（status ∈ ok|partial|stale|reject；moves/rewrites/deletes 实际
+/// 映射驱动 front 定向协调——不用旧 "" 推断无副作用）。
+/// POST /api/lc_commit
+#[api(method = "POST", path = "/api/lc_commit")]
+pub fn lc_commit(kind str, a str, b str, c str, basis str) str {
+    return lifecycle.lc_commit_impl(kind, a, b, c, basis)
 }

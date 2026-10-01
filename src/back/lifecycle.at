@@ -1,0 +1,1598 @@
+// back/lifecycle.at — 受检生命周期操作本体（PLAN-032 T-02；R-02b 多文档
+// 文件操作保护）。契约与决策 = docs/plans/attachments/032-lifecycle-protocol.md。
+//
+// 双入口（api.at /api/lc_plan、/api/lc_commit 承载；分析纯读零写面）：
+//   lc_plan_impl(kind, a, b, c)        → LP1 记录（status ∈ ok|reject）
+//   lc_commit_impl(kind,a,b,c,basis)   → RC1 记录（status ∈ ok|partial|stale|reject）
+// 记录文法（T-01 冻结；全分隔符 = NTFS 文件名非法字符——路径结构性不含，
+// HTTP body 安全，front 手工 split 可解析[D-20④ store 上下文 json 损坏规避]）：
+//   LP1|status|basis|changes|moves|rewrites|deletes
+//   RC1|status|dir|moves|rewrites|deletes|errors|extra
+//   列表项 "*"；迁移对 "old>new"；指纹项 "rel:size:sha"；错误项 "slug:rel"
+//   basis = "F"+count+"*"+rel 清单+"*"+指纹清单（workspace .ad ∪ .trash/.ad
+//   ∪ 变更域逐件）——前端持为不透明串原样回传。
+//
+// kind 全表：rename(a=old_path,b=new_stem) / move(a=path,b=dir) / delete(a=
+// path) / deldir(a=dir) / rendir(a=dir,b=new_name) / movedir(a=dir,b=new_
+// parent,c=""|both|skip|overwrite——非空即合并) / linkify(a=path,b=stem) /
+// restore(a=entry) / restore_all / purge。
+//
+// ⚠ T-01 硬纪律（032-lifecycle-protocol §5③④ 在案）：本模块全部带参函数
+// **入口即把参数快照到独立局部并用快照值**——参数槽位可被嵌套调用覆写
+//（strategy 漏进 basis 槽实证）；每函数体首行块即快照，无例外。
+
+use wsys
+
+// ===== 共享面 =====
+
+/// 工作区根（wsys.root_dir 同源——root pub；resolve 私有故本地重实现）
+fn lc_root() str {
+    return wsys.root_dir()
+}
+
+fn lc_resolve(path str) str {
+    var p0 str = path
+    if p0 == "" {
+        return lc_root()
+    }
+    var n = p0.length
+    if n > 1 {
+        if p0.slice(1, 2) == ":" {
+            return p0
+        }
+    }
+    var head = p0.slice(0, 1)
+    if head == "/" {
+        return p0
+    }
+    if head == "\\" {
+        return p0
+    }
+    return lc_root() + "/" + p0
+}
+
+/// 文件指纹（存在 → "rel:size:sha"；缺失/指纹原语异常 → ""——同 ACL 态
+/// 下 plan/commit 双侧同空，基线比较闭环[032-lifecycle-protocol §5①]）
+fn lc_fp(rel str) str {
+    var r0 str = rel
+    var full str = lc_resolve(r0)
+    if !File.exists(full) {
+        return ""
+    }
+    var sz int = 0
+    var sha str = ""
+    var ok bool = true
+    try {
+        sz = fs.size(full)
+        sha = Hash.file_sha256(full)
+    } catch (e) {
+        ok = false
+    }
+    if !ok {
+        return ""
+    }
+    return r0 + ":" + sz.str() + ":" + sha
+}
+
+/// 回收站条目清单（trash_list_json 同源遍历；返回 ".trash/" 前缀 rel 表）
+fn lc_trash_entries() List {
+    var out List = []
+    var tree str = fs.tree(lc_resolve(".trash"), 8)
+    var segs = tree.split("{\"id\":")
+    var i int = 1
+    while i < segs.len() {
+        var seg str = segs[i]
+        if seg.contains("\"kind\":\"file\"") {
+            var head = seg.split_once(",\"label\":")
+            if head.len() == 2 {
+                var idq str = head[0]
+                var qparts = idq.split("\"")
+                if qparts.len() >= 2 {
+                    var rel str = qparts[1]
+                    if rel.ends_with(".ad") {
+                        out.push(".trash/" + rel)
+                    }
+                }
+            }
+        }
+        i = i + 1
+    }
+    return out
+}
+
+/// 全 .ad 基线（workspace ∪ .trash——restore/restore_all/purge 的条目身份
+/// 同入基线；变更域指纹逐件追加）
+fn lc_basis(extra List) str {
+    var pages List = wsys.collect_ad_pages("", 8)
+    var rels List = []
+    var fps List = []
+    var i int = 0
+    while i < pages.len() {
+        var p = pages[i]
+        var rel str = p.rel
+        rels.push(rel)
+        var f str = lc_fp(rel)
+        if f != "" {
+            fps.push(f)
+        }
+        i = i + 1
+    }
+    var tr List = lc_trash_entries()
+    var j int = 0
+    while j < tr.len() {
+        var t str = tr[j]
+        rels.push(t)
+        var tf str = lc_fp(t)
+        if tf != "" {
+            fps.push(tf)
+        }
+        j = j + 1
+    }
+    var k int = 0
+    while k < extra.len() {
+        var x str = extra[k]
+        rels.push(x)
+        var xf str = lc_fp(x)
+        if xf != "" {
+            fps.push(xf)
+        }
+        k = k + 1
+    }
+    var head str = "F" + rels.len().str()
+    return head + "*" + lc_join_items(rels) + "*" + lc_join_items(fps)
+}
+
+fn lc_join_pairs(olds List, news List) str {
+    var out str = ""
+    var i int = 0
+    while i < olds.len() {
+        if i > 0 {
+            out = out + "*"
+        }
+        var o str = olds[i]
+        var n str = news[i]
+        out = out + o + ">" + n
+        i = i + 1
+    }
+    return out
+}
+
+fn lc_join_items(items List) str {
+    var out str = ""
+    var i int = 0
+    while i < items.len() {
+        if i > 0 {
+            out = out + "*"
+        }
+        var s str = items[i]
+        out = out + s
+        i = i + 1
+    }
+    return out
+}
+
+/// 回收站落点纯算名（分析面用——零写面；wsys.trash_name 纯算段同规则）
+fn lc_trash_name(orig_rel str) str {
+    var r0 str = orig_rel
+    var pre str = wsys.dir_of(r0)
+    var stem str = wsys.stem_of(r0)
+    if stem == "" {
+        return ""
+    }
+    var cand str = ".trash/" + r0
+    if File.exists(lc_resolve(cand)) {
+        var n int = 1
+        cand = ".trash/" + pre + stem + "--1.ad"
+        while File.exists(lc_resolve(cand)) {
+            n = n + 1
+            cand = ".trash/" + pre + stem + "--" + n.str() + ".ad"
+        }
+    }
+    return cand
+}
+
+/// 子树 .ad 清单（前缀过滤——deldir/rendir/movedir 共享；返回 rel 表）
+fn lc_subtree_files(dir str) List {
+    var d0 str = dir
+    var out List = []
+    var pages List = wsys.collect_ad_pages("", 8)
+    var i int = 0
+    while i < pages.len() {
+        var p = pages[i]
+        var rel str = p.rel
+        if rel.starts_with(d0 + "/") {
+            out.push(rel)
+        }
+        i = i + 1
+    }
+    return out
+}
+
+/// 字节整迁核验（wsys.move_file pub 复用；调用方 try/catch 兜原语异常）
+fn lc_move(from_rel str, to_rel str) bool {
+    var f0 str = from_rel
+    var t0 str = to_rel
+    return wsys.move_file(f0, t0)
+}
+
+/// 复制核验 divert（delete/delete_dir 改道面）：write 后**先验字节数一致
+/// 再删源**——复制未核验前不删源的强化（T-02 执行期实勘：deny-delete ACL
+/// 下 read_text 异常返空串——无核验的改道会留下 0 字节残件+删源后数据
+/// 丢失；尺寸核验使该面转为 divert-failed+源保留）。核验失败 → 短写残件
+/// best-effort 清除，源永不动。
+fn lc_divert(orig_rel str, trel str) bool {
+    var o0 str = orig_rel
+    var t0 str = trel
+    var ofull str = lc_resolve(o0)
+    var tfull str = lc_resolve(t0)
+    var szo int = 0
+    var okr bool = true
+    try {
+        szo = fs.size(ofull)
+    } catch (e0) {
+        okr = false
+    }
+    if !okr {
+        return false
+    }
+    File.write_text(tfull, File.read_text(ofull))
+    if !File.exists(tfull) {
+        return false
+    }
+    var szt int = 0
+    var okt bool = true
+    try {
+        szt = fs.size(tfull)
+    } catch (e1) {
+        okt = false
+    }
+    if !okt {
+        return false
+    }
+    if szt != szo {
+        File.delete(tfull)
+        return false
+    }
+    File.delete(ofull)
+    if File.exists(ofull) {
+        return false
+    }
+    return true
+}
+
+// ===== rename =====
+
+fn lc_plan_rename(a str, b str) str {
+    var old_path str = a
+    var new_name str = b
+    if !File.exists(lc_resolve(old_path)) {
+        return "LP1|reject|||||"
+    }
+    var safe str = wsys.title_to_path_stem(new_name)
+    if safe == "" {
+        return "LP1|reject|||||"
+    }
+    var new_rel str = wsys.dir_of(old_path) + safe + ".ad"
+    if new_rel == old_path {
+        return "LP1|reject|||||"
+    }
+    if !wsys.casefold_eq(new_rel, old_path) {
+        if File.exists(lc_resolve(new_rel)) {
+            return "LP1|reject|||||"
+        }
+    }
+    var old_stem str = wsys.stem_of(old_path)
+    var olds List = []
+    var news List = []
+    var rews List = []
+    var fps List = []
+    olds.push(old_path)
+    news.push(new_rel)
+    var ofp str = lc_fp(old_path)
+    if ofp != "" {
+        fps.push(ofp)
+    }
+    var pages List = wsys.collect_ad_pages("", 8)
+    var i int = 0
+    while i < pages.len() {
+        var p = pages[i]
+        var rel str = p.rel
+        var body str = wsys.read_body(rel)
+        var rewritten str = wsys.rewrite_links(body, old_stem, safe)
+        if rewritten != body {
+            rews.push(rel)
+            var f2 str = lc_fp(rel)
+            if f2 != "" {
+                fps.push(f2)
+            }
+        }
+        i = i + 1
+    }
+    return "LP1|ok|" + lc_basis(fps) + "|" + lc_join_items(fps) + "|" + lc_join_pairs(olds, news) + "|" + lc_join_items(rews) + "|"
+}
+
+fn lc_commit_rename(a str, b str, basis str) str {
+    var op str = a
+    var nn str = b
+    var bs str = basis
+    var fresh str = lc_plan_rename(op, nn)
+    var fseg = fresh.split("|")
+    if fseg.len() < 2 {
+        return "RC1|stale||||||"
+    }
+    if fseg[1] != "ok" {
+        return "RC1|reject||||||"
+    }
+    var fbasis str = fseg[2]
+    if fbasis != bs {
+        return "RC1|stale||||||"
+    }
+    var safe str = wsys.title_to_path_stem(nn)
+    var new_rel str = wsys.dir_of(op) + safe + ".ad"
+    var olds List = []
+    var news List = []
+    var rews List = []
+    var errs List = []
+    // ①迁移（case-only 两步同 006 形态）
+    var src_rel str = op
+    var step1 bool = true
+    if wsys.casefold_eq(new_rel, op) {
+        var dop str = wsys.dir_of(op)
+        var sop str = wsys.stem_of(op)
+        var tmp_base str = dop + sop + "--cftmp-"
+        var n int = 1
+        var tmp_rel str = tmp_base + "1.ad"
+        while File.exists(lc_resolve(tmp_rel)) {
+            n = n + 1
+            tmp_rel = tmp_base + n.str() + ".ad"
+        }
+        var m1 bool = false
+        try {
+            m1 = lc_move(op, tmp_rel)
+        } catch (e1) {
+            m1 = false
+        }
+        if !m1 {
+            step1 = false
+        } else {
+            src_rel = tmp_rel
+        }
+    }
+    if step1 {
+        var m2 bool = false
+        try {
+            m2 = lc_move(src_rel, new_rel)
+        } catch (e2) {
+            m2 = false
+        }
+        if !m2 {
+            step1 = false
+        }
+    }
+    if !step1 {
+        errs.push("move-failed:" + op)
+        return "RC1|partial||" + lc_join_pairs(olds, news) + "|" + lc_join_items(rews) + "||" + lc_join_items(errs) + "|"
+    }
+    olds.push(op)
+    news.push(new_rel)
+    // ②逐页改写 + 读回复核（新鲜 walk——基线一致下与分析集一致）
+    var old_stem str = wsys.stem_of(op)
+    var pages List = wsys.collect_ad_pages("", 8)
+    var i int = 0
+    while i < pages.len() {
+        var p = pages[i]
+        var rel str = p.rel
+        var body str = wsys.read_body(rel)
+        var rewritten str = wsys.rewrite_links(body, old_stem, safe)
+        if rewritten != body {
+            wsys.write_body(rel, rewritten)
+            var back str = wsys.read_body(rel)
+            if back == rewritten {
+                rews.push(rel)
+            } else {
+                errs.push("rewrite-failed:" + rel)
+            }
+        }
+        i = i + 1
+    }
+    var status str = "ok"
+    if errs.len() > 0 {
+        status = "partial"
+    }
+    return "RC1|" + status + "|" + new_rel + "|" + lc_join_pairs(olds, news) + "|" + lc_join_items(rews) + "||" + lc_join_items(errs) + "|"
+}
+
+// ===== move =====
+
+fn lc_plan_move(a str, b str) str {
+    var path str = a
+    var dir str = b
+    if !File.exists(lc_resolve(path)) {
+        return "LP1|reject|||||"
+    }
+    var d str = wsys.dir_norm(dir)
+    if !File.is_dir(lc_resolve(d)) {
+        return "LP1|reject|||||"
+    }
+    var fsegs = path.split("/")
+    var fname str = fsegs[fsegs.len() - 1]
+    var new_rel str = fname
+    if d != "" {
+        new_rel = d + "/" + fname
+    }
+    if new_rel == path {
+        // 同路径幂等——零变化方案（status ok，moves 空对）
+        var none1 List = []
+        return "LP1|ok|" + lc_basis(none1) + "||||"
+    }
+    if File.exists(lc_resolve(new_rel)) {
+        return "LP1|reject|||||"
+    }
+    var fps List = []
+    var f1 str = lc_fp(path)
+    if f1 != "" {
+        fps.push(f1)
+    }
+    var olds List = []
+    var news List = []
+    olds.push(path)
+    news.push(new_rel)
+    return "LP1|ok|" + lc_basis(fps) + "|" + lc_join_items(fps) + "|" + lc_join_pairs(olds, news) + "||"
+}
+
+fn lc_commit_move(a str, b str, basis str) str {
+    var p0 str = a
+    var d0 str = b
+    var bs str = basis
+    var fresh str = lc_plan_move(p0, d0)
+    var fseg = fresh.split("|")
+    if fseg.len() < 2 {
+        return "RC1|stale||||||"
+    }
+    if fseg[1] != "ok" {
+        return "RC1|reject||||||"
+    }
+    if fseg[2] != bs {
+        return "RC1|stale||||||"
+    }
+    var movesf str = fseg[4]
+    if movesf == "" {
+        // 幂等零变化
+        return "RC1|ok|" + p0 + "|||||"
+    }
+    var pairs = movesf.split("*")
+    var pr str = pairs[0]
+    var pp = pr.split(">")
+    var o1 str = pp[0]
+    var n1 str = pp[1]
+    var okm bool = false
+    try {
+        okm = lc_move(o1, n1)
+    } catch (e) {
+        okm = false
+    }
+    if !okm {
+        return "RC1|partial|" + n1 + "|||" + "move-failed:" + o1 + "||"
+    }
+    return "RC1|ok|" + n1 + "|" + o1 + ">" + n1 + "||||"
+}
+
+// ===== delete =====
+
+fn lc_plan_delete(a str) str {
+    var path str = a
+    if !path.ends_with(".ad") {
+        return "LP1|reject|||||"
+    }
+    if path.starts_with(".trash/") {
+        return "LP1|reject|||||"
+    }
+    if !File.exists(lc_resolve(path)) {
+        return "LP1|reject|||||"
+    }
+    var trel str = lc_trash_name(path)
+    if trel == "" {
+        return "LP1|reject|||||"
+    }
+    var fps List = []
+    var f1 str = lc_fp(path)
+    if f1 != "" {
+        fps.push(f1)
+    }
+    var dels List = []
+    dels.push(path + ">" + trel)
+    return "LP1|ok|" + lc_basis(fps) + "|" + lc_join_items(fps) + "|||" + lc_join_items(dels)
+}
+
+fn lc_commit_delete(a str, basis str) str {
+    var p0 str = a
+    var bs str = basis
+    var fresh str = lc_plan_delete(p0)
+    var fseg = fresh.split("|")
+    if fseg.len() < 2 {
+        return "RC1|stale||||||"
+    }
+    if fseg[1] != "ok" {
+        return "RC1|reject||||||"
+    }
+    if fseg[2] != bs {
+        return "RC1|stale||||||"
+    }
+    var delsf str = fseg[6]
+    var pairs = delsf.split("*")
+    var pr str = pairs[0]
+    var pp = pr.split(">")
+    var orig str = pp[0]
+    var trel str = pp[1]
+    // 改道：先建父链（wsys.trash_target 建目录+算名——基线一致下同名）
+    var trel2 str = wsys.trash_target(orig)
+    if trel2 == "" {
+        return "RC1|partial|" + orig + "|||guard-failed:" + orig + "||"
+    }
+    var okd bool = false
+    try {
+        okd = lc_divert(orig, trel2)
+    } catch (ed) {
+        okd = false
+    }
+    if !okd {
+        return "RC1|partial|" + orig + "|||divert-failed:" + orig + "||"
+    }
+    return "RC1|ok|" + orig + "|||" + orig + ">" + trel2 + "||"
+}
+
+// ===== deldir =====
+
+fn lc_plan_deldir(a str) str {
+    var dir str = a
+    var p str = wsys.dir_norm(dir)
+    if p == "" {
+        return "LP1|reject|||||"
+    }
+    if p == ".trash" {
+        return "LP1|reject|||||"
+    }
+    if p.starts_with(".trash/") {
+        return "LP1|reject|||||"
+    }
+    if !File.is_dir(lc_resolve(p)) {
+        return "LP1|reject|||||"
+    }
+    var files List = lc_subtree_files(p)
+    var fps List = []
+    var dels List = []
+    var bad bool = false
+    var i int = 0
+    while i < files.len() {
+        var rel str = files[i]
+        if !rel.ends_with(".ad") {
+            bad = true
+        } else {
+            var trel str = lc_trash_name(rel)
+            if trel == "" {
+                bad = true
+            } else {
+                dels.push(rel + ">" + trel)
+                var f1 str = lc_fp(rel)
+                if f1 != "" {
+                    fps.push(f1)
+                }
+            }
+        }
+        i = i + 1
+    }
+    if bad {
+        return "LP1|reject|||||"
+    }
+    return "LP1|ok|" + lc_basis(fps) + "|" + lc_join_items(fps) + "|||" + lc_join_items(dels)
+}
+
+fn lc_commit_deldir(a str, basis str) str {
+    var d0 str = a
+    var bs str = basis
+    var fresh str = lc_plan_deldir(d0)
+    var fseg = fresh.split("|")
+    if fseg.len() < 2 {
+        return "RC1|stale||||||"
+    }
+    if fseg[1] != "ok" {
+        return "RC1|reject||||||"
+    }
+    if fseg[2] != bs {
+        return "RC1|stale||||||"
+    }
+    var p str = wsys.dir_norm(d0)
+    var delsf str = fseg[6]
+    var dels List = []
+    var errs List = []
+    // 子树目录清单在迁移前从文件表推导（迁移后走查会漏空壳嵌套目录——
+    // remove_dir 非递归，残留即 cleanup-failed）
+    var files List = lc_subtree_files(p)
+    var subdirs List = []
+    var fi int = 0
+    while fi < files.len() {
+        var relf str = files[fi]
+        var lastf int = relf.length
+        var slashf int = -1
+        var kf int = 0
+        while kf < lastf {
+            var chf str = relf.slice(kf, kf + 1)
+            if chf == "/" {
+                slashf = kf
+            }
+            kf = kf + 1
+        }
+        if slashf > 0 {
+            var pdirf str = relf.slice(0, slashf)
+            var seenf bool = false
+            var df int = 0
+            while df < subdirs.len() {
+                var sdf str = subdirs[df]
+                if sdf == pdirf {
+                    seenf = true
+                }
+                df = df + 1
+            }
+            if !seenf {
+                subdirs.push(pdirf)
+            }
+        }
+        fi = fi + 1
+    }
+    var pairs = delsf.split("*")
+    var stopped bool = false
+    var i int = 0
+    while i < pairs.len() {
+        if !stopped {
+            var pr str = pairs[i]
+            var pp = pr.split(">")
+            var rel str = pp[0]
+            // 执行面用 wsys.trash_target（建父链+算名——基线一致下与分析同名）
+            var trel str = wsys.trash_target(rel)
+            if trel == "" {
+                errs.push("guard-failed:" + rel)
+                stopped = true
+            } else {
+                var okdv bool = false
+                try {
+                    okdv = lc_divert(rel, trel)
+                } catch (edv) {
+                    okdv = false
+                }
+                if !okdv {
+                    // 删除未生效——不计入已确认 deletes（残面由 errors 与
+                    // 磁盘如实可见；源保留——尺寸核验不过时短写残件已清）
+                    errs.push("divert-failed:" + rel)
+                    stopped = true
+                } else {
+                    dels.push(rel + ">" + trel)
+                }
+            }
+        }
+        i = i + 1
+    }
+    if stopped {
+        return "RC1|partial|" + p + "|||" + lc_join_items(dels) + "|" + lc_join_items(errs) + "|"
+    }
+    // 全成：旧目录清理（子树目录逆序——清单取迁移前推导）+ 顶层 + 复核
+    var k2 int = subdirs.len()
+    while k2 > 0 {
+        k2 = k2 - 1
+        var sd2 str = subdirs[k2]
+        File.remove_dir(lc_resolve(sd2))
+    }
+    File.remove_dir(lc_resolve(p))
+    if File.exists(lc_resolve(p)) {
+        return "RC1|partial|" + p + "|||" + lc_join_items(dels) + "|cleanup-failed:" + p + "|"
+    }
+    return "RC1|ok|" + p + "|||" + lc_join_items(dels) + "||"
+}
+
+// ===== rendir =====
+
+fn lc_plan_rendir(a str, b str) str {
+    var dir str = a
+    var new_name str = b
+    var p str = wsys.dir_norm(dir)
+    if p == "" {
+        return "LP1|reject|||||"
+    }
+    if p == ".trash" {
+        return "LP1|reject|||||"
+    }
+    if p.starts_with(".trash/") {
+        return "LP1|reject|||||"
+    }
+    if !File.is_dir(lc_resolve(p)) {
+        return "LP1|reject|||||"
+    }
+    var safe str = wsys.title_to_path_stem(new_name)
+    if safe == "" {
+        return "LP1|reject|||||"
+    }
+    var parent str = wsys.dir_of(p)
+    var new_rel str = parent + safe
+    if File.exists(lc_resolve(new_rel)) {
+        return "LP1|reject|||||"
+    }
+    if wsys.casefold_eq(new_rel, p) {
+        return "LP1|reject|||||"
+    }
+    var files List = lc_subtree_files(p)
+    var fps List = []
+    var olds List = []
+    var news List = []
+    var bad bool = false
+    var i int = 0
+    while i < files.len() {
+        var rel str = files[i]
+        if !rel.ends_with(".ad") {
+            bad = true
+        } else {
+            var rp = rel.split_once(p + "/")
+            var rest str = rel
+            if rp.len() == 2 {
+                rest = rp[1]
+            }
+            olds.push(rel)
+            news.push(new_rel + "/" + rest)
+            var f1 str = lc_fp(rel)
+            if f1 != "" {
+                fps.push(f1)
+            }
+        }
+        i = i + 1
+    }
+    if bad {
+        return "LP1|reject|||||"
+    }
+    return "LP1|ok|" + lc_basis(fps) + "|" + lc_join_items(fps) + "|" + lc_join_pairs(olds, news) + "||"
+}
+
+fn lc_commit_rendir(a str, b str, basis str) str {
+    var d0 str = a
+    var n0 str = b
+    var bs str = basis
+    var fresh str = lc_plan_rendir(d0, n0)
+    var fseg = fresh.split("|")
+    if fseg.len() < 2 {
+        return "RC1|stale||||||"
+    }
+    if fseg[1] != "ok" {
+        return "RC1|reject||||||"
+    }
+    if fseg[2] != bs {
+        return "RC1|stale||||||"
+    }
+    var p str = wsys.dir_norm(d0)
+    var parent str = wsys.dir_of(p)
+    var safe str = wsys.title_to_path_stem(n0)
+    var new_rel str = parent + safe
+    // 镜像目录（顶层 + 嵌套——分析走查一致）
+    var files List = lc_subtree_files(p)
+    var subdirs List = []
+    var i int = 0
+    while i < files.len() {
+        var rel str = files[i]
+        var last int = rel.length
+        var slash int = -1
+        var k int = 0
+        while k < last {
+            var ch str = rel.slice(k, k + 1)
+            if ch == "/" {
+                slash = k
+            }
+            k = k + 1
+        }
+        if slash > 0 {
+            var pdir str = rel.slice(0, slash)
+            var seen bool = false
+            var d2 int = 0
+            while d2 < subdirs.len() {
+                var sd str = subdirs[d2]
+                if sd == pdir {
+                    seen = true
+                }
+                d2 = d2 + 1
+            }
+            if !seen {
+                subdirs.push(pdir)
+            }
+        }
+        i = i + 1
+    }
+    File.create_dir(lc_resolve(new_rel))
+    var j int = 0
+    while j < subdirs.len() {
+        var sd2 str = subdirs[j]
+        var sdp = sd2.split_once(p + "/")
+        var sd_rest str = sd2
+        if sdp.len() == 2 {
+            sd_rest = sdp[1]
+        }
+        File.create_dir(lc_resolve(wsys.dir_norm(new_rel + "/" + sd_rest)))
+        j = j + 1
+    }
+    // 逐文件迁移核验（失败即停——源保留如实 partial）
+    var olds List = []
+    var news List = []
+    var errs List = []
+    var stopped bool = false
+    var m int = 0
+    while m < files.len() {
+        if !stopped {
+            var rel str = files[m]
+            var rp = rel.split_once(p + "/")
+            var rest str = rel
+            if rp.len() == 2 {
+                rest = rp[1]
+            }
+            var to_rel str = new_rel + "/" + rest
+            var okm bool = false
+            try {
+                okm = lc_move(rel, to_rel)
+            } catch (e) {
+                okm = false
+            }
+            if okm {
+                olds.push(rel)
+                news.push(to_rel)
+            } else {
+                errs.push("move-failed:" + rel)
+                stopped = true
+            }
+        }
+        m = m + 1
+    }
+    if stopped {
+        return "RC1|partial|" + new_rel + "|" + lc_join_pairs(olds, news) + "|||" + lc_join_items(errs) + "|"
+    }
+    // 全成：旧目录清理（子先父后逆序）+ 复核
+    var k2 int = subdirs.len()
+    while k2 > 0 {
+        k2 = k2 - 1
+        var sd3 str = subdirs[k2]
+        File.remove_dir(lc_resolve(sd3))
+    }
+    File.remove_dir(lc_resolve(p))
+    if File.exists(lc_resolve(p)) {
+        return "RC1|partial|" + new_rel + "|" + lc_join_pairs(olds, news) + "|||cleanup-failed:" + p + "|"
+    }
+    return "RC1|ok|" + new_rel + "|" + lc_join_pairs(olds, news) + "||||"
+}
+
+// ===== movedir =====
+
+fn lc_plan_movedir(a str, b str, c str) str {
+    var dir str = a
+    var np str = b
+    var strategy str = c
+    var p str = wsys.dir_norm(dir)
+    if p == "" {
+        return "LP1|reject|||||"
+    }
+    if p == ".trash" {
+        return "LP1|reject|||||"
+    }
+    if p.starts_with(".trash/") {
+        return "LP1|reject|||||"
+    }
+    if strategy != "both" {
+        if strategy != "skip" {
+            if strategy != "overwrite" {
+                if strategy != "" {
+                    return "LP1|reject|||||"
+                }
+            }
+        }
+    }
+    var nps str = wsys.dir_norm(np)
+    if nps == ".trash" {
+        return "LP1|reject|||||"
+    }
+    if nps.starts_with(".trash/") {
+        return "LP1|reject|||||"
+    }
+    if !File.is_dir(lc_resolve(p)) {
+        return "LP1|reject|||||"
+    }
+    if !File.is_dir(lc_resolve(nps)) {
+        return "LP1|reject|||||"
+    }
+    if nps == p {
+        return "LP1|reject|||||"
+    }
+    if nps.starts_with(p + "/") {
+        return "LP1|reject|||||"
+    }
+    // 同父幂等（018 在册语义：返回 dir=p moves=[] 零变化）。⚠ 谓词分两步
+    // 局部调用——嵌套模块调用实参曾现槽位覆写（032-lifecycle-protocol §5③）
+    var pd str = wsys.dir_of(p)
+    var pdn str = wsys.dir_norm(pd)
+    if nps == pdn {
+        var none3 List = []
+        return "LP1|ok|" + lc_basis(none3) + "||||"
+    }
+    var segs = p.split("/")
+    var dname str = segs[segs.len() - 1]
+    var new_rel str = dname
+    if nps != "" {
+        new_rel = nps + "/" + dname
+    }
+    var merging bool = false
+    if File.exists(lc_resolve(new_rel)) {
+        if strategy == "" {
+            return "LP1|reject|||||"
+        }
+        if !File.is_dir(lc_resolve(new_rel)) {
+            return "LP1|reject|||||"
+        }
+        merging = true
+    }
+    var files List = lc_subtree_files(p)
+    var fps List = []
+    var olds List = []
+    var news List = []
+    var bad bool = false
+    var i int = 0
+    while i < files.len() {
+        var rel str = files[i]
+        if !rel.ends_with(".ad") {
+            bad = true
+        } else {
+            var rp = rel.split_once(p + "/")
+            var rest str = rel
+            if rp.len() == 2 {
+                rest = rp[1]
+            }
+            var to_rel str = new_rel + "/" + rest
+            if merging {
+                if File.exists(lc_resolve(to_rel)) {
+                    if strategy == "skip" {
+                        var t1 str = lc_trash_name(rel)
+                        if t1 == "" {
+                            bad = true
+                        } else {
+                            olds.push(rel)
+                            news.push(t1)
+                            var f1 str = lc_fp(rel)
+                            if f1 != "" {
+                                fps.push(f1)
+                            }
+                        }
+                    } else {
+                        if strategy == "overwrite" {
+                            var t2 str = lc_trash_name(to_rel)
+                            if t2 == "" {
+                                bad = true
+                            } else {
+                                olds.push(to_rel)
+                                news.push(t2)
+                                var f2 str = lc_fp(to_rel)
+                                if f2 != "" {
+                                    fps.push(f2)
+                                }
+                                olds.push(rel)
+                                news.push(to_rel)
+                                var f3 str = lc_fp(rel)
+                                if f3 != "" {
+                                    fps.push(f3)
+                                }
+                            }
+                        } else {
+                            // both：后缀新落点（v1 原样）
+                            var drest str = wsys.dir_of(rest)
+                            var fstem str = wsys.stem_of(rest)
+                            if fstem == "" {
+                                bad = true
+                            } else {
+                                var n int = 1
+                                var cand str = drest + fstem + "--1.ad"
+                                while File.exists(lc_resolve(new_rel + "/" + cand)) {
+                                    n = n + 1
+                                    cand = drest + fstem + "--" + n.str() + ".ad"
+                                }
+                                olds.push(rel)
+                                news.push(new_rel + "/" + cand)
+                                var f4 str = lc_fp(rel)
+                                if f4 != "" {
+                                    fps.push(f4)
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    olds.push(rel)
+                    news.push(to_rel)
+                    var f5 str = lc_fp(rel)
+                    if f5 != "" {
+                        fps.push(f5)
+                    }
+                }
+            } else {
+                olds.push(rel)
+                news.push(to_rel)
+                var f6 str = lc_fp(rel)
+                if f6 != "" {
+                    fps.push(f6)
+                }
+            }
+        }
+        i = i + 1
+    }
+    if bad {
+        return "LP1|reject|||||"
+    }
+    return "LP1|ok|" + lc_basis(fps) + "|" + lc_join_items(fps) + "|" + lc_join_pairs(olds, news) + "||"
+}
+
+fn lc_commit_movedir(a str, b str, c str, basis str) str {
+    var dir0 str = a
+    var np0 str = b
+    var st0 str = c
+    var bs str = basis
+    var fresh str = lc_plan_movedir(dir0, np0, st0)
+    var fseg = fresh.split("|")
+    if fseg.len() < 2 {
+        return "RC1|stale||||||"
+    }
+    if fseg[1] != "ok" {
+        return "RC1|reject||||||"
+    }
+    if fseg[2] != bs {
+        return "RC1|stale||||||"
+    }
+    if fseg[4] == "" {
+        // 同父幂等（方案 moves 空对——零变化）
+        var p0 str = wsys.dir_norm(dir0)
+        return "RC1|ok|" + p0 + "|||||"
+    }
+    var p str = wsys.dir_norm(dir0)
+    var nps str = wsys.dir_norm(np0)
+    var segs = p.split("/")
+    var dname str = segs[segs.len() - 1]
+    var new_rel str = dname
+    if nps != "" {
+        new_rel = nps + "/" + dname
+    }
+    var merging bool = false
+    if File.exists(lc_resolve(new_rel)) {
+        merging = true
+    }
+    var files List = lc_subtree_files(p)
+    // 镜像目录（先建——目录面不进回执；合并径免建直入）
+    var subdirs List = []
+    var i int = 0
+    while i < files.len() {
+        var rel str = files[i]
+        var last int = rel.length
+        var slash int = -1
+        var k int = 0
+        while k < last {
+            var ch str = rel.slice(k, k + 1)
+            if ch == "/" {
+                slash = k
+            }
+            k = k + 1
+        }
+        if slash > 0 {
+            var pdir str = rel.slice(0, slash)
+            var seen bool = false
+            var d2 int = 0
+            while d2 < subdirs.len() {
+                var sd str = subdirs[d2]
+                if sd == pdir {
+                    seen = true
+                }
+                d2 = d2 + 1
+            }
+            if !seen {
+                subdirs.push(pdir)
+            }
+        }
+        i = i + 1
+    }
+    if !merging {
+        File.create_dir(lc_resolve(new_rel))
+    }
+    var d int = 0
+    while d < subdirs.len() {
+        var sd2 str = subdirs[d]
+        var sdp = sd2.split_once(p + "/")
+        var sd_rest str = sd2
+        if sdp.len() == 2 {
+            sd_rest = sdp[1]
+        }
+        File.create_dir(lc_resolve(wsys.dir_norm(new_rel + "/" + sd_rest)))
+        d = d + 1
+    }
+    // 逐件迁移（walk 序 = 分析序；失败即停——源保留如实 partial）
+    var olds List = []
+    var news List = []
+    var errs List = []
+    var stopped bool = false
+    var j int = 0
+    while j < files.len() {
+        if !stopped {
+            var rel str = files[j]
+            var rp = rel.split_once(p + "/")
+            var rest str = rel
+            if rp.len() == 2 {
+                rest = rp[1]
+            }
+            var to_rel str = new_rel + "/" + rest
+            var skip_move bool = false
+            if merging {
+                if File.exists(lc_resolve(to_rel)) {
+                    if st0 == "skip" {
+                        var t1 str = wsys.trash_target(rel)
+                        if t1 == "" {
+                            errs.push("guard-failed:" + rel)
+                            stopped = true
+                        } else {
+                            var ok1 bool = false
+                            try {
+                                ok1 = lc_move(rel, t1)
+                            } catch (e1) {
+                                ok1 = false
+                            }
+                            if ok1 {
+                                olds.push(rel)
+                                news.push(t1)
+                                skip_move = true
+                            } else {
+                                errs.push("divert-failed:" + rel)
+                                stopped = true
+                            }
+                        }
+                    } else {
+                        if st0 == "overwrite" {
+                            var t2 str = wsys.trash_target(to_rel)
+                            if t2 == "" {
+                                errs.push("guard-failed:" + to_rel)
+                                stopped = true
+                            } else {
+                                var ok2 bool = false
+                                try {
+                                    ok2 = lc_move(to_rel, t2)
+                                } catch (e2) {
+                                    ok2 = false
+                                }
+                                if ok2 {
+                                    olds.push(to_rel)
+                                    news.push(t2)
+                                } else {
+                                    errs.push("divert-failed:" + to_rel)
+                                    stopped = true
+                                }
+                            }
+                        } else {
+                            // both 后缀（v1 原样——基线一致下与分析同名）
+                            var drest str = wsys.dir_of(rest)
+                            var fstem str = wsys.stem_of(rest)
+                            if fstem == "" {
+                                errs.push("guard-failed:" + rel)
+                                stopped = true
+                            } else {
+                                var n int = 1
+                                var cand str = drest + fstem + "--1.ad"
+                                while File.exists(lc_resolve(new_rel + "/" + cand)) {
+                                    n = n + 1
+                                    cand = drest + fstem + "--" + n.str() + ".ad"
+                                }
+                                to_rel = new_rel + "/" + cand
+                            }
+                        }
+                    }
+                }
+            }
+            if !stopped {
+                if !skip_move {
+                    var ok3 bool = false
+                    try {
+                        ok3 = lc_move(rel, to_rel)
+                    } catch (e3) {
+                        ok3 = false
+                    }
+                    if ok3 {
+                        olds.push(rel)
+                        news.push(to_rel)
+                    } else {
+                        errs.push("move-failed:" + rel)
+                        stopped = true
+                    }
+                }
+            }
+        }
+        j = j + 1
+    }
+    if stopped {
+        // partial：已完成映射如实；旧目录不清理（源残留可见）
+        return "RC1|partial|" + new_rel + "|" + lc_join_pairs(olds, news) + "|||" + lc_join_items(errs) + "|"
+    }
+    // 全成：旧目录清理（子先父后逆序）+ 复核
+    var k2 int = subdirs.len()
+    while k2 > 0 {
+        k2 = k2 - 1
+        var sd3 str = subdirs[k2]
+        File.remove_dir(lc_resolve(sd3))
+    }
+    File.remove_dir(lc_resolve(p))
+    if File.exists(lc_resolve(p)) {
+        return "RC1|partial|" + new_rel + "|" + lc_join_pairs(olds, news) + "|||cleanup-failed:" + p + "|"
+    }
+    return "RC1|ok|" + new_rel + "|" + lc_join_pairs(olds, news) + "||||"
+}
+
+// ===== linkify =====
+
+fn lc_plan_linkify(a str, b str) str {
+    var path str = a
+    var stem str = b
+    if !File.exists(lc_resolve(path)) {
+        return "LP1|reject|||||"
+    }
+    if stem == "" {
+        return "LP1|reject|||||"
+    }
+    var body str = wsys.read_body(path)
+    var parts List = wsys.linkify_split(body, stem)
+    var cnt str = parts[1]
+    if cnt == "0" {
+        // 无可转换处——幂等零变化方案
+        var none2 List = []
+        return "LP1|ok|" + lc_basis(none2) + "||||"
+    }
+    var fps List = []
+    var f1 str = lc_fp(path)
+    if f1 != "" {
+        fps.push(f1)
+    }
+    var rews List = []
+    rews.push(path)
+    return "LP1|ok|" + lc_basis(fps) + "|" + lc_join_items(fps) + "||" + lc_join_items(rews) + "|"
+}
+
+fn lc_commit_linkify(a str, b str, basis str) str {
+    var p0 str = a
+    var s0 str = b
+    var bs str = basis
+    var fresh str = lc_plan_linkify(p0, s0)
+    var fseg = fresh.split("|")
+    if fseg.len() < 2 {
+        return "RC1|stale||||||"
+    }
+    if fseg[1] != "ok" {
+        return "RC1|reject||||||"
+    }
+    if fseg[2] != bs {
+        return "RC1|stale||||||"
+    }
+    var rewsf str = fseg[5]
+    if rewsf == "" {
+        // 幂等零变化
+        return "RC1|ok|0|||||"
+    }
+    // 基线一致下重算与计划同文——改写 + 读回复核
+    var body str = wsys.read_body(p0)
+    var parts List = wsys.linkify_split(body, s0)
+    var out str = parts[0]
+    var cnt str = parts[1]
+    wsys.write_body(p0, out)
+    var back str = wsys.read_body(p0)
+    if back != out {
+        return "RC1|partial|0||" + p0 + "||rewrite-failed:" + p0 + "|"
+    }
+    return "RC1|ok|" + cnt + "||" + p0 + "|||"
+}
+
+// ===== restore =====
+
+fn lc_plan_restore(a str) str {
+    var entry str = a
+    if !entry.starts_with(".trash/") {
+        return "LP1|reject|||||"
+    }
+    if entry.contains("..") {
+        return "LP1|reject|||||"
+    }
+    if !entry.ends_with(".ad") {
+        return "LP1|reject|||||"
+    }
+    if !File.exists(lc_resolve(entry)) {
+        return "LP1|reject|||||"
+    }
+    var up = entry.split_once(".trash/")
+    if up.len() != 2 {
+        return "LP1|reject|||||"
+    }
+    var under str = up[1]
+    var segs = under.split("/")
+    var fname str = segs[segs.len() - 1]
+    var parts = fname.split(".ad")
+    var base str = parts[0]
+    var stem str = wsys.trash_stem_strip(base)
+    if stem == "" {
+        return "LP1|reject|||||"
+    }
+    var target str = wsys.dir_of(under) + stem + ".ad"
+    if File.exists(lc_resolve(target)) {
+        return "LP1|reject|||||"
+    }
+    var fps List = []
+    var f1 str = lc_fp(entry)
+    if f1 != "" {
+        fps.push(f1)
+    }
+    var olds List = []
+    var news List = []
+    olds.push(entry)
+    news.push(target)
+    return "LP1|ok|" + lc_basis(fps) + "|" + lc_join_items(fps) + "|" + lc_join_pairs(olds, news) + "||"
+}
+
+fn lc_commit_restore(a str, basis str) str {
+    var e0 str = a
+    var bs str = basis
+    var fresh str = lc_plan_restore(e0)
+    var fseg = fresh.split("|")
+    if fseg.len() < 2 {
+        return "RC1|stale||||||"
+    }
+    if fseg[1] != "ok" {
+        return "RC1|reject||||||"
+    }
+    if fseg[2] != bs {
+        return "RC1|stale||||||"
+    }
+    var movesf str = fseg[4]
+    var pairs = movesf.split("*")
+    var pr str = pairs[0]
+    var pp = pr.split(">")
+    var entry str = pp[0]
+    var target str = pp[1]
+    var up = entry.split_once(".trash/")
+    var under str = up[1]
+    var pd str = wsys.dir_of(target)
+    if pd != "" {
+        File.create_dir(lc_resolve(wsys.dir_norm(pd)))
+    }
+    var ef str = lc_resolve(entry)
+    var tf str = lc_resolve(target)
+    File.write_text(tf, File.read_text(ef))
+    if !File.exists(tf) {
+        return "RC1|partial|" + target + "|||verify-failed:" + target + "||"
+    }
+    File.delete(ef)
+    if File.exists(ef) {
+        return "RC1|partial|" + target + "|" + entry + ">" + target + "|||delete-failed:" + entry + "|"
+    }
+    return "RC1|ok|" + target + "|" + entry + ">" + target + "||||"
+}
+
+// ===== restore_all =====
+
+fn lc_plan_restore_all() str {
+    var tr List = lc_trash_entries()
+    var fps List = []
+    var olds List = []
+    var news List = []
+    var i int = 0
+    while i < tr.len() {
+        var entry str = tr[i]
+        var okp bool = true
+        if !entry.contains("..") {
+            var up = entry.split_once(".trash/")
+            if up.len() == 2 {
+                var under str = up[1]
+                var segs = under.split("/")
+                var fname str = segs[segs.len() - 1]
+                var parts = fname.split(".ad")
+                var base str = parts[0]
+                var stem str = wsys.trash_stem_strip(base)
+                if stem == "" {
+                    okp = false
+                } else {
+                    // 冲突条目同样入方案（整批 schema 完整——前端门覆盖被占用
+                    // 目标；commit 期逐条复核，仍冲突者如实 error 续行）
+                    var target str = wsys.dir_of(under) + stem + ".ad"
+                    olds.push(entry)
+                    news.push(target)
+                    var f1 str = lc_fp(entry)
+                    if f1 != "" {
+                        fps.push(f1)
+                    }
+                }
+            } else {
+                okp = false
+            }
+        } else {
+            okp = false
+        }
+        i = i + 1
+    }
+    return "LP1|ok|" + lc_basis(fps) + "|" + lc_join_items(fps) + "|" + lc_join_pairs(olds, news) + "||"
+}
+
+fn lc_commit_restore_all(basis str) str {
+    var bs str = basis
+    var fresh str = lc_plan_restore_all()
+    var fseg = fresh.split("|")
+    if fseg.len() < 2 {
+        return "RC1|stale||||||"
+    }
+    if fseg[1] != "ok" {
+        return "RC1|reject||||||"
+    }
+    if fseg[2] != bs {
+        return "RC1|stale||||||"
+    }
+    var movesf str = fseg[4]
+    var olds List = []
+    var news List = []
+    var errs List = []
+    var pairs = movesf.split("*")
+    var i int = 0
+    while i < pairs.len() {
+        if movesf != "" {
+            var pr str = pairs[i]
+            var pp = pr.split(">")
+            var entry str = pp[0]
+            var target str = pp[1]
+            var okr bool = false
+            // 逐条目标冲突复核（批内先恢复者占位 → 后者冲突——如实 error 续行）
+            if !File.exists(lc_resolve(target)) {
+                var up = entry.split_once(".trash/")
+                var under str = up[1]
+                var pd str = wsys.dir_of(target)
+                if pd != "" {
+                    File.create_dir(lc_resolve(wsys.dir_norm(pd)))
+                }
+                var ef str = lc_resolve(entry)
+                var tf str = lc_resolve(target)
+                File.write_text(tf, File.read_text(ef))
+                if File.exists(tf) {
+                    File.delete(ef)
+                    if !File.exists(ef) {
+                        okr = true
+                    }
+                }
+            }
+            if okr {
+                olds.push(entry)
+                news.push(target)
+            } else {
+                errs.push("restore-rejected:" + entry)
+            }
+        }
+        i = i + 1
+    }
+    var status str = "ok"
+    if errs.len() > 0 {
+        status = "partial"
+    }
+    return "RC1|" + status + "||" + lc_join_pairs(olds, news) + "|||" + lc_join_items(errs) + "|"
+}
+
+// ===== purge =====
+
+fn lc_plan_purge() str {
+    var tr List = lc_trash_entries()
+    var fps List = []
+    var dels List = []
+    var i int = 0
+    while i < tr.len() {
+        var entry str = tr[i]
+        dels.push(entry + ">")
+        var f1 str = lc_fp(entry)
+        if f1 != "" {
+            fps.push(f1)
+        }
+        i = i + 1
+    }
+    return "LP1|ok|" + lc_basis(fps) + "|" + lc_join_items(fps) + "|||" + lc_join_items(dels)
+}
+
+fn lc_commit_purge(basis str) str {
+    var bs str = basis
+    var fresh str = lc_plan_purge()
+    var fseg = fresh.split("|")
+    if fseg.len() < 2 {
+        return "RC1|stale||||||"
+    }
+    if fseg[1] != "ok" {
+        return "RC1|reject||||||"
+    }
+    if fseg[2] != bs {
+        return "RC1|stale||||||"
+    }
+    var t str = lc_resolve(".trash")
+    if File.exists(t) {
+        File.remove_dir_all(t)
+        if File.exists(t) {
+            return "RC1|partial|.trash||||purge-failed:.trash|"
+        }
+    }
+    // deletes = 计划清单如实回执（目标已不存在——dir=.trash 表整目录清空）
+    var delsf str = fseg[6]
+    return "RC1|ok|.trash|||" + delsf + "||"
+}
+
+// ===== 契约入口（api 直调；参数入口快照——T-01 硬纪律）=====
+
+pub fn lc_plan_impl(kind str, a str, b str, c str) str {
+    var k0 str = kind
+    var a0 str = a
+    var b0 str = b
+    var c0 str = c
+    if k0 == "rename" {
+        return lc_plan_rename(a0, b0)
+    }
+    if k0 == "move" {
+        return lc_plan_move(a0, b0)
+    }
+    if k0 == "delete" {
+        return lc_plan_delete(a0)
+    }
+    if k0 == "deldir" {
+        return lc_plan_deldir(a0)
+    }
+    if k0 == "rendir" {
+        return lc_plan_rendir(a0, b0)
+    }
+    if k0 == "movedir" {
+        return lc_plan_movedir(a0, b0, c0)
+    }
+    if k0 == "linkify" {
+        return lc_plan_linkify(a0, b0)
+    }
+    if k0 == "restore" {
+        return lc_plan_restore(a0)
+    }
+    if k0 == "restore_all" {
+        return lc_plan_restore_all()
+    }
+    if k0 == "purge" {
+        return lc_plan_purge()
+    }
+    return "LP1|reject|||||"
+}
+
+pub fn lc_commit_impl(kind str, a str, b str, c str, basis str) str {
+    var k0 str = kind
+    var a0 str = a
+    var b0 str = b
+    var c0 str = c
+    var s0 str = basis
+    if k0 == "rename" {
+        return lc_commit_rename(a0, b0, s0)
+    }
+    if k0 == "move" {
+        return lc_commit_move(a0, b0, s0)
+    }
+    if k0 == "delete" {
+        return lc_commit_delete(a0, s0)
+    }
+    if k0 == "deldir" {
+        return lc_commit_deldir(a0, s0)
+    }
+    if k0 == "rendir" {
+        return lc_commit_rendir(a0, b0, s0)
+    }
+    if k0 == "movedir" {
+        return lc_commit_movedir(a0, b0, c0, s0)
+    }
+    if k0 == "linkify" {
+        return lc_commit_linkify(a0, b0, s0)
+    }
+    if k0 == "restore" {
+        return lc_commit_restore(a0, s0)
+    }
+    if k0 == "restore_all" {
+        return lc_commit_restore_all(s0)
+    }
+    if k0 == "purge" {
+        return lc_commit_purge(s0)
+    }
+    return "RC1|reject||||||"
+}

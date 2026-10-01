@@ -596,7 +596,7 @@ pub fn search_json(query str, limit int) str {
 /// 守卫，T-01 案⑤ 同惯用法族）：九字符 `\/:*?"<>|` → `-`（while-
 /// contains 收敛惯用法——D-23①）+ trim + 空名守卫（trim 空或九字符
 /// 收敛后恰 "-"——`///` 形）→ ""。
-fn title_to_path_stem(title str) str {
+pub fn title_to_path_stem(title str) str {
     var bad List = ["\\", "/", ":", "*", "?", "\"", "<", ">", "|"]
     var t str = title
     var i int = 0
@@ -665,7 +665,7 @@ pub fn create_page_impl(title str) str {
 
 /// 路径目录段（"sub/Page.ad" → "sub/"；根档 → ""）——split 法拼回
 ///（D-20③：禁 length+slice——CJK heap 串字节语义）。
-fn dir_of(path str) str {
+pub fn dir_of(path str) str {
     var segs = path.split("/")
     var n int = segs.len()
     if n < 2 {
@@ -685,7 +685,7 @@ fn dir_of(path str) str {
 
 /// 文件 stem（"sub/Old.ad" → "Old"）——split 法去 ".ad" 尾（front
 /// strip_ad 同族；文件名内嵌 ".ad" 病理形态不支持——与 front 镜像同限）。
-fn stem_of(path str) str {
+pub fn stem_of(path str) str {
     var segs = path.split("/")
     var fname str = segs[segs.len() - 1]
     if fname.ends_with(".ad") {
@@ -697,7 +697,7 @@ fn stem_of(path str) str {
 
 /// casefold 相等（G3 裁决面：case-only 重命名拒——两侧 to_lower 比较；
 /// to_lower 双轨在册已证 D-22①）。
-fn casefold_eq(a str, b str) bool {
+pub fn casefold_eq(a str, b str) bool {
     return a.to_lower() == b.to_lower()
 }
 
@@ -716,7 +716,7 @@ fn casefold_eq(a str, b str) bool {
 /// ——八案首跑实录）。段间 "[[" 重接：split→join 同族 O(n) 通道（VM 无
 /// str.join）。返回改写后 body（无匹配 = 原文等价返回——调用面以
 /// 「改写 ≠ 原文」门控 write_body 回写）。
-fn rewrite_links(body str, old str, new str) str {
+pub fn rewrite_links(body str, old str, new str) str {
     if old == "" {
         return body
     }
@@ -760,7 +760,7 @@ fn rewrite_links(body str, old str, new str) str {
 /// ——File.delete 恒返 0 吞错[stdlib shim 忽略 remove_file 结果] → exists
 /// 翻转唯一可信判据；006/012 定文形态，PLAN-017 SD-1701 提取单点——
 /// rename 正常径与 case-only 两步迁移共用）。
-fn move_file(from_rel str, to_rel str) bool {
+pub fn move_file(from_rel str, to_rel str) bool {
     var from_full str = resolve(from_rel)
     var to_full str = resolve(to_rel)
     var text str = File.read_text(from_full)
@@ -903,7 +903,7 @@ pub fn delete_page_impl(path str) str {
 /// 保结构迁移的目录面免费达成）。返回 .trash 内目标 rel（工作区相对，
 /// ".trash/" 前缀——trash_restore 越界卫的路径域）；"" = 空 stem 卫
 ///（".ad" 病理名——walk 忽略面同族不涉常规语料）。
-fn trash_target(orig_rel str) str {
+pub fn trash_target(orig_rel str) str {
     var pre str = dir_of(orig_rel)
     var stem str = stem_of(orig_rel)
     if stem == "" {
@@ -966,7 +966,7 @@ pub fn trash_list_json() str {
 ///（rebuild 空 → 拒，调用面卫）。**观测项 §10.3**：档名本体含 `--1`
 /// 形态的剥析误判 v1 记账（.trash/Pa--1.ad 恢复去尾 → Pa.ad——用户
 /// 重命名修正面）。
-fn trash_stem_strip(base str) str {
+pub fn trash_stem_strip(base str) str {
     var pp = base.split("--")
     if pp.len() < 2 {
         return base
@@ -1079,7 +1079,7 @@ pub fn trash_purge_impl() str {
 /// 目录段归一（move_page_impl 专用）：split("/") 去空段后 "/" 重接
 /// （"wiki"、"wiki/"、"wiki//sub"、"" → "wiki"/"wiki/sub"/""——尾斜杠/
 /// 重复分隔符 UI 输入容错；禁 .length+slice 取段——D-20③ CJK 字节语义）。
-fn dir_norm(dir str) str {
+pub fn dir_norm(dir str) str {
     var segs = dir.split("/")
     var out str = ""
     var i int = 0
@@ -1841,17 +1841,13 @@ fn boundary_ok(left str, right str) bool {
 /// ——`CAP` 不再误中 `CAPTURE`；`_`/`-` 豁免不阻断——§10.2 r1）；
 /// **非纯 ASCII[CJK 等] stem = 恒子串旧径**（无词边界概念——语义零变化）。
 /// 明区判定不变（seg0 + 段内 ]] 后 rest——[[..]] 候选段内不替换）。
-pub fn linkify_page_impl(path str, stem str) str {
-    if !File.exists(resolve(path)) {
-        return ""
-    }
-    if stem == "" {
-        return ""
-    }
-    var body str = read_body(path)
+/// 提及转换纯计算单点（PLAN-032 T-02 抽取——受检面 lifecycle.at 与原始面
+/// linkify_page_impl 共用同一转换；边界/已链接豁免语义原样）。返回双元素
+/// 表 [改写后 body, 改写处数十进制串]——消费面先拷局部再取（D-20②）。
+pub fn linkify_split(body str, stem str) List {
     var ascii bool = is_pure_ascii(stem)
-    var segs = body.split("[[")
     var count int = 0
+    var segs = body.split("[[")
     var seg0 str = segs[0]
     var p0 = seg0.split(stem)
     var seg0_out str = p0[0]
@@ -1909,9 +1905,27 @@ pub fn linkify_page_impl(path str, stem str) str {
         out = out + "[[" + seg_out
         i = i + 1
     }
-    if count > 0 {
+    var out2 List = []
+    out2.push(out)
+    out2.push(count.str())
+    return out2
+}
+
+/// 原始面本体（签名/返回语义零变化——现读现算改为纯计算单点消费）。
+pub fn linkify_page_impl(path str, stem str) str {
+    if !File.exists(resolve(path)) {
+        return ""
+    }
+    if stem == "" {
+        return ""
+    }
+    var body str = read_body(path)
+    var parts List = linkify_split(body, stem)
+    var out str = parts[0]
+    var cnt str = parts[1]
+    if cnt != "0" {
         write_body(path, out)
-        return count.str()
+        return cnt
     }
     return "0"
 }
