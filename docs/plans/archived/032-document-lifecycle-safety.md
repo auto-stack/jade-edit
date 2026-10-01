@@ -237,7 +237,8 @@ Store 捕获操作身份、每个受影响实例的 tab_uid/path/key/doc_id/body
 - **留观交接**：F-32-R2（VM 帧槽别名——上游 auto-lang 供料候选，LC3-in-vm 弧安全终态在案）/F-32-R1（031 ConfirmKeepClose vue 排水竞态——031-impl 修复候选）/F-32-R3（v25 头注顺修）/R-02 完成声明待本回执+复审 pass 支撑——候选池下一项按路线图默认序=R-03 或独立 R-04[立项走 new 流程重勘]
 - outcome: pass（delivery/derived view/archival/cleanup 逐项核验）
 - archived：git mv→docs/plans/archived/032-document-lifecycle-safety.md+status archived+completion_kind delivered（YAML 块内）+provenance 链路核验（active/archive 路径一致、附件/规范链接可达）
-- next: cleaned 收口批
+- **cleaned**：git worktree list 单一主检出（直接 main 线性约定，无 worktree/dev 分支清理面——wt-guard 等价核验：工作树零 WIP+全部提交已落 main 核验）+一次性件居 ignored e2e/.runtime[p32 探针族+dbg 件在档可追溯]
+- next: delivered 收口（deployment 观察随回执：无生产进程面+gen/dist 复审窗现势+载体 10-01 恢复构建）
 
 
 ### 2026-10-01 review：r1 全量复审（review 独立复跑门）
