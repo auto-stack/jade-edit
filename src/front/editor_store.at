@@ -32,6 +32,73 @@ fn strip_ad(path str) str {
     return path
 }
 
+// 受影响域包含判定（lp1 记录域解析伴生件——PLAN-032 T-03）：items 表内
+// 精确相等（D-11 禁 .find 闭包——while 扫描在册形态）。
+fn lc_list_has(items List, v str) bool {
+    var out bool = false
+    var i int = 0
+    while i < items.len() {
+        var s str = items[i]
+        if s == v {
+            out = true
+        }
+        i = i + 1
+    }
+    return out
+}
+
+// "*" 分隔记录域包含判定（rewrites 域命中面）
+fn lc_field_has(field str, v str) bool {
+    if field == "" {
+        return false
+    }
+    var parts = field.split("*")
+    return lc_list_has(parts, v)
+}
+
+// 阻断清单 → 行集（title\u0001path\u0001reason | title…——label 预拼供视图
+// 直读；解析容错：段不足三段时以整段为 label）
+fn lc_block_rows_of(list str) List {
+    var out List = []
+    if list == "" {
+        return out
+    }
+    var entries = list.split("|")
+    var i int = 0
+    while i < entries.len() {
+        var e str = entries[i]
+        if e != "" {
+            var f = e.split("\u0001")
+            if f.len() >= 3 {
+                var t str = f[0]
+                var rsn str = f[2]
+                out.push({ label: t + " — " + rsn })
+            } else {
+                out.push({ label: e })
+            }
+        }
+        i = i + 1
+    }
+    return out
+}
+
+// "|" 串重接（漂移候选清单收缩）
+fn lc_join_pipe(items List) str {
+    var out str = ""
+    var i int = 0
+    while i < items.len() {
+        var s str = items[i]
+        if s != "" {
+            if out != "" {
+                out = out + "|"
+            }
+            out = out + s
+        }
+        i = i + 1
+    }
+    return out
+}
+
 store EditorStore {
     model {
         // Tab 对象（key/path/title/body/original_body/dirty）。typed 声明
@@ -145,6 +212,45 @@ store EditorStore {
         var reload_target_seq int = 0
         var reload_target_conf int = 0
         var reload_was_dirty bool = false
+        // —— 生命周期受检流（PLAN-032 T-03；契约 =
+        // docs/plans/attachments/032-lifecycle-protocol.md §3/§4）。架构
+        // 裁定：**App 发起全部 fetch（lc_plan/lc_commit/read_wiki 漂移
+        // 探测），store 只做同步策略机**（门判定/快照/定向协调/保存门）
+        // ——store 内零 fetch ⇒ App 在 msg 派发后同步读 verdict/basis/
+        // moves 双轨成立（ActSave 先在语义同族）。----
+        // tab_uid：会话内稳定实例 ID（Open/ActNew/DraftRecover 分配；关闭
+        // 即逝；重开同路径 = 新实例——不依赖索引/key/doc_id）。
+        var tab_seq int = 0
+        // 单会话单操作在途（gate 就绪至 resolve/cancel——双击/并发入口
+        // 不重复提交，AC-09；阻断弹层即出 hold=false 由用户处理后重新
+        // 发起——重试必须重新分析）。
+        var lc_hold bool = false
+        // 在途操作冻结参数（请求期间活动页/输入框/选区变化不改目标）。
+        var lc_kind str = ""
+        var lc_a str = ""
+        var lc_b str = ""
+        var lc_c str = ""
+        var lc_basis str = ""
+        // 受影响实例快照 [{uid,path,body,orig,doc}]（提交前捕获；协调按
+        // tab_uid 定址 + 正文仍匹配才同步——晚输入保留，AC-07/08）。
+        var lc_snap Array<str> = []
+        // 漂移探测候选（清洁匹配 tab 的 path 串行 "p1|p2"——App 逐个
+        // read_wiki 后 LcDrift 回填；清空即门终判）。
+        var lc_pending str = ""
+        // 阻断弹层（操作名 + 受影响未保存/待同步文档清单——用户经既有
+        // 保存/保留草稿关闭/明确放弃处理后重新发起；取消保持原操作未
+        // 提交）。
+        var lc_block_open bool = false
+        var lc_block_list str = ""
+        var lc_block_kind str = ""
+        // 阻断行集（视图直读——label = title — reason 预拼，零视图内拼接）。
+        var lc_block_rows Array<str> = []
+        // App 读回面：verdict ∈ reject|blocked|drift|ok|done（gate/drift/
+        // resolve 各阶段终态）；lc_moves = 回执 moves 域（App recents 键
+        // 置换用——LcResolve 同步写入，双轨读回成立）。
+        var lc_verdict str = ""
+        var lc_moves str = ""
+        var lc_status str = ""
     }
 
     // msg 载荷单类型（编译器约束）：Open 单 map、Edit 单 str。
@@ -170,6 +276,7 @@ store EditorStore {
         DelDirOpen, DelDirClose, RenDirOpen, RenDirClose,
         MoveDirOpen, MoveDirClose,
         WsWarn(str),
+        LcGate(str, str, str, str, str), LcDrift(str, str), LcResolve(str), LcBlockCancel,
     }
 
     on {
@@ -207,6 +314,7 @@ store EditorStore {
                         ok = false
                     }
                     if ok {
+                        .tab_seq = .tab_seq + 1
                         .tabs.push({
                             key: path,
                             path: path,
@@ -222,6 +330,8 @@ store EditorStore {
                             recover_src_doc: "",
                             recover_src_seq: 0,
                             recover_src_erev: 0,
+                            tab_uid: .tab_seq,
+                            lc_review: false,
                         })
                         found = .tabs.len() - 1
                         console_log("open: " + path)
@@ -487,6 +597,7 @@ store EditorStore {
                 if dt == "" {
                     dt = "未命名"
                 }
+                .tab_seq = .tab_seq + 1
                 .tabs.push({
                     key: nm,
                     path: "",
@@ -502,6 +613,8 @@ store EditorStore {
                     recover_src_doc: doc_id,
                     recover_src_seq: seq,
                     recover_src_erev: erev,
+                    tab_uid: .tab_seq,
+                    lc_review: false,
                 })
                 .tab_count = .tabs.len()
                 store.TabActivate(.tab_count - 1)
@@ -536,6 +649,25 @@ store EditorStore {
                 i = i + 1
             }
             if j >= 0 {
+                if .tabs[j].lc_review {
+                    if .tabs[j].path != "" {
+                        // 待核验门（PLAN-032 T-03，AC-10）：未知结果/正文外
+                        // 改差异标记接入 Save——禁按原路径覆盖；出口 = 另存
+                        //（path 置空态走既有 Save As）或重新核验。
+                        .save_note = "此文档待核验——请先另存为新文件，或重新核验后再保存"
+                        console_log("save-blocked: review " + .tabs[j].path)
+                        .console = console_lines()
+                    }
+                }
+            }
+            if j >= 0 {
+                var lc_gate_ok bool = true
+                if .tabs[j].lc_review {
+                    if .tabs[j].path != "" {
+                        lc_gate_ok = false
+                    }
+                }
+                if lc_gate_ok {
                 var save_doc str = .tabs[j].doc_id
                 var save_erev int = .tabs[j].draft_erev
                 var save_body str = .tabs[j].body
@@ -548,6 +680,7 @@ store EditorStore {
                         .tabs[j].path = p
                         .tabs[j].key = p
                         .tabs[j].title = strip_ad(p)
+                        .tabs[j].lc_review = false
                     }
                 }
                 if .tabs[j].path != "" {
@@ -606,6 +739,7 @@ store EditorStore {
                     }
                 } else {
                     .save_note = "save: cancelled"
+                }
                 }
             }
             .console = console_lines()
@@ -1016,6 +1150,7 @@ store EditorStore {
         // 草稿身份惰性分配（首次脏编辑时 draft_alloc——T-03）----
         .ActNew -> {
             .open_count = .open_count + 1
+            .tab_seq = .tab_seq + 1
             .tabs.push({
                 key: "untitled-" + .open_count.str(),
                 path: "",
@@ -1031,6 +1166,8 @@ store EditorStore {
                 recover_src_doc: "",
                 recover_src_seq: 0,
                 recover_src_erev: 0,
+                tab_uid: .tab_seq,
+                lc_review: false,
             })
             .tab_count = .tabs.len()
             store.TabActivate(.tab_count - 1)
@@ -1209,6 +1346,18 @@ store EditorStore {
                     j = j + 1
                 }
                 if f >= 0 {
+                    if .tabs[f].lc_review {
+                        if .tabs[f].path != "" {
+                            // 待核验门（PLAN-032 T-03，AC-10）——保持应用
+                            fail = true
+                            .save_note = "存在待核验文档（" + .tabs[f].title + "）——保持应用，请先另存或核验"
+                            console_log("quit-save: review blocked " + .tabs[f].path)
+                            i = ks.len()
+                        }
+                    }
+                }
+                if !fail {
+                if f >= 0 {
                     var body str = .tabs[f].body
                     if .tabs[f].path == "" {
                         var p str = ""
@@ -1227,6 +1376,7 @@ store EditorStore {
                             .tabs[f].path = p
                             .tabs[f].key = p
                             .tabs[f].title = strip_ad(p)
+                            .tabs[f].lc_review = false
                         }
                     }
                     if !fail {
@@ -1265,6 +1415,7 @@ store EditorStore {
                             }
                         }
                     }
+                }
                 }
                 i = i + 1
             }
@@ -1469,6 +1620,436 @@ store EditorStore {
         // 判定在 App 侧，store 只承载显示态）：text 直写（"" = 清警示）。
         .WsWarn(text) -> {
             .ws_warn = text
+        }
+
+        // ---- 生命周期受检流（PLAN-032 T-03；契约 =
+        // docs/plans/attachments/032-lifecycle-protocol.md §3/§4；架构 =
+        // App 发起全部 fetch，store 只做同步策略机——verdict/basis/moves
+        // 在 msg 派发后可被 App 同步读回，双轨成立）。----
+        // 门判定：lp1 记录解析 → 受影响域（changes ∪ moves 两端 ∪
+        // rewrites ∪ deletes 旧端——T-01 实证门匹配域）匹配全部打开实例
+        // （不只活动页）；dirty/草稿在途/待核验 → 阻断弹层（hold 释放，
+        // 用户处理后重新发起——重试必须重新分析）；清洁实例入快照 + 漂移
+        // 探测候选（App 逐个 read_wiki 后 LcDrift 回填）；无候选 → 快照
+        // 就绪 verdict=ok（App 读 .lc_basis 发起受检提交）。----
+        .LcGate(record, kind, a, b, c) -> {
+            var rec str = record
+            var k0 str = kind
+            var a0 str = a
+            var b0 str = b
+            var c0 str = c
+            .lc_verdict = "reject"
+            var segs = rec.split("|")
+            if segs[0] == "LP1" {
+                if segs[1] == "ok" {
+                    if !.lc_hold {
+                        .lc_hold = true
+                        .lc_kind = k0
+                        .lc_a = a0
+                        .lc_b = b0
+                        .lc_c = c0
+                        .lc_basis = segs[2]
+                        var aff List = []
+                        if segs[3] != "" {
+                            var chg = segs[3].split("*")
+                            var ci int = 0
+                            while ci < chg.len() {
+                                var it str = chg[ci]
+                                var fp = it.split(":")
+                                if fp.len() > 1 {
+                                    if !lc_list_has(aff, fp[0]) {
+                                        aff.push(fp[0])
+                                    }
+                                }
+                                ci = ci + 1
+                            }
+                        }
+                        if segs[4] != "" {
+                            var mvs = segs[4].split("*")
+                            var mi int = 0
+                            while mi < mvs.len() {
+                                var pr str = mvs[mi]
+                                var pp = pr.split(">")
+                                if pp.len() == 2 {
+                                    if !lc_list_has(aff, pp[0]) {
+                                        aff.push(pp[0])
+                                    }
+                                    if !lc_list_has(aff, pp[1]) {
+                                        aff.push(pp[1])
+                                    }
+                                }
+                                mi = mi + 1
+                            }
+                        }
+                        if segs[5] != "" {
+                            var rws = segs[5].split("*")
+                            var ri int = 0
+                            while ri < rws.len() {
+                                var rw str = rws[ri]
+                                if rw != "" {
+                                    if !lc_list_has(aff, rw) {
+                                        aff.push(rw)
+                                    }
+                                }
+                                ri = ri + 1
+                            }
+                        }
+                        if segs[6] != "" {
+                            var dls = segs[6].split("*")
+                            var di int = 0
+                            while di < dls.len() {
+                                var pr2 str = dls[di]
+                                var pp2 = pr2.split(">")
+                                if pp2.len() >= 1 {
+                                    if pp2[0] != "" {
+                                        if !lc_list_has(aff, pp2[0]) {
+                                            aff.push(pp2[0])
+                                        }
+                                    }
+                                }
+                                di = di + 1
+                            }
+                        }
+                        // 匹配全部打开实例（脏/在途 → 阻断；清洁 → 快照+漂移候选）
+                        var blocked str = ""
+                        var cand str = ""
+                        .lc_snap = []
+                        var i int = 0
+                        while i < .tabs.len() {
+                            var tp str = .tabs[i].path
+                            if tp != "" {
+                                if lc_list_has(aff, tp) {
+                                    var reason str = ""
+                                    if .tabs[i].lc_review {
+                                        reason = "待核验"
+                                    }
+                                    if reason == "" {
+                                        if .tabs[i].dirty {
+                                            reason = "未保存"
+                                        }
+                                    }
+                                    if reason == "" {
+                                        if .tabs[i].draft_state == "sending" {
+                                            reason = "草稿检查点在途"
+                                        }
+                                        if .tabs[i].draft_state == "pending" {
+                                            reason = "草稿检查点待续"
+                                        }
+                                        if .tabs[i].draft_state == "error" {
+                                            reason = "草稿检查点异常"
+                                        }
+                                    }
+                                    if reason != "" {
+                                        if blocked != "" {
+                                            blocked = blocked + "|"
+                                        }
+                                        blocked = blocked + .tabs[i].title + "\u0001" + tp + "\u0001" + reason
+                                    } else {
+                                        if cand != "" {
+                                            cand = cand + "|"
+                                        }
+                                        cand = cand + tp
+                                        .lc_snap.push({ uid: .tabs[i].tab_uid, path: .tabs[i].path, body: .tabs[i].body, orig: .tabs[i].original_body, doc: .tabs[i].doc_id })
+                                    }
+                                }
+                            }
+                            i = i + 1
+                        }
+                        if blocked != "" {
+                            .lc_block_open = true
+                            .lc_block_list = blocked
+                            .lc_block_kind = .lc_kind
+                            .lc_block_rows = lc_block_rows_of(blocked)
+                            .lc_hold = false
+                            .lc_verdict = "blocked"
+                            console_log("lc-blocked: " + .lc_kind)
+                        } else {
+                            if cand != "" {
+                                .lc_pending = cand
+                                .lc_verdict = "drift"
+                            } else {
+                                .lc_verdict = "ok"
+                            }
+                        }
+                    }
+                }
+            }
+            if .lc_verdict == "reject" {
+                .save_note = "文件操作被拒绝（源缺失/目标冲突/参数无效）"
+                console_log("lc-reject: " + kind)
+            }
+            console_log("lc-gate: verdict=" + .lc_verdict + " pending=" + .lc_pending)
+            .console = console_lines()
+        }
+
+        // ---- 漂移探测回填（App 对每个候选 read_wiki 后调用；清洁页基准
+        // 与磁盘不同 → 阻断「先手动重载」；候选清空即门终判：有阻断出
+        // 弹层 hold 释放，无阻断 verdict=ok 快照已就绪）----
+        .LcDrift(path, diskbody) -> {
+            var p0 str = path
+            var db str = diskbody
+            if .lc_verdict == "drift" {
+                var f int = -1
+                var j int = 0
+                while j < .tabs.len() {
+                    if .tabs[j].path == p0 {
+                        f = j
+                    }
+                    j = j + 1
+                }
+                if f >= 0 {
+                    if .tabs[f].original_body != db {
+                        if .lc_block_list != "" {
+                            .lc_block_list = .lc_block_list + "|"
+                        }
+                        .lc_block_list = .lc_block_list + .tabs[f].title + "\u0001" + p0 + "\u0001磁盘已变化——请先手动重载"
+                    }
+                }
+                var keep List = []
+                var parts = .lc_pending.split("|")
+                var m int = 0
+                while m < parts.len() {
+                    var pp str = parts[m]
+                    if pp != "" {
+                        if pp != p0 {
+                            keep.push(pp)
+                        }
+                    }
+                    m = m + 1
+                }
+                .lc_pending = lc_join_pipe(keep)
+                if .lc_pending == "" {
+                    if .lc_block_list != "" {
+                        .lc_block_open = true
+                        .lc_block_kind = .lc_kind
+                        .lc_block_rows = lc_block_rows_of(.lc_block_list)
+                        .lc_hold = false
+                        .lc_verdict = "blocked"
+                        console_log("lc-blocked-drift: " + .lc_kind)
+                    } else {
+                        .lc_verdict = "ok"
+                    }
+                }
+                console_log("lc-drift: back=" + p0 + " pending=" + .lc_pending + " verdict=" + .lc_verdict)
+            }
+            .console = console_lines()
+        }
+
+        // ---- 回执协调（App 受检提交返回后调用；"" = 未知结果）。ok|partial
+        // → 逐快照实例定向协调（tab_uid 定址 + 正文仍匹配才同步——晚输入
+        // 保留，AC-07/08）；stale 零变更提示重试；未知/畸形 → 全部受影响
+        // 实例标待核验（AC-10——禁旧路径保存）。终态 hold 释放、参数归零、
+        // 活动投影重算。----
+        .LcResolve(receipt) -> {
+            var rec str = receipt
+            .lc_hold = false
+            if .lc_kind != "" {
+                if rec == "" {
+                    store.LcMarkReview()
+                    .save_note = "操作结果未知——相关文档已标记待核验（不可按原路径保存，可另存副本）"
+                    console_log("lc-unknown: " + .lc_kind)
+                } else {
+                    var segs = rec.split("|")
+                    if segs[0] != "RC1" {
+                        store.LcMarkReview()
+                        .save_note = "操作结果未知——相关文档已标记待核验（不可按原路径保存，可另存副本）"
+                        console_log("lc-malformed: " + .lc_kind)
+                    } else {
+                        var status str = segs[1]
+                        .lc_status = status
+                        .lc_moves = segs[3]
+                        if status == "stale" {
+                            .save_note = "文件已变化——方案过期，请重新发起"
+                            console_log("lc-stale: " + .lc_kind)
+                        } else {
+                            if status == "reject" {
+                                .save_note = "文件操作被拒绝"
+                                console_log("lc-reject2: " + .lc_kind)
+                            } else {
+                                var i int = 0
+                                while i < .lc_snap.len() {
+                                    store.LcCoordinate(i, segs[3], segs[4], segs[5])
+                                    i = i + 1
+                                }
+                                if status == "partial" {
+                                    .save_note = "部分完成（已完成项已同步）：" + segs[6]
+                                    console_log("lc-partial: " + .lc_kind + " " + segs[6])
+                                } else {
+                                    .save_note = "已完成：" + .lc_kind
+                                    console_log("lc-ok: " + .lc_kind)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            .lc_kind = ""
+            .lc_a = ""
+            .lc_b = ""
+            .lc_c = ""
+            .lc_basis = ""
+            .lc_snap = []
+            .lc_pending = ""
+            .lc_verdict = "done"
+            if .tab >= 0 {
+                if .tab < .tabs.len() {
+                    store.TabActivate(.tab)
+                }
+            }
+            .console = console_lines()
+        }
+
+        // ---- 单实例定向协调（uid 定址；规则 = 附件 §4 表）：路径迁移跟随
+        // 回执实际 old>new（tab_uid/doc_id/脏标保持，不全局 Reload）；改写
+        // 域命中且正文仍匹配快照 → 读盘同步 body+original_body（key 播种
+        // 重挂载）；等待期新输入 → 保留新正文标待核验（不重读不重设基准）；
+        // 删除域命中且仍清洁 → 关闭该实例；有输入/判定失据 → 保留为需另存
+        // 副本（path 空、title 标记、doc_id 保持）。----
+        .LcCoordinate(i int, moves str, rews str, dels str) -> {
+            var s = .lc_snap[i]
+            var uid int = s.uid
+            var f int = -1
+            var j int = 0
+            while j < .tabs.len() {
+                if .tabs[j].tab_uid == uid {
+                    f = j
+                }
+                j = j + 1
+            }
+            if f >= 0 {
+                var moved bool = false
+                if moves != "" {
+                    var mvs = moves.split("*")
+                    var k int = 0
+                    while k < mvs.len() {
+                        var pr str = mvs[k]
+                        var pp = pr.split(">")
+                        if pp.len() == 2 {
+                            var po str = pp[0]
+                            var pn str = pp[1]
+                            if .tabs[f].path == po {
+                                .tabs[f].path = pn
+                                .tabs[f].key = pn
+                                .tabs[f].title = strip_ad(pn)
+                                moved = true
+                            }
+                        }
+                        k = k + 1
+                    }
+                }
+                if moved {
+                    if .tabs[f].dirty {
+                        // 路径上下文修订检查点（PLAN-032 T-05，AC-11）：迁移
+                        // 后脏页以新路径续排检查点（同 doc_id 新 seq——031 协
+                        // 议 path 逐记录在案）；忙态（sending）不重入——在途
+                        // 排水循环回执后按最新状态自续（D-31 排水语义）。
+                        if .tabs[f].doc_id != "" {
+                            if .tabs[f].draft_state != "sending" {
+                                store.DraftDrainOf(.tabs[f].doc_id)
+                            }
+                        }
+                    }
+                }
+                if rews != "" {
+                    if lc_field_has(rews, .tabs[f].path) {
+                        if .tabs[f].body == s.body {
+                            if .tabs[f].original_body == s.orig {
+                                var nb str = ""
+                                var nok bool = true
+                                try {
+                                    nb = read_wiki(.tabs[f].path)
+                                } catch (e) {
+                                    nok = false
+                                }
+                                if nok {
+                                    .tabs[f].body = nb
+                                    .tabs[f].original_body = nb
+                                    .tabs[f].dirty = false
+                                    .reload_nonce = .reload_nonce + 1
+                                    .tabs[f].key = .tabs[f].path + "#lc" + .reload_nonce.str()
+                                    console_log("lc-synced: " + .tabs[f].path)
+                                } else {
+                                    .tabs[f].lc_review = true
+                                    .save_note = "协调读失败——文档标记待核验"
+                                }
+                            } else {
+                                .tabs[f].lc_review = true
+                            }
+                        } else {
+                            .tabs[f].lc_review = true
+                            .save_note = "文档在操作等待期有新输入——磁盘正文已变化，请核对（可另存保留副本）"
+                            console_log("lc-late-input: " + .tabs[f].path)
+                        }
+                    }
+                }
+                if dels != "" {
+                    var hit bool = false
+                    var dls = dels.split("*")
+                    var m int = 0
+                    while m < dls.len() {
+                        var pr2 str = dls[m]
+                        var pp2 = pr2.split(">")
+                        if pp2.len() >= 1 {
+                            if .tabs[f].path == pp2[0] {
+                                hit = true
+                            }
+                        }
+                        m = m + 1
+                    }
+                    if hit {
+                        if .tabs[f].dirty {
+                            .tabs[f].path = ""
+                            .tabs[f].title = .tabs[f].title + "（原文件已删除）"
+                            console_log("lc-kept-copy: " + s.path)
+                        } else {
+                            if .tabs[f].body == s.body {
+                                if .tabs[f].original_body == s.orig {
+                                    store.RemoveAt(f)
+                                    console_log("lc-closed-clean: " + s.path)
+                                } else {
+                                    .tabs[f].path = ""
+                                    .tabs[f].title = .tabs[f].title + "（原文件已删除）"
+                                    .tabs[f].lc_review = true
+                                }
+                            } else {
+                                .tabs[f].path = ""
+                                .tabs[f].title = .tabs[f].title + "（原文件已删除）"
+                                .tabs[f].lc_review = true
+                            }
+                        }
+                    }
+                }
+            }
+            .console = console_lines()
+        }
+
+        // ---- 未知结果标记（快照全部受影响实例 lc_review=true——禁旧路径
+        // 保存，另存/核验出口保留）----
+        .LcMarkReview -> {
+            var i int = 0
+            while i < .lc_snap.len() {
+                var s = .lc_snap[i]
+                var uid int = s.uid
+                var j int = 0
+                while j < .tabs.len() {
+                    if .tabs[j].tab_uid == uid {
+                        .tabs[j].lc_review = true
+                    }
+                    j = j + 1
+                }
+                i = i + 1
+            }
+        }
+
+        // ---- 阻断弹层取消（零落盘零提交；用户处理文档后重新发起——重新
+        // 分析，不沿用旧列表）----
+        .LcBlockCancel -> {
+            .lc_block_open = false
+            .lc_block_list = ""
+            .lc_block_kind = ""
+            .lc_block_rows = []
+            console_log("lc-cancelled")
+            .console = console_lines()
         }
 
         // ---- 删除档 tab 全量关闭（PLAN-007 T-03；G2 tab 关闭面）：

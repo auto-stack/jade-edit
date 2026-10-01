@@ -183,7 +183,7 @@ const argOf = (name) => {
   return i >= 0 ? args[i + 1] : undefined
 }
 const ARM = argOf('--arm') ?? 'all' // all | merged | split
-const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v24.txt')
+const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v25.txt')
 const SAVE_BASELINE = argOf('--save-baseline')
 
 const EDIT_MARKER = 'jade-edit 冒烟标记：编辑回写可见。'
@@ -227,6 +227,14 @@ const RELOAD_DISK_MARKER = '安全重载磁盘外改：放弃弧。'
 const RELOAD_DISK2_MARKER = '安全重载磁盘外改二：干净直入弧。'
 const RELOAD_DIRTY2_MARKER = '安全重载缺档弧脏标。'
 const RELOAD_CONFIRM_TEXT = '重载会放弃此文档未保存的修改'
+// LC 生命周期受检组（PLAN-032 T-06；R-02b）——素材根落位 ASCII（树行=stem）。
+// 有界案：UI 键入恰一次（LC-B 单检查点——D-45② 上游楔死边界 3+ 检查点，
+// 单文档恒过在册）；无关脏页不列断言由 e2e lifecycle-safety ① 承载（vm 组
+// 键入预算内不造第二脏档）。
+const LC_MARKER = 'LC 组脏档标记。'
+const LC_A = 'LC-A.ad'
+const LC_B = 'LC-B.ad'
+const LC_DEL = 'LC-Del.ad'
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
@@ -495,6 +503,10 @@ async function runArm(arm, port) {
   // fixture 重灌（每臂全新——臂间零污染）
   fs.rmSync(FIXTURE, { recursive: true, force: true })
   fs.cpSync(FIXTURE_SOURCE, FIXTURE, { recursive: true })
+  // LC 组素材（PLAN-032 T-06——boot 期树装配在册；根落位 stem 树行）
+  fs.writeFileSync(path.join(FIXTURE, LC_A), '自链 [[LC-A]] 与 anchor [[LC-A#节]]。\n', 'utf8')
+  fs.writeFileSync(path.join(FIXTURE, LC_B), '引用 [[LC-A]]。\n', 'utf8')
+  fs.writeFileSync(path.join(FIXTURE, LC_DEL), '删除组素材。\n', 'utf8')
 
   const split = arm === 'split'
   const app = spawn(AUTO_EXE, split ? ['run', '-r', 'vm', '--no-merge'] : ['run', '-r', 'vm'], {
@@ -3239,6 +3251,92 @@ async function runArm(arm, port) {
     await stateIs('active_title', tabTitleOf(TARGET_LABEL))
     check('R', 'reload-safe', r1Ok && r2Ok && r4Ok && r5Ok && r5RecOk && r6Ok,
       `安全手动重载六弧（R1 确认开 未读盘=${r1Ok}/R2 取消全保=${r2Ok}/R3 放弃落盘正文=磁盘新文/R4 干净直入 无确认=${r4Ok}/R5 缺档保文 磁盘未建=${r5Ok}+按 tab 正文复原 fm 在=${r5RecOk}/R6 untitled 提示不读 无弹层=${r6Ok}——迟到/异常门 vue 拦截臂承载 e2e reload-safety ⑥；弹层钮区域锚消歧）`)
+
+    // —— LC 生命周期受检组（PLAN-032 T-06；R-02b）——有界三弧（子步
+    // 不占检查位——10c 同款，fail 即臂败）：
+    //   LC1 阻断门：LC-B 单检查点脏（有界键入预算）→ LC-A 活动 → 改名
+    //        → 阻断弹层（LC-B 未保存在列——变更域精确面）→ 取消零提交
+    //   LC2 重试：LC-B 保存 → 重改名 → ok（被迁档 tab 跟随 + 引用源
+    //        磁盘改写 + 无守卫 Reload/TabsRenamed 退役面）
+    //   LC3 删除：清洁开档实例协调关闭（CloseTabsOf 无条件关闭退役面）
+    const pressInBlockDialog = async (buttonText) => {
+      const dl = Date.now() + 8000
+      for (;;) {
+        const t = await snapshot()
+        const title = findFirst(t, (n) => ownText(n) === '文件操作被阻止')
+        if (title) {
+          const header = findParent(t, title)
+          const content = findParent(t, header)
+          const btn = content ? findFirst(content, (n) => n.head.startsWith('button ') && elementIdOf(n) && ownText(n) === buttonText) : null
+          if (btn) {
+            const res = await callTool('autoui_action', { element_id: elementIdOf(btn), action: 'press' })
+            if (!/status: ok/.test(res)) throw new Error(`press ${buttonText}(lc-block) not ok: ${res}`)
+            return
+          }
+        }
+        if (Date.now() > dl) throw new Error(`button "${buttonText}" in lc-block-dialog not found`)
+        await sleep(300)
+      }
+    }
+    const lcBFile = path.join(FIXTURE, LC_B)
+    const lcAFile = path.join(FIXTURE, LC_A)
+    const lcDelFile = path.join(FIXTURE, LC_DEL)
+    // LC1 阻断门
+    await pressTree('LC-B')
+    await typeWholeDoc(`${bodyOf(fs.readFileSync(lcBFile, 'utf8'))}\n\n${LC_MARKER}`)
+    await stateIs('active_dirty', 'true')
+    await pressTree('LC-A')
+    await pressButton('文件', { exact: true })
+    await pressButton('重命名…', { exact: true })
+    await stateIs('rename_open', 'true')
+    await typeIntoRenameInput('LC-A2')
+    await pressInRenameDialog('重命名')
+    await stateIs('lc_block_open', 'true')
+    const lcBlockSnap = await snapshotText()
+    const lcBlockOk = lcBlockSnap.includes('LC-B — 未保存') && !lcBlockSnap.includes('LC-A — 未保存')
+    await pressInBlockDialog('取消')
+    await stateIs('lc_block_open', 'false')
+    const lc1Ok = lcBlockOk && fs.existsSync(lcAFile) && !fs.existsSync(path.join(FIXTURE, 'LC-A2.ad'))
+    // LC2 重试（保存 LC-B 后重新分析——重试不沿用旧列表）
+    await pressTab('LC-B')
+    await pressButton('保存')
+    const lcSaveDl = Date.now() + 10000
+    for (;;) {
+      if (fs.readFileSync(lcBFile, 'utf8').includes(LC_MARKER)) break
+      if (Date.now() > lcSaveDl) throw new Error('LC-B save never landed')
+      await sleep(200)
+    }
+    await pressTab('LC-A')
+    await pressButton('文件', { exact: true })
+    await pressButton('重命名…', { exact: true })
+    await stateIs('rename_open', 'true')
+    await typeIntoRenameInput('LC-A2')
+    await pressInRenameDialog('重命名')
+    await stateIs('rename_open', 'false')
+    const lcRenamedDl = Date.now() + 10000
+    for (;;) {
+      if (!fs.existsSync(lcAFile) && fs.existsSync(path.join(FIXTURE, 'LC-A2.ad'))) break
+      if (Date.now() > lcRenamedDl) throw new Error('LC rename never landed')
+      await sleep(200)
+    }
+    const lcBAfter = fs.readFileSync(lcBFile, 'utf8')
+    const lc2Ok = lcBAfter.includes('[[LC-A2]]') && lcBAfter.includes(LC_MARKER)
+    await stateIs('active_title', 'LC-A2')
+    // LC3 删除：清洁开档 → 协调关闭
+    await pressTree('LC-Del')
+    await pressButton('文件', { exact: true })
+    await pressButton('删除…', { exact: true })
+    await pressButton('删除', { exact: true })
+    const lcDelDl = Date.now() + 10000
+    for (;;) {
+      if (!fs.existsSync(lcDelFile)) break
+      if (Date.now() > lcDelDl) throw new Error('LC delete never landed')
+      await sleep(200)
+    }
+    const lc3Ok = !fs.existsSync(lcDelFile) && fs.existsSync(path.join(FIXTURE, '.trash', LC_DEL))
+    await stateIs('lc_block_open', 'false')
+    check('LC', 'lifecycle', lc1Ok && lc2Ok && lc3Ok,
+      `生命周期受检组（LC1 脏引用源阻断+取消零提交=${lc1Ok}/LC2 保存后重试 ok+源页改写+被迁档跟随=${lc2Ok}/LC3 清洁开档删除协调关闭+回收站落点=${lc3Ok}——无守卫 Reload/TabsRenamed/CloseTabsOf 收尾退役面；无关脏页不列断言=e2e lifecycle ①；键入有界=单检查点窗 D-45②）`)
 
     // 9 退出存盘：dirty → 文件菜单退出 → 确认弹层 → QuitSaveClose →
     // 磁盘三验 + 进程退出。恒为臂内最后一项（Process.exit 杀进程）。

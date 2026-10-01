@@ -45,12 +45,22 @@ const ck = (ok, label) => {
   if (!ok) failures.push(label)
 }
 let lastAppOut = ''
+// 装置持有 PID 清理面（PLAN-032 T-06 收窄——原全局 taskkill /IM auto.exe
+// 会终止同机其他 auto 实例[上游重建/兄弟会话]；改为只杀本装置 spawn 的
+// PID 树——正常与异常退出路径同面）。
+const spawnedPids = []
+const killSpawned = () => {
+  for (const pid of spawnedPids) {
+    try { execFileSync('taskkill', ['/PID', String(pid), '/T', '/F'], { stdio: 'ignore' }) } catch {}
+  }
+  spawnedPids.length = 0
+}
 process.on('unhandledRejection', (e) => {
   console.log(`[unhandled] ${String(e).slice(0, 120)}`)
-  try { execFileSync('taskkill', ['/IM', 'auto.exe', '/F'], { stdio: 'ignore' }) } catch {}
+  killSpawned()
   process.exit(1)
 })
-process.on('exit', () => { try { execFileSync('taskkill', ['/IM', 'auto.exe', '/F'], { stdio: 'ignore' }) } catch {} })
+process.on('exit', () => { killSpawned() })
 
 function makeClient(port) {
   let nextId = 1
@@ -126,6 +136,7 @@ async function bootApp(phaseLabel) {
     env: { ...process.env, AUTOUI_MCP_PORT: String(port), JADE_WORKSPACE: WS },
     stdio: ['ignore', 'pipe', 'pipe'],
   })
+  spawnedPids.push(app.pid)
   let appOut = ''
   app.stdout.on('data', (d) => (appOut += d))
   app.stderr.on('data', (d) => (appOut += d))

@@ -191,6 +191,57 @@ fn lc_trash_name(orig_rel str) str {
     return cand
 }
 
+/// 子树目录清单（fs.tree 段扫描——delete_dir_impl 同源语义；**含空嵌套
+/// 目录**——文件父链推导会漏空目录，vm ⑯ 案 DirBox2/DirBox 实证）。
+fn lc_subtree_dirs(dir str) List {
+    var d0 str = dir
+    var out List = []
+    var tree str = fs.tree(lc_resolve(""), 8)
+    var segs = tree.split("{\"id\":")
+    var i int = 1
+    while i < segs.len() {
+        var seg str = segs[i]
+        var head = seg.split_once(",\"label\":")
+        if head.len() == 2 {
+            var idq str = head[0]
+            var qparts = idq.split("\"")
+            if qparts.len() >= 2 {
+                var id str = qparts[1]
+                if id.starts_with(d0 + "/") {
+                    // kind:file 判优先（delete_dir_impl 同判序——末孙文件段
+                    // 携带父目录的 kind:dir 字段，先排除文件再判目录）
+                    var is_dir bool = false
+                    if !seg.contains("\"kind\":\"file\"") {
+                        if seg.contains("\"kind\":\"dir\"") {
+                            is_dir = true
+                        } else {
+                            if seg.ends_with(",\"children\":[") {
+                                is_dir = true
+                            }
+                        }
+                    }
+                    if is_dir {
+                        var seen bool = false
+                        var j int = 0
+                        while j < out.len() {
+                            var have str = out[j]
+                            if have == id {
+                                seen = true
+                            }
+                            j = j + 1
+                        }
+                        if !seen {
+                            out.push(id)
+                        }
+                    }
+                }
+            }
+        }
+        i = i + 1
+    }
+    return out
+}
+
 /// 子树 .ad 清单（前缀过滤——deldir/rendir/movedir 共享；返回 rel 表）
 fn lc_subtree_files(dir str) List {
     var d0 str = dir
@@ -605,40 +656,8 @@ fn lc_commit_deldir(a str, basis str) str {
     var delsf str = fseg[6]
     var dels List = []
     var errs List = []
-    // 子树目录清单在迁移前从文件表推导（迁移后走查会漏空壳嵌套目录——
-    // remove_dir 非递归，残留即 cleanup-failed）
-    var files List = lc_subtree_files(p)
-    var subdirs List = []
-    var fi int = 0
-    while fi < files.len() {
-        var relf str = files[fi]
-        var lastf int = relf.length
-        var slashf int = -1
-        var kf int = 0
-        while kf < lastf {
-            var chf str = relf.slice(kf, kf + 1)
-            if chf == "/" {
-                slashf = kf
-            }
-            kf = kf + 1
-        }
-        if slashf > 0 {
-            var pdirf str = relf.slice(0, slashf)
-            var seenf bool = false
-            var df int = 0
-            while df < subdirs.len() {
-                var sdf str = subdirs[df]
-                if sdf == pdirf {
-                    seenf = true
-                }
-                df = df + 1
-            }
-            if !seenf {
-                subdirs.push(pdirf)
-            }
-        }
-        fi = fi + 1
-    }
+    // 子树目录清单（树扫描——含空嵌套目录；迁移前采集）
+    var subdirs List = lc_subtree_dirs(p)
     var pairs = delsf.split("*")
     var stopped bool = false
     var i int = 0
@@ -674,7 +693,9 @@ fn lc_commit_deldir(a str, basis str) str {
     if stopped {
         return "RC1|partial|" + p + "|||" + lc_join_items(dels) + "|" + lc_join_items(errs) + "|"
     }
-    // 全成：旧目录清理（子树目录逆序——清单取迁移前推导）+ 顶层 + 复核
+    // 全成：旧目录清理（子树目录逆序——清单取迁移前推导）+ 顶层 + 复核。
+    // 重试一次（Windows delete-pending 类瞬态——源删除紧邻时 remove_dir
+    // 可短暂失败；仍失败 → partial 如实，不伪造完整清理）。
     var k2 int = subdirs.len()
     while k2 > 0 {
         k2 = k2 - 1
@@ -682,6 +703,9 @@ fn lc_commit_deldir(a str, basis str) str {
         File.remove_dir(lc_resolve(sd2))
     }
     File.remove_dir(lc_resolve(p))
+    if File.exists(lc_resolve(p)) {
+        File.remove_dir(lc_resolve(p))
+    }
     if File.exists(lc_resolve(p)) {
         return "RC1|partial|" + p + "|||" + lc_join_items(dels) + "|cleanup-failed:" + p + "|"
     }
@@ -768,39 +792,9 @@ fn lc_commit_rendir(a str, b str, basis str) str {
     var parent str = wsys.dir_of(p)
     var safe str = wsys.title_to_path_stem(n0)
     var new_rel str = parent + safe
-    // 镜像目录（顶层 + 嵌套——分析走查一致）
+    // 镜像目录（树扫描——含空嵌套目录；顶层 + 嵌套与分析一致）
     var files List = lc_subtree_files(p)
-    var subdirs List = []
-    var i int = 0
-    while i < files.len() {
-        var rel str = files[i]
-        var last int = rel.length
-        var slash int = -1
-        var k int = 0
-        while k < last {
-            var ch str = rel.slice(k, k + 1)
-            if ch == "/" {
-                slash = k
-            }
-            k = k + 1
-        }
-        if slash > 0 {
-            var pdir str = rel.slice(0, slash)
-            var seen bool = false
-            var d2 int = 0
-            while d2 < subdirs.len() {
-                var sd str = subdirs[d2]
-                if sd == pdir {
-                    seen = true
-                }
-                d2 = d2 + 1
-            }
-            if !seen {
-                subdirs.push(pdir)
-            }
-        }
-        i = i + 1
-    }
+    var subdirs List = lc_subtree_dirs(p)
     File.create_dir(lc_resolve(new_rel))
     var j int = 0
     while j < subdirs.len() {
