@@ -1,6 +1,6 @@
 ---
 plan_id: PLAN-032
-status: reviewed
+status: archived
 feature_name: 多文档文件操作保护（R-02b）
 author: [agent]
 created_at: 2026-10-01T06:23:09Z
@@ -8,6 +8,7 @@ updated_at: 2026-10-01T23:30:00Z
 plan_revision: 1
 current_step: 7
 total_steps: 7
+completion_kind: delivered
 supersedes_spec_components:
   - docs/specs/editor-safety.md
   - docs/specs/draft-recovery.md
@@ -235,7 +236,9 @@ Store 捕获操作身份、每个受影响实例的 tab_uid/path/key/doc_id/body
 - **批回归到期件**：无 .last-batch-regression.json[jade-edit 惯例 024..031 同判——本批 §6 全量门+复审独立复跑+合并窗 smoke=批级回归门本体]
 - **留观交接**：F-32-R2（VM 帧槽别名——上游 auto-lang 供料候选，LC3-in-vm 弧安全终态在案）/F-32-R1（031 ConfirmKeepClose vue 排水竞态——031-impl 修复候选）/F-32-R3（v25 头注顺修）/R-02 完成声明待本回执+复审 pass 支撑——候选池下一项按路线图默认序=R-03 或独立 R-04[立项走 new 流程重勘]
 - outcome: pass（delivery/derived view/archival/cleanup 逐项核验）
-- next: 复审归档批提交后收口
+- archived：git mv→docs/plans/archived/032-document-lifecycle-safety.md+status archived+completion_kind delivered（YAML 块内）+provenance 链路核验（active/archive 路径一致、附件/规范链接可达）
+- next: cleaned 收口批
+
 
 ### 2026-10-01 review：r1 全量复审（review 独立复跑门）
 
