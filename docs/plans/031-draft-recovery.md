@@ -1,6 +1,6 @@
 ---
 plan_id: PLAN-031
-status: execution_done
+status: reviewed
 feature_name: 草稿持久化与重启恢复（R-02 第一切片）
 author: [agent]
 created_at: 2026-09-30T14:37:05Z
@@ -221,6 +221,21 @@ T-01 的技术实现路径是执行期研究任务，不是假装已有结论。
 - Spec delta: SD-01..SD-05（提案，未落 canonical）
 - 检查：任务覆盖全部 AC/SD；已有路径与符号已读；新文件标明新；现有命令与 package/scripts 已核对；新脚本验证命令需随创建核验；active 匹配、分配锁、唯一性与 0..10 结构由本次文件交付检查确认。
 - 与前序关系：PLAN-030 已 archived/delivered；其 AC 不删除、不降级。R-02b 明确保留，不能据本 Plan 扩写“全部文档生命周期安全”。
+
+### 2026-10-01 review：复审 pass（同会话复审声明+工件重放口径）
+
+- stage: review
+- plan_id: PLAN-031，plan_revision: 1
+- outcome: pass
+- reviewed_commit: f50d3b1（工作树零 WIP；链 1e6ddf7→4cc5b0b→67f2404→068da9b→6e97719→a80980e→3f9c736→f50d3b1 merge-base --is-ancestor 线性无 merge commit）
+- base_commit: 1e6ddf705df512f93dcfdad492637681eccc1392（diff = 7 commit）
+- dependency_revisions: auto-lang 1b21c3be4（只读 native_catalog 调查面）/ auto-down 895f8d0（只读；引擎 src/auto 于复审期被上游 Plan 717 提交更新——见 F-31-R1）
+- spec_inputs: docs/specs/editor-safety.md（PLAN-030 落位版 + 本批 SD-04 修订，复审树实读）/ docs/ARCHITECTURE.md（单源双轨纪律引用）
+- acceptance_results: AC-01..12 全 pass——**本基线重放**：probe_draft_protocol 双臂全案通过（AC-01/03/04 协议+故障+守卫+索引面+原文件不变）；draft_recovery_matrix 19/19 ALL GREEN（AC-02/05/06 恢复/中断/来源保全+AC-09 消费与放弃墓碑——真进程 kill/重启）；pnpm test:e2e 单跑重试 2/2 reload-safety+matrix（AC-07/08/10 用户路径含 ⑦ 结算成功/⑧ 结算失败不提交 + PLAN-030 全弧回归）；vm_matrix merged 17/17（3f9c736 树实跑，AC-10/11——f50d3b1 仅 docs 增量，复用理由=vm 轨不读 docs）；规范/链接/路线图引用实读核对（AC-12）
+- findings: F-31-R1（nonblocking/环境——上游 @autodown/engine dist 陈旧：auto-down Plan 717（895f8d0）在 engine dist 构建后提交了 auto/ 内容，computeStamp 含顶层 auto/ → pnpm build regen 步 FAIL"src/auto changed after last build"；实现期同门已过（T-02 ✓8.56s..T-06 多轮 in-record）；修复义务在上游：`pnpm --filter @autodown/engine build`；本计划树零涉，vue 运行时面不受影响=既有 gen/dist+e2e 重放 2/2）；F-31-R2（nonblocking/环境时序——复审重放全量套件 10.4m 超预算 2 挂[matrix 600s 耗尽+reload-safety boot 15s 无 ready——零断言级行为失败]，单跑清场重试 2/2 1.3m；归因=长会话进程/GPU 上下文累积+引擎 dist 漂移叠加；同 src 两连 5/5 在先）
+- evidence: 复审重放命令实录 = 本会话执行流（build 尝试/probe/矩阵 19/19/e2e 重放+单跑重试）；规范核验 = docs/specs/draft-recovery.md（SD-01..05 定位实读）+ editor-safety.md 交叉引用 + 路线图相对链接解析；基线核验 = git merge-base/rev-list/porcelain 零 WIP
+- next: merge
+- 会话声明：复审与实现同会话（无独立会话授权）——按技能要求裁决全部从工件重建：验证命令于复审基线重放（probe/矩阵/e2e 单跑为本复审新跑），非执行期摘要采信
 
 ### 2026-10-01 work：T-01..T-07 交棒
 
