@@ -1512,6 +1512,39 @@ fn lc_commit_purge(basis str) str {
     return "RC1|ok|.trash|||" + delsf + "||"
 }
 
+// ===== bundle 入口（PLAN-032 T-06 追加；单参形态——VM 跨模块多参调用
+// 槽位覆写实证延伸至 front→back 调用（13-file 组 conflictHold/mvCycleHold
+// + LC3 三弧：kind 残留上一笔操作的值），单参绑定无位序混淆面）。
+// bundle 文法："kind|a|b|c"（plan）/ "kind|a|b|c|basis"（commit）——| 为
+// NTFS 文件名非法字符，路径/策略/basis 结构性不含。=====
+
+pub fn lc_plan_b_impl(bundle str) str {
+    var b0 str = bundle
+    var parts = b0.split("|")
+    if parts.len() < 4 {
+        return "LP1|reject|||||"
+    }
+    var k0 str = parts[0]
+    var a0 str = parts[1]
+    var b0 str = parts[2]
+    var c0 str = parts[3]
+    return lc_plan_impl(k0, a0, b0, c0)
+}
+
+pub fn lc_commit_b_impl(bundle str) str {
+    var b0 str = bundle
+    var parts = b0.split("|")
+    if parts.len() < 5 {
+        return "RC1|stale||||||"
+    }
+    var k0 str = parts[0]
+    var a0 str = parts[1]
+    var b0 str = parts[2]
+    var c0 str = parts[3]
+    var s0 str = parts[4]
+    return lc_commit_impl(k0, a0, b0, c0, s0)
+}
+
 // ===== 契约入口（api 直调；参数入口快照——T-01 硬纪律）=====
 
 pub fn lc_plan_impl(kind str, a str, b str, c str) str {

@@ -71,6 +71,11 @@ async function runRename(page: import('@playwright/test').Page, newName: string)
 
 test.describe('生命周期受检操作（PLAN-032）', () => {
   test('① rename：脏引用源阻断→保存→重试全弧（干净源同步/被迁档跟随/无关脏页零扰动）', async ({ page }) => {
+    page.on('console', (m) => console.log('[pg]', m.type(), m.text().slice(0, 150)))
+    page.on('pageerror', (e) => console.log('[pageerror]', String(e).slice(0, 300)))
+    page.on('response', (r) => { if (r.url().includes('lc_')) console.log('[resp]', r.status(), r.url()) })
+    page.on('requestfailed', (r) => { if (r.url().includes('lc_')) console.log('[reqfail]', r.url(), r.failure()?.errorText) })
+    page.on('requestfinished', (r) => { if (r.url().includes('lc_')) console.log('[reqok]', r.url()) })
     wf('LC-A.ad', '自链 [[LC-A]] 与 [[LC-A#节]]。\n')
     wf('LC-B.ad', '引用 [[LC-A]]。\n')
     wf('LC-C.ad', '背景 [[LC-A]]。\n')
@@ -90,9 +95,11 @@ test.describe('生命周期受检操作（PLAN-032）', () => {
     // 取消 = 零提交（磁盘不动）
     await page.getByRole('alertdialog').getByRole('button', { name: '取消', exact: true }).click()
     await expect(page.getByText(BLOCK_TITLE)).toBeHidden({ timeout: 10_000 })
-    // 关闭仍留置的改名弹层（其遮罩挡 tab 条）
-    await dlg(page).getByRole('button', { name: '取消', exact: true }).click()
-    await expect(dlg(page)).toBeHidden({ timeout: 10_000 })
+    // 关闭仍留置的改名弹层（条件——Radix 嵌套层是否连带收闭为时序面）
+    if (await dlg(page).isVisible().catch(() => false)) {
+      await dlg(page).getByRole('button', { name: '取消', exact: true }).click()
+      await expect(dlg(page)).toBeHidden({ timeout: 10_000 })
+    }
     expect(existsf('LC-A.ad'), '取消零提交：LC-A 仍在').toBe(true)
     // 处理：B 保存（切到 B tab → Ctrl+S）→ 重试（重新分析——不沿用旧列表）
     await tabBtn(page, 'LC-B').click()
@@ -158,7 +165,11 @@ test.describe('生命周期受检操作（PLAN-032）', () => {
     await expect(page.getByText('LC-K — 未保存')).toBeVisible()
     await page.getByRole('alertdialog').getByRole('button', { name: '取消', exact: true }).click()
     await expect(page.getByText(BLOCK_TITLE)).toBeHidden({ timeout: 10_000 })
-    // 阻断取消同时收闭来源弹层（Radix 嵌套层行为）——零提交已证（磁盘断言）
+    // 来源弹层条件关（Radix 嵌套层是否连带收闭为时序面——两种终态都见过）
+    if (await dlg(page).isVisible().catch(() => false)) {
+      await dlg(page).getByRole('button', { name: '取消', exact: true }).click()
+      await expect(dlg(page)).toBeHidden({ timeout: 10_000 })
+    }
     expect(existsf('LC-K.ad'), '取消零提交').toBe(true)
     // 保留草稿并关闭（tab 行 x 钮 → 确认弹层）。F-32-R1（031 既有面，
     // 本片实测登记）：vue 臂 store 互调不 await——ConfirmKeepClose 的排
@@ -182,13 +193,13 @@ test.describe('生命周期受检操作（PLAN-032）', () => {
     await expect(page.getByText('ready', { exact: true }).first()).toBeVisible({ timeout: 15_000 })
     await openFile(page, 'LC-S')
     // 提交窗注入：lc_commit 到达时外部改写引用源 → 基线失配必 stale
-    await page.route('**/api/lc_commit', async (route) => {
+    await page.route('**/api/lc_commit*', async (route) => {
       fs.appendFileSync(path.join(WORKSPACE, 'LC-S2.ad'), '提交窗外部追加。\n', 'utf8')
       await route.continue()
     })
     await runRename(page, 'LC-S9')
     await expect(page.getByText(STALE_NOTE)).toBeVisible({ timeout: 20_000 })
-    await page.unroute('**/api/lc_commit')
+    await page.unroute('**/api/lc_commit*')
     expect(existsf('LC-S.ad'), 'stale 零变更：旧名仍在').toBe(true)
     expect(existsf('LC-S9.ad'), 'stale 零变更：新名未建').toBe(false)
   })
@@ -206,7 +217,7 @@ test.describe('生命周期受检操作（PLAN-032）', () => {
     const commitGate = new Promise<void>((resolve) => {
       releaseCommit = resolve
     })
-    await page.route('**/api/lc_commit', async (route) => {
+    await page.route('**/api/lc_commit*', async (route) => {
       await commitGate
       await route.continue()
     })
@@ -224,7 +235,7 @@ test.describe('生命周期受检操作（PLAN-032）', () => {
     await page.waitForTimeout(400)
     releaseCommit()
     await expect(dlg(page)).toBeHidden({ timeout: 25_000 })
-    await page.unroute('**/api/lc_commit')
+    await page.unroute('**/api/lc_commit*')
     await page.waitForTimeout(1200)
     // 终态不变量（vue 臂编辑器事件发射滞后于回执时序——sync/late-input
     // 两分支皆不丢输入；分支级语义=T-01 原型+vm LC 组承载）：

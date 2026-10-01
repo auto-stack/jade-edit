@@ -276,7 +276,7 @@ store EditorStore {
         DelDirOpen, DelDirClose, RenDirOpen, RenDirClose,
         MoveDirOpen, MoveDirClose,
         WsWarn(str),
-        LcGate(str, str, str, str, str), LcDrift(str, str), LcResolve(str), LcBlockCancel,
+        LcGate(str), LcDrift(str), LcResolve(str), LcBlockCancel,
     }
 
     on {
@@ -1632,12 +1632,32 @@ store EditorStore {
         // 用户处理后重新发起——重试必须重新分析）；清洁实例入快照 + 漂移
         // 探测候选（App 逐个 read_wiki 后 LcDrift 回填）；无候选 → 快照
         // 就绪 verdict=ok（App 读 .lc_basis 发起受检提交）。----
-        .LcGate(record, kind, a, b, c) -> {
-            var rec str = record
-            var k0 str = kind
-            var a0 str = a
-            var b0 str = b
-            var c0 str = c
+        .LcGate(armed) -> {
+            // armed = LP1 记录 + \u0001 + 调用 bundle（kind|a|b|c）——单参
+            // 绑定（VM 跨模块多参槽位覆写规避，T-06 实勘）；bundle 解析
+            // 后快照到模型（commit 期经模型读回重建，零帧槽依赖）。
+            var armed0 str = armed
+            var head = armed0.split("\u0001")
+            var rec str = armed0
+            var k0 str = ""
+            var a0 str = ""
+            var b0 str = ""
+            var c0 str = ""
+            if head.len() >= 2 {
+                rec = head[0]
+                var bparts = head[1].split("|")
+                if bparts.len() >= 4 {
+                    k0 = bparts[0]
+                    a0 = bparts[1]
+                    b0 = bparts[2]
+                    c0 = bparts[3]
+                }
+            }
+            // 上一笔操作的 status/moves 不跨操作残留（reject 路径不写
+            // status——App 尾联读 stale "ok" 会误关来源弹层，13-file 组
+            // conflictHold/mvCycleHold 两弧实证）
+            .lc_status = ""
+            .lc_moves = ""
             .lc_verdict = "reject"
             var segs = rec.split("|")
             if segs[0] == "LP1" {
@@ -1776,7 +1796,7 @@ store EditorStore {
             }
             if .lc_verdict == "reject" {
                 .save_note = "文件操作被拒绝（源缺失/目标冲突/参数无效）"
-                console_log("lc-reject: " + kind)
+                console_log("lc-reject: " + k0)
             }
             console_log("lc-gate: verdict=" + .lc_verdict + " pending=" + .lc_pending)
             .console = console_lines()
@@ -1785,10 +1805,24 @@ store EditorStore {
         // ---- 漂移探测回填（App 对每个候选 read_wiki 后调用；清洁页基准
         // 与磁盘不同 → 阻断「先手动重载」；候选清空即门终判：有阻断出
         // 弹层 hold 释放，无阻断 verdict=ok 快照已就绪）----
-        .LcDrift(path, diskbody) -> {
-            var p0 str = path
+        .LcDrift(diskbody) -> {
+            // 参数 = 漂移候选首位的磁盘正文；路径由 store 自己从
+            // pending 头取（模型读，零帧槽依赖——vm 循环计数器槽位污
+            // 染规避，T-06 实勘）。App 循环：pending 非空 → 读首路径
+            // 磁盘 → LcDrift(正文)。空 pending 守卫直接 ok 终判。
+            var p0 str = ""
+            if .lc_pending != "" {
+                var parts0 = .lc_pending.split("|")
+                p0 = parts0[0]
+            }
             var db str = diskbody
             if .lc_verdict == "drift" {
+                if p0 == "" {
+                    .lc_pending = ""
+                    .lc_verdict = "ok"
+                    console_log("lc-drift: empty-pending fallback verdict=ok")
+                    .console = console_lines()
+                }
                 var f int = -1
                 var j int = 0
                 while j < .tabs.len() {

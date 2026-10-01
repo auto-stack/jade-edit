@@ -1,12 +1,12 @@
 ---
 plan_id: PLAN-032
-status: executing
+status: execution_done
 feature_name: 多文档文件操作保护（R-02b）
 author: [agent]
 created_at: 2026-10-01T06:23:09Z
-updated_at: 2026-10-01T20:30:00Z
+updated_at: 2026-10-01T23:30:00Z
 plan_revision: 1
-current_step: 4
+current_step: 7
 total_steps: 7
 supersedes_spec_components:
   - docs/specs/editor-safety.md
@@ -217,10 +217,21 @@ Store 捕获操作身份、每个受影响实例的 tab_uid/path/key/doc_id/body
 - [x] **T-03 Store 前置保护与定向协调**。依赖：T-02。修改 editor_store.at Open/ActNew/DraftRecover 初始化会话内 tab_uid；新增生命周期消息／状态（名称 T-01 冻结），实现全部实例快照门、仅受影响同步、未知结果／正文差异保存门。移除业务收尾对无守卫 Reload/CloseTabsOf 的依赖，低层 RemoveAt 不毁草稿。覆盖 AC-02/03/06/07/08/10，SD-03。验证：Store 与磁盘对照，延迟／重开／晚输入故障，不以索引定位。
 - [x] **T-04 十类入口与保护提示接线**。依赖：T-03。修改 app.at RenameGo/MoveGo/DeleteGo/DelDirGo/RenDirGo/MoveDirExec/LinkifyGo/TrashRestore/TrashRestoreAll/TrashPurgeGo，参数快照、统一受检调用与阻断文档列表；成功刷新族／recents 按实际回执更新。新增 e2e/lifecycle-safety.spec.ts。覆盖 AC-01/02/03/06/07/09/10，SD-01/02/03。验证：定向 Playwright，十类操作都经过门；未保护的旧 API 调用不得留作旁路。
 - [x] **T-05 草稿上下文与晚输入保留出口**。依赖：T-03/T-04。修改 editor_store.at 的路径协调、DraftDrainOf、Save/QuitSaveClose 等对应状态门；必要时 back/drafts.at 仅补可验证消费接口，不迁 schema v1、不原位改旧记录。实现同 doc_id 上下文修订、.trash/ 路径、删除后保留副本、未知／外改的另存或核验出口。覆盖 AC-08/10/11/12，SD-03/04。验证：旧回执晚到／检查点失败、部分合并后恢复、不清库真重启；失败不结算最新草稿。
-- [ ] **T-06 故障全弧与受影响回归（部分——vm 合并臂两弧待适配，余项见 §9）**。依赖：T-02..05。完成 probe_lifecycle／lifecycle-safety，扩 vm_matrix、draft_recovery_matrix 必要路径案；运行前将后者异常／exit 全局 auto.exe 清理改为装置拥有的 PID／进程树；新增结构基线 v25（新，须解释 diff）。执行 §6 全部命令，记录注入生效、代码／载体／fixture。覆盖 AC-01..12，SD-05。验证：新红定位；上游关键路径不可验时 blocker，旧红同窗对照不冒充全绿。
-- [ ] **T-07 规范与复审交接**。依赖：T-06。新增 docs/specs/document-lifecycle.md，局部修改 editor-safety/draft-recovery，必要时 README/ARCHITECTURE/parity-ledger 指针；更新分析路线图与R-02实际完成门。映射 SD-01..05/AC-01..13 并绑定实施 revision，交 auto-plan-review。覆盖 AC-12/13。验证：规范、兼容、剩余边界与实现一致，链接/hash 可查；本次规划不自动执行或合并。
+- [x] **T-06 故障全弧与受影响回归**。依赖：T-02..05。完成 probe_lifecycle／lifecycle-safety，扩 vm_matrix、draft_recovery_matrix 必要路径案；运行前将后者异常／exit 全局 auto.exe 清理改为装置拥有的 PID／进程树；新增结构基线 v25（新，须解释 diff）。执行 §6 全部命令，记录注入生效、代码／载体／fixture。覆盖 AC-01..12，SD-05。验证：新红定位；上游关键路径不可验时 blocker，旧红同窗对照不冒充全绿。
+- [x] **T-07 规范与复审交接**。依赖：T-06。新增 docs/specs/document-lifecycle.md，局部修改 editor-safety/draft-recovery，必要时 README/ARCHITECTURE/parity-ledger 指针；更新分析路线图与R-02实际完成门。映射 SD-01..05/AC-01..13 并绑定实施 revision，交 auto-plan-review。覆盖 AC-12/13。验证：规范、兼容、剩余边界与实现一致，链接/hash 可查；本次规划不自动执行或合并。
 
 ## 9. 复审记录
+
+### 2026-10-01 work：T-06 余项收口 + T-07 规范与复审交接（r1 第 6-7/7 步，execution_done）
+
+- stage: work
+- plan: PLAN-032，plan_revision: 1
+- outcome: pass（T-01..T-07 全数 [x]；LC3-in-vm 弧 = F-32-R2 上游 blocker 安全终态在案）
+- code_commit: 本批（直接 main 线性，base=f4faf91）
+- task_ids: T-06（余项）, T-07
+- evidence: **T-06 收口**——LC3/13-组弧根因定谳 = VM 帧槽跨调用别名蔓延至前端 handler 命名局部（kind 跨操作残留 'deldir'，LC3-DBG console 转储在录）；根治 = 受检流程 **bundle 单参形态**（kind|a|b|c[|basis]，| 为 NTFS 非法字符）+漂移循环模型驱动化（条件读 pending、路径 store 自取 pending 头、App 只传正文——循环计数器槽位污染消除）+LcGate 尾联 lc_status/lc_moves 不跨操作残留；deldir/rendir 清理 lc_subtree_dirs 树扫描（空嵌套目录）+kind:file 判优先+cleanup 重试。**验证**：probe_lifecycle 连跑 ALL GREEN（97 PASS×多轮）+e2e 九测全绿（9 passed）+vm merged 全组 PASS（含 13-file conflictHold/mvCycle 修复后绿+LC 组 LC1/LC2 绿；LC3-delete 弧 = F-32-R2 blocker 安全终态：verdict=reject 零磁盘变更+弹层留置+save_note 如实，LC3-DBG 转储在录；v25 基线落位）。**T-07**：docs/specs/document-lifecycle.md 新（SD-01..05 五节：受检门与影响域/基线回执与部分完成/定向协调与晚输入/双轨形态与 F-32-R2 边界/验证矩阵）+editor-safety 修订（R-02b 指针更新——十入口受检化后内部 Reload 在册调用面清零）+draft-recovery 修订（R-02b 交付指针+已关闭草稿不被文件操作连带结算）+路线图进度与 R-02 行更新。AC-01..13 映射：AC-01/09=probe 影响域+整批方案+e2e①⑩；AC-02/03=门判定+阻断弹层+e2e①③；AC-04=stale 双注入（probe+e2e⑤）；AC-05=partial 真故障（probe ACL 注入）；AC-06=定向协调全页（probe+e2e①②⑦）；AC-07=无关页零扰动（e2e①）；AC-08=晚输入保留+副本（e2e⑥+probe late）；AC-10=未知结果门（store LcMarkReview+保存门）；AC-11=草稿可追踪（路径上下文排水+F-32-R1 边界如实）；AC-12=双轨（bundle 形态双臂+旧 API 签名保留）；AC-13=本节映射与规范/路线图/附件可查
+- blockers: F-32-R2（上游 auto-lang VM 帧槽别名——前端 handler 命名局部跨操作残留；安全侧设计包含，LC3-in-vm 弧转上游证据；vue 臂/probe 双臂不受影响）
+- next: auto-plan-review（revision 绑定：T-01=5a934eb、T-02=2b25cef、T-03..07=本批；probe+e2e+vm 日志在 e2e/.runtime/p32 与 /tmp 转录）
 
 ### 2026-10-01 work：T-03/T-04/T-05 实施 + T-06 部分回归（r1 第 3-6/7 步）
 

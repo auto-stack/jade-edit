@@ -484,3 +484,18 @@ pub fn lc_plan(kind str, a str, b str, c str) str {
 pub fn lc_commit(kind str, a str, b str, c str, basis str) str {
     return lifecycle.lc_commit_impl(kind, a, b, c, basis)
 }
+
+/// 受检生命周期 bundle 形态（PLAN-032 T-06 追加；单参调用——VM 跨模块
+/// 多参槽位覆写实证面，merged 臂前端入口专用；split/HTTP 探针沿用上面
+/// 4/5 参端点——HTTP 按名绑定无此面）。bundle 文法见 lifecycle.at 头注。
+/// POST /api/lc_plan_b
+#[api(method = "POST", path = "/api/lc_plan_b")]
+pub fn lc_plan_b(bundle str) str {
+    return lifecycle.lc_plan_b_impl(bundle)
+}
+
+/// POST /api/lc_commit_b
+#[api(method = "POST", path = "/api/lc_commit_b")]
+pub fn lc_commit_b(bundle str) str {
+    return lifecycle.lc_commit_b_impl(bundle)
+}

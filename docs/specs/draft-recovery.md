@@ -82,8 +82,13 @@ body="" 非空恒 dirty 需另存）；**空文副本不被 body==original 普�
 
 - **非目标如实**：原文档自动保存、文件版本历史、断电 fsync 保证、
   浏览器原生关闭拦截、多会话并发写草稿库、跨设备同步、R-02b 多文件
-  事务保护——全部未交付。检查点失败注入弧由 probe 协议矩阵（七类故
-  障）+ e2e ⑧（draft_settle 拦截→结算失败不提交）承载。
+  事务保护——R-02b 已由 PLAN-032 交付（`docs/specs/document-lifecycle.
+  md`：受检门/真实回执/定向协调；路径上下文检查点=迁移后同 doc_id 新
+  seq 续排，path 逐记录在案），其余项仍未交付。检查点失败注入弧由
+  probe 协议矩阵（七类故障）+ e2e ⑧（draft_settle 拦截→结算失败不提
+  交）承载。已关闭草稿及 `.jade/drafts` 不被文件操作删除/清空连带结算
+  （document-lifecycle 删除协调：清洁实例关闭、有输入保留副本，草稿
+  记录保留）。
 - **上游边界（实勘在册）**：vm 合并轨 3+ 检查点后 AURA/MCP 面楔死
   （app 活但连接 RST——单文档序列恒过、多相位序列恒楔，矩阵键入预算
   制 + SKIP-VM-WEDGE 显式降级）；vm split 臂 boot FAIL = F-24-2 在册

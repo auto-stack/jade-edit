@@ -29,7 +29,7 @@ use find_panel: FindPanel
 use tags_panel: TagsPanel
 use bps.navigation.filetree.tree_util: flatten_tree, toggle_id
 use bps.navigation.filetree.tree_icon: TreeIcon
-use back.api: tree, ws_root, link_index, search_wiki, create_page, tags_index, page_meta, set_page_meta, create_dir, daily_note, trash_list, recent_paths_get, recent_paths_set, draft_pending, draft_read, exists, read_wiki, lc_plan, lc_commit
+use back.api: tree, ws_root, link_index, search_wiki, create_page, tags_index, page_meta, set_page_meta, create_dir, daily_note, trash_list, recent_paths_get, recent_paths_set, draft_pending, draft_read, exists, read_wiki, lc_plan_b, lc_commit_b
 
 style warn_label = "text-[12px] text-amber-400 mr-1"
 
@@ -2755,45 +2755,40 @@ widget App {
          // 单会话单操作在途（AC-09——双击/并发入口不重复提交）
          console_log("lc: busy")
          } else {
-         var lk str = "linkify"
-         var la str = la6
-         var lb str = lb6
-         var lc str = ""
          var lr str = ""
          var lok bool = true
          try {
-             lr = lc_plan(lk, la, lb, lc)
+             lr = lc_plan_b("linkify" + "|" + path + "|" + path_stem(.store.active_path) + "|" + "")
          } catch (e9) {
              lok = false
+            console_log("lc-plan-err: " + e9)
          }
-         store.LcGate(lr, lk, la, lb, lc)
+         store.LcGate(lr + "\u0001" + "linkify" + "|" + path + "|" + path_stem(.store.active_path) + "|" + "")
          if .store.lc_verdict == "drift" {
-             var cand = .store.lc_pending.split("|")
-             var li int = 0
-             while li < cand.len() {
-                 var cp str = cand[li]
-                 if cp != "" {
-                     var cbody str = ""
-                     var cokr bool = true
-                     try {
-                         cbody = read_wiki(cp)
-                     } catch (e10) {
-                         cokr = false
-                     }
-                     if !cokr {
-                         cbody = "\u0001drift-unknown"
-                     }
-                     store.LcDrift(cp, cbody)
-                 }
-                 li = li + 1
-             }
-         }
+            // 模型驱动循环（条件读 pending——vm 循环计数器槽位污染规避）；
+            // 路径由 store 自取 pending 头，App 只传磁盘正文
+            while .store.lc_pending != "" {
+                var candh = .store.lc_pending.split("|")
+                var p0 str = candh[0]
+                var cbody str = ""
+                var cokr bool = true
+                try {
+                    cbody = read_wiki(p0)
+                } catch (e10) {
+                    cokr = false
+                }
+                if !cokr {
+                    cbody = "LC-DRIFT-UNKNOWN-SENTINEL"
+                }
+                store.LcDrift(cbody)
+            }
+        }
          if .store.lc_verdict == "ok" {
              var lbasis str = .store.lc_basis
              var lcr str = ""
              var lcok bool = true
              try {
-                 lcr = lc_commit(lk, la, lb, lc, lbasis)
+                 lcr = lc_commit_b(.store.lc_kind + "|" + .store.lc_a + "|" + .store.lc_b + "|" + .store.lc_c + "|" + .store.lc_basis)
              } catch (e11) {
                  lcok = false
              }
@@ -3069,37 +3064,32 @@ widget App {
         // 单会话单操作在途（AC-09——双击/并发入口不重复提交）
         console_log("lc: busy")
         } else {
-        var lk str = "delete"
-        var la str = la1
-        var lb str = ""
-        var lc str = ""
         var lr str = ""
         var lok bool = true
         try {
-            lr = lc_plan(lk, la, lb, lc)
+            lr = lc_plan_b("delete" + "|" + .ft_sel + "|" + "" + "|" + "")
         } catch (e9) {
             lok = false
+            console_log("lc-plan-err: " + e9)
         }
-        store.LcGate(lr, lk, la, lb, lc)
+        store.LcGate(lr + "\u0001" + "delete" + "|" + .ft_sel + "|" + "" + "|" + "")
         if .store.lc_verdict == "drift" {
-            var cand = .store.lc_pending.split("|")
-            var li int = 0
-            while li < cand.len() {
-                var cp str = cand[li]
-                if cp != "" {
-                    var cbody str = ""
-                    var cokr bool = true
-                    try {
-                        cbody = read_wiki(cp)
-                    } catch (e10) {
-                        cokr = false
-                    }
-                    if !cokr {
-                        cbody = "\u0001drift-unknown"
-                    }
-                    store.LcDrift(cp, cbody)
+            // 模型驱动循环（条件读 pending——vm 循环计数器槽位污染规避）；
+            // 路径由 store 自取 pending 头，App 只传磁盘正文
+            while .store.lc_pending != "" {
+                var candh = .store.lc_pending.split("|")
+                var p0 str = candh[0]
+                var cbody str = ""
+                var cokr bool = true
+                try {
+                    cbody = read_wiki(p0)
+                } catch (e10) {
+                    cokr = false
                 }
-                li = li + 1
+                if !cokr {
+                    cbody = "LC-DRIFT-UNKNOWN-SENTINEL"
+                }
+                store.LcDrift(cbody)
             }
         }
         if .store.lc_verdict == "ok" {
@@ -3107,7 +3097,7 @@ widget App {
             var lcr str = ""
             var lcok bool = true
             try {
-                lcr = lc_commit(lk, la, lb, lc, lbasis)
+                lcr = lc_commit_b(.store.lc_kind + "|" + .store.lc_a + "|" + .store.lc_b + "|" + .store.lc_c + "|" + .store.lc_basis)
             } catch (e11) {
                 lcok = false
             }
@@ -3189,37 +3179,32 @@ widget App {
         // 单会话单操作在途（AC-09——双击/并发入口不重复提交）
         console_log("lc: busy")
         } else {
-        var lk str = "rename"
-        var la str = la0
-        var lb str = lb0
-        var lc str = ""
         var lr str = ""
         var lok bool = true
         try {
-            lr = lc_plan(lk, la, lb, lc)
+            lr = lc_plan_b("rename" + "|" + .store.active_path + "|" + .rename_q + "|" + "")
         } catch (e9) {
             lok = false
+            console_log("lc-plan-err: " + e9)
         }
-        store.LcGate(lr, lk, la, lb, lc)
+        store.LcGate(lr + "\u0001" + "rename" + "|" + .store.active_path + "|" + .rename_q + "|" + "")
         if .store.lc_verdict == "drift" {
-            var cand = .store.lc_pending.split("|")
-            var li int = 0
-            while li < cand.len() {
-                var cp str = cand[li]
-                if cp != "" {
-                    var cbody str = ""
-                    var cokr bool = true
-                    try {
-                        cbody = read_wiki(cp)
-                    } catch (e10) {
-                        cokr = false
-                    }
-                    if !cokr {
-                        cbody = "\u0001drift-unknown"
-                    }
-                    store.LcDrift(cp, cbody)
+            // 模型驱动循环（条件读 pending——vm 循环计数器槽位污染规避）；
+            // 路径由 store 自取 pending 头，App 只传磁盘正文
+            while .store.lc_pending != "" {
+                var candh = .store.lc_pending.split("|")
+                var p0 str = candh[0]
+                var cbody str = ""
+                var cokr bool = true
+                try {
+                    cbody = read_wiki(p0)
+                } catch (e10) {
+                    cokr = false
                 }
-                li = li + 1
+                if !cokr {
+                    cbody = "LC-DRIFT-UNKNOWN-SENTINEL"
+                }
+                store.LcDrift(cbody)
             }
         }
         if .store.lc_verdict == "ok" {
@@ -3227,7 +3212,7 @@ widget App {
             var lcr str = ""
             var lcok bool = true
             try {
-                lcr = lc_commit(lk, la, lb, lc, lbasis)
+                lcr = lc_commit_b(.store.lc_kind + "|" + .store.lc_a + "|" + .store.lc_b + "|" + .store.lc_c + "|" + .store.lc_basis)
             } catch (e11) {
                 lcok = false
             }
@@ -3435,37 +3420,32 @@ widget App {
         // 单会话单操作在途（AC-09——双击/并发入口不重复提交）
         console_log("lc: busy")
         } else {
-        var lk str = "move"
-        var la str = la2
-        var lb str = lb2
-        var lc str = ""
         var lr str = ""
         var lok bool = true
         try {
-            lr = lc_plan(lk, la, lb, lc)
+            lr = lc_plan_b("move" + "|" + .ft_sel + "|" + .move_q + "|" + "")
         } catch (e9) {
             lok = false
+            console_log("lc-plan-err: " + e9)
         }
-        store.LcGate(lr, lk, la, lb, lc)
+        store.LcGate(lr + "\u0001" + "move" + "|" + .ft_sel + "|" + .move_q + "|" + "")
         if .store.lc_verdict == "drift" {
-            var cand = .store.lc_pending.split("|")
-            var li int = 0
-            while li < cand.len() {
-                var cp str = cand[li]
-                if cp != "" {
-                    var cbody str = ""
-                    var cokr bool = true
-                    try {
-                        cbody = read_wiki(cp)
-                    } catch (e10) {
-                        cokr = false
-                    }
-                    if !cokr {
-                        cbody = "\u0001drift-unknown"
-                    }
-                    store.LcDrift(cp, cbody)
+            // 模型驱动循环（条件读 pending——vm 循环计数器槽位污染规避）；
+            // 路径由 store 自取 pending 头，App 只传磁盘正文
+            while .store.lc_pending != "" {
+                var candh = .store.lc_pending.split("|")
+                var p0 str = candh[0]
+                var cbody str = ""
+                var cokr bool = true
+                try {
+                    cbody = read_wiki(p0)
+                } catch (e10) {
+                    cokr = false
                 }
-                li = li + 1
+                if !cokr {
+                    cbody = "LC-DRIFT-UNKNOWN-SENTINEL"
+                }
+                store.LcDrift(cbody)
             }
         }
         if .store.lc_verdict == "ok" {
@@ -3473,7 +3453,7 @@ widget App {
             var lcr str = ""
             var lcok bool = true
             try {
-                lcr = lc_commit(lk, la, lb, lc, lbasis)
+                lcr = lc_commit_b(.store.lc_kind + "|" + .store.lc_a + "|" + .store.lc_b + "|" + .store.lc_c + "|" + .store.lc_basis)
             } catch (e11) {
                 lcok = false
             }
@@ -3540,37 +3520,32 @@ widget App {
         // 单会话单操作在途（AC-09——双击/并发入口不重复提交）
         console_log("lc: busy")
         } else {
-        var lk str = "deldir"
-        var la str = la3
-        var lb str = ""
-        var lc str = ""
         var lr str = ""
         var lok bool = true
         try {
-            lr = lc_plan(lk, la, lb, lc)
+            lr = lc_plan_b("deldir" + "|" + dir_trim(.deldir_q) + "|" + "" + "|" + "")
         } catch (e9) {
             lok = false
+            console_log("lc-plan-err: " + e9)
         }
-        store.LcGate(lr, lk, la, lb, lc)
+        store.LcGate(lr + "\u0001" + "deldir" + "|" + dir_trim(.deldir_q) + "|" + "" + "|" + "")
         if .store.lc_verdict == "drift" {
-            var cand = .store.lc_pending.split("|")
-            var li int = 0
-            while li < cand.len() {
-                var cp str = cand[li]
-                if cp != "" {
-                    var cbody str = ""
-                    var cokr bool = true
-                    try {
-                        cbody = read_wiki(cp)
-                    } catch (e10) {
-                        cokr = false
-                    }
-                    if !cokr {
-                        cbody = "\u0001drift-unknown"
-                    }
-                    store.LcDrift(cp, cbody)
+            // 模型驱动循环（条件读 pending——vm 循环计数器槽位污染规避）；
+            // 路径由 store 自取 pending 头，App 只传磁盘正文
+            while .store.lc_pending != "" {
+                var candh = .store.lc_pending.split("|")
+                var p0 str = candh[0]
+                var cbody str = ""
+                var cokr bool = true
+                try {
+                    cbody = read_wiki(p0)
+                } catch (e10) {
+                    cokr = false
                 }
-                li = li + 1
+                if !cokr {
+                    cbody = "LC-DRIFT-UNKNOWN-SENTINEL"
+                }
+                store.LcDrift(cbody)
             }
         }
         if .store.lc_verdict == "ok" {
@@ -3578,7 +3553,7 @@ widget App {
             var lcr str = ""
             var lcok bool = true
             try {
-                lcr = lc_commit(lk, la, lb, lc, lbasis)
+                lcr = lc_commit_b(.store.lc_kind + "|" + .store.lc_a + "|" + .store.lc_b + "|" + .store.lc_c + "|" + .store.lc_basis)
             } catch (e11) {
                 lcok = false
             }
@@ -3654,45 +3629,40 @@ widget App {
          // 单会话单操作在途（AC-09——双击/并发入口不重复提交）
          console_log("lc: busy")
          } else {
-         var lk str = "rendir"
-         var la str = la4
-         var lb str = lb4
-         var lc str = ""
          var lr str = ""
          var lok bool = true
          try {
-             lr = lc_plan(lk, la, lb, lc)
+             lr = lc_plan_b("rendir" + "|" + dir_trim(.rendir_target) + "|" + .rendir_q + "|" + "")
          } catch (e9) {
              lok = false
+            console_log("lc-plan-err: " + e9)
          }
-         store.LcGate(lr, lk, la, lb, lc)
+         store.LcGate(lr + "\u0001" + "rendir" + "|" + dir_trim(.rendir_target) + "|" + .rendir_q + "|" + "")
          if .store.lc_verdict == "drift" {
-             var cand = .store.lc_pending.split("|")
-             var li int = 0
-             while li < cand.len() {
-                 var cp str = cand[li]
-                 if cp != "" {
-                     var cbody str = ""
-                     var cokr bool = true
-                     try {
-                         cbody = read_wiki(cp)
-                     } catch (e10) {
-                         cokr = false
-                     }
-                     if !cokr {
-                         cbody = "\u0001drift-unknown"
-                     }
-                     store.LcDrift(cp, cbody)
-                 }
-                 li = li + 1
-             }
-         }
+            // 模型驱动循环（条件读 pending——vm 循环计数器槽位污染规避）；
+            // 路径由 store 自取 pending 头，App 只传磁盘正文
+            while .store.lc_pending != "" {
+                var candh = .store.lc_pending.split("|")
+                var p0 str = candh[0]
+                var cbody str = ""
+                var cokr bool = true
+                try {
+                    cbody = read_wiki(p0)
+                } catch (e10) {
+                    cokr = false
+                }
+                if !cokr {
+                    cbody = "LC-DRIFT-UNKNOWN-SENTINEL"
+                }
+                store.LcDrift(cbody)
+            }
+        }
          if .store.lc_verdict == "ok" {
              var lbasis str = .store.lc_basis
              var lcr str = ""
              var lcok bool = true
              try {
-                 lcr = lc_commit(lk, la, lb, lc, lbasis)
+                 lcr = lc_commit_b(.store.lc_kind + "|" + .store.lc_a + "|" + .store.lc_b + "|" + .store.lc_c + "|" + .store.lc_basis)
              } catch (e11) {
                  lcok = false
              }
@@ -3803,37 +3773,36 @@ widget App {
         // 单会话单操作在途（AC-09——双击/并发入口不重复提交）
         console_log("lc: busy")
         } else {
-        var lk str = "movedir"
-        var la str = la5
-        var lb str = lb5
-        var lc str = lc5
         var lr str = ""
         var lok bool = true
         try {
-            lr = lc_plan(lk, la, lb, lc)
+            lr = lc_plan_b("movedir" + "|" + dir_trim(.movedir_src) + "|" + dir_trim(.movedir_dst) + "|" + strat)
         } catch (e9) {
             lok = false
+            console_log("lc-plan-err: " + e9)
         }
-        store.LcGate(lr, lk, la, lb, lc)
-        if .store.lc_verdict == "drift" {
-            var cand = .store.lc_pending.split("|")
-            var li int = 0
-            while li < cand.len() {
-                var cp str = cand[li]
-                if cp != "" {
-                    var cbody str = ""
-                    var cokr bool = true
-                    try {
-                        cbody = read_wiki(cp)
-                    } catch (e10) {
-                        cokr = false
-                    }
-                    if !cokr {
-                        cbody = "\u0001drift-unknown"
-                    }
-                    store.LcDrift(cp, cbody)
+                var strat2 str = ""
+                if .dirmerge_on {
+                    strat2 = .dirmerge_strategy
                 }
-                li = li + 1
+        store.LcGate(lr + "\u0001" + "movedir" + "|" + dir_trim(.movedir_src) + "|" + dir_trim(.movedir_dst) + "|" + strat2)
+        if .store.lc_verdict == "drift" {
+            // 模型驱动循环（条件读 pending——vm 循环计数器槽位污染规避）；
+            // 路径由 store 自取 pending 头，App 只传磁盘正文
+            while .store.lc_pending != "" {
+                var candh = .store.lc_pending.split("|")
+                var p0 str = candh[0]
+                var cbody str = ""
+                var cokr bool = true
+                try {
+                    cbody = read_wiki(p0)
+                } catch (e10) {
+                    cokr = false
+                }
+                if !cokr {
+                    cbody = "LC-DRIFT-UNKNOWN-SENTINEL"
+                }
+                store.LcDrift(cbody)
             }
         }
         if .store.lc_verdict == "ok" {
@@ -3841,7 +3810,7 @@ widget App {
             var lcr str = ""
             var lcok bool = true
             try {
-                lcr = lc_commit(lk, la, lb, lc, lbasis)
+                lcr = lc_commit_b(.store.lc_kind + "|" + .store.lc_a + "|" + .store.lc_b + "|" + .store.lc_c + "|" + .store.lc_basis)
             } catch (e11) {
                 lcok = false
             }
@@ -3904,37 +3873,32 @@ widget App {
         // 单会话单操作在途（AC-09——双击/并发入口不重复提交）
         console_log("lc: busy")
         } else {
-        var lk str = "restore"
-        var la str = la7
-        var lb str = ""
-        var lc str = ""
         var lr str = ""
         var lok bool = true
         try {
-            lr = lc_plan(lk, la, lb, lc)
+            lr = lc_plan_b("restore" + "|" + entry + "|" + "" + "|" + "")
         } catch (e9) {
             lok = false
+            console_log("lc-plan-err: " + e9)
         }
-        store.LcGate(lr, lk, la, lb, lc)
+        store.LcGate(lr + "\u0001" + "restore" + "|" + entry + "|" + "" + "|" + "")
         if .store.lc_verdict == "drift" {
-            var cand = .store.lc_pending.split("|")
-            var li int = 0
-            while li < cand.len() {
-                var cp str = cand[li]
-                if cp != "" {
-                    var cbody str = ""
-                    var cokr bool = true
-                    try {
-                        cbody = read_wiki(cp)
-                    } catch (e10) {
-                        cokr = false
-                    }
-                    if !cokr {
-                        cbody = "\u0001drift-unknown"
-                    }
-                    store.LcDrift(cp, cbody)
+            // 模型驱动循环（条件读 pending——vm 循环计数器槽位污染规避）；
+            // 路径由 store 自取 pending 头，App 只传磁盘正文
+            while .store.lc_pending != "" {
+                var candh = .store.lc_pending.split("|")
+                var p0 str = candh[0]
+                var cbody str = ""
+                var cokr bool = true
+                try {
+                    cbody = read_wiki(p0)
+                } catch (e10) {
+                    cokr = false
                 }
-                li = li + 1
+                if !cokr {
+                    cbody = "LC-DRIFT-UNKNOWN-SENTINEL"
+                }
+                store.LcDrift(cbody)
             }
         }
         if .store.lc_verdict == "ok" {
@@ -3942,7 +3906,7 @@ widget App {
             var lcr str = ""
             var lcok bool = true
             try {
-                lcr = lc_commit(lk, la, lb, lc, lbasis)
+                lcr = lc_commit_b(.store.lc_kind + "|" + .store.lc_a + "|" + .store.lc_b + "|" + .store.lc_c + "|" + .store.lc_basis)
             } catch (e11) {
                 lcok = false
             }
@@ -3991,45 +3955,40 @@ widget App {
        // 单会话单操作在途（AC-09——双击/并发入口不重复提交）
        console_log("lc: busy")
        } else {
-       var lk str = "restore_all"
-       var la str = ""
-       var lb str = ""
-       var lc str = ""
        var lr str = ""
        var lok bool = true
        try {
-           lr = lc_plan(lk, la, lb, lc)
+           lr = lc_plan_b("restore_all" + "|" + "" + "|" + "" + "|" + "")
        } catch (e9) {
            lok = false
+            console_log("lc-plan-err: " + e9)
        }
-       store.LcGate(lr, lk, la, lb, lc)
+       store.LcGate(lr + "\u0001" + "restore_all" + "|" + "" + "|" + "" + "|" + "")
        if .store.lc_verdict == "drift" {
-           var cand = .store.lc_pending.split("|")
-           var li int = 0
-           while li < cand.len() {
-               var cp str = cand[li]
-               if cp != "" {
-                   var cbody str = ""
-                   var cokr bool = true
-                   try {
-                       cbody = read_wiki(cp)
-                   } catch (e10) {
-                       cokr = false
-                   }
-                   if !cokr {
-                       cbody = "\u0001drift-unknown"
-                   }
-                   store.LcDrift(cp, cbody)
-               }
-               li = li + 1
-           }
-       }
+            // 模型驱动循环（条件读 pending——vm 循环计数器槽位污染规避）；
+            // 路径由 store 自取 pending 头，App 只传磁盘正文
+            while .store.lc_pending != "" {
+                var candh = .store.lc_pending.split("|")
+                var p0 str = candh[0]
+                var cbody str = ""
+                var cokr bool = true
+                try {
+                    cbody = read_wiki(p0)
+                } catch (e10) {
+                    cokr = false
+                }
+                if !cokr {
+                    cbody = "LC-DRIFT-UNKNOWN-SENTINEL"
+                }
+                store.LcDrift(cbody)
+            }
+        }
        if .store.lc_verdict == "ok" {
            var lbasis str = .store.lc_basis
            var lcr str = ""
            var lcok bool = true
            try {
-               lcr = lc_commit(lk, la, lb, lc, lbasis)
+               lcr = lc_commit_b(.store.lc_kind + "|" + .store.lc_a + "|" + .store.lc_b + "|" + .store.lc_c + "|" + .store.lc_basis)
            } catch (e11) {
                lcok = false
            }
@@ -4094,45 +4053,40 @@ widget App {
        // 单会话单操作在途（AC-09——双击/并发入口不重复提交）
        console_log("lc: busy")
        } else {
-       var lk str = "purge"
-       var la str = ""
-       var lb str = ""
-       var lc str = ""
        var lr str = ""
        var lok bool = true
        try {
-           lr = lc_plan(lk, la, lb, lc)
+           lr = lc_plan_b("purge" + "|" + "" + "|" + "" + "|" + "")
        } catch (e9) {
            lok = false
+            console_log("lc-plan-err: " + e9)
        }
-       store.LcGate(lr, lk, la, lb, lc)
+       store.LcGate(lr + "\u0001" + "purge" + "|" + "" + "|" + "" + "|" + "")
        if .store.lc_verdict == "drift" {
-           var cand = .store.lc_pending.split("|")
-           var li int = 0
-           while li < cand.len() {
-               var cp str = cand[li]
-               if cp != "" {
-                   var cbody str = ""
-                   var cokr bool = true
-                   try {
-                       cbody = read_wiki(cp)
-                   } catch (e10) {
-                       cokr = false
-                   }
-                   if !cokr {
-                       cbody = "\u0001drift-unknown"
-                   }
-                   store.LcDrift(cp, cbody)
-               }
-               li = li + 1
-           }
-       }
+            // 模型驱动循环（条件读 pending——vm 循环计数器槽位污染规避）；
+            // 路径由 store 自取 pending 头，App 只传磁盘正文
+            while .store.lc_pending != "" {
+                var candh = .store.lc_pending.split("|")
+                var p0 str = candh[0]
+                var cbody str = ""
+                var cokr bool = true
+                try {
+                    cbody = read_wiki(p0)
+                } catch (e10) {
+                    cokr = false
+                }
+                if !cokr {
+                    cbody = "LC-DRIFT-UNKNOWN-SENTINEL"
+                }
+                store.LcDrift(cbody)
+            }
+        }
        if .store.lc_verdict == "ok" {
            var lbasis str = .store.lc_basis
            var lcr str = ""
            var lcok bool = true
            try {
-               lcr = lc_commit(lk, la, lb, lc, lbasis)
+               lcr = lc_commit_b(.store.lc_kind + "|" + .store.lc_a + "|" + .store.lc_b + "|" + .store.lc_c + "|" + .store.lc_basis)
            } catch (e11) {
                lcok = false
            }

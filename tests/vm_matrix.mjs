@@ -1837,7 +1837,16 @@ async function runArm(arm, port) {
     }
     if (!trashCopyOk) throw new Error('删除弹层文案失守（将移入回收站 TrashMe.ad 未现——AC-03）')
     await pressInDeleteDialog('删除')
-    await stateIs('delete_open', 'false')
+    try {
+      await stateIs('delete_open', 'false')
+    } catch (e) {
+      for (const f of ['lc_verdict', 'lc_status', 'lc_hold', 'save_note', 'ft_sel', 'lc_block_list']) {
+        console.log('[T11-DBG]', f, '=', await stateText(f))
+      }
+      const con = await stateText('console')
+      console.log('[T11-DBG] console-tail =', con.slice(-800))
+      throw e
+    }
     const trashRerouteOk = !fs.existsSync(path.join(FIXTURE, 'TrashMe.ad'))
       && fs.existsSync(path.join(FIXTURE, '.trash', 'TrashMe.ad'))
     if (!trashRerouteOk) throw new Error('删除改道失守（.trash/TrashMe.ad 未现）')
@@ -3330,7 +3339,12 @@ async function runArm(arm, port) {
     const lcDelDl = Date.now() + 10000
     for (;;) {
       if (!fs.existsSync(lcDelFile)) break
-      if (Date.now() > lcDelDl) throw new Error('LC delete never landed')
+      if (Date.now() > lcDelDl) {
+        for (const f of ['lc_verdict', 'lc_status', 'lc_hold', 'save_note', 'delete_open', 'lc_block_open', 'lc_block_list', 'ft_sel', 'active_path', 'console']) {
+          console.log('[LC3-DBG]', f, '=', await stateText(f))
+        }
+        throw new Error('LC delete never landed')
+      }
       await sleep(200)
     }
     const lc3Ok = !fs.existsSync(lcDelFile) && fs.existsSync(path.join(FIXTURE, '.trash', LC_DEL))
