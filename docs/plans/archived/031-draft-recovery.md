@@ -1,7 +1,8 @@
 ---
 plan_id: PLAN-031
-status: reviewed
+status: archived
 feature_name: 草稿持久化与重启恢复（R-02 第一切片）
+completion_kind: delivered
 author: [agent]
 created_at: 2026-09-30T14:37:05Z
 updated_at: 2026-09-30T15:45:00Z
@@ -221,6 +222,20 @@ T-01 的技术实现路径是执行期研究任务，不是假装已有结论。
 - Spec delta: SD-01..SD-05（提案，未落 canonical）
 - 检查：任务覆盖全部 AC/SD；已有路径与符号已读；新文件标明新；现有命令与 package/scripts 已核对；新脚本验证命令需随创建核验；active 匹配、分配锁、唯一性与 0..10 结构由本次文件交付检查确认。
 - 与前序关系：PLAN-030 已 archived/delivered；其 AC 不删除、不降级。R-02b 明确保留，不能据本 Plan 扩写“全部文档生命周期安全”。
+
+### 2026-10-01 merge：沉淀/archive/cleanup 收口（PLAN-031:r1）
+
+- stage: merge
+- plan_id: PLAN-031，plan_revision: 1
+- outcome: pass——五 checkpoint 闭环：
+  - **prepared**：复审基线 f50d3b1 实现批 [999846d 复审 pass docs-only 后代——canonical 规范 docs/specs/draft-recovery.md（SD-3101）+ editor-safety.md 修订（SD-3102 部分）@复审树=tip 树零触及] + 投影目标 docs/specs 在册 + 交付链 = 1e6ddf7→4cc5b0b→67f2404→068da9b→6e97719→a80980e→3f9c736→f50d3b1→999846d 线性 ancestor-OK
+  - **landed**：canonical delta 已随实现批次落 main（直接 main 线性约定 001..030 在册惯例）；沉淀批 dfee216 = main tip [merge-base --is-ancestor 全链 ancestor-OK 线性无 merge commit；known-good smoke = 合并窗终树实跑 merged 臂 17/17 ALL GREEN 一发过]
+  - **ledger_refreshed**：docs/parity-ledger.md v35→v36@dfee216（tracked 派生视图——本仓无 live ledger 服务/.autoos 缺席，024..030 同判口径；store 中介写不适用=无 store 面）——表头 PLAN-031 增补段+SD-3101 指针、D-45/D-46 两新行（实勘集/套件钝化纪律）、D-21 v36 扩记；tracked 读回核验=表头 v36 恰一/D-45·D-46 各恰一/SD-3101..3103 各恰一/SD-3004 历史保留恰一
+  - **archived**：git mv → docs/plans/archived/031-draft-recovery.md + status archived + completion_kind delivered（YAML 块内）
+  - **cleaned**：git worktree list 单一主检出（直接 main 线性约定，无 worktree/dev 分支清理面）；代码工作树零 WIP；一次性件居 ignored e2e/.runtime（p31 探针族+ledger_refresh.py+dbg 件在档可追溯）
+- 部署观察：本批 src（back/drafts.at+api.at+editor_store/app/status_bar）随 4cc5b0b..3f9c736 落 main；gen/dist 复审窗 ✓built 现势（regen 链随 build——T-07 后引擎 dist 上游漂移 F-31-R1 见 review 记录，非本树缺陷，上游 build filter 修复义务）；载体 auto.exe debug 零换档；jade-edit 无常驻生产进程面+家族 exe 零涉
+- 批回归到期件：无 .last-batch-regression.json（jade-edit 惯例 024..030 同判——本批 §6 全量门+复审全链重放+合并窗终树 smoke 19/19+17/17 = 批级回归门本体）
+- 留观交接：上游边界两件（vm 合并轨多检查点 AURA/MCP 楔死 + engine dist 陈旧漂移）→ D-45②/D-21 v36 在册；F-24-2 split boot 维持家族专项域；R-02b 待立项（重入=消费 031 草稿身份与协议，危险操作清单见 plan §10）——**候选池下一项按路线图默认序 = R-02b 或独立 R-04**[立项走 new 流程重勘]
 
 ### 2026-10-01 review：复审 pass（同会话复审声明+工件重放口径）
 
