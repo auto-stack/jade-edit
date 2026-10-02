@@ -22,8 +22,10 @@ const FIXTURE_SOURCE = process.env.JADE_FIXTURE ?? 'D:/autostack/auto-down/tmp/w
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 const normPath = (p) => p.replace(/^\\\\\?\\/, '').replace(/\\/g, '/').toLowerCase()
 
-export async function serveBackend({ port = 8211 } = {}) {
-  const ws = path.join(repoRoot, 'e2e', '.runtime', 'workspace')
+export async function serveBackend({ port = 8211, workspace } = {}) {
+  // workspace 覆盖（PLAN-033 probe_name_search 分臂隔离——缺省路径零变化：
+  // e2e webServer 与既有探针不经本参）。
+  const ws = workspace ?? path.join(repoRoot, 'e2e', '.runtime', 'workspace')
   if (!fs.existsSync(FIXTURE_SOURCE)) throw new Error(`[serve-back] fixture source missing: ${FIXTURE_SOURCE}`)
   fs.rmSync(ws, { recursive: true, force: true })
   fs.mkdirSync(path.dirname(ws), { recursive: true })

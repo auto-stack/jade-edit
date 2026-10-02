@@ -1,0 +1,439 @@
+#!/usr/bin/env node
+// probe_name_search.mjs — PLAN-033 名称查找一致 双臂探针（probe_dir_move
+// 配方变体：merged 直调探针工程 + split serve-back POST；语料 = node 侧
+// 隔离置盘——本探针测**读面**（目录/检索/链接身份），语料即 fixture 性质
+// 的已知答案输入，不 经 app 写面）。
+//
+//   merged 臂  临时探针工程（e2e/.runtime/probe-name-search/，脚本生成
+//              ——pac.at render vm + src/back 整树拷贝 + 探针 widget Init
+//              内直调 search_wiki/link_index 案表），`auto run -r vm`
+//              进程内 CALL——autoui_state 全量 dump 读回。
+//   split 臂   serve-back（`auto run --server vm`，同 matrix/e2e 后端配方
+//              ——workspace 覆盖参数分臂隔离）POST /api/*（JSON body
+//              ——D-19 面：查询词 CJK 常态走 body）。
+//
+// 相位（PLAN-033 §6/T-01/T-02）：
+//   相位 1（T-01 基础）：隔离语料（nm/ 子树 + 5 层深档，fixture 零触碰）
+//           + 已知答案断言 + 载体直证（link_index 嵌套 links/dtitle 列表
+//           内嵌 map 字段双臂可取形 + int model 字段）+ 现行行为红相证据
+//           （fm title/相对路径不在检索域——T-02 翻转案）+ 磁盘不变量
+//           （检索前后逐文件 SHA256 对照——检索零副作用圈定）+ 旧响应
+//           形状/limit 钳制回归锚（jade garden 基线逐字节）。
+//   相位 2（T-02 扩）：page_names 目录已知答案 + search 扩面翻转案 +
+//           转义读回案。
+//
+// 语料（nm/ 子树；均含 frontmatter 原文直写；正文不含名称词）：
+//   nm/Home.ad       title=首页 aliases=[起点]  body 无 首页/起点
+//   nm/Dup A.ad      title=重名页               body 甲处正文。
+//   nm/Dup B.ad      title=重名页               body 乙处正文。
+//   nm/AliasOnly.ad  aliases=[独角兽]（无 title）body 别名页正文。
+//   nm/Plain.ad      无 frontmatter             body 含 plain corpus line
+//   nm/deep/l2/l3/l4/l5/Deep.ad                body deep line（5 层目录）
+//   nm/Quoted.ad     title=q"ote\slash aliases=[tab<TAB>9]  转义案
+//   nm/Linker.ad     fm 空段 + body 含 [[首页]]（链接身份不变量案）
+//
+// 用法（仓根）：node tests/probe_name_search.mjs [--phase 1|2]（缺省 2；
+// 相位 1 = 红相基线：翻转案按现行行为断言）。
+
+import { spawn, execFileSync } from 'node:child_process'
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import { fileURLToPath, pathToFileURL } from 'node:url'
+import { pickPort } from './pick_port.mjs'
+
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
+const AUTO_EXE = process.env.AUTO_EXE ?? 'D:/autostack/auto-lang/target/debug/auto.exe'
+const FIXTURE_SOURCE = process.env.JADE_FIXTURE ?? 'D:/autostack/auto-down/tmp/wiki-demo'
+const RUNTIME = path.join(repoRoot, 'e2e', '.runtime')
+const PROBE_DIR = path.join(RUNTIME, 'probe-name-search')
+const MERGED_WS = path.join(RUNTIME, 'probe-name-search-ws')
+const SPLIT_WS = path.join(RUNTIME, 'probe-name-search-ws-split')
+const MERGED_PORT = 9363
+const SPLIT_PORT = await pickPort()
+
+const argOf = (name) => {
+  const i = process.argv.indexOf(name)
+  return i >= 0 ? process.argv[i + 1] : undefined
+}
+const PHASE = argOf('--phase') === '1' ? 1 : 2
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
+const sha = (p) => crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex').toUpperCase()
+
+// ---- 语料（双臂共享；node 直写含 frontmatter 全文）----
+const TAB = '\t'
+const CORPUS = [
+  { rel: 'nm/Home.ad', body: '---\ntitle: 首页\naliases:\n- 起点\n---\n\n# Doc\n\n普通正文段落。\n' },
+  { rel: 'nm/Dup A.ad', body: '---\ntitle: 重名页\n---\n\n甲处正文。\n' },
+  { rel: 'nm/Dup B.ad', body: '---\ntitle: 重名页\n---\n\n乙处正文。\n' },
+  { rel: 'nm/AliasOnly.ad', body: '---\naliases:\n- 独角兽\n---\n\n别名页正文。\n' },
+  { rel: 'nm/Plain.ad', body: '# Plain\n\nplain corpus line\n' },
+  { rel: 'nm/deep/l2/l3/l4/l5/Deep.ad', body: 'deep line\n' },
+  { rel: 'nm/Quoted.ad', body: `---\ntitle: q"ote\\slash\naliases:\n- tab${TAB}9\n---\n\nquoted body\n` },
+  { rel: 'nm/Linker.ad', body: '---\n---\n\n链 [[首页]] 悬空应保持。\n' },
+]
+
+function writeCorpus(ws) {
+  for (const c of CORPUS) {
+    fs.mkdirSync(path.join(ws, c.rel, '..'), { recursive: true })
+    fs.writeFileSync(path.join(ws, c.rel), c.body, 'utf8')
+  }
+}
+
+function prepareWorkspace(ws) {
+  fs.rmSync(ws, { recursive: true, force: true })
+  fs.mkdirSync(ws, { recursive: true })
+  fs.cpSync(FIXTURE_SOURCE, ws, { recursive: true })
+  writeCorpus(ws)
+}
+
+function wsSnapshot(ws) {
+  const out = {}
+  const walk = (dir) => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (e.name.startsWith('.')) continue
+      const full = path.join(dir, e.name)
+      if (e.isDirectory()) walk(full)
+      else out[path.relative(ws, full).replace(/\\/g, '/')] = sha(full)
+    }
+  }
+  walk(ws)
+  return out
+}
+
+// ---------------- merged 臂 ----------------
+
+// 检索案表（merged Init 直调 + split POST 双臂同案序）：
+//   f1 首页     相位1=[]（fm title 不在域）      相位2=命中 nm/Home.ad snippet=""
+//   f2 起点     alias 域（既有）→ nm/Home.ad snippet=""
+//   f3 Home     stem 域（既有）→ nm/Home.ad
+//   f4 nm/Home  相位1=[]（路径不在域）           相位2=命中 nm/Home.ad
+//   f5 独角兽   alias 域 → nm/AliasOnly.ad snippet=""
+//   f6 active   属性专有词（fixture status 值）两相位恒 []（非名称字段）
+//   f7 重名页   相位1=[]                          相位2=Dup A+Dup B walk 序
+//   f8 plain    limit 1 钳制 → 恰 1 行
+//   f9 plain    limit 0 → 钳 1 行（与 f8 同形）
+//   fa tab<TAB>9 alias 转义案 → nm/Quoted.ad（相位2 断言；相位1 记录现行）
+//   fb jade garden 语料基线逐字节回归锚（两相位恒等）
+const SEARCH_CALLS = [
+  { field: 'f1', call: 'search_wiki("首页", 20)', api: ['search_wiki', { query: '首页', limit: 20 }] },
+  { field: 'f2', call: 'search_wiki("起点", 20)', api: ['search_wiki', { query: '起点', limit: 20 }] },
+  { field: 'f3', call: 'search_wiki("Home", 20)', api: ['search_wiki', { query: 'Home', limit: 20 }] },
+  { field: 'f4', call: 'search_wiki("nm/Home", 20)', api: ['search_wiki', { query: 'nm/Home', limit: 20 }] },
+  { field: 'f5', call: 'search_wiki("独角兽", 20)', api: ['search_wiki', { query: '独角兽', limit: 20 }] },
+  { field: 'f6', call: 'search_wiki("active", 20)', api: ['search_wiki', { query: 'active', limit: 20 }] },
+  { field: 'f7', call: 'search_wiki("重名页", 20)', api: ['search_wiki', { query: '重名页', limit: 20 }] },
+  { field: 'f8', call: 'search_wiki("plain", 1)', api: ['search_wiki', { query: 'plain', limit: 1 }] },
+  { field: 'f9', call: 'search_wiki("plain", 0)', api: ['search_wiki', { query: 'plain', limit: 0 }] },
+  { field: 'fa', call: `search_wiki("tab${TAB}9", 20)`, api: ['search_wiki', { query: `tab${TAB}9`, limit: 20 }] },
+  { field: 'fb', call: 'search_wiki("jade garden", 20)', api: ['search_wiki', { query: 'jade garden', limit: 20 }] },
+]
+
+const PROBE_AT = `// 探针 widget（tests/probe_name_search.mjs 生成件——直证后随 .runtime 再生，
+// 非入库源）。Init 内进程内直调 search_wiki 案表 + link_index 载体案 +
+// int 字段计数，返回值落 model 字段供 autoui_state dump 读回。
+// 入口文件名固定 app.at（auto 前端入口约定）。
+use back.api: search_wiki, link_index
+
+widget App {
+    msg { Init }
+    model {
+        var done bool = false
+        var c1 int = 0
+        var lk str = ""
+        var f1 str = ""
+        var f2 str = ""
+        var f3 str = ""
+        var f4 str = ""
+        var f5 str = ""
+        var f6 str = ""
+        var f7 str = ""
+        var f8 str = ""
+        var f9 str = ""
+        var fa str = ""
+        var fb str = ""
+    }
+    view {
+        col (style: "h-full w-full items-center justify-center") {
+            text "probe: name search" { style: "text-[13px] text-muted-foreground" }
+        }
+    }
+    on {
+        .Init -> {
+            c1 = c1 + 1
+            c1 = c1 + 1
+            c1 = c1 + 1
+            lk = link_index("", 8)
+            f1 = ${SEARCH_CALLS[0].call}
+            f2 = ${SEARCH_CALLS[1].call}
+            f3 = ${SEARCH_CALLS[2].call}
+            f4 = ${SEARCH_CALLS[3].call}
+            f5 = ${SEARCH_CALLS[4].call}
+            f6 = ${SEARCH_CALLS[5].call}
+            f7 = ${SEARCH_CALLS[6].call}
+            f8 = ${SEARCH_CALLS[7].call}
+            f9 = ${SEARCH_CALLS[8].call}
+            fa = ${SEARCH_CALLS[9].call}
+            fb = ${SEARCH_CALLS[10].call}
+            done = true
+        }
+    }
+}
+`
+
+function buildProbeProject() {
+  fs.rmSync(PROBE_DIR, { recursive: true, force: true })
+  fs.mkdirSync(path.join(PROBE_DIR, 'src', 'front'), { recursive: true })
+  fs.cpSync(path.join(repoRoot, 'src', 'back'), path.join(PROBE_DIR, 'src', 'back'), { recursive: true })
+  fs.writeFileSync(path.join(PROBE_DIR, 'src', 'front', 'app.at'), PROBE_AT, 'utf8')
+  fs.writeFileSync(
+    path.join(PROBE_DIR, 'pac.at'),
+    `name: "jade-probe-name-search"
+version: "0.1.0"
+scene: "ui"
+render: ["vm"]
+title: "ProbeNameSearch"
+window: "400x300"
+`,
+    'utf8',
+  )
+}
+
+function makeClient(port) {
+  let nextId = 1
+  const rpc = async (method, params) => {
+    const res = await fetch(`http://127.0.0.1:${port}/mcp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', id: nextId++, method, params }),
+    })
+    if (!res.ok) throw new Error(`MCP ${method} -> HTTP ${res.status}`)
+    const body = await res.json()
+    if (body.error) throw new Error(`MCP ${method} error: ${JSON.stringify(body.error)}`)
+    return body.result
+  }
+  const callTool = async (name, toolArgs) => {
+    const result = await rpc('tools/call', { name, arguments: toolArgs })
+    if (result.isError) throw new Error(`tool ${name} failed: ${JSON.stringify(result.content)}`)
+    return result.content.map((c) => c.text ?? '').join('\n')
+  }
+  return { rpc, callTool }
+}
+
+// dump 字符串字段捕获（\" 转义面）+ 反转义回实际串
+const strField = (dump, name) => {
+  const raw = dump.match(new RegExp(`${name}:\\s*"((?:[^"\\\\]|\\\\.)*)"`))?.[1]
+  if (raw === undefined) return null
+  try { return JSON.parse(`"${raw}"`) } catch { return raw }
+}
+const intField = (dump, name) => {
+  const m = dump.match(new RegExp(`${name}:\\s*(-?\\d+)`))
+  return m ? Number(m[1]) : null
+}
+
+async function runMergedArm(preSnap) {
+  buildProbeProject()
+  const app = spawn(AUTO_EXE, ['run', '-r', 'vm'], {
+    cwd: PROBE_DIR,
+    env: { ...process.env, AUTOUI_MCP_PORT: String(MERGED_PORT), JADE_WORKSPACE: MERGED_WS },
+    stdio: ['ignore', 'pipe', 'pipe'],
+  })
+  let appOut = ''
+  app.stdout.on('data', (d) => (appOut += d))
+  app.stderr.on('data', (d) => (appOut += d))
+  try {
+    const { rpc, callTool } = makeClient(MERGED_PORT)
+    const deadline = Date.now() + 45000
+    for (;;) {
+      try {
+        await rpc('initialize', { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'jade-probe-name-search', version: '0.1.0' } })
+        break
+      } catch (err) {
+        if (app.exitCode !== null) throw new Error(`probe app exited early (code ${app.exitCode}):\n${appOut.slice(-1500)}`)
+        if (Date.now() > deadline) throw new Error(`MCP not reachable: ${err.message}`)
+        await sleep(500)
+      }
+    }
+    const pollDeadline = Date.now() + 30000
+    let dump = ''
+    for (;;) {
+      dump = (await callTool('autoui_state', {})).trim()
+      if (/done:\s*true/.test(dump)) break
+      if (Date.now() > pollDeadline) throw new Error(`probe Init never completed:\n${dump.slice(0, 800)}\n---\n${appOut.slice(-800)}`)
+      await sleep(300)
+    }
+    const c1 = intField(dump, 'c1')
+    if (c1 !== 3) throw new Error(`int model field carrier broken: c1=${c1}`)
+    const searches = {}
+    for (const c of SEARCH_CALLS) {
+      searches[c.field] = strField(dump, c.field)
+      if (searches[c.field] === null) throw new Error(`probe state missing ${c.field}`)
+    }
+    const lk = strField(dump, 'lk')
+    if (lk === null) throw new Error('probe state missing lk')
+    // 磁盘不变量：检索（Init 内全部案）执行后工作区与检索前快照逐件相等
+    //（检索零副作用圈定——目录/全文/链接索引皆只读）。
+    const postSnap = wsSnapshot(MERGED_WS)
+    const drift = Object.keys(preSnap).filter((k) => preSnap[k] !== postSnap[k])
+      .concat(Object.keys(postSnap).filter((k) => !(k in preSnap)))
+    return { searches, lk, drift, ws: MERGED_WS }
+  } finally {
+    try { execFileSync('taskkill', ['/PID', String(app.pid), '/T', '/F'], { stdio: 'ignore' }) } catch {}
+    await sleep(400)
+  }
+}
+
+// ---------------- split 臂 ----------------
+
+async function runSplitArm(preSnap) {
+  const { serveBackend } = await import(pathToFileURL(path.join(repoRoot, 'scripts', 'serve-back.mjs')).href)
+  const back = await serveBackend({ port: SPLIT_PORT, workspace: SPLIT_WS })
+  // serve-backend 内部按 fixture 重建工作区——语料在其后置盘。
+  writeCorpus(back.workspace)
+  try {
+    const post = async (api, payload) => {
+      const res = await fetch(`${back.url}/api/${api}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) throw new Error(`POST ${api}(${JSON.stringify(payload)}) -> HTTP ${res.status}: ${(await res.text()).slice(0, 200)}`)
+      const text = await res.text()
+      let val
+      try { val = JSON.parse(text) } catch { val = text }
+      return String(val)
+    }
+    const searches = {}
+    for (const c of SEARCH_CALLS) {
+      searches[c.field] = await post(c.api[0], c.api[1])
+    }
+    const getJson = async (api, query) => {
+      const res = await fetch(`${back.url}/api/${api}${query ?? ''}`)
+      if (!res.ok) throw new Error(`GET ${api} -> HTTP ${res.status}`)
+      const text = await res.text()
+      try { return JSON.parse(text) } catch { return text }
+    }
+    const lk = await getJson('link_index', '?path=&depth=8')
+    const postSnap = wsSnapshot(back.workspace)
+    const drift = Object.keys(preSnap).filter((k) => preSnap[k] !== postSnap[k])
+      .concat(Object.keys(postSnap).filter((k) => !(k in preSnap)))
+    return { searches, lk, drift, ws: back.workspace }
+  } finally {
+    await back.stop()
+  }
+}
+
+// ---------------- 断言（双臂共用）----------------
+
+const BASELINE_JSON = JSON.stringify([
+  { path: 'wiki/Hello World.ad', title: 'Hello World', snippet: 'println!("Hello, Jade Garden!");' },
+  { path: 'wiki/index.ad', title: 'index', snippet: '欢迎来到 Jade Garden 测试知识库。' },
+])
+
+function checks(tag, data, failures) {
+  const ck = (ok, label) => {
+    console.log(`  [${tag}] ${ok ? 'PASS' : 'FAIL'} — ${label}`)
+    if (!ok) failures.push(`${tag}: ${label}`)
+  }
+  const hits = (field) => {
+    try { return JSON.parse(data.searches[field]) } catch { return null }
+  }
+  const pathsOf = (field) => {
+    const h = hits(field)
+    return Array.isArray(h) ? h.map((r) => r.path) : null
+  }
+
+  // ---- 相位 1：现行行为红相证据（T-02 翻转）----
+  if (PHASE === 1) {
+    const p1 = pathsOf('f1') || []
+    ck(!p1.includes('nm/Home.ad'), `红相 f1 "首页" 现行不命中 title-only 页 nm/Home.ad（实际：${JSON.stringify(p1)}）`)
+    ck(data.searches['f4'] === '[]', `红相 f4 "nm/Home" 现行不命中相对路径（实际：${data.searches['f4']?.slice(0, 120)}）`)
+    ck(data.searches['f7'] === '[]', `红相 f7 "重名页" 现行不命中 fm title（实际：${data.searches['f7']?.slice(0, 120)}）`)
+  } else {
+    // ---- 相位 2：扩面终案（AC-01/AC-02/AC-05 域）----
+    const h1 = hits('f1')
+    const home1 = Array.isArray(h1) ? h1.find((r) => r.path === 'nm/Home.ad') : undefined
+    ck(!!home1, `f1 "首页" 命中 title-only 页 nm/Home.ad（实际：${JSON.stringify(h1)?.slice(0, 240)}）`)
+    ck(home1?.title === 'Home' && home1.snippet === '', `f1 nm/Home.ad 行 title=stem + snippet=""（title-only 命中）`)
+    ck(JSON.stringify(pathsOf('f4')) === JSON.stringify(['nm/Home.ad']), `f4 "nm/Home" 相对路径命中 nm/Home.ad（实际：${JSON.stringify(pathsOf('f4'))}）`)
+    ck(JSON.stringify(pathsOf('f7')) === JSON.stringify(['nm/Dup A.ad', 'nm/Dup B.ad']), `f7 "重名页" 同名双页逐 path walk 序保留（实际：${JSON.stringify(pathsOf('f7'))}）`)
+    ck(JSON.stringify(pathsOf('fa')) === JSON.stringify(['nm/Quoted.ad']), `fa 制表符 alias 命中 nm/Quoted.ad（实际：${JSON.stringify(pathsOf('fa'))}）`)
+  }
+
+  // ---- 既有域回归（两相位恒等——AC-03 旧语义保持）----
+  const h2 = hits('f2')
+  ck(Array.isArray(h2) && h2.length === 1 && h2[0].path === 'nm/Home.ad', `"起点" alias 命中 nm/Home.ad（实际：${data.searches['f2']?.slice(0, 160)}）`)
+  ck(h2?.[0]?.title === 'Home' && h2[0].snippet === '', `f2 title=stem + snippet=""（alias-only 既有口径）`)
+  ck(JSON.stringify(pathsOf('f3')) === JSON.stringify(['nm/Home.ad']), `"Home" stem 命中（实际：${JSON.stringify(pathsOf('f3'))}）`)
+  ck(JSON.stringify(pathsOf('f5')) === JSON.stringify(['nm/AliasOnly.ad']), `"独角兽" alias 命中 AliasOnly（实际：${JSON.stringify(pathsOf('f5'))}）`)
+  ck(data.searches['f6'] === '[]', `"active" 属性专有词不命中（tags/status 非名称字段——AC-02 负向）`)
+  // limit 钳制：1 与 0（→1）同形
+  ck((hits('f8') || []).length === 1, `limit=1 恰 1 行`)
+  ck(data.searches['f9'] === data.searches['f8'], `limit=0 钳为 1（与 limit=1 逐字节同形）`)
+  // 形状：恰 {path,title,snippet} 三字段 + title=stem
+  const all = [...(hits('f1') || []), ...(hits('f2') || []), ...(hits('f3') || []), ...(hits('f5') || []), ...(hits('f7') || []), ...(hits('fb') || [])]
+  ck(all.every((r) => Object.keys(r).length === 3 && 'path' in r && 'title' in r && 'snippet' in r), '响应行恰 {path,title,snippet} 三字段')
+  ck(all.every((r) => r.title === r.path.split('/').pop().replace(/\.ad$/, '')), 'title 恒 = stem')
+  // 语料基线逐字节回归锚（SD-401 口径零漂移）
+  ck(data.searches['fb'] === BASELINE_JSON, `jade garden 基线逐字节（实际：${data.searches['fb']?.slice(0, 200)}）`)
+
+  // ---- 载体直证：link_index 嵌套列表/映射字段（两轨在册消费面的 VM 侧根）----
+  let lkOk = false
+  let lkHome = null
+  let lkLinker = null
+  let lkDeep = null
+  try {
+    const pages = JSON.parse(data.lk)
+    lkOk = Array.isArray(pages)
+    lkHome = pages.find((p) => p.path === 'nm/Home.ad')
+    lkLinker = pages.find((p) => p.path === 'nm/Linker.ad')
+    lkDeep = pages.find((p) => p.path === 'nm/deep/l2/l3/l4/l5/Deep.ad')
+  } catch {}
+  ck(lkOk, 'link_index JSON 可解析（顶层裸数组）')
+  ck(lkHome?.dtitle === '首页' && Array.isArray(lkHome?.links), 'link_index 行含 dtitle 字符串 + links 嵌套数组（名称载体在册）')
+  const linkerLink = Array.isArray(lkLinker?.links) ? lkLinker.links[0] : null
+  ck(linkerLink?.target === '首页' && linkerLink?.exists === false && linkerLink.target_path === '', '[[首页]] 悬空——title 不进链接解析器（AC-07 身份不变量）')
+  ck(!!lkDeep, '5 层深档 nm/deep/l2/l3/l4/l5/Deep.ad 入索引（depth 8 覆盖）')
+
+  // ---- 磁盘不变量：检索零副作用（pre-search 快照对照）----
+  ck(data.drift.length === 0, `检索零磁盘副作用（drift：${data.drift.slice(0, 5).join(', ') || '无'}）`)
+
+  // ---- 语料在盘逐字节（已知答案输入自证）----
+  for (const c of CORPUS) {
+    const full = path.join(data.ws, c.rel)
+    ck(fs.existsSync(full) && fs.readFileSync(full, 'utf8') === c.body, `语料在盘逐字节 ${c.rel}`)
+  }
+}
+
+// ---------------- run ----------------
+
+const failures = []
+console.log(`[probe-name-search] phase ${PHASE} — arm 1: merged 直调（探针工程 ${path.relative(repoRoot, PROBE_DIR)}，进程内 CALL）`)
+prepareWorkspace(MERGED_WS)
+const mergedPre = wsSnapshot(MERGED_WS)
+const merged = await runMergedArm(mergedPre)
+checks('merged', merged, failures)
+
+console.log(`[probe-name-search] arm 2: split serve-back POST（:${SPLIT_PORT}，JSON body CJK 通道）`)
+prepareWorkspace(SPLIT_WS)
+const splitPre = wsSnapshot(SPLIT_WS)
+const split = await runSplitArm(splitPre)
+checks('split', split, failures)
+
+console.log('\n[probe-name-search] 双臂检索 JSON 逐案对读：')
+let agree = true
+for (const c of SEARCH_CALLS) {
+  const m = merged.searches[c.field]
+  const s = split.searches[c.field]
+  const ok = m === s && m !== null
+  if (m !== s) agree = false
+  console.log(`  [${c.field}] ${ok ? 'PASS' : 'FAIL'} — 双臂逐字节一致=${m === s}`)
+  if (!ok) failures.push(`case ${c.field}: merged="${m?.slice(0, 120)}" split="${s?.slice(0, 120)}"`)
+}
+
+if (failures.length > 0) {
+  console.error(`\n[probe-name-search] FAIL（${failures.length} 项）:\n  - ${failures.join('\n  - ')}`)
+  process.exit(1)
+}
+console.log(`\n[probe-name-search] RESULT: phase ${PHASE} merged + split 全案通过（11 检索案 + 载体直证 + 磁盘零副作用 + 双臂一致=${agree}）`)

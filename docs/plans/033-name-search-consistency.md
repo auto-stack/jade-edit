@@ -6,7 +6,7 @@ author: [agent]
 created_at: 2026-10-02T01:18:59Z
 updated_at: 2026-10-02T09:40:00Z
 plan_revision: 1
-current_step: 0
+current_step: 1
 total_steps: 5
 supersedes_spec_components: []
 new_spec_components:
@@ -161,7 +161,8 @@ T-01 输出逐入口触点表：查找入口开启／重新进入、现有手动
 
 ### T-01 名称载体与刷新／请求门验证
 
-- 依赖：无；第一项可执行任务。范围：wsys.at 现有 parser、api.at 标量返回、app.at Find*/LinksRefreshOf/TreeRefresh/MetaGo/Save 与十个 LcResolve 收尾，现有 probe/e2e 配方。
+- [x] **T-01**。依赖：无；第一项可执行任务。范围：wsys.at 现有 parser、api.at 标量返回、app.at Find*/LinksRefreshOf/TreeRefresh/MetaGo/Save 与十个 LcResolve 收尾，现有 probe/e2e 配方。
+  [✅ 已完成 2026-10-02] 契约冻结件 docs/plans/attachments/033-name-contract.md（§1 目录线形状 [{path,title,dtitle,aliases}] 载体=link_index 嵌套 List-in-Map 在册通道；§2 json_esc_x 五步转义、VM str.replace=全局替换 engine.rs:8398 一手源实勘；§3 统一匹配规则两端同规；§4 请求身份快照-回读+computed files 行集+失效世代，无 handler 互调读态；§5 十八行逐入口刷新触点表+显式不刷负表；§6 工具链/限制登记含 F-31-R1 engine dist 本批重建）。验证：node tests/probe_name_search.mjs --phase 1 双臂全绿（11 检索案+载体直证+磁盘零副作用+双臂逐字节一致；红相证据 f1/f4/f7——fm title/相对路径现行不在检索域）+ pnpm build 绿（engine dist 卫兵经 F-31-R1 重建过）。新增 serve-back.mjs workspace 覆盖参数（缺省零变化）。
 - 产物：新 docs/plans/attachments/033-name-contract.md，冻结目录线形状、JSON 转义方案、两轨 aliases 取形、异步请求身份保存／失效方式及逐入口刷新表；列出实际工具链 revision/dist、已有 blocker。提供可重复的最小探针并扩成拟新增 tests/probe_name_search.mjs 的基础相位。
 - 边界：一次最小原型＋一次针对失败的复测。可用→继续 T-02；等价载体可用→记录决策与对应 Plan 修订后继续；名称或请求门不能满足→写出缺失原语、负责模块和重入条件，不能删 AC 或无界重试。无跨仓实现。
 - 验证：node tests/probe_name_search.mjs（基础相位，脚本新建于工作阶段）＋ pnpm build；基础目录独立已知答案／两轨取形证据完整，生成成功；原型交互记录进入附件。对应 AC-04/08/09/10，SD-01/03/04。
@@ -201,6 +202,7 @@ T-01 输出逐入口触点表：查找入口开启／重新进入、现有手动
 - 2026-10-02T01:18:59Z：stage: new；plan_id: PLAN-033；plan_revision: 1；outcome: pass；next: work（执行时按用户实施指令和 auto-plan-work 进入专属工作树）。
 - 本次规划新增 T-01..05、AC-01..10、SD-01..04；已核对 032 归档、当前局部规范与相关实现，任务／验收／增量覆盖完整。新增载体与异步机制有 T-01 有界调查出口，不以未知机制宣称已可用。
 - 本记录仅为规划交接，不是实现复审 pass；本次未运行应用测试、未改实现或 canonical Specs、未自动继续 work/review/merge。
+- 2026-10-02T10:30:00Z：stage: work | plan_id: PLAN-033 | plan_revision: 1 | outcome: executing（T-01 完成）| code_commit: f2ccacd(规划落档)+本批 | task_ids: T-01 | evidence: 契约冻结件 attachments/033-name-contract.md；node tests/probe_name_search.mjs --phase 1 双臂全绿（红相 f1/f4/f7 在录）；pnpm build 绿（engine dist F-31-R1 类陈旧就地重建 stamp f46a2f18——零源变更，032 会话内重建 auto.exe 先例）| blockers: 无 | next: T-02（后端 page_names+search_json 扩面）。工作树=主检出（直接 main 线性惯例：git worktree list 单一主检出，001..032 在册惯例；提交随批落 main，工作树零 WIP 休止态）。
 
 ## 10. 待澄清事项
 
