@@ -2,11 +2,13 @@
 
 日期：2026-09-30。来源：[产品分析](2026-09-30-product-review.md)。本文件是交付组织建议，不替代单项 Plan，也不修改当前产品规范。界面草案中选择的“文档工作台”作为默认设计方向；日志视图作为同库可选入口。
 
+**当前下一项（2026-10-02·五）**：[PLAN-036 Vue 正文内链导航](../plans/036-wiki-link-navigation.md) r1 / drafting（R-03b2），5 任务、10 验收、5 规范增量。035 已交付；其未涉及的能力不是遗漏验收。复核证明现有完整事件名可接 Vue 链接（隔离真实点击通过），不必等待简称映射修复；原生内部撤销代码也已存在，不能以自动化组合键受限推断为不存在。保存来源／动作栏、宿主命令桥、原生正文事件、定位和 Shift 仍保留缺口。依据与指纹见 [上游依赖复核](2026-10-02-upstream-dependency-audit.md)；旧进度段是历史记录，发生差异以本次复核和 §13 下一项为准，canonical 更正由 036 SD 提议处理。
+
 进度更新（2026-10-02）：[PLAN-030](../plans/archived/030-safe-manual-reload.md) archived/delivered（R-01）；[PLAN-031](../plans/archived/031-draft-recovery.md) archived/delivered（R-02a）；[PLAN-032](../plans/archived/032-document-lifecycle-safety.md) archived/delivered（R-02b），十类应用内文件操作的受检门、真实回执和定向协调已沉淀至 [document-lifecycle](../specs/document-lifecycle.md)。R-02 的这两个交付片已完成，原生 VM 帧槽串扰 F-32-R2、Vue 排水时序 F-32-R1 等限制按现行 Specs 保留，不能宣称全平台问题已消失。[PLAN-033 名称查找一致](../plans/archived/033-name-search-consistency.md)（R-04）已 archived/delivered：只读名称目录 page_names、快开/全文统一名称匹配域（显示标题/别名/stem/带 .ad 文件名/相对路径）、同名行逐路径消歧、刷新失效与请求门、可见加载/错误/过期三形已落地，现行规范增 [name-search](../specs/name-search.md)，probe 双臂全绿（含刷新弧）+ vm merged 19/19（N 组新增）+ e2e name-search 6/6；F-32-R2/F-24-2 按在录口径分列。Jade/Musk 产品结合方向尚未纳入实施范围。
 
 进度更新（2026-10-02·二）：[PLAN-034 编辑器宿主能力核验与供给契约](../plans/archived/034-editor-host-capabilities.md)（R-03a）已 archived/delivered：六类宿主接口×三载体能力矩阵与入口盘点已实证——宿主保存三入口（toolbar/菜单/Ctrl+S）双轨真实落盘、vue 引擎 Save 钮/@save 供给存在未接线（show-actions 为 attr 透传非 prop）、六命令宿主面 console 降级（引擎内部 Ctrl+Z/Y 仅 vue 轨）、链接点击零导航（生成器 emit 名 @openwikilink 与 kebab 不匹配为双层缺口之一）、后端四级解析供给已可消费、caret/reveal 无原语；现行规范增 [editor-host-capabilities](../specs/editor-host-capabilities.md)，ARCHITECTURE §4 加指针（SD-3401）。可重跑探针 tests/probe_editor_host.mjs 四相位 + e2e editor-host-capabilities 四小案；逐仓供给需求与解锁门见 attachments/034-editor-host-supply.md。R-03 整体未完成——调查交付不等于宿主接线完成。
 
-下一项规划（2026-10-02）：[PLAN-035 编辑命令入口真实化](../plans/035-editor-command-availability.md) r1（drafting，R-03b1），落实 034 供给表 C-2 的本仓独立收口分支：移除失效工具栏／菜单执行入口，提供编辑命令说明，取消宿主 Ctrl+Z/Y/A 空操作注册，旧 ID／消息保留可见守卫。4 个任务、9 条验收、4 项规范增量；本次仅规划，保存／链接／完整命令桥仍按上游解锁门推进。
+历史规划（2026-10-02）：[PLAN-035 编辑命令入口真实化](../plans/archived/035-editor-command-availability.md) r1（新建时 drafting，现已交付，R-03b1），落实 034 供给表 C-2 的本仓独立收口分支：移除失效工具栏／菜单执行入口，提供编辑命令说明，取消宿主 Ctrl+Z/Y/A 空操作注册，旧 ID／消息保留可见守卫。4 个任务、9 条验收、4 项规范增量；当时仅规划，保存／链接／完整命令桥按上游解锁门推进；当前依赖判断见顶部复核。
 
 进度更新（2026-10-02·三）：PLAN-035（R-03b1）T-01..T-04 已实施完毕（executing→execution_done，待复审）：失效撤销／重做工具栏钮与六菜单执行项移除，编辑菜单仅「编辑命令说明…」入口（根说明弹层，无文档亦可开，关闭仅清旗标）；宿主 Ctrl+Z/Y/A 注册移除（生成 keymap/原生 action 表/bind 三面核验），编辑器内部撤销/重做与 input 原生全选不回退；旧六 action ID/msg 保留可见说明守卫（零编辑/零磁盘/save_note 保持——probe 真实 Store 臂逐值直证）。规范增 [editor-command-availability](../specs/editor-command-availability.md)，editor-host-capabilities §1.2/§2.3/§3 C-2 随实现刷新（能力结论维持），ARCHITECTURE §4 加指针（SD-3501）；vm 结构基线 v26→v27（E cmd-avail 组新增）。可重跑：tests/probe_command_availability.mjs 全臂 + vm merged 20/20 + e2e command-availability 3/3 + editor-host-capabilities 4/4。R-03 整体仍未完成——失效入口收口不等于命令桥/保存/链接接线交付。
 
@@ -32,12 +34,12 @@
 | --- | --- | --- | --- |
 | R-01 安全手动重载 | F5/菜单/工具栏保护未保存正文；取消不变，明确放弃后才读盘 | 当前输入必须已同步或能可靠冲刷 | PLAN-030 已交付归档；两轨三入口与失败／失效保护在册 |
 | R-02 草稿与生命周期保护 | R-02a＝PLAN-031、R-02b＝PLAN-032 均已交付归档；应用内十类入口受检门／真实回执／定向协调在册 | R-01/R-02a 已交付；032 消费稳定草稿身份与协议 | 草稿恢复、受影响脏页阻断、晚输入保留与部分结果协调已按局部规范交付；保留 F-32-R1/R2、031 上游边界，不扩大为断电／多进程事务保证 |
-| R-03 编辑器宿主接线 | R-03a＝034 已 archived/delivered；R-03b1＝PLAN-035 已 archived/delivered：失效入口收口+三宿主键归还+可见说明+兼容守卫交付，规范 editor-command-availability 与账本 v40（SD-3501..3504+D-52）已沉淀；其余接线按上游解锁立项 | 034 六能力与逐仓供给契约已交付；C-2 收口已交付；保存／链接／完整命令桥仍有供给前置 | 035 已验入口真实、控件按键归属、零编辑／磁盘副作用与安全回归（复审独立复跑门全绿）；R-03 整体仍以保存磁盘字节、正文正确目标、实际命令执行为完成门 |
+| R-03 编辑器宿主接线 | R-03a＝034、R-03b1＝035 已交付归档；R-03b2＝036 drafting，下一片交付 Vue 正文内链导航 | 完整事件名运行期已证可达，Vue 片不依赖 B-1 简称修复；原生正文、保存来源／动作栏、命令桥和位置供给仍缺 | 036 验正确页面、未保存源保护、迟到拒绝、缺页确认及锚点边界；双后端解析不等于原生正文点击已交付；R-03 整体仍以保存磁盘字节、正文正确目标、实际命令执行为完成门 |
 | R-04 名称查找一致 | PLAN-033 已 archived/delivered：名称目录 + 快开/全文统一匹配域 + 同名逐路径消歧 + 刷新/请求门 + 可见加载/错误/过期；不改变链接身份域 | 已有 title/aliases 数据；双轨名称载体与刷新/请求门已实证（契约附件 033-name-contract） | 首页≠index 断言双臂全绿；属性标题/别名/stem/.ad 文件名/相对路径均可找回；同名逐路径正确打开；逐键零额外请求；失效/失败/过期可见可区分；链接目标不变（[[首页]] 仍悬空） |
 | R-05 导航分工 | 左侧全库导航，右侧当前页上下文，快开轻弹层，基本响应式 | R-03/R-04；纯壳可先准备 | 全库搜索与页面引用各有位置；窄屏入口可用；旧快捷键保留 |
 | R-06 工作区与设置 | 创建/打开/最近知识库、基础设置、安装与启动；先调研运行时根切换能力 | T-工作区调查；基础打包接口 | 普通用户能启动并定位自己的文件，退出重开回到原库；无开发工具依赖承诺前验证 |
 
-默认推进顺序：R-01/R-02a/R-02b/R-04（030/031/032/033 已交付归档）→ R-03a（034 已归档）→ R-03b1（PLAN-035 编辑命令入口收口，已交付归档）→ R-03b 后续（保存／链接／命令桥按 034 解锁证据分别立项）→ R-05；R-06 在运行时与打包调查有结论后进入实施。调查和失效入口收口均不等于完整宿主接线交付；已有安全与上游限制继续登记。
+默认推进顺序：R-01/R-02a/R-02b/R-04（030/031/032/033 已交付归档）→ R-03a（034 已归档）→ R-03b1（035 已归档）→ R-03b2（036 Vue 正文内链导航）→ 其余保存／原生链接／命令桥按最新供给证据分别立项 → R-05；R-06 在运行时与打包调查有结论后进入实施。Vue 片不等待简称修复；调查、入口收口及单载体导航均不等于完整宿主接线交付。
 
 ### B. 日常记录、查找与复用
 
@@ -174,10 +176,23 @@ R-16 手机记录与读取、R-17 同步与分享、R-18 协作、R-19 AI、R-20
 
 ## 12. 后续交接：PLAN-035
 
+本节保留新建与实施历史；035 当前 archived/delivered，下一项与最新依赖判断见 §13。
+
 - 前序：PLAN-034 archived/delivered，六能力核验和逐仓解锁条件见 editor-host-capabilities 与 034-editor-host-supply；main 规划基线 0cc67f2。
-- 下一项：[PLAN-035 编辑命令入口真实化](../plans/035-editor-command-availability.md) r1（R-03b1）；4 个任务、9 条验收、4 项规范增量。
+- 当时下一项：[PLAN-035 编辑命令入口真实化](../plans/archived/035-editor-command-availability.md) r1（R-03b1）；4 个任务、9 条验收、4 项规范增量。
 - 选择依据：C-2 的菜单失效收口不依赖命令桥先交付。当前两工具栏钮、六菜单命令仍只写日志，宿主 Ctrl+Z/Y/A 还会截获正文／输入框按键；先消除这些真实交互问题。
 - 范围：移除假的执行按钮／菜单项，保留编辑命令说明入口；取消三宿主键注册；旧六 action ID/msg 保留拒绝／可见说明守卫。说明不改文档、草稿、save_note 或磁盘，内部快捷键沿已有控件能力。
 - **实施状态（2026-10-02）**：T-01..T-04 已完成（execution_done 待复审）。契约冻结件 attachments/035-command-availability-contract.md（enabled_if 实测修订在案）；探针 tests/probe_command_availability.mjs（原型+阴性对照+真实 Store 三臂）；e2e/command-availability.spec.ts 新套件 3/3；旧 editor-host-capabilities commands 案适配 4/4；probe_editor_host 盘点对齐 --phase all 全绿；vm_matrix E cmd-avail 组+结构基线 v27 重锁（merged 20/20 零漂移复跑）；规范 editor-command-availability 新落位+editor-host-capabilities §1.2/§2.3/§3 C-2 刷新+ARCHITECTURE SD-3501 指针。交付链 1bffd15→c08e547→d286f95→77a8f74→本批（直接 main 线性）。
 - 仍欠：A-1/A-2 保存来源与动作栏、A-3/B-3 六命令桥、B-1/B-2 正文链接／原生消息，按负责仓解锁后另立消费片。Shift 全局组合键丢失另列上游问题；R-03 整体仍未完成，不提前分配 036。
 - 规划批记录：规划会话只创建 Plan 与更新路线图；实施批按上条交付链落 main。
+
+## 13. 后续交接：PLAN-036
+
+- 前序：035 已交付归档，九条验收复审通过；main 规划基线 512b36f。在录源码漂移、split boot 和套件时序 findings 不是未交付验收。
+- 下一项：[036 Vue 正文内链导航](../plans/036-wiki-link-navigation.md) r1（drafting，R-03b2）；5 任务、10 验收、5 规范增量。
+- 选择依据：现有公开 `on "open-wiki-link"` 可生成正确监听，隔离真实引擎点击已通过。此前“必须等 B-1 修复”的依赖描述需要缩窄；完整事件名可先消费，简称兼容仍由 auto-lang 修复。第二参是目标锚点而非源身份。
+- 范围：只读单目标四级解析、Vue 正文点击、真实完成后记最近文件、未保存源与内存脏目标保护、全部等待期迟到门、正常缺页确认、错误独立可见、锚点不伪报定位。
+- 第一任务：T-01 固化缺参归一、源票据、活动选择世代、单 handler 异步流程／Store 同步提交，以及延迟反例；有界原型不能满足时记 blocker，不减少保护验收。
+- 规范提议：新增 wiki-link-navigation；修正 host-capabilities 和 command-availability 中的 Vue 链接前置与 native 内部撤销误推论。仅源码证明 native 历史实现存在，真键与各类编辑覆盖仍未补证，宿主命令桥仍缺。
+- 其余依赖：保存来源与动作栏、六命令桥、原生正文事件、定位和 Shift；owner／重入门见上游复核。原生事件与锚定位不纳入本片交付承诺。
+- 本次只完成规划、依赖审计与隔离点击验证；未改生产源码／canonical Specs／上游，未自动 work/review/merge。
