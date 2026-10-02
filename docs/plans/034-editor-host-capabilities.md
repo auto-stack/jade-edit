@@ -1,12 +1,12 @@
 ---
 plan_id: PLAN-034
-status: executing
+status: execution_done
 feature_name: 编辑器宿主能力核验与供给契约（R-03a）
 author: [agent]
 created_at: 2026-10-02T04:10:23Z
-updated_at: 2026-10-02T07:50:00Z
+updated_at: 2026-10-02T08:40:00Z
 plan_revision: 1
-current_step: 3
+current_step: 4
 total_steps: 4
 supersedes_spec_components: []
 new_spec_components:
@@ -199,7 +199,9 @@ show_actions:false 目前只证明生成器发射 :show-actions，不能据此�
 - 交接：汇总实际 revision、工具链、每项状态与缺证；推荐具体下一片和前置解锁证据。按 auto-plan-work 转交 review；复审验证研究契约与实证，不以需要上游供给否决已如实交付的调查，也不把调查 pass 写成能力全支持。
 - 对应 AC-01..08，SD-01..03。
 
-执行顺序 T-01→T-02→T-03→T-04，尚未实施。研究边界仍无法判定的项可按受阻交付，前提是证据／owner／重入条件完整；如果连入口／载体／规范不变量都无法核实，则本片相应 AC 不通过，先补证据或记录 Plan blocker，不自动扩大跨仓范围。
+- [x] T-04 [✅ 已完成 2026-10-02] 规范落位：docs/specs/editor-host-capabilities.md 新三节+§4（SD-01 §1 当前能力与载体[save/command 逐命令/link/selection-cursor-reveal 四态判定表]+SD-02 §2 消费约束六条[保存来源身份禁 md+active_key 消费/保存共门/命令历史归属/链接身份/位置语义/show_actions 边界]+SD-03 §3 缺口与交接[逐仓摘要+上游边界维持]）；docs/ARCHITECTURE.md §4 仅加指针（SD-3401——@save/@focusblock/open-wiki-link 供给存在未接线·native 通道缺供给·show-actions attr 透传）；路线图顶部进度二段+R-03 行 execution_done 待复审+推进顺序+§11 交接更新（不宣称 R-03 接线完成）。验证（绑定 revision 链 08d7c08→013ad6f→177e0c1→e425421→本批）：node tests/probe_editor_host.mjs --phase all 全绿（EXIT=0——unsupported/受阻按行在案）；pnpm build 绿；e2e editor-host-capabilities 全套件 4/4（inventory+save+commands+navigation）；git diff --check 清；生产 src 与四个旧局部 Specs SHA256 逐一对照规划基线表恒等（app.at/editor_store.at/editor-safety/draft-recovery/document-lifecycle/name-search 六件全 OK）；共享测试配方（vm_matrix/e2e helpers/config/baseline）零改动——无补跑义务，vm 结构基线 v26 不受扰（生产源零变更）。交接：下一片推荐=R-03b 本仓接线（C-1 @save 消费前置=A-1 来源身份上游解锁；C-3 open-wiki-link 前置=B-1 生成名解锁；C-2 菜单失效收口可独立先行）；复审按 auto-plan-review 独立复跑门。
+
+执行顺序 T-01→T-02→T-03→T-04 全闭环（T-01..04 回执见各节）。研究边界仍无法判定的项按受阻交付（native 块聚焦消费面——证据/owner/重入条件完整在案）；入口／载体／规范不变量全部核实，无 AC 因受阻不通过，未扩大跨仓范围。
 
 回退：删除／回退新增测试与规范提交即可，无用户数据迁移；临时探针只在隔离目录清理。供给提案不改现行 API。完成本片后仍必须为实际功能接线建立实施验收。
 
@@ -209,6 +211,7 @@ show_actions:false 目前只证明生成器发射 :show-actions，不能据此�
 - 新增 T-01..04、AC-01..08、SD-01..03；已确认 033 归档与当前实现，未知机制由有界探针和明确供给出口负责，不承诺完整 R-03 功能在本仓立即可实施。
 - 本记录是规划交接，非实现复审。此次未运行应用／接口探针、未改生产代码或 canonical Specs、未自动继续 work/review/merge。
 - 2026-10-02T07:50:00Z：stage: work | plan_id: PLAN-034 | plan_revision: 1 | outcome: executing（T-03 完成）| code_commit: 177e0c1(T-02)+本批 | task_ids: T-03 | evidence: probe navigation 全绿 + e2e navigation 1/1 + attachments/034-editor-host-supply.md 逐仓供给表 | blockers: 无 | next: T-04（规范沉淀与交接）。
+- 2026-10-02T08:40:00Z：stage: work | plan_id: PLAN-034 | plan_revision: 1 | outcome: pass | code_commit: 08d7c08→013ad6f→177e0c1→e425421→本批（直接 main 线性）| task_ids: T-01..T-04 全闭环 | evidence: 规范 editor-host-capabilities.md 三节（SD-01..03）+ARCHITECTURE SD-3401 指针+路线图三处；probe 四相位全绿（all 复跑 EXIT=0）+e2e 四小案 4/4+pnpm build 绿+git diff --check 清+生产 src/旧四规范 hash 恒等（六件对照基线表全 OK） | blockers: 无本片新增（F-32-R2/F-24-2/F-31-R1/F-31-R2/vue 多文件时序族按在录口径分列；native 块聚焦消费面受阻边界新增在案 owner=auto-lang） | next: review（auto-plan-review 独立复跑门；复审不以需上游供给否决已如实交付的调查，也不把调查 pass 写成能力全支持）。工作树零 WIP。
 - 2026-10-02T07:10:00Z：stage: work | plan_id: PLAN-034 | plan_revision: 1 | outcome: executing（T-02 完成）| code_commit: 013ad6f(T-01)+本批 | task_ids: T-02 | evidence: probe save/commands 相位全绿 + e2e save|commands 2/2 + 附件判定列终判 | blockers: 无 | next: T-03（navigation 与供给附件）。
 - 2026-10-02T06:30:00Z：stage: work | plan_id: PLAN-034 | plan_revision: 1 | outcome: executing（T-01 完成）| code_commit: 08d7c08(落档)+本批 | task_ids: T-01 | evidence: 探针 inventory 相位全绿（probe_editor_host.mjs）+ e2e inventory 1/1 + pnpm build 绿 + 附件 034-editor-host-contract.md T-01 判定列落表 | blockers: 无 | next: T-02（save/commands 核验）。工作树=主检出（直接 main 线性惯例 001..033 在册）。
 

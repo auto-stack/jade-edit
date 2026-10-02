@@ -122,6 +122,14 @@ src/back/api.at           /api 契约（自有 Auto 源，与实现同 commit—
 - vue 轨：npm_deps link → 生成 App.vue 的 `AutoDownEditor`
   （`:content` + `@update:modelValue`）；engine dist 新鲜度经
   `assert-dist-fresh` 卫兵（regen-vue 内 fail-fast）。
+- **宿主能力边界（SD-3401，PLAN-034 R-03a）**：六类宿主接口
+  （save/command/link/selection/cursor/reveal）的三载体能力矩阵、
+  后续接线消费约束（保存来源身份/共门/命令历史归属/链接身份/位置
+  语义）与逐仓供给缺口见
+  [specs/editor-host-capabilities.md](specs/editor-host-capabilities.md)
+  ——vue 引擎 `@save`/`@focusblock`/`open-wiki-link` 供给存在未接线，
+  native 轨 save/link/命令消息通道缺供给，`show-actions` 为 attr 透传
+  非 prop（细节以该规范 §1 为准）。
 - engine rust/VM 平台面 experimental（engine ARCHITECTURE §2）——深层
   行为差异入 [parity-ledger.md](parity-ledger.md)。
 
