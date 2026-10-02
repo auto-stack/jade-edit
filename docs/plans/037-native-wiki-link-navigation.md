@@ -4,9 +4,9 @@ status: executing
 feature_name: VM 原生正文内链导航（R-03b3，上游供给解锁后接入）
 author: [agent]
 created_at: 2026-10-02T13:17:45Z
-updated_at: 2026-10-02T13:28:35Z
+updated_at: 2026-10-02T13:35:00Z
 plan_revision: 1
-current_step: 0
+current_step: 1
 total_steps: 5
 supersedes_spec_components:
   - docs/specs/wiki-link-navigation.md
@@ -185,13 +185,13 @@ git diff --check
 
 | 步骤 | 依赖 | 已核实路径／符号 | 输出和验证 | AC / SD |
 | --- | --- | --- | --- | --- |
-| T-01 冻结供给与验证载体 | 无，可先完成交接核验 | docs/upstream/2026-10-native-wiki-link-supply.md；上游 core.rs DocInput/DocOutput、widget.rs publish、View::AutodownEditor、convert_autodown_editor_native、build_autodown_editor_generic；新 attachments/037-native-link-contract.md | 核对 U-01..06，登记负责仓正式 Plan 关联／触发交互／公开 origin／真事件工具与截止，检查 Vue 兼容；每关键未知一次原型＋一次复测，不能达成记精确 blocker。只在负责仓工作树原型，不在本仓伪造核心能力 | AC-01,02,04,10；SD-01,04 |
+| [x] T-01 冻结供给与验证载体（✅ 2026-10-02T13:33Z——契约冻结件 attachments/037-native-link-contract.md 落位：binary 重绑 v0.4.2-2620-g7d50989f7/9EFC7CCB…F1B64〔规划收尾后外部重建，漂移在记〕；五环指纹逐项恒等复核，源码级 U-01..06 全未供给〔core.rs:393/:144 行号定谳〕；C-01..06 消费契约冻结；Vue 兼容目标实勘 app.at:1646/:3024＋spec §1..§3；K-01..04 原型义务登记 owner=上游供给 Plan；负责仓正式 Plan 关联=仍缺席〔活动 242/719/722/723/730/731 无一供给〕。原型不在本仓伪造，关键未知随上游 Plan 原型+复测） | 无，可先完成交接核验 | docs/upstream/2026-10-native-wiki-link-supply.md；上游 core.rs DocInput/DocOutput、widget.rs publish、View::AutodownEditor、convert_autodown_editor_native、build_autodown_editor_generic；新 attachments/037-native-link-contract.md | 核对 U-01..06，登记负责仓正式 Plan 关联／触发交互／公开 origin／真事件工具与截止，检查 Vue 兼容；每关键未知一次原型＋一次复测，不能达成记精确 blocker。只在负责仓工作树原型，不在本仓伪造核心能力 | AC-01,02,04,10；SD-01,04 |
 | T-02 验收上游解锁 | T-01＋auto-lang 独立供给 Plan reviewed/delivered，**当前缺失** | 新 native probe；上游交付契约与实际 binary；tests/probe_editor_host.mjs 的 live native 消费面 | 核验 core→widget→Shell→DSL 和来源反例全链、缺省兼容；版本／binary 指纹与证据绑定。合格后记录 unlock，失败／缺证保持 blocked，不进入 T-03 | AC-01,02,04,10；SD-01,04 |
 | T-03 原生入口接共享导航 | T-02 unlock | src/front/app.at autodown_editor/OpenWikiLink/navc_*；src/front/editor_store.at NavCommit/TabActivate | 最小 origin 适配，复用现有 resolver／协调流程与门；必要公共提取必须维持 Vue 事件双参消费。运行新 probe N/O/P/S，真实正确目标和保护、旧来源拒绝 | AC-03,04,05,06；SD-01,02 |
 | T-04 原生缺页与终态验证 | T-03 | app.at CreateGo/CreateConfirmOpen 对应调用、wiki_nav_note；新 probe M/F/E，既有 vm_matrix | 原生 missing／取消／创建／失效确认／错误／anchor 实际可达；编辑兼容。新 probe 全功能臂 PASS；native merged 点击证据不可达时不得打勾 | AC-02,07,08,09；SD-03 |
 | T-05 定向回归与规范交接 | T-03,T-04 | §6 既有 tests/e2e；wiki-link-navigation、editor-host-capabilities、ARCHITECTURE 和路线图 | 单跑定向门全绿，必要 baseline 差异逐项解释，SD-01..04 终版、载体能力表与 upstream revision 回执提交独立 review；保持其他供给缺口，不改上游 WIP或旧归档 | AC-01..10；SD-01..04 |
 
-进度 0/5；T-02..05 未解锁。本仓 Plan 不实现 auto-lang T；上游自身的任务／规范／门禁由该仓 Plan 管理。本片不能在上游只交付蓝色渲染时归档为 delivered。
+进度 1/5（T-01 闭环 2026-10-02T13:33Z——供给契约冻结件落位＋五环现状定谳；T-02 解锁门 BLOCKED：上游供给 Plan 仍缺席，详见 §9 结算与契约 §7）。T-02..05 未解锁。本仓 Plan 不实现 auto-lang T；上游自身的任务／规范／门禁由该仓 Plan 管理。本片不能在上游只交付蓝色渲染时归档为 delivered。
 
 ## 9. 复审记录
 
@@ -205,10 +205,11 @@ git diff --check
 - 规划检查：5 任务覆盖 10 验收／4 SD，明确前置 owner、代码链、真实输入与来源反例。供给包已可交接；当前不是立即可执行的 Jade 接入代码任务。
 - 这是 draft handoff 依赖结果，不是实施复审结论，也不是目标工具 update_goal 的 blocked 状态。用户只请求规划，本次交付文档后停止。
 - 2026-10-02T13:28:35Z：stage: work | plan_id: PLAN-037 | plan_revision: 1 | outcome: executing（启动） | code_commit: 基线 3ee11a3（036 archived/delivered tip；直接 main 线性惯例单一主检出——001..036 在册，无 worktree/dev 分支面，本片沿用仓库既定惯例） | task_ids: 无（T-01 未开工） | evidence: 用户指令「计划037: auto-plan-work 实施」授权执行（drafting→executing）；主检出预检=路线图 M＋本计划/上游供给包 untracked（规划会话产物，本落档批清零），代码路径（src/tests/e2e/scripts/gen）零 WIP；工作树清单=单一主检出 D:/autostack/jade-edit@main，无既有 037 工作树/分支 | blockers: 无（执行启动面；上游供给缺口为 T-02 门前置，见 §0/§4.3） | next: T-01（冻结供给与验证载体）。
+- 2026-10-02T13:35:00Z：stage: work | plan_id: PLAN-037 | plan_revision: 1 | outcome: blocked（T-01 闭环；T-02 解锁门未过——按 §4.3 前置门 T-03..05 保持锁定，本 Plan 维持 executing） | code_commit: d6d0000（落档+启动）→本批（docs/plans/attachments/037-native-link-contract.md 新增＋计划进度/§9/§10；直接 main 线性；生产源码/tests/e2e 零改动——本任务为文档交接核验面） | task_ids: T-01 | evidence: 契约冻结件 §1..§8（T-01 实勘 2026-10-02T13:30Z）——①binary 重绑：`auto 0.1.0+v0.4.2-2620-g7d50989f7` SHA256 9EFC7CCB…F1B64（`--version` 首行+sha256sum，与探针指纹臂同法；规划收尾记 v0.4.2-2607/0688B145… 已漂移，重绑规则入契约 §1：T-02 每次核验以当时实际 binary 重测）；②五环源码指纹与需求包 §1 逐项恒等（sha256sum 五文件），源码级 U-01..06 全未供给——core.rs:393 DocOutput 仅五 changed 旗标、:144 `Mark::Link|Image => style.link=true`（目标即丢）、widget.rs:112 publish 仅 on_change/on_focus、view.rs:2490 AutodownEditor 七字段无 link callback、aura_view_builder.rs:3880 与 iced/renderer.rs:26228 无回调传递；五环 grep 仅 :2963 注释一处零回调代码；③C-01..06 消费契约冻结（载荷双参 target/target_anchor 无锚明确空值+普通左键完整点击+全链六环+origin 禁 last-mounted 单槽+真实事件面+缺省 None 兼容）；④Vue 兼容目标实勘（app.at:1145 msg/:1646 绑定/:3024 handler/:3032 缺参归一+spec wiki-link-navigation §1..§3 现行语义）；⑤T-02 解锁门五项清单（契约 §4）；⑥K-01..04 关键未知＝上游原型义务（K-01 布局命中映射/K-02 origin 形态/K-03 真实事件工具/K-04 AURA 双 string 载荷通道），本仓不伪造。T-02 门核验：auto-lang 无供给 Plan——活动 242/719/722/723/730/731、archive 至 729 均无 wikilink 供给（13:30Z 实勘）；其源 HEAD 7d50989f7 与规划收尾恒等（受跟踪路径 clean，仅根目录外部 .tmp-* 残留） | blockers: 上游供给未交付（结构性前置，非本仓可解）——精确解锁动作=auto-lang 按其 AGENTS 独立立项供给 Plan（scripts/new-plan.sh 独占编号+`.wt/lang-<NNN>` 专属工作树+独立 review/merge），交付契约 §4 五项回执后本片 T-02 复验 | next: 上游供给 Plan reviewed/delivered 后 T-02 解锁核验（以当时 binary 重绑复测）；届时未解锁则本 Plan 保持 blocked 休止。
 
 ## 10. 待澄清事项
 
-- **D-01 上游供给，owner auto-lang**：U-01..06 未交付；按该仓 AGENTS 独占立项／专属工作树执行。无需本次重复确认已请求的规划；跨仓代码执行由其后续明确任务／Plan 授权。
+- **D-01 上游供给，owner auto-lang**：U-01..06 未交付；按该仓 AGENTS 独占立项／专属工作树执行。无需本次重复确认已请求的规划；跨仓代码执行由其后续明确任务／Plan 授权。**T-01 结算（2026-10-02T13:35Z）**：供给 Plan 仍缺席（活动 242/719/722/723/730/731、archive 至 729 实勘无一供给）；契约冻结件已落位，binary 已漂移至 v0.4.2-2620-g7d50989f7 并按重绑规则在记——解锁动作与验收条款见契约 §4/§7。
 - **D-02 公开载荷和真实事件工具，owner 上游执行者＋Jade 验收者**：由 T-01 有界冻结，不能猜不存在的 callback/API；无法获得真实事件面即阻断本片功能验收。改变 ordinary-click 产品操作须修订 AC-02 并提具体选择。
 - **D-03 输入期解析／Vue 空白页，owner auto-down**：036 B-6/B-7 仍未解决，B-7 应优先修复。单独供给解锁后补偿该完整用例，不包含在本片 native 加载期承诺中，也不抹除历史缺口。
 - **D-04 native split，owner auto-lang／Jade 运行载体**：F-24-2 保留，本片 merged 成功不等于 split 产品可启动；最小 split 事件与后端 HTTP 两者分别记证。
