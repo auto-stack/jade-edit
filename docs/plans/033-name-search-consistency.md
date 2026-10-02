@@ -6,7 +6,7 @@ author: [agent]
 created_at: 2026-10-02T01:18:59Z
 updated_at: 2026-10-02T09:40:00Z
 plan_revision: 1
-current_step: 1
+current_step: 2
 total_steps: 5
 supersedes_spec_components: []
 new_spec_components:
@@ -169,7 +169,8 @@ T-01 输出逐入口触点表：查找入口开启／重新进入、现有手动
 
 ### T-02 后端名称目录与全文扩面
 
-- 依赖：T-01 载体裁决通过。修改 src/back/wsys.at 与 api.at，新增 page_names 与其只读实现；search_json 复用同一名称规则／解析，保持旧返回形状、limit、walk、snippet。为新增字段实现安全编码，链接解析器不接入 title。
+- [x] **T-02**。依赖：T-01 载体裁决通过。修改 src/back/wsys.at 与 api.at，新增 page_names 与其只读实现；search_json 复用同一名称规则／解析，保持旧返回形状、limit、walk、snippet。为新增字段实现安全编码，链接解析器不接入 title。
+  [✅ 已完成 2026-10-02] wsys.at：json_esc_x（反斜杠→引号→\n→\r→\t 五步全局替换；现行 json_esc 调用面零扰动）+ page_names_json（collect_ad_pages("",8) walk 序、title=stem、dtitle=fm title 缺省 stem、aliases=page_aliases、json_esc_x 装配、只读零写面）+ search_json 扩面（命中域 = stem ∪ 相对路径 ∪ dtitle ∪ aliases ∪ body；响应形状/limit 钳制/walk 序/snippet 规则零变化；fm 单读复用——原内联 frontmatter_of 提升变量）。api.at：GET /api/page_names 无参契约（trash_list 同族零 D-19 面）。验证：node tests/probe_name_search.mjs 相位 2 双臂全绿（翻转案 f1 首页/f4 nm/Home/f7 重名页/fa 制表 alias 全中；目录已知答案 nm/ 子树逐字节 walk 序+集合=磁盘 .ad 一一对应+转义读回 q"ote\slash/tab⇥9+零点前缀；基线 fb 逐字节零漂移）+ probe_dir_move/probe_page_meta/probe_casefold/probe_alias_linkify 四探针全绿（回归无新增失败）。
 - 验证：node tests/probe_name_search.mjs；node tests/probe_dir_move.mjs；node tests/probe_page_meta.mjs；node tests/probe_casefold.mjs；node tests/probe_alias_linkify.mjs。新脚本所有名称／隐藏域／编码／limit／hash 案双臂按答案通过，旧三字段搜索与身份回归无新增失败。
 - 对应 AC-01/02/03/04/07/10，SD-01/02/04。
 
@@ -203,6 +204,7 @@ T-01 输出逐入口触点表：查找入口开启／重新进入、现有手动
 - 本次规划新增 T-01..05、AC-01..10、SD-01..04；已核对 032 归档、当前局部规范与相关实现，任务／验收／增量覆盖完整。新增载体与异步机制有 T-01 有界调查出口，不以未知机制宣称已可用。
 - 本记录仅为规划交接，不是实现复审 pass；本次未运行应用测试、未改实现或 canonical Specs、未自动继续 work/review/merge。
 - 2026-10-02T10:30:00Z：stage: work | plan_id: PLAN-033 | plan_revision: 1 | outcome: executing（T-01 完成）| code_commit: f2ccacd(规划落档)+本批 | task_ids: T-01 | evidence: 契约冻结件 attachments/033-name-contract.md；node tests/probe_name_search.mjs --phase 1 双臂全绿（红相 f1/f4/f7 在录）；pnpm build 绿（engine dist F-31-R1 类陈旧就地重建 stamp f46a2f18——零源变更，032 会话内重建 auto.exe 先例）| blockers: 无 | next: T-02（后端 page_names+search_json 扩面）。工作树=主检出（直接 main 线性惯例：git worktree list 单一主检出，001..032 在册惯例；提交随批落 main，工作树零 WIP 休止态）。
+- 2026-10-02T11:10:00Z：stage: work | plan_id: PLAN-033 | plan_revision: 1 | outcome: executing（T-02 完成）| code_commit: 本批 | task_ids: T-02 | evidence: node tests/probe_name_search.mjs 相位 2 双臂全绿（翻转案+目录已知答案逐字节+转义读回）+ probe_dir_move/probe_page_meta/probe_casefold/probe_alias_linkify 全绿（回归零新增失败）| blockers: 无 | next: T-03（快开与查找行接线）。
 
 ## 10. 待澄清事项
 

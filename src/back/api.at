@@ -96,10 +96,25 @@ pub fn link_index(path str, depth int) str {
 /// **POST 而非 GET**：D-19（AutoVM HTTP 对 GET query 的 UTF-8 百分号
 /// 序列不解码——CJK 查询词在 split/vue 臂全败）；POST body CJK 已证
 ///（write_wiki 同款）。匹配语义见 wsys.search_json（SD-401 定文）。
+/// **PLAN-033 扩**：命中域加显示标题（fm title）与相对路径——响应
+/// 形状/limit 钳制/walk 序/snippet 规则零变化（name-search.md §2）。
 /// POST /api/search_wiki
 #[api(method = "POST", path = "/api/search_wiki")]
 pub fn search_wiki(query str, limit int) str {
     return wsys.search_json(query, limit)
+}
+
+/// 工作区页面名称目录（PLAN-033 T-02；R-04 快开/全文统一名称查找数据
+/// 面）：`[{path,title,dtitle,aliases:[str,…]}]` 顶层裸数组——每 .ad
+/// 页一条（walk 序/depth 8/忽略面 = collect_ad_pages 同源；title=stem，
+/// dtitle=fm title 或 stem 缺省，aliases=block-list 在册规则）。只读
+/// 零写面，每次调用读当前磁盘。**GET 无参契约**（trash_list/
+/// recent_paths_get 同族——零 D-19 暴露面：CJK 值在响应 body UTF-8
+/// 直通；无 query 解码环节）。语义定文见 wsys.page_names_json。
+/// GET /api/page_names
+#[api(method = "GET", path = "/api/page_names")]
+pub fn page_names() str {
+    return wsys.page_names_json()
 }
 
 /// 悬空建页（PLAN-005 第三切片；wikilink 写闭环收口）：title 清洗 →

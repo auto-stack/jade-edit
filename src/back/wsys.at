@@ -240,6 +240,22 @@ fn json_esc(s str) str {
     return r
 }
 
+/// JSON 字符串字面量转义·全控面（PLAN-033 T-02——名称目录专用安全编码；
+/// 现行 json_esc 调用面零扰动）：反斜杠先行 + 引号 + 换行/回车/制表。
+/// 语义依据：VM str.replace = Rust String::replace 全局替换（engine.rs
+/// 一手源实勘 T-01——json_esc 现行无循环即依赖全局替换语义；.at 字面量
+/// \t/\n/\\/\" 转义 lexer 在册）。消费面 = page_names_json 的
+/// path/title/dtitle/aliases（fm 值可含引号/反斜杠/制表——严格 JSON
+/// 控制符必须转义）。
+fn json_esc_x(s str) str {
+    var r str = s.replace("\\", "\\\\")
+    r = r.replace("\"", "\\\"")
+    r = r.replace("\n", "\\n")
+    r = r.replace("\r", "\\r")
+    r = r.replace("\t", "\\t")
+    return r
+}
+
 /// stem/alias 集内解析 target → rel（**四级解析序**——PLAN-017 SD-1701：
 /// ①stem 精确首现 → ②alias 精确首现 → ③stem casefold 首现 → ④alias
 /// casefold 首现；级间严格有序——exact 全集扫完才进 casefold 级[精确优先
@@ -536,10 +552,32 @@ pub fn search_json(query str, limit int) str {
             // 010 在册件 page_aliases——links_json:331-338 同款模式）；
             // alias-title-only 命中 → snippet = ""（下方 snippet 只从 body
             // 取，天然满足——SD-401 口径续）。命中行 title 恒 = stem。
-            var als List = page_aliases(frontmatter_of(text))
+            // **PLAN-033 扩（SD-01 查找域——统一名称规则）**：命中域 =
+            // stem ∪ dtitle（fm title 解析值，空缺省 stem）∪ aliases ∪
+            // 相对路径（"带 .ad 文件名"/"目录路径"由 path contains 承载
+            // ——不设第二套文件名归一；basename 已含于 path）。非名称
+            // frontmatter 字段（tags/summary/status…）不入域；**链接
+            // 解析域零涉**（resolve_target 不接入 title/dtitle——AC-07
+            // 身份不变量）。
+            var fm str = frontmatter_of(text)
+            var als List = page_aliases(fm)
+            var dt str = page_fm_value(fm, "title")
+            var rel_l str = p.rel.to_lower()
             var title_hit bool = false
             if stem_l.contains(ql) {
                 title_hit = true
+            }
+            if !title_hit {
+                if rel_l.contains(ql) {
+                    title_hit = true
+                }
+            }
+            if !title_hit {
+                if dt != "" {
+                    if dt.to_lower().contains(ql) {
+                        title_hit = true
+                    }
+                }
             }
             if !title_hit {
                 var ai int = 0
@@ -561,7 +599,7 @@ pub fn search_json(query str, limit int) str {
             }
             if is_hit {
                 // snippet = 首条命中行 trim 整行（跨多行命中只取首行；
-                // title-only 命中 = ""）。
+                // 名称-only 命中 = ""）。
                 var snip str = ""
                 var lines = body.split("\n")
                 var k int = 0
@@ -584,6 +622,58 @@ pub fn search_json(query str, limit int) str {
                 hits = hits + 1
             }
         }
+        i = i + 1
+    }
+    return "[" + sb.build() + "]"
+}
+
+/// 工作区页面名称目录（PLAN-033 T-02；R-04 快开/全文统一名称查找的
+/// 数据面）：`[{path,title,dtitle,aliases:[str,…]}]` 顶层裸数组——每
+/// .ad 页一条，walk 序 = collect_ad_pages("", 8) 同源（fs.tree
+/// dirs-first + 名称 casefold，确定性；.trash 等点前缀自动排除）。
+/// title = 文件 stem（links_json 同口径恒 stem）；dtitle = page_fm_value
+/// (fm,"title")（引号壳剥离），空 → 缺省 stem（links_json dtitle 缺省
+/// 装配同款双保险）；aliases = page_aliases(fm)（block-list 两缩进形态
+/// trim 归一在册规则）。**只读零写面**（每次调用读当前磁盘——不服务
+/// 过期缓存）；正文不读入匹配数据（快开数据面零 body 字段）。
+/// **转义 = json_esc_x**（PLAN-033 专用安全编码——fm 值可含引号/反斜杠/
+/// 制表，严格 JSON 控制符必转义；现行 json_esc 调用面零扰动，见该件注）。
+/// 载体先例 = links_json 嵌套 links 数组（App 三消费面双轨在册）。
+/// ⚠ D-20②：列表元素先拷局部变量再取字段/调方法。
+/// **GET /api/page_names 无参契约**（trash_list/recent_paths_get 同族
+/// ——零 D-19 暴露面：CJK 值在响应 body，UTF-8 直通）。
+pub fn page_names_json() str {
+    var pages List = collect_ad_pages("", 8)
+    var sb StringBuilder = StringBuilder.new(1024)
+    var i int = 0
+    while i < pages.len() {
+        // ⚠ D-20②：列表元素先拷局部变量再取字段。
+        var p = pages[i]
+        var rel str = p.rel
+        var stem str = p.stem
+        var text str = File.read_text(resolve(rel))
+        var fm str = frontmatter_of(text)
+        var dt str = page_fm_value(fm, "title")
+        if dt == "" {
+            dt = stem
+        }
+        var als List = page_aliases(fm)
+        if sb.len() > 0 {
+            sb.append(",")
+        }
+        sb.append("{\"path\":\"" + json_esc_x(rel) + "\",\"title\":\"" + json_esc_x(stem))
+        sb.append("\",\"dtitle\":\"" + json_esc_x(dt) + "\",\"aliases\":[")
+        var a int = 0
+        while a < als.len() {
+            if a > 0 {
+                sb.append(",")
+            }
+            // ⚠ D-20②：列表元素先拷局部变量再调方法。
+            var al str = als[a]
+            sb.append("\"" + json_esc_x(al) + "\"")
+            a = a + 1
+        }
+        sb.append("]}")
         i = i + 1
     }
     return "[" + sb.build() + "]"

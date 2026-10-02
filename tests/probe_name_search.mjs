@@ -131,10 +131,10 @@ const SEARCH_CALLS = [
 ]
 
 const PROBE_AT = `// 探针 widget（tests/probe_name_search.mjs 生成件——直证后随 .runtime 再生，
-// 非入库源）。Init 内进程内直调 search_wiki 案表 + link_index 载体案 +
-// int 字段计数，返回值落 model 字段供 autoui_state dump 读回。
-// 入口文件名固定 app.at（auto 前端入口约定）。
-use back.api: search_wiki, link_index
+// 非入库源）。Init 内进程内直调 search_wiki 案表 + page_names 目录 +
+// link_index 载体案 + int 字段计数，返回值落 model 字段供 autoui_state
+// dump 读回。入口文件名固定 app.at（auto 前端入口约定）。
+use back.api: search_wiki, link_index, page_names
 
 widget App {
     msg { Init }
@@ -142,6 +142,7 @@ widget App {
         var done bool = false
         var c1 int = 0
         var lk str = ""
+        var pn str = ""
         var f1 str = ""
         var f2 str = ""
         var f3 str = ""
@@ -165,6 +166,7 @@ widget App {
             c1 = c1 + 1
             c1 = c1 + 1
             lk = link_index("", 8)
+            pn = page_names()
             f1 = ${SEARCH_CALLS[0].call}
             f2 = ${SEARCH_CALLS[1].call}
             f3 = ${SEARCH_CALLS[2].call}
@@ -272,12 +274,17 @@ async function runMergedArm(preSnap) {
     }
     const lk = strField(dump, 'lk')
     if (lk === null) throw new Error('probe state missing lk')
+    let pn = null
+    if (PHASE >= 2) {
+      pn = strField(dump, 'pn')
+      if (pn === null) throw new Error('probe state missing pn')
+    }
     // 磁盘不变量：检索（Init 内全部案）执行后工作区与检索前快照逐件相等
     //（检索零副作用圈定——目录/全文/链接索引皆只读）。
     const postSnap = wsSnapshot(MERGED_WS)
     const drift = Object.keys(preSnap).filter((k) => preSnap[k] !== postSnap[k])
       .concat(Object.keys(postSnap).filter((k) => !(k in preSnap)))
-    return { searches, lk, drift, ws: MERGED_WS }
+    return { searches, lk, pn, drift, ws: MERGED_WS }
   } finally {
     try { execFileSync('taskkill', ['/PID', String(app.pid), '/T', '/F'], { stdio: 'ignore' }) } catch {}
     await sleep(400)
@@ -315,10 +322,15 @@ async function runSplitArm(preSnap) {
       try { return JSON.parse(text) } catch { return text }
     }
     const lk = await getJson('link_index', '?path=&depth=8')
+    let pn = null
+    if (PHASE >= 2) {
+      const raw = await getJson('page_names', '')
+      pn = typeof raw === 'string' ? raw : JSON.stringify(raw)
+    }
     const postSnap = wsSnapshot(back.workspace)
     const drift = Object.keys(preSnap).filter((k) => preSnap[k] !== postSnap[k])
       .concat(Object.keys(postSnap).filter((k) => !(k in preSnap)))
-    return { searches, lk, drift, ws: back.workspace }
+    return { searches, lk, pn, drift, ws: back.workspace }
   } finally {
     await back.stop()
   }
@@ -329,6 +341,20 @@ async function runSplitArm(preSnap) {
 const BASELINE_JSON = JSON.stringify([
   { path: 'wiki/Hello World.ad', title: 'Hello World', snippet: 'println!("Hello, Jade Garden!");' },
   { path: 'wiki/index.ad', title: 'index', snippet: '欢迎来到 Jade Garden 测试知识库。' },
+])
+
+// nm/ 子树已知答案（page_names walk 序：根 dirs-first nm<wiki；nm 内
+// dirs-first deep 子树先、文件段 casefold 序 aliasonly<dup a<dup b<home<
+// linker<plain<quoted；深层档 = nm/deep/l2/l3/l4/l5/Deep.ad）。
+const NM_DIR_JSON = JSON.stringify([
+  { path: 'nm/deep/l2/l3/l4/l5/Deep.ad', title: 'Deep', dtitle: 'Deep', aliases: [] },
+  { path: 'nm/AliasOnly.ad', title: 'AliasOnly', dtitle: 'AliasOnly', aliases: ['独角兽'] },
+  { path: 'nm/Dup A.ad', title: 'Dup A', dtitle: '重名页', aliases: [] },
+  { path: 'nm/Dup B.ad', title: 'Dup B', dtitle: '重名页', aliases: [] },
+  { path: 'nm/Home.ad', title: 'Home', dtitle: '首页', aliases: ['起点'] },
+  { path: 'nm/Linker.ad', title: 'Linker', dtitle: 'Linker', aliases: [] },
+  { path: 'nm/Plain.ad', title: 'Plain', dtitle: 'Plain', aliases: [] },
+  { path: 'nm/Quoted.ad', title: 'Quoted', dtitle: 'q"ote\\slash', aliases: [`tab${TAB}9`] },
 ])
 
 function checks(tag, data, failures) {
@@ -398,6 +424,39 @@ function checks(tag, data, failures) {
 
   // ---- 磁盘不变量：检索零副作用（pre-search 快照对照）----
   ck(data.drift.length === 0, `检索零磁盘副作用（drift：${data.drift.slice(0, 5).join(', ') || '无'}）`)
+
+  // ---- 相位 2：page_names 目录已知答案（AC-04 域）----
+  if (PHASE >= 2) {
+    let dir = null
+    try { dir = JSON.parse(data.pn) } catch {}
+    ck(Array.isArray(dir), `page_names 顶层裸数组可解析（实际：${String(data.pn)?.slice(0, 120)}）`)
+    if (Array.isArray(dir)) {
+      // 形状：恰 {path,title,dtitle,aliases} 四字段 + title=stem + dtitle/title 非空
+      ck(dir.every((r) => Object.keys(r).length === 4 && 'path' in r && 'title' in r && 'dtitle' in r && 'aliases' in r && Array.isArray(r.aliases)), '目录行恰 {path,title,dtitle,aliases} 四字段（aliases 数组）')
+      ck(dir.every((r) => r.title === r.path.split('/').pop().replace(/\.ad$/, '') && r.title !== '' && r.dtitle !== ''), 'title 恒 = stem 且两名称域非空')
+      // 完整性：磁盘 .ad 集合 ↔ 目录一一对应（一页一记录）
+      const diskAds = []
+      const walkAds = (d, pre) => {
+        for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+          if (e.name.startsWith('.')) continue
+          const full = path.join(d, e.name)
+          if (e.isDirectory()) walkAds(full, `${pre}${e.name}/`)
+          else if (e.name.endsWith('.ad')) diskAds.push(`${pre}${e.name}`)
+        }
+      }
+      walkAds(data.ws, '')
+      const dirPaths = dir.map((r) => r.path).sort()
+      ck(JSON.stringify(dirPaths) === JSON.stringify([...diskAds].sort()), `目录 path 集合 = 磁盘 .ad 集合（${diskAds.length} 页，一页一记录）`)
+      // nm/ 子树 walk 序逐字节（dirs-first + casefold 已知答案）
+      const nmJson = JSON.stringify(dir.filter((r) => r.path.startsWith('nm/')))
+      ck(nmJson === NM_DIR_JSON, `nm/ 子树已知答案逐字节 walk 序（实际：${nmJson.slice(0, 240)}）`)
+      // 转义读回：Quoted 行 title/aliases 逐值等值（引号/反斜杠/制表）
+      const q = dir.find((r) => r.path === 'nm/Quoted.ad')
+      ck(q?.dtitle === 'q"ote\\slash' && JSON.stringify(q?.aliases) === JSON.stringify([`tab${TAB}9`]), `转义读回 title="q\\"ote\\\\slash" aliases=["tab<TAB>9"]（实际：${JSON.stringify(q)?.slice(0, 160)}）`)
+      // 忽略面：目录不含 .trash/.jade/非 .ad（集合等价已证——点前缀不入 walkAds）
+      ck(dir.every((r) => !r.path.includes('/.') && !r.path.startsWith('.') && r.path.endsWith('.ad')), '目录零点前缀/零非 .ad 条目')
+    }
+  }
 
   // ---- 语料在盘逐字节（已知答案输入自证）----
   for (const c of CORPUS) {
