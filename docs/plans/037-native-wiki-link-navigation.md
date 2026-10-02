@@ -209,7 +209,7 @@ git diff --check
 
 ## 10. 待澄清事项
 
-- **D-01 上游供给，owner auto-lang**：U-01..06 未交付；按该仓 AGENTS 独占立项／专属工作树执行。无需本次重复确认已请求的规划；跨仓代码执行由其后续明确任务／Plan 授权。**T-01 结算（2026-10-02T13:35Z）**：供给 Plan 仍缺席（活动 242/719/722/723/730/731、archive 至 729 实勘无一供给）；契约冻结件已落位，binary 已漂移至 v0.4.2-2620-g7d50989f7 并按重绑规则在记——解锁动作与验收条款见契约 §4/§7。
+- **D-01 上游供给，owner auto-lang**：U-01..06 未交付；按该仓 AGENTS 独占立项／专属工作树执行。无需本次重复确认已请求的规划；跨仓代码执行由其后续明确任务／Plan 授权。**T-01 结算（2026-10-02T13:35Z）**：供给 Plan 仍缺席（活动 242/719/722/723/730/731、archive 至 729 实勘无一供给）；契约冻结件已落位，binary 已漂移至 v0.4.2-2620-g7d50989f7 并按重绑规则在记——解锁动作与验收条款见契约 §4/§7。**供给已立项（2026-10-02T13:55Z）**：用户授权后经 auto-plan-new 在 auto-lang 建 [PLAN-732](../../../auto-lang/docs/plans/732-autodown-wikilink-activation.md)（drafting@其仓 master a809a556c）——6 任务/7 验收/2 SD 完整承接 U-01..06；其 T-01 有界原型冻结四未知（K-01..04 与本契约 §6 同表）。T-02 门仍未解锁：等待 PLAN-732 reviewed/delivered＋AC-07 回执五件套；其实勘收窄＝wikilink 载荷已在 autodown-core 模型（span attr），无 auto-down 接口缺口。
 - **D-02 公开载荷和真实事件工具，owner 上游执行者＋Jade 验收者**：由 T-01 有界冻结，不能猜不存在的 callback/API；无法获得真实事件面即阻断本片功能验收。改变 ordinary-click 产品操作须修订 AC-02 并提具体选择。
 - **D-03 输入期解析／Vue 空白页，owner auto-down**：036 B-6/B-7 仍未解决，B-7 应优先修复。单独供给解锁后补偿该完整用例，不包含在本片 native 加载期承诺中，也不抹除历史缺口。
 - **D-04 native split，owner auto-lang／Jade 运行载体**：F-24-2 保留，本片 merged 成功不等于 split 产品可启动；最小 split 事件与后端 HTTP 两者分别记证。
