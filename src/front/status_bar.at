@@ -36,6 +36,12 @@ widget StatusBar {
                 if .store.recover_hint > 0 {
                     text "待恢复草稿（视图菜单查看）" { style: "text-[11px] text-amber-400" }
                 }
+                // 正文内链导航提示（PLAN-036 T-03；独立分域不占 save_note
+                // ——错误/锚点说明不覆盖保存与草稿注记，§5.3；迟到拒绝零
+                // 回写故无陈旧提示面）。
+                if .store.wiki_nav_note != "" {
+                    text .store.wiki_nav_note { style: "text-[11px] text-sky-400" }
+                }
 
                 text "docs: ${.store.tab_count}" {
                     style: "text-[11px] text-muted-foreground ml-auto"

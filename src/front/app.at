@@ -29,7 +29,7 @@ use find_panel: FindPanel
 use tags_panel: TagsPanel
 use bps.navigation.filetree.tree_util: flatten_tree, toggle_id
 use bps.navigation.filetree.tree_icon: TreeIcon
-use back.api: tree, ws_root, link_index, search_wiki, page_names, create_page, tags_index, page_meta, set_page_meta, create_dir, daily_note, trash_list, recent_paths_get, recent_paths_set, draft_pending, draft_read, exists, read_wiki, lc_plan_b, lc_commit_b
+use back.api: tree, ws_root, link_index, search_wiki, page_names, create_page, tags_index, page_meta, set_page_meta, create_dir, daily_note, trash_list, recent_paths_get, recent_paths_set, draft_pending, draft_read, exists, read_wiki, lc_plan_b, lc_commit_b, resolve_wiki_link
 
 style warn_label = "text-[12px] text-amber-400 mr-1"
 
@@ -1142,6 +1142,7 @@ widget App {
         CloseRequest, QuitDiscard, QuitSaveClose, QuitConfirmCancel,
         ActBacklinks, LinksRefresh, OpenLink(str),
         MentionsRefreshOf(str), LinkifyGo(str),
+        OpenWikiLink(str, str),
         FindEdit(str), FindRun, ActFindFiles, ActFindText, FindPick(str),
         CreateClick(str), CreateGo, CreateCancel,
         TreeRefresh, LinksRefreshOf(str),
@@ -1304,6 +1305,11 @@ widget App {
         // mtime 不作判据，AC-05 口径）。----
         var recover_open bool = false
         var recover_rows List = []
+        // —— 正文内链导航请求号（PLAN-036 T-03；契约 §2）：协调 handler
+        // .OpenWikiLink 的 App 侧请求门（每等待期后 seq 相配才续走——切档
+        // /新输入/第二点击均递增使旧流程失效）；源票据为 handler 局部捕获
+        //（单次不可变），仅请求号入模型。----
+        var nav_seq int = 0
     }
 
     computed {
@@ -1620,10 +1626,13 @@ widget App {
                     col (style: "h-px w-full bg-border shrink-0")
 
                     // —— 编辑区（autodown_editor；key 变即重挂载读 content:）——
+                    // PLAN-036 T-03：正文内链完整事件名消费（on "open-wiki-link"
+                    // 双参 = target + 可选目标锚点；引擎 emit 名 kebab 形）。
                     if .store.tab_count > 0 {
                         autodown_editor (key: .store.active_key, final: true, style: "flex-1 w-full") {
                             content: .store.active_body
                             oninput: .Edit
+                            on "open-wiki-link": .OpenWikiLink
                         }
                     }
                     if .store.tab_count == 0 {
@@ -2984,6 +2993,118 @@ widget App {
                 .bl_rows = backlink_rows_of(.link_pages, path)
                 .ol_rows = outlink_rows_of(.link_pages, path)
                 .MentionsRefreshOf(path)
+            }
+        }
+
+        // —— 正文内链导航协调 handler（PLAN-036 T-03；契约
+        // attachments/036-wiki-link-contract.md §1/§2——T-01/T-02 探针冻结
+        // 形态生产化）：完整事件名 on "open-wiki-link" 双参消费（第一参
+        // target = 引擎已 trim 页面名；第二参 = 可选目标锚点非来源身份）。
+        // 缺参归一（引擎无锚 emit undefined——JS 空等判失效，串接收敛）；
+        // 源票据第一 await 前同步捕获（tab_uid/gen/key/path/body 单次不可
+        // 变）；两级等待窗（resolve_wiki_link 单参 / read_wiki）各自过门
+        //（请求号+uid+gen+key+body 五查）；最终同步提交 store.NavCommit。
+        // 只有真实提交成功（回执读回 active_path==tp）才写最近文件与刷新
+        // 链接行（成功目标 path 显式入参——handler 内 .store 读为陈旧投影
+        // 规避同 OpenFile/OpenLink 家族）；迟到拒绝零副作用零提示回写。
+        // 导航不 Save/Reload 源页、不清 dirty、不改 original_body、不结算
+        // 草稿（AC-04）；missing 确认流/错误终态措辞归 T-04（本片 missing
+        // 与无效仅 console 注记不开建页）。----
+        .OpenWikiLink(target, anchor) -> {
+            if target != "" {
+                .nav_seq = .nav_seq + 1
+                var myseq int = .nav_seq
+                var rawa str = "" + anchor
+                var anc str = rawa
+                if rawa == "undefined" {
+                    anc = ""
+                }
+                var t_uid int = .store.active_uid
+                var t_gen int = .store.sel_gen
+                var t_key str = .store.active_key
+                var t_path str = .store.active_path
+                var t_body str = .store.active_body
+                // —— 等待窗①：单目标解析（T-02 只读口——无效 [] 行缺与
+                // missing 行严格区分；目录现读未保存来源同面可解析）——
+                var res List = []
+                var rok bool = true
+                try {
+                    res = json.to_value(resolve_wiki_link(target))
+                } catch (e) {
+                    rok = false
+                }
+                if !rok {
+                    store.NavNote("链接解析失败，请重试")
+                    console_log("nav: resolve failed")
+                } else {
+                    if res.len() < 1 {
+                        console_log("nav: invalid target")
+                    } else {
+                        // ⚠ D-20②：行元素先拷局部变量再取字段。
+                        var r0 = res[0]
+                        var ex bool = r0.exists
+                        var tp str = r0.target_path
+                        if !ex {
+                            tp = ""
+                        }
+                        if tp == "" {
+                            // 正常 missing（T-04 接确认流；本片不开建页）
+                            console_log("nav: missing " + target)
+                        } else {
+                            // —— 门①（解析后）：请求号 + 来源身份 + 世代 ——
+                            var g1 bool = true
+                            if .nav_seq != myseq { g1 = false }
+                            if .store.active_uid != t_uid { g1 = false }
+                            if .store.sel_gen != t_gen { g1 = false }
+                            if .store.active_key != t_key { g1 = false }
+                            if .store.active_body != t_body { g1 = false }
+                            if !g1 {
+                                console_log("nav: stale-after-resolve")
+                            } else {
+                                if tp == t_path {
+                                    // 目标 = 源页：同步激活自身（零读盘）
+                                    store.NavCommit({ uid: t_uid, gen: t_gen, key: t_key, body: t_body, path: tp, anchor: anc, body2: t_body })
+                                } else {
+                                    // —— 等待窗②：目标读盘（只读）——
+                                    var body2 str = ""
+                                    var dok bool = true
+                                    try {
+                                        body2 = read_wiki(tp)
+                                    } catch (e2) {
+                                        dok = false
+                                    }
+                                    if !dok {
+                                        store.NavNote("页面读取失败，请重试")
+                                        console_log("nav: read failed " + tp)
+                                    } else {
+                                        // —— 门②（读盘后、提交前）——
+                                        var g2 bool = true
+                                        if .nav_seq != myseq { g2 = false }
+                                        if .store.active_uid != t_uid { g2 = false }
+                                        if .store.sel_gen != t_gen { g2 = false }
+                                        if .store.active_key != t_key { g2 = false }
+                                        if .store.active_body != t_body { g2 = false }
+                                        if !g2 {
+                                            console_log("nav: stale-after-read")
+                                        } else {
+                                            store.NavCommit({ uid: t_uid, gen: t_gen, key: t_key, body: t_body, path: tp, anchor: anc, body2: body2 })
+                                        }
+                                    }
+                                }
+                                if .store.active_path == tp {
+                                    // 真实提交成功回执（同步读回——store 门
+                                    // 通过后 active 即目标）：最近文件 + 链接
+                                    // 行 + 提及刷新（成功目标 path 显式）。
+                                    .recent_paths = push_recent(.recent_paths, tp)
+                                    .RecentsPersist()
+                                    .bl_rows = backlink_rows_of(.link_pages, tp)
+                                    .ol_rows = outlink_rows_of(.link_pages, tp)
+                                    .MentionsRefreshOf(tp)
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 

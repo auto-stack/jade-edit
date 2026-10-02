@@ -72,6 +72,9 @@ if rawa == "undefined" {
 | B-3 | **content prop 回写回声**：store 直改 body → 编辑器 `:content` 变更 → 引擎 replaceDoc 规范化回声 `update:modelValue`（plan-030 D-03 家族，实测恰补一尾 `\n`）；纯链接点击零回声（edit_count=0 实证） | 探针 S3 after_tail 实录 + echo 变体 edit_count 观察 | T-03：生产导航流不回写源 content，无此回声面；凡程序化 content 回写处（open/reload/lc-sync）沿用 reload_nonce key 重挂载在册形态；探针 S3 断言容忍恰一尾 `\n` |
 | B-4 | **pickPort 假阳性**（F-R8-1/F-R13-1 家族新形态）：本机客户端出站连接占用 LAN 接口临时端口（192.168.68.6:8221 ESTABLISHED），`127.0.0.1` 绑定测试通过而 AutoVM 的 `0.0.0.0` 绑定撞 os error 10048——serve-back 子进程「exit 0 静默退」即此 | 探针 split 臂失败实录 + 复现脚本 `Backend API server port: 8221 (from cli)` + `Async server bind failed` | tests/pick_port.mjs 缺省改绑 `0.0.0.0`（严格强于 127.0.0.1）——已修；e2e 固定 8211 若同族占用属独立环境项 |
 | B-5 | 探针状态列跨 span 读存在瞬时不同步窗（active_path 先于 commit_count 可见一拍）；单 store 同步提交语义不变 | E1 读数竞态实录（commits=0 与 active=Tgt.ad 同帧）+ E2 联合等待后恒一致 | 探针用 waitStatusAll 联合等待（多 span 落定后读）；生产无此读面（无逐帧断言） |
+| B-6 | **引擎无输入期 wikilink 解析**：insertText/逐键键入的 `[[X]]` 保持字面文本（markdown 解析仅在 content 载入期）；blur 不重解析 | e2e E3 首版快照（追加后 `[[Hello World#sec-x]]` 字面渲染）+ U2 实证 | e2e 语料链接一律磁盘预写（加载期解析）；**AC-04 的「untitled 源带链接点击导航」在此引擎构建上结构性不可达**（untitled 空编辑器不可输入——B-7），保护面由具名脏源承载，如实上报告复审；输入期解析能力缺口 owner=auto-down |
+| B-7 | **空编辑器渲染零块**：content="" 的编辑器无任何块节点——无 caret 目标，点击（含多点高度）与逐键/insertText 键入均不落 | U2 五高度点击+真实逐键实测（received 恒空） | 上游 UX 边界（新建页键入体验）owner=auto-down；本片 e2e 的 untitled 案降级为「untitled 存在时导航零波及」形态 |
+| B-8 | **块底 boundary 命中区**：`.autodown-block-boundary:after`（块底下 20px+下沿溢出 8px，pointer-events:auto）按块高遮挡 span 中心点——单行链接段点击被拦截 | e2e clickLink 拦截实录（NavAnchor/NavSrc 单行链接段） | e2e clickLink 多高度点重试（span 内 y 序列，拦截抛错即换）；真实用户单行短段落链接可点性受同一几何影响（UX 观感项，owner=auto-down，不阻塞功能） |
 
 ## 5. 四级解析与已知答案（T-02 义务基线）
 
@@ -88,8 +91,9 @@ node tests/probe_wiki_link_navigation.mjs --phase runtime   # vue 运行时（�
 ```
 
 - 指纹（三连绿时点）：auto.exe `auto 0.1.0+v0.4.2-2573-g982e80004-dirty`（SHA256 `D63B3DDC…70B19B`）；auto-lang HEAD `31192447223d66c29c1abf9ae06ef8a6dc229c3b`（外部 WIP 在录——binary 恒等证据链同 035 F-35-R1 口径）；auto-down HEAD `895f8d0f…`；engine dist `index.js` SHA256 `AE6CCD56…A640`（assert-dist-fresh 在册义务延续）；jade-edit `9baa301b…`。
-- 延迟反例配方：Playwright `page.route('**/api/page_names', …)` 单次延迟消费旗标（2000–3000ms）——T-03 生产 e2e 同配方拦 `**/api/resolve_wiki_link` 与 `**/api/read_wiki` 两等待窗。
-- 断言面：merged 臂 M0–M6（协调形态同步全流程 + 世代门 + 陈旧直派阴性）；split 臂 B1–B2（双臂已知答案 + page_names 行集）；形状臂 6 项（全名/简称/双参/重建恢复）；运行时臂 E0–E5/S1–S4（真实点击 + 缺参归一 + 四类迟到反例 + 零 pageerror）。合计 36 断言三连绿。
+- 延迟反例配方：Playwright `page.route('**/api/resolve_wiki_link', …)` 单次延迟消费旗标（2000–3000ms）——T-03 生产 e2e 同配方拦 `**/api/resolve_wiki_link` 与 `**/api/read_wiki` 两等待窗。
+- 生产 e2e 套件：`e2e/wiki-link-navigation.spec.ts` 五测（E 事件/U 未保存源/D 目标状态/S 过期×2）——5/5 绿（31s）。链接语料磁盘预写（B-6）；切换走 tab 条（树折叠幂等——openTreePage 幂等展开）；boundary 命中区多高度点击（B-8）。
+- 断言面：merged 臂 M0–M7（协调形态同步全流程 + 世代门 + 陈旧直派阴性 + 无效终态）；split 臂 B1–B3（双臂已知答案 + page_names 行集 + resolve 单参十案含零写/旧响应恒等）；形状臂 6 项（全名/简称/双参/重建恢复）；运行时臂 E0–E5/S1–S4（真实点击 + 缺参归一 + 四类迟到反例 + 零 pageerror）；e2e 五测（真实引擎 DOM 点击 + 路由延迟 + 源/目标/最近文件保护）。
 
 ## 7. 失败复测记录（每问题一次原型＋一次复测预算内）
 

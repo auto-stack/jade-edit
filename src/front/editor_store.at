@@ -258,6 +258,15 @@ store EditorStore {
         // 读写；关闭仅清旗标（不动正文/草稿/save_note/磁盘）。独立于
         // save_note 提示通道（说明不吞安全注记——AC-07）。----
         var editor_commands_help_open bool = false
+        // —— 正文内链导航（PLAN-036 T-03；契约
+        // attachments/036-wiki-link-contract.md §2/§3）：活动选择世代
+        //（TabActivate 递增——切档往返 A→B→A 不回退，仅字段相同的旧导航
+        // 票据不复活）+ 活动实例 uid 投影（票据来源身份）+ 独立导航提示
+        //（不占 save_note——错误/锚点说明分域，§5.3；迟到拒绝零回写）。
+        //----
+        var sel_gen int = 0
+        var active_uid int = 0
+        var wiki_nav_note str = ""
     }
 
     // msg 载荷单类型（编译器约束）：Open 单 map、Edit 单 str。
@@ -284,12 +293,15 @@ store EditorStore {
         DelDirOpen, DelDirClose, RenDirOpen, RenDirClose,
         MoveDirOpen, MoveDirClose,
         WsWarn(str),
+        NavCommit(map), NavNote(str),
         LcGate(str), LcDrift(str), LcResolve(str), LcBlockCancel,
     }
 
     on {
         // ---- 激活投影重算（tab 索引 → active_* 全套；tab_count 就地同步
-        // ——Open/RemoveAt/ActNew 全走此口，防漏维护） ----
+        // ——Open/RemoveAt/ActNew 全走此口，防漏维护）。sel_gen 活动选择
+        // 世代递增（PLAN-036——切档/开新/关闭重排同口覆盖；构造走本口故
+        // 新 tab 亦递增；A→B→A 往返后世代不回退——导航票据过期判据）----
         .TabActivate(i) -> {
             .tab_count = .tabs.len()
             .tab = i
@@ -298,6 +310,8 @@ store EditorStore {
             .active_title = .tabs[i].title
             .active_body = .tabs[i].body
             .active_dirty = .tabs[i].dirty
+            .active_uid = .tabs[i].tab_uid
+            .sel_gen = .sel_gen + 1
         }
 
         // ---- Open({path})：已开 tab 激活；否则 exists 守卫 + 读盘新 tab ----
@@ -995,6 +1009,7 @@ store EditorStore {
                 .active_title = ""
                 .active_body = ""
                 .active_dirty = false
+                .active_uid = 0
                 .save_note = ""
             }
         }
@@ -1666,6 +1681,88 @@ store EditorStore {
         // 判定在 App 侧，store 只承载显示态）：text 直写（"" = 清警示）。
         .WsWarn(text) -> {
             .ws_warn = text
+        }
+
+        // ---- 正文内链导航同步提交门（PLAN-036 T-03；契约 §3——T-01 探针
+        // 冻结形态生产化）：App 协调 handler（.OpenWikiLink）已过每等待期
+        // 门（请求号+来源），本门以 store 权威态**同步**重查来源身份与选择
+        // 世代（身份权威单点——vue 臂 App 读与 store 派发同微任务，重查为
+        // 结构性不变式非竞态补丁）；通过 = 目标已开转激活（零读盘零覆盖
+        // dirty——内存脏目标优先，AC-05）/ 未开按票据已读正文构造（**Open
+        // 全字段同构**——tab_seq/草稿五字段/recover 三字段/tab_uid/lc_review
+        // 缺省全套，零二次 I/O）；拒绝 = 零 tab 变化零激活零提示回写（S 组
+        // 迟到门——旧结果零副作用）。成功 = 真实完成回执面：锚点非空提示
+        // 不支持定位（§5.3——开页≠reveal），无锚清提示；不写 save_note、
+        // 不清 dirty、不改 original_body、不结算草稿（源/目标保护面）。----
+        .NavCommit(a) -> {
+            var ok bool = true
+            if a.uid != .active_uid {
+                ok = false
+            }
+            if a.gen != .sel_gen {
+                ok = false
+            }
+            if a.key != .active_key {
+                ok = false
+            }
+            if a.body != .active_body {
+                ok = false
+            }
+            if ok {
+                var path str = a.path
+                var found int = -1
+                var i int = 0
+                while i < .tabs.len() {
+                    var tp str = .tabs[i].path
+                    if tp == path {
+                        found = i
+                    }
+                    i = i + 1
+                }
+                if found < 0 {
+                    .tab_seq = .tab_seq + 1
+                    .tabs.push({
+                        key: path,
+                        path: path,
+                        title: strip_ad(path),
+                        body: a.body2,
+                        original_body: a.body2,
+                        dirty: false,
+                        doc_id: "",
+                        draft_erev: 0,
+                        draft_state: "",
+                        draft_seq: 0,
+                        draft_conf: 0,
+                        recover_src_doc: "",
+                        recover_src_seq: 0,
+                        recover_src_erev: 0,
+                        tab_uid: .tab_seq,
+                        lc_review: false,
+                    })
+                    found = .tabs.len() - 1
+                    console_log("nav-open: " + path)
+                } else {
+                    console_log("nav-activate: " + path)
+                }
+                store.TabActivate(found)
+                var anc str = a.anchor
+                if anc != "" {
+                    .wiki_nav_note = "已打开页面，暂不支持定位到锚点：" + anc
+                } else {
+                    .wiki_nav_note = ""
+                }
+            } else {
+                console_log("nav-stale: rejected")
+            }
+            .console = console_lines()
+        }
+
+        // ---- 导航独立提示写口（PLAN-036 T-03；App 协调 handler 错误终态
+        //——不占 save_note 不覆盖草稿注记；迟到拒绝在 App 门内不触发本口，
+        // 零提示回写）。----
+        .NavNote(text) -> {
+            .wiki_nav_note = text
+            .console = console_lines()
         }
 
         // ---- 生命周期受检流（PLAN-032 T-03；契约 =
