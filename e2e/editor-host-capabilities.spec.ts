@@ -166,3 +166,39 @@ test('宿主能力核验·commands（六命令宿主入口 console 降级 + 引�
   await expect(page.getByPlaceholder('过滤文件名…')).toHaveCount(0)
   console.log('[commands] PASS — Ctrl+Shift+O 被 ActOpen 抢占（keymap Shift 丢失在录面）：孤页清单不开、无崩溃（dialog 取消垫片）')
 })
+
+test('宿主能力核验·navigation（wiki 链接点击零导航 + 块域稳定面）', async ({ page }) => {
+  test.setTimeout(180_000)
+  await page.goto('/')
+  await expect(page.getByText('ready', { exact: true }).first()).toBeVisible({ timeout: 15_000 })
+  await page.getByText('wiki', { exact: true }).first().click()
+  // index.ad（树行显示名 首页）正文含 [[Hello World]]——D-23③ 渲染为
+  // 链接 span（autodown-wikilink-label + data-wikilink-title）
+  await page.getByText('首页', { exact: true }).first().click()
+  await expect(visibleEditor(page)).toContainText('Jade Garden 测试知识库', { timeout: 10_000 })
+  const link = page.locator('.autodown-editor:visible .autodown-wikilink-label[data-wikilink-title="Hello World"]').first()
+  await expect(link).toBeVisible()
+  console.log('[navigation] wiki 链接渲染面可见（span.autodown-wikilink-label + data-wikilink-title=Hello World）')
+
+  // 点击链接 → @open-wiki-link 无监听：零导航（活动档仍 index.ad、无新
+  // tab、无跳转错误——调查通过、接口尚不可用）
+  await link.click()
+  await page.waitForTimeout(800)
+  await expect(visibleEditor(page)).toContainText('Jade Garden 测试知识库', { timeout: 10_000 })
+  await expect(page.locator('button[class*="h-8 px-3"]', { hasText: 'Hello World' })).toHaveCount(0)
+  console.log('[navigation] PASS — 链接点击零导航（emit 无消费者；title 不被当 path 打开——安全侧现状）')
+
+  // 缺页点击（title 无对应档）同形零导航——这里复用同一链接面即可：链接
+  // 点击本身未接线，缺页/在页路由无分野（一并记录）
+  // 块域稳定面（data-block-id——^anchor 显式或 block-<i> 位置回退，同内
+  // 容确定性）：切档往返后 id 集稳定
+  const idsBefore = await page.locator('.autodown-editor:visible [data-block-id]').evaluateAll((els) => els.map((e) => e.getAttribute('data-block-id')))
+  expect(idsBefore.length).toBeGreaterThan(0)
+  await page.getByText('Tasks', { exact: true }).first().click()
+  await expect(visibleEditor(page)).toContainText('原型设计', { timeout: 10_000 })
+  await page.getByText('首页', { exact: true }).first().click()
+  await expect(visibleEditor(page)).toContainText('Jade Garden 测试知识库', { timeout: 10_000 })
+  const idsAfter = await page.locator('.autodown-editor:visible [data-block-id]').evaluateAll((els) => els.map((e) => e.getAttribute('data-block-id')))
+  expect(idsAfter, '块域 id 集切档往返稳定（同内容确定性——reveal 定位候选坐标域）').toEqual(idsBefore)
+  console.log('[navigation] PASS — data-block-id 块域切档往返稳定（getBlockMap 公开契约 DOM 面；caret/reveal 原语缺口以 probe navigation UNSUPPORTED 行在案）')
+})

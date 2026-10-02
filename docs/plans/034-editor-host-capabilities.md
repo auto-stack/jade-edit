@@ -4,9 +4,9 @@ status: executing
 feature_name: 编辑器宿主能力核验与供给契约（R-03a）
 author: [agent]
 created_at: 2026-10-02T04:10:23Z
-updated_at: 2026-10-02T07:10:00Z
+updated_at: 2026-10-02T07:50:00Z
 plan_revision: 1
-current_step: 2
+current_step: 3
 total_steps: 4
 supersedes_spec_components: []
 new_spec_components:
@@ -190,6 +190,8 @@ show_actions:false 目前只证明生成器发射 :show-actions，不能据此�
 - 验证：node tests/probe_editor_host.mjs --phase navigation；pnpm exec playwright test -c e2e/playwright.config.ts e2e/editor-host-capabilities.spec.ts --grep navigation。四类结果字段／来源／位置边界按已知语料记录；提案与四级身份及现行 Store 保护一致。
 - 对应 AC-01/05/06/07/08，SD-01/02/03。
 
+- [x] T-03 [✅ 已完成 2026-10-02] probe navigation 相位全绿（N2 link 事件二次点入零回执+聚焦面与 M3 同判；N3 四级解析已知答案 merged 读回全过[目标页/靶心 alias 级→Tgt.ad·tgt casefold 级·缺失页悬空 exists=false·目标页#sec1 anchor 伴随]；B2 split HTTP 双臂同判[GET 双壳 JSON 双次解析修正]；selection/cursor/reveal 终判=块聚焦消费面受阻边界[MCP click 直写 ghost state 不经 handler·真键 headless 不可达]+caret/reveal 无原语+vue data-block-id 块域公开可消费）+ e2e navigation 1/1（wiki 链接渲染面 span.autodown-wikilink-label[data-wikilink-title] 可见+点击零导航无新 tab=title 不当 path 安全侧现状；块域 id 集切档往返逐值稳定）。新增 attachments/034-editor-host-supply.md（出口决策总表+逐仓 §A auto-down 三项[保存事件来源身份/show_actions 真消费/组件命令面——拟议接口均标尚非现行 API+解锁证据]+§B auto-lang 四项[open-wiki-link 生成名 kebab 不匹配优先解锁/原生 save+link 消息通道/命令原语/位置族]+§C jade-edit 四项可实施面+§D 不做边界）。
+
 ### T-04 规范沉淀与后续决策交接
 
 - 依赖：T-02/T-03。工作阶段新增 docs/specs/editor-host-capabilities.md，落位 SD-01..03（当前证据、后续消费要求、逐仓缺口）；在 docs/ARCHITECTURE.md §4 仅加指针。更新路线图的 R-03a 已交付／待复审状态，不宣称 R-03 接线完成。
@@ -206,6 +208,7 @@ show_actions:false 目前只证明生成器发射 :show-actions，不能据此�
 - 2026-10-02T04:10:23Z：stage: new；plan_id: PLAN-034；plan_revision: 1；outcome: pass；next: work（能力核验与契约交付，按用户执行指令进入工作阶段）。
 - 新增 T-01..04、AC-01..08、SD-01..03；已确认 033 归档与当前实现，未知机制由有界探针和明确供给出口负责，不承诺完整 R-03 功能在本仓立即可实施。
 - 本记录是规划交接，非实现复审。此次未运行应用／接口探针、未改生产代码或 canonical Specs、未自动继续 work/review/merge。
+- 2026-10-02T07:50:00Z：stage: work | plan_id: PLAN-034 | plan_revision: 1 | outcome: executing（T-03 完成）| code_commit: 177e0c1(T-02)+本批 | task_ids: T-03 | evidence: probe navigation 全绿 + e2e navigation 1/1 + attachments/034-editor-host-supply.md 逐仓供给表 | blockers: 无 | next: T-04（规范沉淀与交接）。
 - 2026-10-02T07:10:00Z：stage: work | plan_id: PLAN-034 | plan_revision: 1 | outcome: executing（T-02 完成）| code_commit: 013ad6f(T-01)+本批 | task_ids: T-02 | evidence: probe save/commands 相位全绿 + e2e save|commands 2/2 + 附件判定列终判 | blockers: 无 | next: T-03（navigation 与供给附件）。
 - 2026-10-02T06:30:00Z：stage: work | plan_id: PLAN-034 | plan_revision: 1 | outcome: executing（T-01 完成）| code_commit: 08d7c08(落档)+本批 | task_ids: T-01 | evidence: 探针 inventory 相位全绿（probe_editor_host.mjs）+ e2e inventory 1/1 + pnpm build 绿 + 附件 034-editor-host-contract.md T-01 判定列落表 | blockers: 无 | next: T-02（save/commands 核验）。工作树=主检出（直接 main 线性惯例 001..033 在册）。
 

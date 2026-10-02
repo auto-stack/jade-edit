@@ -504,7 +504,9 @@ async function runMergedArm(rec) {
 
     if (RUN_PHASES.includes('navigation')) {
       // —— N2 链接点击零回执补强（M3 press 之后再次点入内容区）——
-      if (rec.editors[0]?.id) {
+    // N2 链接零回执补强（M3 click 之后再次点入内容区）；聚焦面与 M3
+    // 同判（click 直写 ghost state——回执恒零为预期形态，非「续发」）。
+    if (rec.editors[0]?.id) {
         try {
           await callTool('autoui_action', { element_id: rec.editors[0]?.id, action: 'click', value: '150,90' })
         } catch (e) {
@@ -516,7 +518,7 @@ async function runMergedArm(rec) {
         rec.n2_link_last = strField(st, 'link_last')
         rec.n2_focus_count = intField(st, 'focus_count')
         rec.n2_focus_last = strField(st, 'focus_last')
-      }
+    }
       // —— N3 四级解析已知答案（Init 直调产物读回）——
       {
         const st = (await callTool('autoui_state', {})).trim()
@@ -745,16 +747,16 @@ function checks(rec) {
 
   if (RUN_PHASES.includes('navigation')) {
     console.log('\n[probe-editor-host] navigation 相位：')
-    // N2 链接零回执 + 聚焦回执
+    // N2 链接零回执 + 聚焦面（与 M3 同判——回执恒零为预期形态）
     ck((rec.n2_link_count ?? 0) === 0, `N2 内容区二次点入 → link 事件仍零回执（link_count=${rec.n2_link_count}）`)
-    ck((rec.n2_focus_count ?? 0) >= (rec.m3_focus_count ?? 0), `N2 press 聚焦回执续发 focus_count=${rec.n2_focus_count} last=${rec.n2_focus_last}`)
+    ck((rec.n2_focus_count ?? 0) === 0 && (rec.m3_focus_count ?? 0) === 0, 'N2 聚焦回执恒零与 M3 同判（click 直写 ghost state 不经 DSL handler——M3 UNSUPPORTED 锚定一致）')
     // N3 四级解析已知答案
     ck(rec.n3_tgt === '目标页>Tgt.ad', `N3 [[目标页]] alias 精确级 → Tgt.ad（实际：${rec.n3_tgt}）`)
     ck(rec.n3_alias === '靶心>Tgt.ad', `N3 [[靶心]] alias 级 → Tgt.ad（实际：${rec.n3_alias}）`)
     ck(rec.n3_case === 'tgt>Tgt.ad', `N3 [[tgt]] stem casefold 级 → Tgt.ad（实际：${rec.n3_case}）`)
     ck(rec.n3_miss === '缺失页>', `N3 [[缺失页]] 悬空：exists=false + target_path=""（实际：${rec.n3_miss}）`)
     ck(rec.n3_anchor === '目标页#sec1>Tgt.ad', `N3 [[目标页#sec1]] anchor 伴随 target 解析（实际：${rec.n3_anchor}）`)
-    uns('selection/cursor/reveal：native 公开读出=块聚焦 (block_index,height)（focusblock 回执）；caret 行列/选区快照/reveal 调用无宿主原语——块聚焦≠caret、开页≠定位；scroll_sync offset 写入通道在册（PLAN-043）但块/锚定位供给缺')
+    uns('selection/cursor/reveal：native 块聚焦=onfocusblock→on_focus 绑定在册（FocusCallback 单元测试在录）；但 MCP click 合成路径直写 ghost state 不达 handler（M3/N2 实测）、真键鼠标 headless 不可达——块聚焦宿主消费面=受阻边界（未证非可用）；caret 行列/选区快照/reveal 调用无宿主原语——块聚焦≠caret、开页≠定位；scroll_sync offset 写入通道在册（PLAN-043）但块/锚定位供给缺')
   }
 
   console.log('\n[probe-editor-host] split 臂（原生 split boot + HTTP 供给面）：')
@@ -796,17 +798,16 @@ async function runSplitHttp(rec) {
   const back = await serveBackend({ port: SPLIT_PORT, workspace: SPLIT_WS })
   writeCorpus(back.workspace)
   try {
-    const post = async (api, payload) => {
-      const res = await fetch(`${back.url}/api/${api}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-      if (!res.ok) throw new Error(`POST ${api} -> HTTP ${res.status}`)
+    const getJson = async (api, query) => {
+      const res = await fetch(`${back.url}/api/${api}${query ?? ''}`)
+      if (!res.ok) throw new Error(`GET ${api} -> HTTP ${res.status}`)
       const text = await res.text()
       try { return JSON.parse(text) } catch { return text }
     }
-    const pages = await post('link_index', { path: '', depth: 8 })
+    // link_index = GET 端点（probe_name_search 同款 ?path=&depth=8 形）；
+    // 响应 = 双壳 JSON 字符串（"[{...}]"——一次 parse 得串，两次得数组）。
+    const raw = await getJson('link_index', '?path=&depth=8')
+    const pages = typeof raw === 'string' ? JSON.parse(raw) : raw
     const src = Array.isArray(pages) ? pages.find((p) => p.path === 'Src.ad') : null
     const rowOf = (target) => (Array.isArray(src?.links) ? src.links.find((l) => l.target === target) : null)
     const fmt = (r) => (r ? `${r.target}>${r.target_path ?? ''}` : '(missing)')

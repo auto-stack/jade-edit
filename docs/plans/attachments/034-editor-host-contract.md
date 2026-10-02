@@ -59,17 +59,17 @@
 
 | 载体 | 源码观察 | 运行证明 | 状态 |
 | --- | --- | --- | --- |
-| ①② native | 无链接消息通道（同 save 格） | 探针 M3 link 零回执 | 缺供给（auto-lang） |
-| ③ Vue | emit('open-wiki-link', title, blockId?)（全局 wikilinkOpener seam）；生成器发 @openwikilink（名不匹配）；App.vue 零监听 | 探针 vue 形状 + e2e navigation T-03 | 缺供给双层（生成名不匹配=auto-lang；未接线=jade-edit）——T-03 终判 |
-| 后端解析供给 | link_index 行 {target,anchor,exists,target_path} 四级已解析（resolve_target 私有：stems 精确→aliases 精确→stems casefold→aliases casefold；anchor=`#` split_once） | 探针 N3（T-03）：目标页/靶心/tgt/缺失页/#sec1 已知答案双臂 | 已可消费（OpenLink(path)=开档口，title 不当路径——现状保真） |
+| ①② native | 无链接消息通道（同 save 格） | 探针 M3/N2 link 零回执 | 缺供给（auto-lang——供给附件 §B-2） |
+| ③ Vue | emit('open-wiki-link', title, blockId?)（全局 wikilinkOpener seam）；生成器发 @openwikilink（名不匹配）；App.vue 零监听 | 探针 vue 形状（@openwikilink 发射、kebab 零命中）+ e2e navigation（链接渲染面 span.autodown-wikilink-label[data-wikilink-title] 可见；点击零导航、无新 tab——title 不被当 path，安全侧现状） | 缺供给双层（生成名不匹配=auto-lang §B-1 优先解锁；未接线=jade-edit §C-3） |
+| 后端解析供给 | link_index 行 {target,anchor,exists,target_path} 四级已解析（resolve_target 私有：stems 精确→aliases 精确→stems casefold→aliases casefold；anchor=`#` split_once） | 探针 N3/B2 双臂已知答案全过（目标页/靶心/tgt→Tgt.ad；缺失页 exists=false path=""; 目标页#sec1 anchor 伴随） | 已可消费（OpenLink(path)=开档口，title 不当路径——现状保真） |
 
 ### selection / cursor / reveal
 
 | 能力 | 源码观察 | 运行证明 | 状态 |
 | --- | --- | --- | --- |
-| selection | vue：引擎内部 selection + editor_drag 拖选合成（MCP 面）；native：core 内部 | 探针（T-03 补拖选/选区读出面） | T-03 |
-| cursor | 无 caret 行列字段；oncursor 仅 code_editor 壳（vue.rs base_event_to_dom 注） | 块聚焦≠caret 判定 T-03 | T-03 |
-| reveal | getBlockMap（vue 公开）+ data-block-id DOM 域；scroll_sync offset 写入通道（PLAN-043 native）；无块/锚 reveal 原语 | e2e inventory 块域在 + 探针 T-03 | T-03 |
+| selection | vue：引擎内部 selection + editor_drag 拖选合成（MCP 面，本片未拖选——合成通道不改变宿主读出面）；native：core 内部 | 无宿主选区快照读出（双轨） | 缺供给（读出面——§B-4）；vue DOM 选区=浏览器面 |
+| cursor | 无 caret 行列字段；oncursor 仅 code_editor 壳（vue.rs base_event_to_dom 注） | 块聚焦≠caret 判定成立（无 caret 数据可读） | 缺供给（caret 读出——§B-4） |
+| reveal | getBlockMap（vue 公开导出）+ data-block-id DOM 域（^anchor 显式或 block-<i> 位置回退——同内容确定性）；scroll_sync offset 写入通道（PLAN-043 native）；无块/锚 reveal 原语 | e2e navigation：data-block-id 集合切档往返逐值稳定（reveal 定位候选坐标域实证）；探针 M3/N2 块聚焦消费面受阻边界（click 直写 ghost state 不经 handler） | vue 块域=已可消费（公开契约）；reveal 调用=缺供给（§B-4）；native 块聚焦消费面=受阻（headless 边界——owner auto-lang，重入=真键或等价合成通道） |
 
 ## 3. 保存来源身份缺口（AC-03；T-02 终判）
 
