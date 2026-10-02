@@ -22,7 +22,8 @@
 //
 // 结果标签：PASS（预期且实测相符）/ FAIL（意外——计失败）。
 //
-// 用法（仓根）：node tests/probe_command_availability.mjs [--skip-variant] [--skip-vue]
+// 用法（仓根）：node tests/probe_command_availability.mjs [--skip-variant]
+//   [--skip-vue] [--skip-store]
 
 import { spawn, execFileSync, spawnSync } from 'node:child_process'
 import fs from 'node:fs'
@@ -39,6 +40,7 @@ const VARIANT_DIR = path.join(RUNTIME, 'probe-cmd-avail-variant')
 
 const SKIP_VARIANT = process.argv.includes('--skip-variant')
 const SKIP_VUE = process.argv.includes('--skip-vue')
+const SKIP_STORE = process.argv.includes('--skip-store')
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 const sha = (p) => crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex').toUpperCase()
@@ -509,9 +511,262 @@ function checkVue(rec) {
   console.log(`  [INFO] canary enabled_if:"false" 转译：emitted=${m.canary_emitted} line=${m.canary_line ?? '(none)'}`)
 }
 
+// ---------------- 真实 Store 臂（T-02——生产 EditorStore 六 handler 逐项） ----------------
+
+const STORE_SEED = '# StoreProbe\n\n真实 Store 守卫基线正文。\n'
+const STORE_TYPED = `${STORE_SEED}键入标记：脏态+草稿检查点后派发六兼容消息。\n`
+
+// 探针 widget 挂真实 EditorStore（src/front/editor_store.at 原样副本——
+// 生产 handler 无变换直测）：editor 走 store.Open/Edit 全链（草稿检查点
+// 排水真实发生），六按钮 → store.ActUndo..SelectAll（旁路直派语义——
+// UI 菜单移除后旧 ID 兼容面），说明弹层 = 生产同款契约形状。
+function makeStoreProbeAt() {
+  return `// 探针 widget（tests/probe_command_availability.mjs 生成件——直证后随
+// .runtime 再生，非入库源）。真实 EditorStore + 六兼容按钮 + 生产契约
+// 说明弹层形状；草稿/dirty/save_note 逐值不变量。
+use editor_store: EditorStore
+use back.api: write_wiki
+
+widget App {
+    msg {
+        Init,
+        OnEdit(str),
+        CmdUndo, CmdRedo, CmdCut, CmdCopy, CmdPaste, CmdSelectAll,
+        HelpClose,
+    }
+    model {
+        var done bool = false
+        var last_cmd str = ""
+    }
+    view {
+        col (style: "h-full w-full") {
+            autodown_editor (key: .store.active_key, final: true, style: "h-1/2 w-full") {
+                content: .store.active_body
+                oninput: .OnEdit
+            }
+            row (style: "h-8 items-center gap-1 shrink-0 px-1") {
+                button (text: "undo", variant: "ghost") { onclick: .CmdUndo, style: "h-6 px-2 text-[11px]" }
+                button (text: "redo", variant: "ghost") { onclick: .CmdRedo, style: "h-6 px-2 text-[11px]" }
+                button (text: "cut", variant: "ghost") { onclick: .CmdCut, style: "h-6 px-2 text-[11px]" }
+                button (text: "copy", variant: "ghost") { onclick: .CmdCopy, style: "h-6 px-2 text-[11px]" }
+                button (text: "paste", variant: "ghost") { onclick: .CmdPaste, style: "h-6 px-2 text-[11px]" }
+                button (text: "select-all", variant: "ghost") { onclick: .CmdSelectAll, style: "h-6 px-2 text-[11px]" }
+            }
+            alert-dialog (open: .store.editor_commands_help_open) {
+                alert-dialog-content {
+                    alert-dialog-header {
+                        alert-dialog-title "编辑命令说明"
+                        alert-dialog-description "当前版本不支持从菜单执行撤销、重做、剪切、复制、粘贴和全选。正文和输入框仍可使用当前编辑器支持的操作。"
+                    }
+                    alert-dialog-footer {
+                        alert-dialog-cancel "关闭" { onclick: .HelpClose }
+                    }
+                }
+            }
+        }
+    }
+    on {
+        .Init -> {
+            write_wiki("Probe.ad", "${esc(STORE_SEED)}")
+            store.Open({ path: "Probe.ad" })
+            done = true
+        }
+        .OnEdit(t) -> {
+            store.Edit(t)
+        }
+        .CmdUndo -> { last_cmd = "undo"; store.ActUndo() }
+        .CmdRedo -> { last_cmd = "redo"; store.ActRedo() }
+        .CmdCut -> { last_cmd = "cut"; store.ActCut() }
+        .CmdCopy -> { last_cmd = "copy"; store.ActCopy() }
+        .CmdPaste -> { last_cmd = "paste"; store.ActPaste() }
+        .CmdSelectAll -> { last_cmd = "select-all"; store.ActSelectAll() }
+        .HelpClose -> { store.EditorCommandsHelpClose() }
+    }
+}
+`
+}
+
+function buildStoreProbeProject(dir) {
+  fs.rmSync(dir, { recursive: true, force: true })
+  fs.mkdirSync(path.join(dir, 'src', 'front'), { recursive: true })
+  fs.cpSync(path.join(repoRoot, 'src', 'back'), path.join(dir, 'src', 'back'), { recursive: true })
+  // 真实生产 Store 原样副本（零变换——直测现行 handler）
+  fs.copyFileSync(path.join(repoRoot, 'src', 'front', 'editor_store.at'), path.join(dir, 'src', 'front', 'editor_store.at'))
+  fs.writeFileSync(path.join(dir, 'src', 'front', 'app.at'), makeStoreProbeAt(), 'utf8')
+  fs.writeFileSync(
+    path.join(dir, 'pac.at'),
+    `name: "jade-probe-cmd-avail-store"
+version: "0.1.0"
+scene: "ui"
+render: ["vm"]
+title: "ProbeCmdAvailStore"
+window: "900x700"
+`,
+    'utf8',
+  )
+}
+
+async function runStoreArm({ dir, ws, port }) {
+  const rec = { arm: 'store' }
+  const app = spawn(AUTO_EXE, ['run', '-r', 'vm'], {
+    cwd: dir,
+    env: { ...process.env, AUTOUI_MCP_PORT: String(port), JADE_WORKSPACE: ws },
+    stdio: ['ignore', 'pipe', 'pipe'],
+  })
+  let appOut = ''
+  app.stdout.on('data', (d) => (appOut += d))
+  app.stderr.on('data', (d) => (appOut += d))
+  try {
+    const { rpc, callTool } = makeClient(port)
+    const deadline = Date.now() + 45000
+    for (;;) {
+      try {
+        await rpc('initialize', { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'jade-probe-cmd-avail-store', version: '0.1.0' } })
+        break
+      } catch (err) {
+        if (app.exitCode !== null) throw new Error(`store probe app exited early (code ${app.exitCode}):\n${appOut.slice(-2000)}`)
+        if (Date.now() > deadline) throw new Error(`MCP not reachable: ${err.message}`)
+        await sleep(500)
+      }
+    }
+    const pollDeadline = Date.now() + 30000
+    let dump = ''
+    for (;;) {
+      dump = (await callTool('autoui_state', {})).trim()
+      if (/done:\s*true/.test(dump)) break
+      if (Date.now() > pollDeadline) throw new Error(`store probe Init never completed:\n${dump.slice(0, 800)}\n---\n${appOut.slice(-800)}`)
+      await sleep(300)
+    }
+
+    const state = async () => (await callTool('autoui_state', {})).trim()
+    const pollBool = async (field, want, timeoutMs = 8000) => {
+      const dl = Date.now() + timeoutMs
+      for (;;) {
+        const st = await state()
+        if (boolField(st, field) === want) return st
+        if (Date.now() > dl) throw new Error(`state.${field} never reached ${want}`)
+        await sleep(200)
+      }
+    }
+    const pollStr = async (field, want, timeoutMs = 15000) => {
+      const dl = Date.now() + timeoutMs
+      for (;;) {
+        const st = await state()
+        if (strField(st, field) === want) return st
+        if (Date.now() > dl) throw new Error(`state.${field} never reached "${want}" (got "${strField(st, field)}")`)
+        await sleep(200)
+      }
+    }
+    const editorId = async () => {
+      const snap = await callTool('autoui_snapshot', {})
+      const m = snap.split('\n').find((l) => /^\s*textarea #(\S+) \{$/.test(l))
+      return m?.match(/^(\s*)textarea #(\S+)/)?.[2] ?? null
+    }
+    const pressButton = async (label, { timeoutMs = 8000 } = {}) => {
+      const dl = Date.now() + timeoutMs
+      for (;;) {
+        const tree = parseAura(await callTool('autoui_snapshot', {}))
+        const btn = findFirst(tree, (n) => n.head.startsWith('button ') && elementIdOf(n) && ownText(n) === label)
+        if (btn) {
+          const res = await callTool('autoui_action', { element_id: elementIdOf(btn), action: 'press' })
+          if (!/status: ok/.test(res)) throw new Error(`press ${label} not ok: ${res}`)
+          return
+        }
+        if (Date.now() > dl) throw new Error(`button "${label}" not found`)
+        await sleep(300)
+      }
+    }
+
+    // —— S0 开档态——
+    const st0 = await pollStr('active_path', 'Probe.ad')
+    rec.s0 = {
+      active_path: strField(st0, 'active_path'),
+      active_dirty: boolField(st0, 'active_dirty'),
+      help_open: boolField(st0, 'editor_commands_help_open'),
+      save_note: strField(st0, 'save_note'),
+    }
+
+    // —— 键入脏态（真实 Edit 链+草稿检查点排水——“草稿已保护”落定后取基线）——
+    const ed = await editorId()
+    if (!ed) throw new Error('editor textarea vnode not found')
+    await callTool('autoui_action', { element_id: ed, action: 'type_text', value: STORE_TYPED })
+    const stDirty = await pollBool('active_dirty', true)
+    rec.typed = {
+      body: strField(stDirty, 'active_body'),
+      dirty: boolField(stDirty, 'active_dirty'),
+      save_note: strField(stDirty, 'save_note'),
+    }
+    const stDraft = await pollStr('save_note', '草稿已保护', 20000)
+    rec.draft_note = strField(stDraft, 'save_note')
+    rec.disk_before = walkHash(ws)
+
+    // —— S1 六兼容消息逐个（真实 Store handler 直派）——
+    rec.commands = {}
+    for (const cmd of ['undo', 'redo', 'cut', 'copy', 'paste', 'select-all']) {
+      await pressButton(cmd)
+      const stOpen = await pollBool('editor_commands_help_open', true)
+      const entry = {
+        help_open: true,
+        last_cmd: strField(stOpen, 'last_cmd'),
+        body: strField(stOpen, 'active_body'),
+        dirty: boolField(stOpen, 'active_dirty'),
+        save_note: strField(stOpen, 'save_note'),
+      }
+      await pressButton('关闭')
+      const stClosed = await pollBool('editor_commands_help_open', false)
+      entry.closed_clean = boolField(stClosed, 'editor_commands_help_open') === false
+        && strField(stClosed, 'active_body') === entry.body
+        && boolField(stClosed, 'active_dirty') === entry.dirty
+        && strField(stClosed, 'save_note') === entry.save_note
+      rec.commands[cmd] = entry
+    }
+
+    // —— S2 键盘零路由（真实 Store 守卫不经键盘触达）——
+    rec.keys = {}
+    const lastCmdPre = strField(await state(), 'last_cmd')
+    for (const k of ['z', 'y', 'a']) {
+      await callTool('autoui_keyboard', { key: k, modifiers: ['ctrl'] })
+      await sleep(600)
+      const st = await state()
+      rec.keys[`ctrl+${k}`] = {
+        help_open: boolField(st, 'editor_commands_help_open'),
+        last_cmd_unchanged: strField(st, 'last_cmd') === lastCmdPre,
+        body: strField(st, 'active_body'),
+      }
+    }
+    rec.disk_after = walkHash(ws)
+    rec.boot_tail = appOut.slice(-300)
+  } finally {
+    try { execFileSync('taskkill', ['/PID', String(app.pid), '/T', '/F'], { stdio: 'ignore' }) } catch {}
+    await sleep(400)
+  }
+  return rec
+}
+
+function checkStore(rec) {
+  console.log('\n[probe-cmd-avail] 真实 Store 臂（生产 EditorStore 六 handler 直派）：')
+  ck(rec.s0?.active_path === 'Probe.ad' && rec.s0?.help_open === false, `S0 开档态（active_path=${rec.s0?.active_path} help_open=${rec.s0?.help_open}）`)
+  ck(rec.typed?.dirty === true && rec.draft_note === '草稿已保护', `键入脏态+草稿检查点落定（save_note="${rec.draft_note}"——不变量域含在途保护注记）`)
+  for (const cmd of ['undo', 'redo', 'cut', 'copy', 'paste', 'select-all']) {
+    const c = rec.commands?.[cmd]
+    if (!c) { ck(false, `S1 ${cmd}: 案缺失`); continue }
+    ck(c.help_open === true && c.last_cmd === cmd, `S1 ${cmd}: 真实 handler 直派 → 说明开（last_cmd=${c.last_cmd}）`)
+    ck(c.body === rec.typed.body && c.dirty === true && c.save_note === '草稿已保护', `S1 ${cmd}: 零编辑+save_note 保持（body/dirty/草稿注记逐值恒等——AC-03/06/07 语义）`)
+    ck(c.closed_clean === true, `S1 ${cmd}: 关闭仅清旗标（四元组保持）`)
+  }
+  for (const k of ['z', 'y', 'a']) {
+    const r = rec.keys?.[`ctrl+${k}`]
+    if (!r) { ck(false, `S2 ctrl+${k}: 案缺失`); continue }
+    ck(r.help_open === false && r.last_cmd_unchanged, `S2 Ctrl+${k.toUpperCase()} 键盘零路由（真实守卫不经键盘触达——shortcut 已删）`)
+    ck(r.body === rec.typed.body, `S2 Ctrl+${k.toUpperCase()} 零正文突变`)
+  }
+  const diskEq = JSON.stringify(rec.disk_before) === JSON.stringify(rec.disk_after)
+  ck(diskEq, `S3 磁盘不变量：walk 前后恒等（${Object.keys(rec.disk_before ?? {}).length} 件——含草稿账；六直派+键盘+开关零磁盘写入）`)
+}
+
 // ---------------- run ----------------
 
-console.log(`[probe-cmd-avail] T-01 基础案 — 主工程+variant 阴性对照+vue 形状（跳位：variant=${SKIP_VARIANT} vue=${SKIP_VUE}）`)
+console.log(`[probe-cmd-avail] T-01 基础案+T-02 Store 臂 — 主工程+variant 阴性对照+真实 Store+vue 形状（跳位：variant=${SKIP_VARIANT} vue=${SKIP_VUE} store=${SKIP_STORE}）`)
 const rec = {}
 rec.fingerprints = fingerprints()
 for (const [k, v] of Object.entries(rec.fingerprints)) console.log(`  ${k} = ${String(v).slice(0, 100)}`)
@@ -532,6 +787,16 @@ if (!SKIP_VARIANT) {
   checkVariant(rec.variant)
 }
 
+if (!SKIP_STORE) {
+  const STORE_DIR = path.join(RUNTIME, 'probe-cmd-avail-store')
+  const STORE_WS = path.join(RUNTIME, 'probe-cmd-avail-ws-store')
+  fs.rmSync(STORE_WS, { recursive: true, force: true })
+  fs.mkdirSync(STORE_WS, { recursive: true })
+  buildStoreProbeProject(STORE_DIR)
+  rec.store = await runStoreArm({ dir: STORE_DIR, ws: STORE_WS, port: await pickPort() })
+  checkStore(rec.store)
+}
+
 if (!SKIP_VUE) {
   rec.vue_main = vueShape(MAIN_DIR, 'main')
   if (!SKIP_VARIANT) rec.vue_variant = vueShape(VARIANT_DIR, 'variant')
@@ -542,4 +807,4 @@ if (failures.length > 0) {
   console.error(`\n[probe-cmd-avail] FAIL（${failures.length} 项）:\n  - ${failures.join('\n  - ')}`)
   process.exit(1)
 }
-console.log(`\n[probe-cmd-avail] RESULT: T-01 基础案全过（载体可行性定谳——守卫/键盘/磁盘/形状四域；生产 Store 扩面归 T-02）`)
+console.log(`\n[probe-cmd-avail] RESULT: 基础案+Store 臂全过（载体可行性+真实 EditorStore 六 handler 守卫——守卫/键盘/磁盘/形状四域）`)

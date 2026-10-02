@@ -1138,6 +1138,7 @@ widget App {
         ActNew, ActOpen, ActSave, ActQuit,
         ActUndo, ActRedo, ActCut, ActCopy, ActPaste, ActSelectAll,
         ActConsole, ActSwitchTab, ActAbout,
+        EditorCommandsHelpOpen, EditorCommandsHelpClose,
         CloseRequest, QuitDiscard, QuitSaveClose, QuitConfirmCancel,
         ActBacklinks, LinksRefresh, OpenLink(str),
         MentionsRefreshOf(str), LinkifyGo(str),
@@ -1374,12 +1375,26 @@ widget App {
         // 指定，D-24③ 同判）。
         action (id: "file.movedir", handler: .ActMoveDir, title: "移动目录…")
         action (id: "file.quit",   handler: .ActQuit,   title: "退出",  shortcut: "Alt+F4")
-        action (id: "edit.undo",   handler: .ActUndo,   title: "撤销",  icon: "undo-2",      shortcut: "Ctrl+Z")
-        action (id: "edit.redo",   handler: .ActRedo,   title: "重做",  icon: "redo-2",      shortcut: "Ctrl+Y")
-        action (id: "edit.cut",    handler: .ActCut,    title: "剪切",  icon: "scissors")
-        action (id: "edit.copy",   handler: .ActCopy,   title: "复制",  icon: "copy")
-        action (id: "edit.paste",  handler: .ActPaste,  title: "粘贴",  icon: "clipboard")
-        action (id: "edit.select-all", handler: .ActSelectAll, title: "全选", shortcut: "Ctrl+A")
+        // 编辑命令族（PLAN-035 C-2 收口；契约
+        // attachments/035-command-availability-contract.md §2）：六命令
+        // 当前无宿主执行桥（034 SD-01 在录）——不进 toolbar/menubar 消
+        // 费面，三 shortcut 删除（undo/redo/select-all 原 Ctrl+Z/Y/A——
+        // 空 handler 不再截获正文/输入框按键，编辑器与 input 自主管
+        // 辖）；ID/handler/title 保留 + title 后缀与 enabled_if 元数据
+        // 如实标不可用（T-01 实测良构），旧 ID 直派只得到 Store 守卫的
+        // 可见说明，零编辑。保留 ≠ 可执行。----
+        action (id: "edit.undo",   handler: .ActUndo,   title: "撤销（菜单暂不可用）", icon: "undo-2",
+                enabled_if: "false")
+        action (id: "edit.redo",   handler: .ActRedo,   title: "重做（菜单暂不可用）", icon: "redo-2",
+                enabled_if: "false")
+        action (id: "edit.cut",    handler: .ActCut,    title: "剪切（菜单暂不可用）", icon: "scissors",
+                enabled_if: "false")
+        action (id: "edit.copy",   handler: .ActCopy,   title: "复制（菜单暂不可用）", icon: "copy",
+                enabled_if: "false")
+        action (id: "edit.paste",  handler: .ActPaste,  title: "粘贴（菜单暂不可用）", icon: "clipboard",
+                enabled_if: "false")
+        action (id: "edit.select-all", handler: .ActSelectAll, title: "全选（菜单暂不可用）",
+                enabled_if: "false")
         action (id: "view.console",    handler: .ActConsole,    title: "切换 Console", icon: "terminal", shortcut: "Ctrl+J",
                 checked_if: ".store.console_open")
         action (id: "view.backlinks",  handler: .ActBacklinks,  title: "切换反链", icon: "link-2", shortcut: "Ctrl+L",
@@ -1408,9 +1423,8 @@ widget App {
             item (action: "file.save")
             item (action: "file.daily")
             item (action: "view.reload")
-            sep
-            item (action: "edit.undo")
-            item (action: "edit.redo")
+            // 编辑命令族不进 toolbar（PLAN-035——撤销/重做两失效钮移除；
+            // 其余保存/文件/重载入口保留）
         }
     }
 
@@ -1464,13 +1478,10 @@ widget App {
                     menubar-menu (value: "edit") {
                         menubar-trigger "编辑"
                         menubar-content {
-                            menubar-item (title: "撤销", icon: "undo-2", shortcut: "Ctrl+Z") { onclick: .ActUndo }
-                            menubar-item (title: "重做", icon: "redo-2", shortcut: "Ctrl+Y") { onclick: .ActRedo }
-                            menubar-separator
-                            menubar-item (title: "剪切", icon: "scissors") { onclick: .ActCut }
-                            menubar-item (title: "复制", icon: "copy") { onclick: .ActCopy }
-                            menubar-item (title: "粘贴", icon: "clipboard") { onclick: .ActPaste }
-                            menubar-item (title: "全选", shortcut: "Ctrl+A") { onclick: .ActSelectAll }
+                            // 编辑命令说明（PLAN-035 C-2 收口——编辑菜单
+                            // 唯一有效入口；六执行项整体移除，不依赖
+                            // native menubar enabled 冻结缺口 D-24③）。
+                            menubar-item (title: "编辑命令说明…") { onclick: .EditorCommandsHelpOpen }
                         }
                     }
                     menubar-menu (value: "view") {
@@ -2400,6 +2411,25 @@ widget App {
                     }
                     alert-dialog-footer {
                         alert-dialog-cancel "取消" { onclick: .LcBlockCancel }
+                    }
+                }
+            }
+
+            // —— 编辑命令说明（PLAN-035；alert-dialog 在册族新实例——
+            // 单「关闭」钮，lc_block 同形）：六宿主编辑命令当前无执行桥
+            // （034 SD-01 在录），菜单入口与旧 ID 直派共口开此说明。文案
+            // 不声称原生轨快捷键可用、不写实现术语（契约 §1 冻结）；无
+            // 文档亦可打开；关闭仅清旗标（store Close——不清 dirty、不
+            // 重挂载、不触 Save/Reload）。声明位在 lc_block 后 StatusBar
+            // 前——闭态零可见面，弹层 input 序锚不受扰（零 input）。----
+            alert-dialog (open: .store.editor_commands_help_open) {
+                alert-dialog-content {
+                    alert-dialog-header {
+                        alert-dialog-title "编辑命令说明"
+                        alert-dialog-description "当前版本不支持从菜单执行撤销、重做、剪切、复制、粘贴和全选。正文和输入框仍可使用当前编辑器支持的操作。"
+                    }
+                    alert-dialog-footer {
+                        alert-dialog-cancel "关闭" { onclick: .EditorCommandsHelpClose }
                     }
                 }
             }
@@ -3346,6 +3376,8 @@ widget App {
 
         .ActSwitchTab -> { store.ActSwitchTab() }
         .ActAbout -> { store.ActAbout() }
+        .EditorCommandsHelpOpen -> { store.EditorCommandsHelpOpen() }
+        .EditorCommandsHelpClose -> { store.EditorCommandsHelpClose() }
         .CloseRequest -> { store.CloseRequest() }
         .QuitDiscard -> { store.QuitDiscard() }
         .QuitSaveClose -> { store.QuitSaveClose() }

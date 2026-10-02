@@ -6,7 +6,7 @@ author: [agent]
 created_at: 2026-10-02T05:05:19Z
 updated_at: 2026-10-02T11:30:00Z
 plan_revision: 1
-current_step: 1
+current_step: 2
 total_steps: 4
 supersedes_spec_components:
   - docs/specs/editor-host-capabilities.md
@@ -164,6 +164,8 @@ Vue 用区域定位验证两个 toolbar 按钮和六执行菜单项不存在、�
 - 验证：pnpm build；node tests/probe_command_availability.mjs；pnpm exec playwright test -c e2e/playwright.config.ts e2e/command-availability.spec.ts。入口、说明、key/body/draft/hash 及旧 ID 均满足 AC。
 - 对应 AC-01/02/03/04/06/07，SD-01/02/04。
 
+- [x] T-02 [✅ 已完成 2026-10-02] 生产改造：app.at 六 action（三 shortcut 删除+title 后缀+enabled_if:"false" 元数据）、toolbar 两执行钮移除（sep 随行）、编辑菜单单入口「编辑命令说明…」、根 alert-dialog 新实例（单「关闭」钮，lc_block 同形；声明位 lc_block 后 StatusBar 前）、App 双新 msg+薄委托；editor_store.at 新 editor_commands_help_open bool+Open/Close msg、六旧 handler 同步置位守卫（console 行降为诊断留痕非唯一反馈），status_bar.at 零改动。生成面核验：__autoActionsKeymap 三键（Ctrl+z/y/a）消除、Ctrl+S/F5/其余 shortcut 原样、help 文案与菜单发射正确。probe 扩真实 Store 臂（editor_store.at 原样副本+生产契约弹层形状）27 案全绿：S0 开档态/键入脏态+草稿检查点落定（save_note=草稿已保护）/S1 六 handler 直派逐项「说明开（last_cmd 判别）→零编辑+save_note 保持→关闭仅清旗标」/S2 键盘零路由/S3 磁盘 walk 恒等（含草稿账 4 件）。新 e2e/command-availability.spec.ts 3/3 绿（入口与说明=toolbar 两钮 count 0+菜单单入口+六执行项负向+文案逐字+无/有文档双开+DOM 标记法零重挂载；键程=真键 Ctrl+Z 撤销/Ctrl+Y 重做+Shift 三变体零宿主路由+快开 input Ctrl+A 局部替换正文磁盘保持；不变量=说明开关前后未保存/草稿已保护原值保持+磁盘零写入+说明后继续输入+Ctrl+S 真落盘）。验证：pnpm build 绿；node tests/probe_command_availability.mjs 全臂绿（主 28 案+variant 3+store 27+vue 形状）；新套件单跑 3/3。披露：e2e/editor-host-capabilities.spec.ts commands 案在 T-02 后预期红（旧「菜单撤销可点」面已移除）——按计划 T-03 同会话适配，过渡红不入本批门。
+
 ### T-03 键程、旧核验测试与原生矩阵适配
 
 - 依赖：T-02。补 e2e 新套件的 Ctrl+Z/Y、input 全选、焦点与事件观察；更新 e2e/editor-host-capabilities.spec.ts commands 和 tests/probe_editor_host.mjs 的 live 盘点。扩 tests/vm_matrix.mjs E 组并新增拟定 structure-v27.txt，逐项记录一旗标／新弹层／菜单与 toolbar 节点差异，不改旧结构锁。
@@ -186,6 +188,7 @@ Vue 用区域定位验证两个 toolbar 按钮和六执行菜单项不存在、�
 - 本记录仅为规划交接，非实现复审 pass；本次未运行应用测试或探针、未改生产代码／canonical Specs、未自动继续 work/review/merge。
 - 2026-10-02T11:30:00Z：stage: work | plan_id: PLAN-035 | plan_revision: 1 | outcome: executing（启动） | code_commit: 本批（规划落档+work 启动；直接 main 线性惯例单一主检出——001..034 在册，无 worktree/dev 分支面） | task_ids: 无（T-01 未开工） | evidence: 用户指令「计划 035 auto-plan-work 实施」授权执行；主检出预检=路线图+计划文件规划面 WIP（本批落档清零），代码路径零 WIP | blockers: 无 | next: T-01（收口载体与兼容守卫确认）。
 - 2026-10-02T12:10:00Z：stage: work | plan_id: PLAN-035 | plan_revision: 1 | outcome: executing（T-01 完成） | code_commit: 1bffd15（规划落档）+本批 | task_ids: T-01 | evidence: 契约冻结件 attachments/035-command-availability-contract.md（§1..§7，含 enabled_if 实测修订）+node tests/probe_command_availability.mjs 全绿（主工程 25 案+variant 阴性对照 3 案+vue 形状两向——六命令守卫/键盘零路由/磁盘不变量/形状四域；失败复测=variant ctrl+z→flag 翻真成对在案）+pnpm build 绿 | blockers: 无 | next: T-02（生产入口与说明状态改造）。 |
+- 2026-10-02T12:50:00Z：stage: work | plan_id: PLAN-035 | plan_revision: 1 | outcome: executing（T-02 完成） | code_commit: c08e547（T-01）+本批 | task_ids: T-02 | evidence: app.at/editor_store.at 生产改造（三 shortcut 删+toolbar 两钮移除+菜单单入口+根说明 dialog+store 旗标/双 msg/六守卫 handler；status_bar 零改）+probe 真实 Store 臂 27 案全绿（六 handler 直派零编辑+save_note 保持+键盘零路由+磁盘恒等）+e2e/command-availability.spec.ts 3/3（入口/键程/不变量）+pnpm build 绿+生成 keymap 三键消除核验 | blockers: 无（e2e/editor-host-capabilities commands 案过渡红按计划 T-03 适配，同会话） | next: T-03（键程/旧核验测试/原生矩阵适配）。 |
 
 ## 10. 待澄清事项
 

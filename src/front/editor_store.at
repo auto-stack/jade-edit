@@ -251,6 +251,13 @@ store EditorStore {
         var lc_verdict str = ""
         var lc_moves str = ""
         var lc_status str = ""
+        // —— 编辑命令说明开态（PLAN-035；契约
+        // attachments/035-command-availability-contract.md §3）：六宿主
+        // 编辑命令（undo/redo/cut/copy/paste/select-all）当前无执行桥
+        //（034 SD-01 在录）——旧 handler 同步置位开可见说明，零编辑器
+        // 读写；关闭仅清旗标（不动正文/草稿/save_note/磁盘）。独立于
+        // save_note 提示通道（说明不吞安全注记——AC-07）。----
+        var editor_commands_help_open bool = false
     }
 
     // msg 载荷单类型（编译器约束）：Open 单 map、Edit 单 str。
@@ -265,6 +272,7 @@ store EditorStore {
         ActUndo, ActRedo, ActCut, ActCopy, ActPaste, ActSelectAll, ActAbout,
         ActQuit, ConsoleClear, CloseRequest, QuitDiscard, QuitSaveClose,
         QuitConfirmCancel,
+        EditorCommandsHelpOpen, EditorCommandsHelpClose,
         BacklinksToggle,
         TagsToggle,
         FindOpen(str), FindToggle, FindClose,
@@ -1189,14 +1197,52 @@ store EditorStore {
             .console = console_lines()
         }
 
-        // ---- 编辑器操作族降级（autodown_editor 无 builtin 通道，T-00
-        // 实勘登记；编辑器内原生快捷键仍可用） ----
-        .ActUndo -> { console_log("editor-native: undo（autodown_editor 无 builtin）"); .console = console_lines() }
-        .ActRedo -> { console_log("editor-native: redo"); .console = console_lines() }
-        .ActCut -> { console_log("editor-native: cut"); .console = console_lines() }
-        .ActCopy -> { console_log("editor-native: copy"); .console = console_lines() }
-        .ActPaste -> { console_log("editor-native: paste"); .console = console_lines() }
-        .ActSelectAll -> { console_log("editor-native: select-all"); .console = console_lines() }
+        // ---- 编辑命令族守卫（PLAN-035；契约 §2/§3——034 C-2 收口）：
+        // 六宿主编辑命令当前无执行桥（editor-host-capabilities §1.2 在
+        // 录），handler 同步置位说明开态——旁路触发（旧 ID 直派/兼容消
+        // 息）只能得到可见说明，零编辑器读写、零磁盘/草稿/save_note 副
+        // 作用。console 行仅诊断留痕，非唯一反馈（替代旧 no-op 降级——
+        // 不再以日志冒充反馈）。保留 ID ≠ 可执行。----
+        .ActUndo -> {
+            .editor_commands_help_open = true
+            console_log("editor-command-unavailable: undo（菜单暂不可用——见编辑命令说明）")
+            .console = console_lines()
+        }
+        .ActRedo -> {
+            .editor_commands_help_open = true
+            console_log("editor-command-unavailable: redo（菜单暂不可用——见编辑命令说明）")
+            .console = console_lines()
+        }
+        .ActCut -> {
+            .editor_commands_help_open = true
+            console_log("editor-command-unavailable: cut（菜单暂不可用——见编辑命令说明）")
+            .console = console_lines()
+        }
+        .ActCopy -> {
+            .editor_commands_help_open = true
+            console_log("editor-command-unavailable: copy（菜单暂不可用——见编辑命令说明）")
+            .console = console_lines()
+        }
+        .ActPaste -> {
+            .editor_commands_help_open = true
+            console_log("editor-command-unavailable: paste（菜单暂不可用——见编辑命令说明）")
+            .console = console_lines()
+        }
+        .ActSelectAll -> {
+            .editor_commands_help_open = true
+            console_log("editor-command-unavailable: select-all（菜单暂不可用——见编辑命令说明）")
+            .console = console_lines()
+        }
+        // 说明开关（PLAN-035）：Open = 菜单入口共口（六守卫 handler 同
+        // 形置位语义）；Close = 仅清旗标（不清 dirty、不重挂载、不触
+        // Save/Reload——AC-02/06）。
+        .EditorCommandsHelpOpen -> {
+            .editor_commands_help_open = true
+            .console = console_lines()
+        }
+        .EditorCommandsHelpClose -> {
+            .editor_commands_help_open = false
+        }
 
         .ActConsole -> {
             .console_open = !.console_open
