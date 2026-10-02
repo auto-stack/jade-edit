@@ -9,9 +9,10 @@
 //               编辑器 content 面与 data-block-id 公开域。
 //   save        引擎 Save 点击零宿主效果（@save 无监听——未接线直证）
 //               vs 宿主 toolbar/Ctrl+S 真保存（共 ActSave 门链在册）。
-//   commands    六命令宿主入口 = 菜单/快捷键→console 降级（内容零变化
-//               ——宿主命令桥缺供给直证）；Ctrl+Z 引擎内部撤销与宿主
-//               ActUndo 并行（互不干扰实录）。
+//   commands    六命令宿主入口 = PLAN-035 收口后编辑菜单仅「编辑命令说明…」
+//               入口（六执行项移除、说明 dialog 可见反馈替代 console 降级
+//               ——C-2 交付面）；Ctrl+Z 引擎内部撤销（宿主 keymap 零路由
+//               ——独占不并行）；Ctrl+Shift+O Shift 丢失缺口在录维持。
 //   navigation  正文 wiki 链接点击零导航（@open-wiki-link 无监听）+
 //               data-block-id 块域稳定面（getBlockMap 公开契约）。
 //
@@ -114,7 +115,7 @@ test('宿主能力核验·save（引擎 @save 未接线 vs 宿主入口真保存
   console.log('[save] PASS — Ctrl+S 宿主快捷键真落盘且无引擎双保存面')
 })
 
-test('宿主能力核验·commands（六命令宿主入口 console 降级 + 引擎内部撤销并行）', async ({ page }) => {
+test('宿主能力核验·commands（菜单收口说明入口 + 引擎内部撤销 + Shift 缺口实录）', async ({ page }) => {
   test.setTimeout(180_000)
   await page.goto('/')
   await expect(page.getByText('ready', { exact: true }).first()).toBeVisible({ timeout: 15_000 })
@@ -131,36 +132,44 @@ test('宿主能力核验·commands（六命令宿主入口 console 降级 + 引�
     .poll(async () => /撤\s*$/.test(await content.innerText()), { timeout: 10_000 })
     .toBe(true)
 
-  // 引擎内部撤销（Ctrl+Z 真键——EngineEditor onContentKeydown runHistory）
+  // 引擎内部撤销（Ctrl+Z 真键——EngineEditor onContentKeydown runHistory；
+  // PLAN-035 起宿主 keymap 无 Ctrl+Z 路由——内部撤销独占不并行）
   await page.keyboard.press('Control+z')
   await expect
     .poll(async () => !/撤\s*$/.test(await content.innerText()), { timeout: 10_000 })
     .toBe(true)
-  console.log('[commands] 引擎内部 Ctrl+Z 撤销生效（内容复原——vue 轨内部历史栈在册）')
+  await expect(page.getByText('编辑命令说明', { exact: true })).toHaveCount(0)
+  console.log('[commands] 引擎内部 Ctrl+Z 撤销生效（内容复原——vue 轨内部历史栈在册；宿主零截获——无说明弹出）')
 
-  // 宿主菜单 撤销（编辑→撤销）→ console 降级：对已存在的新变更零效果
-  await content.click()
-  await page.keyboard.press('Control+End')
-  await page.keyboard.type('标', { delay: 25 })
-  await expect
-    .poll(async () => /标\s*$/.test(await content.innerText()), { timeout: 10_000 })
-    .toBe(true)
+  // PLAN-035 收口（C-2）：编辑菜单仅「编辑命令说明…」有效入口——六执行
+  // 项移除，旧「菜单可点但零效果」面退役；点击入口 → 可见说明 dialog
+  //（替代 console_log 降级——可见不可用反馈）
   await page.getByText('编辑', { exact: true }).first().click()
-  await page.getByText('撤销', { exact: true }).first().click()
-  await page.waitForTimeout(800)
-  await expect(visibleEditor(page)).toContainText('标', { timeout: 10_000 })
-  console.log('[commands] PASS — 宿主菜单撤销零效果（console_log 降级直证——菜单命令不可用面）')
+  await expect(page.getByText('编辑命令说明…', { exact: true })).toBeVisible()
+  for (const gone of ['撤销', '重做', '剪切', '复制', '粘贴', '全选']) {
+    await expect(page.getByText(gone, { exact: true })).toHaveCount(0)
+  }
+  await page.getByText('编辑命令说明…', { exact: true }).first().click()
+  await expect(page.getByText('编辑命令说明', { exact: true })).toBeVisible({ timeout: 5_000 })
+  await expect(page.getByText('当前版本不支持从菜单执行撤销、重做、剪切、复制、粘贴和全选。正文和输入框仍可使用当前编辑器支持的操作。')).toBeVisible()
+  // 新变更仍原样（说明不编辑——zero-effect 面由「内容保持」承载）
+  await page.getByText('关闭', { exact: true }).click()
+  await expect(page.getByText('编辑命令说明', { exact: true })).toHaveCount(0)
+  await expect(visibleEditor(page)).toContainText('这是一段示例文本')
+  console.log('[commands] PASS — 编辑菜单收口：六执行项移除+说明入口可见 dialog（console_log 降级面退役——C-2 交付）')
 
-  // Ctrl+A 编辑器内：浏览器原生全选 + 宿主 ActSelectAll 并行，内容零破坏
+  // Ctrl+A 编辑器内：浏览器原生全选（宿主 keymap 无路由——无并行面），
+  // 内容零破坏
   await content.click()
   await page.keyboard.press('Control+a')
   await page.waitForTimeout(400)
   await expect(visibleEditor(page)).toContainText('这是一段示例文本', { timeout: 5_000 })
-  console.log('[commands] PASS — Ctrl+A 编辑器内原生全选与宿主回执并行、内容零破坏')
+  await expect(page.getByText('编辑命令说明', { exact: true })).toHaveCount(0)
+  console.log('[commands] PASS — Ctrl+A 编辑器内原生全选（宿主零路由）、内容零破坏')
 
   // 全局热键 Shift 丢失（在录生成器缺口）：Ctrl+Shift+O 组合按 keymap
   // 'Ctrl+o' 命中 ActOpen（vue dialog_open 垫片 ""=取消——无害），
-  // 孤页清单面板不开
+  // 孤页清单面板不开（034 实录缺口维持——不在本片修复范围）
   await page.keyboard.press('Control+Shift+o')
   await page.waitForTimeout(600)
   await expect(page.getByPlaceholder('过滤文件名…')).toHaveCount(0)

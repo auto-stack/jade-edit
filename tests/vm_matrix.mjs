@@ -10,18 +10,25 @@
 //   5 save    保存落盘（toolbar 保存 → 脏标清 + 磁盘字节含标记 + frontmatter 保留
 //             + updated_at 自动维护——PLAN-015：已有键保存即更新值[当日形]）
 //   6 reload  重载可见（磁盘外改 → toolbar 重载 → 编辑器见新内容）
-//   B base    结构基线 v21 零漂移（仅 merged 臂；必须在 1-6 后、扩单前采集
-//             ——v20 锁的是六检查终态，扩单不漂移基线；v20=PLAN-025 目录
-//             合并三择批[App dirmerge_strategy 入 dump——"both" 缺省 + 移动
-//             目录弹层三钮闭态渲染；v19 留档]；v19=PLAN-021 试用
-//             赋能批[store ws_warn 入 dump——P≤200 防线态现行语料恒空；
-//             v18 留档]；v18=PLAN-020 孤页+recents 切片[App orphan_rows/
-//             recent_paths 入 dump——孤页 pristine 恒空[]/recent_paths 六
-//             检查后 1 项[check 3 开档]；第五模式 action/menubar 项入 id
-//             序列——计划内重锁第五例]；v17=PLAN-019 目录合并 UI 面、
-//             v16=PLAN-018 目录移动 UI 面、v15=PLAN-016 回收站 UI 面、
-//             v14=PLAN-015 每日笔记、v13=PLAN-014、v12=PLAN-013、v11=
-//             PLAN-012 等留档）
+//   B base    结构基线 v27 零漂移（仅 merged 臂；必须在 1-6 后、扩单前采集
+//             ——v27 锁的是六检查终态，扩单不漂移基线；v27=PLAN-035 编辑
+//             命令入口真实化批[store editor_commands_help_open 入 dump——
+//             false 缺省；toolbar 撤销/重做两钮 vnode 消失+编辑菜单六执
+//             行项→单说明入口——snapshot id 序列两处收缩，逐项解释在
+//             PLAN-035 T-03 记录；v26=PLAN-033 名称查找批留档]；v20=
+//             PLAN-025 目录合并三择批[v19 留档]；v19=PLAN-021 试用赋能批
+//             [v18 留档]；v18=PLAN-020 孤页+recents 切片[第五模式
+//             action/menubar 项入 id 序列——计划内重锁第五例]；v17=
+//             PLAN-019、v16=PLAN-018、v15=PLAN-016、v14=PLAN-015、
+//             v13=PLAN-014、v12=PLAN-013、v11=PLAN-012 等留档）
+//   E cmd-avail 编辑命令入口真实化（PLAN-035；B 后 7 前单臂子步——fail 即
+//             臂败不占检查位）：toolbar/编辑菜单六执行项零恰等钮（说明
+//             dialog description 长句非短词全等——闭态恒渲染不误中）→
+//             编辑菜单单「编辑命令说明…」入口 → 说明 dialog 开
+//             [editor_commands_help_open=true——可见说明替代 console 降
+//             级]→ 正文/脏标恒等 → 关闭仅清旗标；Ctrl+Z/Y/A 键盘零宿主
+//             路由（action 表无三键——flag 恒假；直派守卫逐值面归
+//             probe_command_availability 真实 Store 臂）
 //   7 tab     tab 面：开两档 → 切换（active 断言 + 内容互换）→ dirty 档
 //             关闭走确认弹层两路（取消=档留；放弃修改并关闭=结算式弃改——PLAN-031 T-05 三动作化）
 //   8 editops 编辑操作族：段中回车/退格（C-5 整文构造——回车分段可见 +
@@ -190,7 +197,7 @@ const argOf = (name) => {
   return i >= 0 ? args[i + 1] : undefined
 }
 const ARM = argOf('--arm') ?? 'all' // all | merged | split
-const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v26.txt')
+const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v27.txt')
 const SAVE_BASELINE = argOf('--save-baseline')
 
 const EDIT_MARKER = 'jade-edit 冒烟标记：编辑回写可见。'
@@ -636,27 +643,21 @@ async function runArm(arm, port) {
       const stateDump = (await callTool('autoui_state', {})).trim()
       const snapIds = JSON.stringify([...(await snapshotText()).matchAll(/#(vnode_\d+)/g)].map((m) => m[1]))
       const headerFor = (file) =>
-        `// jade-edit vm 结构基线 v26（PLAN-033 T-04 重锁；v25=PLAN-032 批[头注字面 v21 系陈旧文案——
+        `// jade-edit vm 结构基线 v27（PLAN-035 T-03 重锁；v26=PLAN-033 批、v25=PLAN-032 批[头注字面 v21 系陈旧文案——
 ` +
-        `// F-32-R3 同类面，本锁起逐版实写]；v20=PLAN-025、v19=PLAN-021、v18=PLAN-020、v17=PLAN-019、
+        `// F-32-R3 同类面，v25 锁起逐版实写]；v20=PLAN-025、v19=PLAN-021、v18=PLAN-020、v17=PLAN-019、
 ` +
         `// v16=PLAN-018、v15=PLAN-016、v14=PLAN-015、v13=PLAN-014、v12=PLAN-013、v11=PLAN-012 等均留档）。
 ` +
-        `// 重锁因由：名称查找一致批（PLAN-033）——App 模型七新字段入 dump（names/names_state/
+        `// 重锁因由：编辑命令入口真实化批（PLAN-035）——store editor_commands_help_open 入 dump（false 缺省，
 ` +
-        `// names_seq/names_gen/find_seq/find_err/find_stale——名称目录与查找请求门态。B 位终态值：
+        `// B 位终态值恒 false——说明未开）+ toolbar 撤销/重做两执行钮 vnode 消失 + 编辑菜单六执行项→单
 ` +
-        `// names=[]、names_state=""、names_seq=0、find_seq=0、find_err=""（查找面板未开过）+
+        `// 「编辑命令说明…」入口（snapshot id 序列两处收缩；说明 alert-dialog 闭态恒渲染——闭态零可见面）。
 ` +
-        `// names_gen=1、find_stale=true（check 5 ActSave→NamesInvalidate 触点副作用——每臂
+        `// 计划内重锁第十例——store 新字段+入口结构收缩面（E 组新增不占检查位，逐项解释在 PLAN-035 T-03 记录）。
 ` +
-        `// 确定性一存）；查找
-` +
-        `// 面板闭态零视觉面（snapshot vnode id 序列零变化——diff 仅 state 段七行，逐项解释在
-` +
-        `// PLAN-033 T-04 记录）。计划内重锁第九例——App 模型新字段面。
-` +
-        `// 仪器同 v2..v25：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态
+        `// 仪器同 v2..v26：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态
 ` +
         `//（chrome 全套 + Hello World.ad 开；查找面板/建页弹层/新建弹层/属性弹层/新建目录
 ` +
@@ -664,7 +665,7 @@ async function runArm(arm, port) {
 ` +
         `// 面板/反链面板/重载确认弹层未开——find_*/names_*/create_*/new_*/meta_*/dir_*/move_*/movedir_*/
 ` +
-        `// deldir_*/rendir_*/rename_*/delete_*/tags_*/mention_rows/reload_* 全为默认值入 dump）。
+        `// deldir_*/rendir_*/rename_*/delete_*/tags_*/mention_rows/reload_*/editor_commands_help_open 全为默认值入 dump）。
 ` +
         `// 再生成：node tests/vm_matrix.mjs --save-baseline ${path.relative(repoRoot, file).replace(/\\\\/g, '/')}\n`
       const baselineBodyOf = () => `## state\n${stateDump}\n\n## snapshot-ids\n${snapIds}\n`
@@ -675,10 +676,91 @@ async function runArm(arm, port) {
       } else if (fs.existsSync(BASELINE)) {
         const raw = fs.readFileSync(BASELINE, 'utf8')
         const ok = raw === headerFor(BASELINE) + baselineBodyOf()
-        check('B', 'baseline', ok, ok ? '结构基线 v26 零漂移（state 逐字节 + id 序列）——PLAN-033 T-04 重锁（App 模型七新字段入 dump：七行中五行默认值+names_gen=1/find_stale=true 系 check5 ActSave→NamesInvalidate 确定性副作用——snapshot id 序列零变化，diff 仅 state 段七行，逐项解释在 PLAN-033 T-04）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
+        check('B', 'baseline', ok, ok ? '结构基线 v27 零漂移（state 逐字节 + id 序列）——PLAN-035 T-03 重锁（store editor_commands_help_open 入 dump false 缺省+toolbar 两执行钮 vnode 消失+编辑菜单六执行项→单说明入口——id 序列两处收缩，逐项解释在 PLAN-035 T-03）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
       } else {
-        console.log('  [baseline] structure-v26 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v26.txt')
+        console.log('  [baseline] structure-v27 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v27.txt')
       }
+    }
+
+    // —— E 编辑命令入口真实化组（PLAN-035；契约
+    // attachments/035-command-availability-contract.md §1/§4——merged 臂
+    // 生产面）——toolbar 两执行钮移除（全树无 ownText 恰等六短词的
+    // button——说明 dialog description 长句非短词全等，闭态恒渲染不误
+    // 中）；编辑菜单开 → 单一「编辑命令说明…」项 → 说明 dialog 开
+    //（editor_commands_help_open=true——可见说明替代 console 降级）→
+    // 正文/脏标不变 → 关闭仅清旗标；Ctrl+Z/Y/A 键盘零宿主路由（action
+    // 表无三键——flag 恒假；正文/脏标恒等）。执行序在 B 后 7 前（弹层
+    // 开关零状态残留——终态即默认态，不扰后续组与基线）。子步不占检查
+    // 位（组数不变），fail 即臂败。
+    {
+      const eBodyBefore = (await callTool('autoui_state', {})).match(/active_body: "((?:[^"\\]|\\.)*)"/)?.[1] ?? ''
+      const eDirtyBefore = /active_dirty: true/.test(await callTool('autoui_state', {}))
+      const sixGone = ['撤销', '重做', '剪切', '复制', '粘贴', '全选']
+      const countExactButtons = async (label) => {
+        const t = await snapshot()
+        let n = 0
+        const visit = (node) => {
+          if (node.head.startsWith('button ') && elementIdOf(node) && ownText(node) === label) n = n + 1
+          for (const c of node.children) visit(c)
+        }
+        visit(t)
+        return n
+      }
+      let eToolbarGoneOk = true
+      for (const label of sixGone) {
+        if ((await countExactButtons(label)) !== 0) eToolbarGoneOk = false
+      }
+      // 编辑菜单开 → 单一说明入口（六执行项开态复认）→ 说明 dialog
+      await pressButton('编辑')
+      const helpItem = await waitButton('编辑命令说明…', { exact: true })
+      let eMenuOnlyOk = true
+      for (const label of sixGone) {
+        if ((await countExactButtons(label)) !== 0) eMenuOnlyOk = false
+      }
+      const resHelp = await callTool('autoui_action', { element_id: elementIdOf(helpItem), action: 'press' })
+      if (!/status: ok/.test(resHelp)) throw new Error('press 编辑命令说明… not ok')
+      await stateIs('editor_commands_help_open', 'true')
+      const stHelpOpen = await callTool('autoui_state', {})
+      const eBodyHelp = stHelpOpen.match(/active_body: "((?:[^"\\]|\\.)*)"/)?.[1] ?? ''
+      const eBodyStableOk = eBodyHelp === eBodyBefore
+      // 关闭钮 = 说明 dialog 内容域内定位（D-29③ 标题锚变体——逐级上溯
+      // 至首个子树含「关闭」钮的祖先即 dialog content 域；recover 等
+      // 弹层闭态恒渲染且树序在前，全树 findFirst 会误中其 RecoverClose
+      // ——一次性上溯 N 代同样越界，故逐级判定）
+      const closeInHelpDialog = async () => {
+        const dl = Date.now() + 6000
+        for (;;) {
+          const t = await snapshot()
+          const titleNode = findFirst(t, (n) => ownText(n) === '编辑命令说明')
+          if (titleNode) {
+            let scope = titleNode
+            while (findParent(t, scope)) {
+              scope = findParent(t, scope)
+              const btn = findFirst(scope, (n) => n !== scope && n.head.startsWith('button ') && elementIdOf(n) && ownText(n) === '关闭')
+              if (btn) {
+                const res = await callTool('autoui_action', { element_id: elementIdOf(btn), action: 'press' })
+                if (!/status: ok/.test(res)) throw new Error('press help 关闭 not ok')
+                return
+              }
+            }
+          }
+          if (Date.now() > dl) throw new Error('help dialog 关闭 button not found (content-scoped)')
+          await sleep(300)
+        }
+      }
+      await closeInHelpDialog()
+      await stateIs('editor_commands_help_open', 'false')
+      // Ctrl+Z/Y/A 键盘零宿主路由（生产 action 表无三键——flag 恒假）
+      let eKeysOk = true
+      for (const k of ['z', 'y', 'a']) {
+        await callTool('autoui_keyboard', { key: k, modifiers: ['ctrl'] })
+        await sleep(500)
+        const st = await callTool('autoui_state', {})
+        if (/editor_commands_help_open: true/.test(st)) eKeysOk = false
+      }
+      const eDirtyAfter = /active_dirty: true/.test(await callTool('autoui_state', {}))
+      check('E', 'cmd-avail', eToolbarGoneOk && eMenuOnlyOk && eBodyStableOk && eKeysOk && eDirtyBefore === eDirtyAfter,
+        `toolbar/菜单六执行项零恰等钮=${eToolbarGoneOk && eMenuOnlyOk} 说明开关（open→true→关闭→false）正文恒等=${eBodyStableOk} 键盘 Ctrl+Z/Y/A 零宿主路由=${eKeysOk} 脏标恒等=${eDirtyBefore === eDirtyAfter}（PLAN-035 C-2 收口——直派守卫逐值面归 probe_command_availability Store 臂）`)
     }
 
     // 7 tab 面：开两档 → 切换（active 断言 + 内容互换）→ dirty 档关闭确认两路。
@@ -3706,5 +3788,5 @@ for (const { arm, results } of all) {
 }
 if (failed > 0) process.exitCode = 1
 if (all.every(({ results }) => results.every((r) => r.ok))) {
-  console.log(`[matrix] ALL GREEN：${arms.join(' + ')} 臂检查单全过（六检查 + 基线[merged] + tab/editops/link/create/find/rename/file/meta 扩单 + quit）`)
+  console.log(`[matrix] ALL GREEN：${arms.join(' + ')} 臂检查单全过（六检查 + 基线[merged] + E cmd-avail[merged] + tab/editops/link/create/find/rename/file/meta 扩单 + quit）`)
 }

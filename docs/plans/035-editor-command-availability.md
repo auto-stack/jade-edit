@@ -6,7 +6,7 @@ author: [agent]
 created_at: 2026-10-02T05:05:19Z
 updated_at: 2026-10-02T11:30:00Z
 plan_revision: 1
-current_step: 2
+current_step: 3
 total_steps: 4
 supersedes_spec_components:
   - docs/specs/editor-host-capabilities.md
@@ -172,6 +172,8 @@ Vue 用区域定位验证两个 toolbar 按钮和六执行菜单项不存在、�
 - 验证：新 e2e 单套；pnpm exec playwright test -c e2e/playwright.config.ts e2e/editor-host-capabilities.spec.ts；node tests/probe_editor_host.mjs --phase all；node tests/vm_matrix.mjs --arm merged。内部快捷键／input 真效果通过、宿主不截获，034 其他能力缺口结论无变化。
 - 对应 AC-01..09，SD-01/02/03/04。
 
+- [x] T-03 [✅ 已完成 2026-10-02] 旧核验适配：e2e/editor-host-capabilities.spec.ts commands 案改写（「旧菜单可点零效果」面退役→新入口说明 dialog+六执行项负向+宿主零截获注记；引擎内部 Ctrl+Z 独占不再并行；Ctrl+Shift+O Shift 丢失缺口在录维持）4/4 单跑全绿；tests/probe_editor_host.mjs live 盘点对齐（cmd_family 多行守卫形+cmd_help_flag+cmd_guard_note 三锚；commands 相位头注「隔离工程缺桥模拟与生产守卫分域」）--phase all 全绿（historical unsupported/BLOCKED 按行在案，034 结论零变化）。原生矩阵：vm_matrix 扩 E cmd-avail 组（toolbar/菜单六执行项零恰等钮[说明 dialog 长句非短词全等——闭态恒渲染不误中]+编辑菜单单入口→说明开→正文恒等→关闭仅清旗标[内容域逐级上溯锚——recover 弹层树序在前全树 findFirst 会误中其关闭钮，两次失败复测定谳后改定]+键盘零路由；B 后 7 前单臂子步不占检查位）+基线 v26→v27 重锁（BASELINE/headerFor/B 标签/ALL GREEN 摘要四处；structure-v27.txt 新增）。v26→v27 diff 逐项解释：state +1 行（editor_commands_help_open: false——store 新字段唯一增量）+snapshot id 序列两处收缩（toolbar 撤销/重做钮子树+编辑菜单六执行项 sep）+新说明 alert-dialog 闭态恒渲染子树节点入序列（闭态零可见面）——与契约 §5 预期清单逐项对读一致。验证：vm merged 20/20 两跑（首跑 --save-baseline 落 v27+复跑 B 零漂移；19/19 检查位+E 组子步计入=20 检查位）+probe_editor_host --phase all 全绿+editor-host-capabilities 4/4+command-availability 3/3（T-02 已验）。
+
 ### T-04 回归、规范落位与复审交接
 
 - 依赖：T-03。工作阶段新增 docs/specs/editor-command-availability.md，更新 editor-host-capabilities.md §1.2／§3 C-2 并在 ARCHITECTURE §4 加指针；保留 034 旧附件／归档与其他四 Specs 承诺。更新路线图 R-03b1 的真实阶段状态，保留 A-1/A-2/A-3/B-1/B-2 等后续解锁项。
@@ -189,6 +191,7 @@ Vue 用区域定位验证两个 toolbar 按钮和六执行菜单项不存在、�
 - 2026-10-02T11:30:00Z：stage: work | plan_id: PLAN-035 | plan_revision: 1 | outcome: executing（启动） | code_commit: 本批（规划落档+work 启动；直接 main 线性惯例单一主检出——001..034 在册，无 worktree/dev 分支面） | task_ids: 无（T-01 未开工） | evidence: 用户指令「计划 035 auto-plan-work 实施」授权执行；主检出预检=路线图+计划文件规划面 WIP（本批落档清零），代码路径零 WIP | blockers: 无 | next: T-01（收口载体与兼容守卫确认）。
 - 2026-10-02T12:10:00Z：stage: work | plan_id: PLAN-035 | plan_revision: 1 | outcome: executing（T-01 完成） | code_commit: 1bffd15（规划落档）+本批 | task_ids: T-01 | evidence: 契约冻结件 attachments/035-command-availability-contract.md（§1..§7，含 enabled_if 实测修订）+node tests/probe_command_availability.mjs 全绿（主工程 25 案+variant 阴性对照 3 案+vue 形状两向——六命令守卫/键盘零路由/磁盘不变量/形状四域；失败复测=variant ctrl+z→flag 翻真成对在案）+pnpm build 绿 | blockers: 无 | next: T-02（生产入口与说明状态改造）。 |
 - 2026-10-02T12:50:00Z：stage: work | plan_id: PLAN-035 | plan_revision: 1 | outcome: executing（T-02 完成） | code_commit: c08e547（T-01）+本批 | task_ids: T-02 | evidence: app.at/editor_store.at 生产改造（三 shortcut 删+toolbar 两钮移除+菜单单入口+根说明 dialog+store 旗标/双 msg/六守卫 handler；status_bar 零改）+probe 真实 Store 臂 27 案全绿（六 handler 直派零编辑+save_note 保持+键盘零路由+磁盘恒等）+e2e/command-availability.spec.ts 3/3（入口/键程/不变量）+pnpm build 绿+生成 keymap 三键消除核验 | blockers: 无（e2e/editor-host-capabilities commands 案过渡红按计划 T-03 适配，同会话） | next: T-03（键程/旧核验测试/原生矩阵适配）。 |
+- 2026-10-02T13:45:00Z：stage: work | plan_id: PLAN-035 | plan_revision: 1 | outcome: executing（T-03 完成） | code_commit: d286f95（T-02）+本批 | task_ids: T-03 | evidence: editor-host-capabilities commands 案适配 4/4+probe_editor_host 盘点三锚对齐 --phase all 全绿+vm_matrix E 组+结构基线 v27 重锁（merged 20/20 两跑——落锁跑+零漂移复跑；diff=state+1 行/snapshot 两处收缩/新弹层闭态子树，逐项解释在 T-03 记录与契约 §5 对读） | blockers: 无 | next: T-04（回归/规范落位/复审交接）。 |
 
 ## 10. 待澄清事项
 

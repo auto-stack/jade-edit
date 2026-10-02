@@ -25,6 +25,12 @@
 // （载体阻断——owner/重入条件在案即调查通过形）。预期缺能力案 = 调查
 // 通过、接口尚不可用（unsupported 结论单独成行，不计为功能成功）。
 //
+// PLAN-035 注记：commands 相位为**隔离工程缺桥模拟**（探针自含 widget
+// 六 handler 计数器——历史能力证据，与生产守卫无关）；生产 EditorStore
+// 六 handler 已于 035 改为可见说明守卫（零编辑），其直派/键盘/磁盘守卫
+// 验证归 tests/probe_command_availability.mjs 真实 Store 臂。live 源码
+// 盘点（entryInventory）已对齐 035 现状。
+//
 // 用法（仓根）：node tests/probe_editor_host.mjs [--phase all]
 
 import { spawn, execFileSync, spawnSync } from 'node:child_process'
@@ -664,7 +670,11 @@ function entryInventory(rec) {
     editor_vue: grab(appVue, /<AutoDownEditor[^>]*>/s),
     actsave: grab(appAt, /\.ActSave -> \{[\s\S]{0,120}/),
     store_save_head: grab(storeAt, /\.Save -> \{[\s\S]{0,80}/),
-    cmd_family: grab(storeAt, /\.ActUndo -> \{[^\n]*\}\s*\n\s*\.ActRedo[\s\S]{0,240}/),
+    // PLAN-035 对齐：六 handler 已改为可见说明守卫（多行形——置位
+    // editor_commands_help_open+console 诊断），旧单行 console_log 降级退役
+    cmd_family: grab(storeAt, /\.ActUndo -> \{[\s\S]{0,200}/),
+    cmd_help_flag: grab(storeAt, /editor_commands_help_open bool = false/),
+    cmd_guard_note: grab(appAt, /编辑命令说明[\s\S]{0,120}/),
     openlink: grab(appAt, /\.OpenLink\(path\) -> \{[\s\S]{0,120}/),
   }
   return rec
