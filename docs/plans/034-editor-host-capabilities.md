@@ -1,12 +1,12 @@
 ---
 plan_id: PLAN-034
-status: drafting
+status: executing
 feature_name: 编辑器宿主能力核验与供给契约（R-03a）
 author: [agent]
 created_at: 2026-10-02T04:10:23Z
-updated_at: 2026-10-02T04:10:23Z
+updated_at: 2026-10-02T06:30:00Z
 plan_revision: 1
-current_step: 0
+current_step: 1
 total_steps: 4
 supersedes_spec_components: []
 new_spec_components:
@@ -172,6 +172,8 @@ show_actions:false 目前只证明生成器发射 :show-actions，不能据此�
 - 验证：node tests/probe_editor_host.mjs --phase inventory；pnpm build；pnpm exec playwright test -c e2e/playwright.config.ts e2e/editor-host-capabilities.spec.ts --grep inventory。盘点、Save 栏／show_actions 的实际结果与两轨生成／读出证据落表，binary/source 不一致时如实说明；不可启动的载体写精确 blocker。
 - 对应 AC-01/02/07/08，SD-01/03。
 
+- [x] T-01 [✅ 已完成 2026-10-02] 三件新增落位：tests/probe_editor_host.mjs（--phase 四相位+all；merged 探针工程直调双编辑器+候选事件绑定+六命令 action 捷径+MCP 合成驱动 autoui_action/keyboard；onfocusblock 多参 handler (int,float) 编译通过零回退）+ e2e/editor-host-capabilities.spec.ts（inventory 小案）+ attachments/034-editor-host-contract.md（指纹/入口表/矩阵 T-01 判定列）。验证：node tests/probe_editor_host.mjs --phase inventory 全绿（EXIT=0——M1 双编辑器 textarea lowering+候选绑定声明显形/M2 INPUT_TEXT 全文逐字节含 CJK/M3 save+link 零回执+click 直写 ghost state 不经 DSL handler[PLAN-044 T6 锚定 UNSUPPORTED]/I5 Ctrl+S→宿主回执/B1 探针工程原生 split boot 成功[最小宿主无 F-24-2——jade 应用阻断不翻案]/vue 形状：@save+@focusblock 发射·@openwikilink 名不匹配[kebab 缺口]·:show-actions/:can-edit attr 透传）；pnpm build 绿；e2e --grep inventory 1/1。指纹：auto.exe v0.4.2-2511-dirty/auto-lang 0aa3a669-dirty/auto-down 895f8d0/engine dist 10-02 stamp。
+
 ### T-02 保存／命令能力与输入归属核验
 
 - 依赖：T-01。扩探针 save/commands 相位与 e2e 同名小案，记录 .Edit/.ActSave/store.Save、公开 save(md) 能否被 Auto 消费、六命令／原生快捷键／焦点情况；仅在隔离探针中测试候选接线，不改生产 src。
@@ -202,6 +204,7 @@ show_actions:false 目前只证明生成器发射 :show-actions，不能据此�
 - 2026-10-02T04:10:23Z：stage: new；plan_id: PLAN-034；plan_revision: 1；outcome: pass；next: work（能力核验与契约交付，按用户执行指令进入工作阶段）。
 - 新增 T-01..04、AC-01..08、SD-01..03；已确认 033 归档与当前实现，未知机制由有界探针和明确供给出口负责，不承诺完整 R-03 功能在本仓立即可实施。
 - 本记录是规划交接，非实现复审。此次未运行应用／接口探针、未改生产代码或 canonical Specs、未自动继续 work/review/merge。
+- 2026-10-02T06:30:00Z：stage: work | plan_id: PLAN-034 | plan_revision: 1 | outcome: executing（T-01 完成）| code_commit: 08d7c08(落档)+本批 | task_ids: T-01 | evidence: 探针 inventory 相位全绿（probe_editor_host.mjs）+ e2e inventory 1/1 + pnpm build 绿 + 附件 034-editor-host-contract.md T-01 判定列落表 | blockers: 无 | next: T-02（save/commands 核验）。工作树=主检出（直接 main 线性惯例 001..033 在册）。
 
 ## 10. 待澄清事项
 
