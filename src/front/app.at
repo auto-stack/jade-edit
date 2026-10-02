@@ -29,7 +29,7 @@ use find_panel: FindPanel
 use tags_panel: TagsPanel
 use bps.navigation.filetree.tree_util: flatten_tree, toggle_id
 use bps.navigation.filetree.tree_icon: TreeIcon
-use back.api: tree, ws_root, link_index, search_wiki, create_page, tags_index, page_meta, set_page_meta, create_dir, daily_note, trash_list, recent_paths_get, recent_paths_set, draft_pending, draft_read, exists, read_wiki, lc_plan_b, lc_commit_b
+use back.api: tree, ws_root, link_index, search_wiki, page_names, create_page, tags_index, page_meta, set_page_meta, create_dir, daily_note, trash_list, recent_paths_get, recent_paths_set, draft_pending, draft_read, exists, read_wiki, lc_plan_b, lc_commit_b
 
 style warn_label = "text-[12px] text-amber-400 mr-1"
 
@@ -185,26 +185,79 @@ fn collect_ad_paths(nodes List) List {
     return out
 }
 
-/// 快开过滤：双侧 to_lower contains（探针 A 定谳同裁——检索匹配同语义
-/// SD-401）；空 q = 全量（Ctrl+P 首开即全档清单——VS Code 同形态）。
-/// 行对象 = {path}（与检索行 path 键对齐——视图单渲染面）。
-fn file_rows_of(paths List, q str) List {
-    var out List = []
-    var ql str = q.to_lower()
+/// 名称目录显示名查找（PLAN-033——快开/最近/全文行的名称投影源从
+/// titles 表（link_pages 派生）切至名称目录 page_names：dtitle 字段
+/// 缺省装配 = back 侧 stem 双保险在册；目录行缺失（外部新档未刷新）
+/// fallback 直通——dtitle_of 同款身份可读口径）。零 fetch 纯查表。
+fn name_dtitle_of(dir List, path str, fallback str) str {
     var i int = 0
-    while i < paths.len() {
-        var p str = paths[i]
+    while i < dir.len() {
+        // ⚠ D-20②：列表元素先拷局部变量再取字段。
+        var r = names[i]
+        var rp str = r.path
+        if rp == path {
+            var dt str = r.dtitle
+            if dt != "" {
+                return dt
+            }
+        }
+        i = i + 1
+    }
+    return fallback
+}
+
+/// 快开名称过滤（PLAN-033——files 行集统一名称规则，两端同规见
+/// name-search 契约 §3）：N(q)=trim.to_lower；候选 = dtitle ∪ title
+/// (stem) ∪ aliases ∪ 相对 path 任一 to_lower contains。空查询（纯
+/// 空白同判）= 全量（既有 recents 替换式消费在视图支路，行集恒全量
+/// ——首开全档清单语义保持）。行对象 = {path,dtitle}（视图单渲染面
+/// ——dtitle 主行 + path 次行，onclick 恒 path 身份域）。
+/// 纯内存过滤（FindEdit 逐键零 fetch——computed 派生源 .names/.find_q
+/// 任一变化自动重算，无时序窗）。
+fn name_rows_of(dir List, q str) List {
+    var nq str = q.trim().to_lower()
+    var out List = []
+    var i int = 0
+    while i < dir.len() {
+        // ⚠ D-20②：列表元素先拷局部变量再取字段。
+        var r = names[i]
         var hit bool = false
-        if ql == "" {
+        if nq == "" {
             hit = true
         } else {
-            var pl str = p.to_lower()
-            if pl.contains(ql) {
+            var dt str = r.dtitle
+            if dt.to_lower().contains(nq) {
                 hit = true
+            }
+            if !hit {
+                var t str = r.title
+                if t.to_lower().contains(nq) {
+                    hit = true
+                }
+            }
+            if !hit {
+                var rp str = r.path
+                if rp.to_lower().contains(nq) {
+                    hit = true
+                }
+            }
+            if !hit {
+                var als List = r.aliases
+                var a int = 0
+                while a < als.len() {
+                    if !hit {
+                        // ⚠ D-20②：嵌套列表元素先拷局部变量再调方法。
+                        var al str = als[a]
+                        if al.to_lower().contains(nq) {
+                            hit = true
+                        }
+                    }
+                    a = a + 1
+                }
             }
         }
         if hit {
-            out.push({ path: p })
+            out.push({ path: r.path, dtitle: r.dtitle })
         }
         i = i + 1
     }
@@ -1127,6 +1180,24 @@ widget App {
         var find_q str = ""
         var find_rows List = []
         var find_ran bool = false
+        // —— 名称目录与查找请求门（PLAN-033；契约
+        // attachments/033-name-contract.md §4）：names = page_names 行集
+        // [{path,title,dtitle,aliases}]（GET 无参——files 行集 computed
+        // name_rows_of 派生源 + 三面行显示名 name_dtitle_of 查表源）；
+        // names_state = ""（未载）|"loading"|"ready"|"error" 可区分三形；
+        // names_seq/names_gen/find_seq = 请求序号/失效世代（快照-回读
+        // 提交门，同一 handler 体内——禁互调读态 D-23②/F-32-R1）；
+        // find_err/find_stale = 全文可见错误/过期旗标（失败不渲染成
+        // "无结果"，保留旧投影必标过期——§5.3）。find_rows 自本片起
+        // 只承载 text 模式后端检索行（files 行集切 computed files_rows
+        // ——目录回包/输入变化自动重算）。store 零新增（开态权威不变）。
+        var names List = []
+        var names_state str = ""
+        var names_seq int = 0
+        var names_gen int = 0
+        var find_seq int = 0
+        var find_err str = ""
+        var find_stale bool = false
         // —— 最近打开数据态（PLAN-020 T-02；SD-2001 recents 半）：会话
         // 域 App 态（**持久化不做**——v1 重启即失，§10.3 留口）——开档
         // 成功触点头插（push_recent：去重置顶 + 容量 10 截断；触点族 =
@@ -1221,6 +1292,11 @@ widget App {
 
     computed {
         ft_rows => flatten_tree(.ft_nodes, .ft_expanded, true, .ft_sel)
+        // 快开 files 行集（PLAN-033）：名称目录 × 查询词统一名称过滤
+        //（name_rows_of 纯函数委托）——目录回包/输入变化自动重算，
+        // "提交时使用最新 find_q"结构性成立（无时序窗）。零 fetch
+        //（FindEdit 逐键纯内存——AC-06 请求计数零增）。
+        files_rows => name_rows_of(.names, .find_q)
         // 悬空建页弹层路径预览（PLAN-005）：title_to_path 镜像消费
         // .store.create_target（widget computed——ft_rows 同族先例）。
         create_preview => title_to_path(.store.create_target)
@@ -1580,72 +1656,114 @@ widget App {
                                 }
                             }
                             }
-                            // files 模式：即时过滤行集 + 空态（拾取即关——
-                            // FindPick 口）。行文本 = 显示名覆盖（PLAN-013
-                            // ——fallback = path 身份可读：无 title 档显示
-                            // 完整 path 与现状一致零变化，§10.3 注记）。
-                            // **PLAN-020 空 q 双态**（SD-2001 recents 半
-                            // ——Obsidian 快速切换器同款替换式 v1）：空 q
-                            // 且有记录 → 「最近」段（标题行 + recents 行
-                            // 集——视图直读 recent_paths，str 清单 for 消
-                            // 费 r.paths 同款在册形态；段标题 = 静态 text
-                            // 零 computed 串接 D-33②）；无记录空 q → 全量
-                            // （现状不变——首跑零漂移面）；有输入 → 过滤
-                            // （现状回归）。拾取即关契约不变（FindPick 口）。
+                            // files 模式（PLAN-033 行集重排）：目录状态门
+                            //（loading/error/ready 三形可区分——首载失败
+                            // 不伪造"无结果"，§5.3）+ 行集 = computed
+                            // files_rows（名称目录 × 查询词统一过滤，纯内
+                            // 存零 fetch）。行 = dtitle 主行（FindPick 口
+                            // ——拾取即关不变）+ 实际 path 次行（同名页消
+                            // 歧显式路径——mentions 两行留根同款形态，非
+                            // 单钮双段插值 §5.2）。显示名查表切名称目录
+                            //（name_dtitle_of——titles 表只余反链/出链/
+                            // tab 消费面）。
                             if .store.find_mode == "files" {
-                                if .find_q == "" {
-                                    if .recent_paths.len() > 0 {
-                                        row (style: "h-6 items-center shrink-0 px-3") {
-                                            text "最近" { style: "text-[11px] font-bold text-muted-foreground" }
-                                        }
-                                        for p in .recent_paths {
-                                            button (text: dtitle_of(.titles, p, p), variant: "ghost") {
-                                                onclick: .FindPick(p)
-                                                style: "w-full justify-start px-3 h-6 text-left text-[12px]"
-                                            }
+                                if .names_state == "loading" {
+                                    text "名称加载中…" { style: "text-[11px] text-muted-foreground px-3" }
+                                }
+                                if .names_state == "error" {
+                                    row (style: "w-full items-center justify-between px-3") {
+                                        text "名称加载失败" { style: "text-[11px] text-destructive" }
+                                        button (text: "重试", variant: "text") {
+                                            onclick: .NamesRefresh
+                                            style: "text-[11px] h-5 px-2 text-muted-foreground shrink-0"
                                         }
                                     }
-                                    if .recent_paths.len() == 0 {
-                                        if .find_rows.len() == 0 {
-                                            text "（无匹配文件）" { style: "text-[11px] text-muted-foreground px-3" }
+                                }
+                                if .find_q == "" {
+                                    if .names_state == "ready" {
+                                        if .recent_paths.len() > 0 {
+                                            row (style: "h-6 items-center shrink-0 px-3") {
+                                                text "最近" { style: "text-[11px] font-bold text-muted-foreground" }
+                                            }
+                                            for p in .recent_paths {
+                                                button (text: name_dtitle_of(.names, p, p), variant: "ghost") {
+                                                    onclick: .FindPick(p)
+                                                    style: "w-full justify-start px-3 h-6 text-left text-[12px]"
+                                                }
+                                                text p { style: "text-[10px] text-muted-foreground px-3" }
+                                            }
                                         }
-                                        for r in .find_rows {
-                                            button (text: dtitle_of(.titles, r.path, r.path), variant: "ghost") {
-                                                onclick: .FindPick(r.path)
-                                                style: "w-full justify-start px-3 h-6 text-left text-[12px]"
+                                        if .recent_paths.len() == 0 {
+                                            if .files_rows.len() == 0 {
+                                                text "（无匹配文件）" { style: "text-[11px] text-muted-foreground px-3" }
+                                            }
+                                            for r in .files_rows {
+                                                button (text: r.dtitle, variant: "ghost") {
+                                                    onclick: .FindPick(r.path)
+                                                    style: "w-full justify-start px-3 h-6 text-left text-[12px]"
+                                                }
+                                                text r.path { style: "text-[10px] text-muted-foreground px-3" }
                                             }
                                         }
                                     }
                                 }
                                 if .find_q != "" {
-                                    if .find_rows.len() == 0 {
-                                        text "（无匹配文件）" { style: "text-[11px] text-muted-foreground px-3" }
-                                    }
-                                    for r in .find_rows {
-                                        button (text: dtitle_of(.titles, r.path, r.path), variant: "ghost") {
-                                            onclick: .FindPick(r.path)
-                                            style: "w-full justify-start px-3 h-6 text-left text-[12px]"
+                                    if .names_state == "ready" {
+                                        if .files_rows.len() == 0 {
+                                            text "（无匹配文件）" { style: "text-[11px] text-muted-foreground px-3" }
+                                        }
+                                        for r in .files_rows {
+                                            button (text: r.dtitle, variant: "ghost") {
+                                                onclick: .FindPick(r.path)
+                                                style: "w-full justify-start px-3 h-6 text-left text-[12px]"
+                                            }
+                                            text r.path { style: "text-[10px] text-muted-foreground px-3" }
                                         }
                                     }
                                 }
                             }
-                            // text 模式：空态两形（find_ran 区分——未运行
-                            // 提示/运行后无结果）+ 行集（检索浏览语义——行
-                            // 点击开档面板保持开）。
+                            // text 模式（PLAN-033 门化渲染）：错误横幅
+                            //（find_err + 重试钮——失败不渲染成"无结果"，
+                            // 既有行集保留）+ 过期横幅（find_stale——磁盘
+                            // 变化后旧结果提示重新检索）+ 空态两形
+                            //（find_ran 区分——未运行提示/运行后无结果）+
+                            // 行集（检索浏览语义——行点击开档面板保持开）。
+                            // 行显示名 = 名称目录 dtitle 缺省 r.title（恒
+                            // stem——目录行缺失时身份可读）；path 次行同
+                            // files 面（同名消歧）。
                             if .store.find_mode == "text" {
-                                if !.find_ran {
-                                    text "（输入查询词后检索）" { style: "text-[11px] text-muted-foreground px-3" }
-                                }
-                                if .find_ran {
-                                    if .find_rows.len() == 0 {
-                                        text "（无结果）" { style: "text-[11px] text-muted-foreground px-3" }
+                                if .find_err != "" {
+                                    row (style: "w-full items-center justify-between px-3") {
+                                        text .find_err { style: "text-[11px] text-destructive" }
+                                        button (text: "重试", variant: "text") {
+                                            onclick: .FindRun
+                                            style: "text-[11px] h-5 px-2 text-muted-foreground shrink-0"
+                                        }
                                     }
-                                    // 行文本 = 显示名覆盖（PLAN-013——fallback
-                                    // = r.title 恒 stem 检索口径）。
-                                    for r in .find_rows {
-                                        button (text: dtitle_of(.titles, r.path, r.title), variant: "ghost") {
-                                            onclick: .FindPick(r.path)
-                                            style: "w-full justify-start px-3 h-6 text-left text-[12px]"
+                                }
+                                if .find_err == "" {
+                                    if .find_stale {
+                                        row (style: "w-full items-center justify-between px-3") {
+                                            text "结果已过期——请重新检索" { style: "text-[11px] text-muted-foreground" }
+                                            button (text: "重新检索", variant: "text") {
+                                                onclick: .FindRun
+                                                style: "text-[11px] h-5 px-2 text-muted-foreground shrink-0"
+                                            }
+                                        }
+                                    }
+                                    if !.find_ran {
+                                        text "（输入查询词后检索）" { style: "text-[11px] text-muted-foreground px-3" }
+                                    }
+                                    if .find_ran {
+                                        if .find_rows.len() == 0 {
+                                            text "（无结果）" { style: "text-[11px] text-muted-foreground px-3" }
+                                        }
+                                        for r in .find_rows {
+                                            button (text: name_dtitle_of(.names, r.path, r.title), variant: "ghost") {
+                                                onclick: .FindPick(r.path)
+                                                style: "w-full justify-start px-3 h-6 text-left text-[12px]"
+                                            }
+                                            text r.path { style: "text-[10px] text-muted-foreground px-3" }
                                         }
                                     }
                                 }
@@ -2566,6 +2684,7 @@ widget App {
                 .LinksRefreshOf(r)
                 .TagsRefresh()
                 .TreeRefresh()
+                .NamesInvalidate()
                 .ft_sel = r
             } else {
                 if ok {
@@ -2581,10 +2700,13 @@ widget App {
             // 陈旧投影面）**。行 active = .store.active_path 读回（Save 对
             // 具名档不改 active；untitled 先落路径 rare 分支 vm 轨留陈旧
             // 行，下次触点校正——先在语义保持）。
+            // **PLAN-033**：名称失效同判（保存可能改 title/aliases 写面
+            // ——失败保存的重取无害幂等，TreeRefresh 同判；面板关只失效）。
             .TreeRefresh()
             .LinksRefreshOf(.store.active_path)
             .TagsRefresh()
             .MentionsRefreshOf(.store.active_path)
+            .NamesInvalidate()
         }
         .ActQuit -> { store.ActQuit() }
         .QuitKeepClose -> { store.QuitKeepClose() }
@@ -2801,6 +2923,7 @@ widget App {
                     if .store.lc_status == "ok" {
                         .LinksRefreshOf(.store.active_path)
                         .MentionsRefreshOf(.store.active_path)
+                        .NamesInvalidate()
                     } else {
                         if .store.lc_status == "stale" {
                             console_log("linkify: stale — re-initiate")
@@ -2872,45 +2995,107 @@ widget App {
             }
         }
 
-        // —— 查找面板（PLAN-004 T-02/T-03）——
-        // 输入分流：files 模式即时过滤（纯内存零 fetch——SD-401 刷新触发
-        // 集=无）；text 模式只更 find_q（触发面 = 检索钮/onenter——探针 C）。
+        // —— 查找面板（PLAN-004 T-02/T-03；**PLAN-033 请求门化**）——
+        // 输入分流：files 模式即时过滤（computed files_rows 纯内存——
+        // SD-401 触发集=无保持）；text 模式更 find_q + **在途请求失效**
+        //（find_seq 递增——查询修改后旧响应不得提交，§5.3 门）。
         .FindEdit(q) -> {
             .find_q = q
-            if .store.find_mode == "files" {
-                .find_rows = file_rows_of(collect_ad_paths(.ft_nodes), q)
+            if .store.find_mode == "text" {
+                .find_seq = .find_seq + 1
             }
         }
         // 检索触发（text 模式）：fetch search_wiki（POST 通道——D-19 适配）
         // + **双取形**（⚠ ts_adapter 只对 call-arg 形发射 JSON.parse，
         // identifier 实参静默降恒等——D-20⑤，Init link_index 同款；此处
         // rows 直接收解析产物，单次调用即双取形合规）+ 行装配 + find_ran。
-        // try/catch 落 console_log（链接触点同款——backend-offline 不炸）。
+        // **请求身份门（PLAN-033 §4）**：find_seq 入口快照 myseq + query
+        // 快照 q，回包后 seq 相配才提交（切模式/关面板/查询修改/新请求
+        // 都经 seq 递增使旧响应失效——迟到旧响应零写面）；失败置
+        // find_err 可见文案（不渲染成"无结果"——不触 find_rows/find_ran，
+        // 既有行集保留）；成功清错误 + 清过期。
         .FindRun -> {
+            .find_seq = .find_seq + 1
+            var myseq int = .find_seq
+            var q str = .find_q
             var rows List = []
             var ok bool = true
             try {
-                rows = json.to_value(search_wiki(.find_q, 20))
+                rows = json.to_value(search_wiki(q, 20))
             } catch (e) {
                 ok = false
             }
             if !ok {
                 console_log("find: search failed")
             }
-            .find_rows = rows
-            .find_ran = true
+            if .find_seq == myseq {
+                if ok {
+                    .find_err = ""
+                    .find_stale = false
+                    .find_rows = rows
+                    .find_ran = true
+                } else {
+                    .find_err = "搜索失败——请重试"
+                }
+            }
         }
-        // 快开入口（幂等重开——已开则保模式清过滤面）；行集就绪待过滤
-        //（空 q = 全量清单——PLAN-020 后空 q 有记录时视图改显 recents
-        // 段[recent_paths 直读]，行集消费面 = 无记录/有输入两态）。
+        // —— 名称目录共享口（PLAN-033）：GET page_names 无参（call-arg
+        // 双取形合规 D-20⑤）+ **提交门**：names_seq/names_gen 双快照-
+        // 回读（同 handler 体内——禁互调读态 D-23②）。seq 失配 = 更新
+        // 请求已发出（旧响应零写面）；seq 相配 gen 失配 = 迟到旧代次
+        // 回包（丢弃不递归——下次入口/失效触点再取，规避 vue
+        // fire-and-forget 链与 VM 递归深度面）。失败置 error 态（面板
+        // 可见 + 重试钮——首载失败不伪造"无结果"，§5.3）。
+        .NamesRefresh -> {
+            .names_state = "loading"
+            .names_seq = .names_seq + 1
+            var myseq int = .names_seq
+            var mygen int = .names_gen
+            var rows List = []
+            var ok bool = true
+            try {
+                rows = json.to_value(page_names())
+            } catch (e) {
+                ok = false
+            }
+            if !ok {
+                console_log("names: refresh failed")
+            }
+            if .names_seq == myseq {
+                if ok {
+                    if .names_gen == mygen {
+                        .names = rows
+                        .names_state = "ready"
+                    }
+                } else {
+                    .names_state = "error"
+                }
+            }
+        }
+        // 名称失效统一口（PLAN-033 契约 §5 触点表——磁盘变化终态调用）：
+        // 世代递增（目录标失效 + text 结果标过期）+ 面板开才即时重取
+        //（面板关只失效——下次入口/触点再取，§5.3）。files 行集由
+        // computed 随新目录自动重算（提交时恒最新 find_q）。
+        .NamesInvalidate -> {
+            .names_gen = .names_gen + 1
+            .find_stale = true
+            if .store.find_open {
+                .NamesRefresh()
+            }
+        }
+        // 快开入口（幂等重开——已开则保模式清过滤面）；**入口即取新目录**
+        //（PLAN-033 §5——重进查找入口 = 外部变更观察口；旧门控"未载才取"
+        // 会让外部改名不可见，无条件重取换 P≤200 单 walk 成本）。
         .ActFindFiles -> {
             store.FindOpen("files")
-            .find_rows = file_rows_of(collect_ad_paths(.ft_nodes), .find_q)
+            .NamesRefresh()
         }
-        // 全文检索入口（幂等重开 + 切模式）；行集不动——text 面板由
-        // find_ran 门控渲染（未运行提示优先，files 期残留行不泄漏）。
+        // 全文检索入口（幂等重开 + 切模式）+ 入口即取新目录（text 行显示
+        // 名同源目录）；行集不动——text 面板由 find_ran/find_err 门控渲染
+        //（未运行提示优先，files 期残留行不泄漏）。
         .ActFindText -> {
             store.FindOpen("text")
+            .NamesRefresh()
         }
         // wanted 模式入口（PLAN-008；Ctrl+Shift+D/菜单共口——find-text
         // 同构第三模式）：幂等重开 + 切模式 + 链接索引重取（入口即刷新
@@ -2973,6 +3158,7 @@ widget App {
                 .LinksRefreshOf(r)
                 .TagsRefresh()
                 .TreeRefresh()
+                .NamesInvalidate()
             }
         }
         // —— 新建页面流（PLAN-007 T-02；§2.3）——
@@ -3019,6 +3205,7 @@ widget App {
                 .LinksRefreshOf(r)
                 .TagsRefresh()
                 .TreeRefresh()
+                .NamesInvalidate()
                 .ft_sel = r
             } else {
                 if ok {
@@ -3113,6 +3300,7 @@ widget App {
                     .MentionsRefreshOf(.store.active_path)
                     .TagsRefresh()
                     .TreeRefresh()
+                    .NamesInvalidate()
                     .ft_sel = ""
                 } else {
                     if .store.lc_status == "stale" {
@@ -3230,6 +3418,7 @@ widget App {
                     .TagsRefresh()
                     .MentionsRefreshOf(.store.active_path)
                     .TreeRefresh()
+                    .NamesInvalidate()
                     .ft_sel = lc_remap_one(.store.lc_moves, .ft_sel)
                 } else {
                     if .store.lc_status == "stale" {
@@ -3319,6 +3508,9 @@ widget App {
                 store.MetaClose()
                 .LinksRefreshOf(.store.active_path)
                 .TagsRefresh()
+                // PLAN-033：title/aliases 写面成功——名称目录失效重取
+                //（面板开）核心触点（AC-08 属性编辑代表弧）。
+                .NamesInvalidate()
             } else {
                 if ok {
                     console_log("meta: save rejected")
@@ -3471,6 +3663,7 @@ widget App {
                     .TagsRefresh()
                     .MentionsRefreshOf(.store.active_path)
                     .TreeRefresh()
+                    .NamesInvalidate()
                     .ft_sel = lc_remap_one(.store.lc_moves, .ft_sel)
                 } else {
                     if .store.lc_status == "stale" {
@@ -3569,6 +3762,7 @@ widget App {
                     .MentionsRefreshOf(.store.active_path)
                     .TagsRefresh()
                     .TreeRefresh()
+                    .NamesInvalidate()
                     var sel str = .ft_sel
                     if rel_under(sel, target) != "" {
                         .ft_sel = ""
@@ -3680,6 +3874,7 @@ widget App {
                         .TagsRefresh()
                         .MentionsRefreshOf(.store.active_path)
                         .TreeRefresh()
+                        .NamesInvalidate()
                         .ft_sel = lc_remap_one(.store.lc_moves, .ft_sel)
                     } else {
                         if .store.lc_status == "stale" {
@@ -3828,6 +4023,7 @@ widget App {
                     .TagsRefresh()
                     .MentionsRefreshOf(.store.active_path)
                     .TreeRefresh()
+                    .NamesInvalidate()
                     .ft_sel = lc_remap_one(.store.lc_moves, .ft_sel)
                 } else {
                     if .store.lc_status == "stale" {
@@ -3931,6 +4127,7 @@ widget App {
                     .LinksRefreshOf(.store.active_path)
                     .TagsRefresh()
                     .TreeRefresh()
+                    .NamesInvalidate()
                 } else {
                     if .store.lc_status == "stale" {
                         console_log("trash: restore stale — re-initiate")
@@ -4013,6 +4210,7 @@ widget App {
                 .LinksRefreshOf(.store.active_path)
                 .TagsRefresh()
                 .TreeRefresh()
+                .NamesInvalidate()
             } else {
                 if .store.lc_status == "partial" {
                     var rows2 List = []
@@ -4029,6 +4227,8 @@ widget App {
                     .LinksRefreshOf(.store.active_path)
                     .TagsRefresh()
                     .TreeRefresh()
+                    // partial = 已恢复项落盘如实面——名称失效同刷（契约 §5 #17）
+                    .NamesInvalidate()
                 }
             }
         }
@@ -4109,6 +4309,7 @@ widget App {
                     console_log("trash: list failed")
                 }
                 .trash_rows = rows2
+                .NamesInvalidate()
             } else {
                 if .store.lc_status == "stale" {
                     console_log("trash: purge stale — re-initiate")

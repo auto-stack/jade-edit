@@ -6,7 +6,7 @@ author: [agent]
 created_at: 2026-10-02T01:18:59Z
 updated_at: 2026-10-02T09:40:00Z
 plan_revision: 1
-current_step: 2
+current_step: 3
 total_steps: 5
 supersedes_spec_components: []
 new_spec_components:
@@ -176,7 +176,8 @@ T-01 输出逐入口触点表：查找入口开启／重新进入、现有手动
 
 ### T-03 快开与查找行接线
 
-- 依赖：T-02。修改 src/front/app.at 的导入、名称模型、file_rows_of（或等价替代）、FindEdit/ActFindFiles/ActFindText/FindPick 与 files/text/最近区域。目录加载后本地过滤，title+path 显示，兼容最近与点击语义；不把 fetch 放入逐键过滤。
+- [x] **T-03**。依赖：T-02。修改 src/front/app.at 的导入、名称模型、file_rows_of（或等价替代）、FindEdit/ActFindFiles/ActFindText/FindPick 与 files/text/最近区域。目录加载后本地过滤，title+path 显示，兼容最近与点击语义；不把 fetch 放入逐键过滤。
+  [✅ 已完成 2026-10-02] app.at：use 导入 +page_names；模型七新字段（names/names_state/names_seq/names_gen/find_seq/find_err/find_stale——store 零新增）；file_rows_of→name_rows_of（统一名称规则 dtitle∪title∪aliases∪path，参数名 dir 避 D-30① 阴影面——names 参数名实勘 vue codegen .value 误加即 undefined，首跑 e2e pageerror 在录）+ name_dtitle_of 查表；computed files_rows（目录回包/输入自动重算零时序窗）；NamesRefresh（seq/gen 双快照-回读门——生成 TS 静态核验 ref 直读在录）+ NamesInvalidate（gen+1+find_stale+面板开才重取）；FindEdit text 键入使在途失效；FindRun 门化提交（失败置 find_err 不伪"无结果"）；视图 files/text 重排（目录状态三形门+行 dtitle 主行+path 次行+最近段 ready 门——matrix ⑩⑤ fallback 先渲染面在录修正）；十六触点 NamesInvalidate 接线（契约 §5 表全量）。验证：pnpm build 绿 + e2e/name-search.spec.ts 6/6（名称五域/同名逐路径/全文扩面/请求计数/失败重试/迟到门/保存刷新过期横幅）+ e2e/matrix.spec.ts 全套 1/1（既有 [11 find]/⑧⑨⑩ 弧零漂移）。
 - 产物：新 e2e/name-search.spec.ts 的基本名称／同名／最近／请求计数弧；按现有 helpers/config 操作，不混入 Explorer 行。
 - 验证：pnpm build；pnpm exec playwright test -c e2e/playwright.config.ts e2e/name-search.spec.ts。名称查询与正确路径打开通过，正文专有词不进 files，输入计数零额外 API，最近行为保持。
 - 对应 AC-01/02/03/05/06/07，SD-01/02。
@@ -205,6 +206,7 @@ T-01 输出逐入口触点表：查找入口开启／重新进入、现有手动
 - 本记录仅为规划交接，不是实现复审 pass；本次未运行应用测试、未改实现或 canonical Specs、未自动继续 work/review/merge。
 - 2026-10-02T10:30:00Z：stage: work | plan_id: PLAN-033 | plan_revision: 1 | outcome: executing（T-01 完成）| code_commit: f2ccacd(规划落档)+本批 | task_ids: T-01 | evidence: 契约冻结件 attachments/033-name-contract.md；node tests/probe_name_search.mjs --phase 1 双臂全绿（红相 f1/f4/f7 在录）；pnpm build 绿（engine dist F-31-R1 类陈旧就地重建 stamp f46a2f18——零源变更，032 会话内重建 auto.exe 先例）| blockers: 无 | next: T-02（后端 page_names+search_json 扩面）。工作树=主检出（直接 main 线性惯例：git worktree list 单一主检出，001..032 在册惯例；提交随批落 main，工作树零 WIP 休止态）。
 - 2026-10-02T11:10:00Z：stage: work | plan_id: PLAN-033 | plan_revision: 1 | outcome: executing（T-02 完成）| code_commit: 本批 | task_ids: T-02 | evidence: node tests/probe_name_search.mjs 相位 2 双臂全绿（翻转案+目录已知答案逐字节+转义读回）+ probe_dir_move/probe_page_meta/probe_casefold/probe_alias_linkify 全绿（回归零新增失败）| blockers: 无 | next: T-03（快开与查找行接线）。
+- 2026-10-02T12:00:00Z：stage: work | plan_id: PLAN-033 | plan_revision: 1 | outcome: executing（T-03 完成，含 T-04 e2e 面）| code_commit: 本批 | task_ids: T-03（T-04 e2e 前置）| evidence: pnpm build 绿+gen TS 静态核验（快照-回读门/computed files_rows/await 在 handler 体内）+ e2e name-search 6/6 + e2e matrix 全套（回归零漂移；⑩⑤ recents ready 门修正）| blockers: 无 | next: T-04（probe 刷新案+vm_matrix N 组）。
 
 ## 10. 待澄清事项
 
