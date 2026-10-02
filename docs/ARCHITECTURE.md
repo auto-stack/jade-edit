@@ -130,6 +130,13 @@ src/back/api.at           /api 契约（自有 Auto 源，与实现同 commit—
   ——vue 引擎 `@save`/`@focusblock`/`open-wiki-link` 供给存在未接线，
   native 轨 save/link/命令消息通道缺供给，`show-actions` 为 attr 透传
   非 prop（细节以该规范 §1 为准）。
+- **编辑命令入口收口（SD-3501，PLAN-035 R-03b1）**：六宿主编辑命令
+  无执行桥现状下的界面契约——失效 toolbar/菜单执行入口移除、可见
+  说明弹层、旧 action ID/msg 兼容守卫（零假执行）、宿主 Ctrl+Z/Y/A
+  注册移除（正文/input 自主管辖）见
+  [specs/editor-command-availability.md](specs/editor-command-availability.md)；
+  能力结论（宿主命令桥缺供给）不因入口收口翻案，真执行仍按上游
+  解锁门推进。
 - engine rust/VM 平台面 experimental（engine ARCHITECTURE §2）——深层
   行为差异入 [parity-ledger.md](parity-ledger.md)。
 

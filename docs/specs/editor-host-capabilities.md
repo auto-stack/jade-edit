@@ -18,12 +18,14 @@
 
 ### 1.2 命令（undo/redo/cut/copy/paste/select-all——逐项）
 
+> **PLAN-035 收口刷新（2026-10-02）**：下表 ①②③ 行的**能力结论维持**（宿主仍无执行桥——本节为能力核验记录）；界面入口已按 C-2 独立分支收口（失效 toolbar/menu 入口移除、可见说明、宿主三键归还控件、旧 ID/msg 兼容守卫）——现行入口/快捷键/守卫契约见 [editor-command-availability.md](editor-command-availability.md)，本表不再描述已移除的入口面。console_log 降级 handler 已于 035 退役为可见说明守卫（零编辑）。
+
 | 面 | 事实 | 证据 |
 | --- | --- | --- |
-| ①② native | **缺供给**：宿主通道（actions 捷径 Ctrl+Z/Y/A + 按钮/菜单）可达 handler，但 handler→编辑器无执行桥（回执 6/6 正文零变化）；编辑器内部撤销不存在——key_press 词表无修饰键（`'ctrl+z'` Invalid keyspec 实录，PLAN-057 v1）；cut/copy/paste 无捷径在册 | probe C1/C2 |
-| ③ Vue 内部快捷键 | **已可消费**（编辑器内部）：引擎内部 Ctrl+Z/Y 真键撤销/重做生效（onContentKeydown runHistory）；cut/copy/paste/select-all=浏览器 contenteditable 原生面（Ctrl+A 并行零破坏） | e2e commands |
-| ③ Vue 宿主菜单 | **缺供给**：六菜单 handler 仅 console_log 降级（T-00 实勘在录）——菜单 撤销点击对新变更零效果 | e2e commands + editor_store.at ActUndo 族 |
-| 全局热键冲突 | vue keymap 修饰键全局拦截无焦点甄别（Ctrl+Z/A 双通道并行当前无害）；**生成器组合键丢 Shift 位**：`Ctrl+Shift+O` 实测被 `'Ctrl+o'→ActOpen` 抢占（孤页清单快捷键失效；Ctrl+Shift+F/D 同族塌缩）——下一片处理项，不在本片修复 | e2e commands 实录 + App.vue `__autoActionsKeymap` |
+| ①② native | **缺供给**（结论维持）：宿主通道可达 handler，但 handler→编辑器无执行桥（回执 6/6 正文零变化）；编辑器内部撤销不存在——key_press 词表无修饰键（`'ctrl+z'` Invalid keyspec 实录，PLAN-057 v1） | probe C1/C2（隔离工程缺桥模拟——历史证据，与生产守卫分域） |
+| ③ Vue 内部快捷键 | **已可消费**（编辑器内部；035 后宿主 keymap 三键移除——引擎内部撤销独占不被空 handler 并行）：引擎内部 Ctrl+Z/Y 真键撤销/重做生效（onContentKeydown runHistory）；cut/copy/paste/select-all=浏览器 contenteditable 原生面 | e2e commands + editor-command-availability §2 |
+| ③ Vue 宿主菜单 | **缺供给→已收口**（035）：六菜单执行项移除，唯一入口=「编辑命令说明…」可见 dialog；直派兼容消息=守卫说明零编辑（C-2 独立分支交付，命令桥仍缺） | probe_command_availability 真实 Store 臂 + editor-command-availability §1 |
+| 全局热键冲突 | **035 收口半**：Ctrl+Z/Y/A 宿主注册已移除（空 handler 不再截获正文/输入框按键）；**生成器组合键丢 Shift 位维持**：`Ctrl+Shift+O` 实测被 `'Ctrl+o'→ActOpen` 抢占（孤页清单快捷键失效；Ctrl+Shift+F/D 同族塌缩）——上游缺口不在 035 修复 | e2e commands 实录 + App.vue `__autoActionsKeymap`（三键已消） |
 
 ### 1.3 链接（link）
 
@@ -48,7 +50,7 @@
 
 1. **保存来源身份**：事件载荷=全文 md 单参（INPUT_TEXT 与 vue `emit('save', md)` 同形），**无 tab_uid/实例世代字段**。同正文双页+active 读回不可辨识来源（probe S1 反例：A/B 同正文、active 恒指 A、事件源于 B——零串扰可分但判源不可）。任何 save 事件消费**必须**绑定可核来源（上游身份字段或等价机制）方可入 store.Save 门链；仅凭 md+active_key 消费被本规范禁止。
 2. **保存共门**：save 接线必须进入现行 `store.Save` 全链（untitled 另存旁路、lc_review 待核验门、写盘读回核验、草稿结算 saved、较新输入经比较保 dirty、取消/写失败/核验失败终态）——不得新 onSave 直写 write_wiki；不得以较旧 save(md) 覆盖 Store 最新正文（迟到事件拒绝）。
-3. **命令历史归属**：编辑器拥有历史栈/选区/执行；宿主只传命令请求并消费回执。宿主不得复制历史栈、不得借 DOM 私有实例或整文重置模拟撤销/复制/选区。无支持的菜单入口在接线前不得伪造成功（console_log 降级为在录已知状态，非终态）。
+3. **命令历史归属**：编辑器拥有历史栈/选区/执行；宿主只传命令请求并消费回执。宿主不得复制历史栈、不得借 DOM 私有实例或整文重置模拟撤销/复制/选区。无支持的命令入口不得伪造成功——035 起现行形态=入口收口+可见说明守卫（[editor-command-availability.md](editor-command-availability.md) §1.2）；原 console_log 降级为历史形态不再使用。
 4. **链接身份**：链接事件 target 消费现行四级解析（link_index target_path 逐路径），title/alias 不成为路径身份；`OpenLink(path)` 是开档口——不得将未解析 title 拼 `.ad` 直开或重写磁盘；缺页走既有悬空确认面，外链/白名单规则独立裁决。
 5. **位置语义**：块聚焦≠caret 行列；开页≠定位成功；data-block-id 块域与 getBlockMap 为公开坐标域，caret/选区偏移单位与挂载世代稳定域在供给落地前不预设。
 6. **show_actions 边界**：在 A-2 供给前，任何「隐藏引擎 Save 钮」的方案不成立；控制动作栏与可靠接入两路线均须真实验证后裁决。
@@ -59,7 +61,7 @@
 
 - **auto-down**（§A）：A-1 保存/链接/聚焦事件载荷增实例身份（本仓消费 @save 的前置解锁）；A-2 showActions/canEdit 真消费 prop；A-3 六命令宿主可调面（runCommand 或等价回执对）。
 - **auto-lang**（§B）：B-1 open-wiki-link 生成名 kebab 不匹配（优先解锁，小改动）；B-2 原生轨 save/link 消息通道；B-3 原生轨命令原语（key_press 词表无修饰键为源码锚定）；B-4 位置族原语（caret/选区/reveal——R-08/R-11 方向输入）。
-- **jade-edit**（§C，本仓可实施面，后续 Plan 细化）：C-1 @save 消费接线（依赖 A-1）；C-2 六命令菜单真实化或失效收口（禁用/提示）；C-3 open-wiki-link 接线（依赖 B-1，消费四级解析）；C-4 双轨保存同门链一致性。
+- **jade-edit**（§C，本仓可实施面，后续 Plan 细化）：C-1 @save 消费接线（依赖 A-1）；C-2 六命令菜单真实化/失效收口——**已由 PLAN-035 交付独立分支**（失效收口形态：入口移除+可见说明+兼容守卫+三键归还，见 [editor-command-availability.md](editor-command-availability.md)；真执行仍待 A-3/B-3 解锁后另立消费片）；C-3 open-wiki-link 接线（依赖 B-1，消费四级解析）；C-4 双轨保存同门链一致性。
 - **已知上游边界维持**：F-32-R2（VM 局部槽串扰）、F-24-2（jade 应用 split boot）、F-31-R1（engine dist 新鲜度义务）、F-31-R2（vue handler 互调未 await）、vue 多文件 e2e 时序族——本片如实分列，不因调查结论翻案。
 
 ## 4. 验证与边界

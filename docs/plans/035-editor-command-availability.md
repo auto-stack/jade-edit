@@ -1,12 +1,12 @@
 ---
 plan_id: PLAN-035
-status: executing
+status: execution_done
 feature_name: 编辑命令入口真实化（R-03b1）
 author: [agent]
 created_at: 2026-10-02T05:05:19Z
 updated_at: 2026-10-02T11:30:00Z
 plan_revision: 1
-current_step: 3
+current_step: 4
 total_steps: 4
 supersedes_spec_components:
   - docs/specs/editor-host-capabilities.md
@@ -181,6 +181,8 @@ Vue 用区域定位验证两个 toolbar 按钮和六执行菜单项不存在、�
 - 目标通过且受影响回归无新增失败；既有精确 blocker／多套件时序不能冲淡本片验收。输出代码 revision／工具链／命令结果／结构 diff／SD 覆盖，按工作技能交接 review，不自行跨仓或合入。
 - 对应 AC-01..09，SD-01..04。
 
+- [x] T-04 [✅ 已完成 2026-10-02] 规范落位：docs/specs/editor-command-availability.md 新三节（§1 入口与兼容[toolbar/menu/dialog 契约+旧 ID/msg 兼容守卫零假执行]/§2 快捷键归属[三键归还/input 自辖/不新增 X/C/V/既有键保持/Shift 缺口边界]/§3 不变量与验证[状态独立+零副作用+验证矩阵+暂不可用边界]——SD-02..04 落位）；editor-host-capabilities.md §1.2 收口刷新（能力结论维持+035 收口行+C-2 已交付标注）+§2.3 守卫形态更新+§3 C-2 交付标注（能力结论/旧证据不翻案）+§4 探针双件引用；ARCHITECTURE §4 SD-3501 指针；路线图顶部进度三段+R-03 行+推进顺序+§12 实施状态。T-04 全量门：pnpm build 绿；node tests/probe_command_availability.mjs 全臂绿（主 28+variant 3+store 27+vue 形状）；node tests/probe_editor_host.mjs --phase all 全绿（historical unsupported/BLOCKED 按行在案）；vm merged 20/20（B v27 零漂移，T-03 双跑后续门同证）；vm split 三跑=boot 成功+E 组+六检查过、10b/linkify 挂点漂移——**A/B 定谳：0cc67f2 诊断 worktree（deps 拷贝补 gitignored 面）同臂同点同形挂（10b CAP 定理行 state.active_title）=在录时序族非本片引入**（诊断件 wt-guard clean 后用后即删，worktree list 单一主检出恢复）；e2e 单跑：command-availability 3/3+editor-host-capabilities 4/4+matrix 1/1（首跑 10m 超时挂在录族、复跑 1.2m 复绿）+reload-safety 1/1+draft-recovery 3/3+name-search 6/6+lifecycle-safety 8/9+⑩ trash 单跑 1/1（套内菜单项 click 饿死=F-33-R1 在录签名，单跑 5.9s 复绿同 033 处置）；git diff --check 清。SD 覆盖对读：SD-01=host-capabilities §1.2/§2.3/§3 刷新；SD-02/03/04=editor-command-availability §1/§2/§3。
+
 执行顺序 T-01→T-02→T-03→T-04，均尚未实施。回退为专属工作树应用／测试／文档提交回退，无数据迁移；不要用测试 fixture 覆盖真实知识库。技术等价调整可记录证据；扩大到执行桥、改目标或跨仓供给先修订契约并处理授权。
 
 ## 9. 复审记录
@@ -192,6 +194,7 @@ Vue 用区域定位验证两个 toolbar 按钮和六执行菜单项不存在、�
 - 2026-10-02T12:10:00Z：stage: work | plan_id: PLAN-035 | plan_revision: 1 | outcome: executing（T-01 完成） | code_commit: 1bffd15（规划落档）+本批 | task_ids: T-01 | evidence: 契约冻结件 attachments/035-command-availability-contract.md（§1..§7，含 enabled_if 实测修订）+node tests/probe_command_availability.mjs 全绿（主工程 25 案+variant 阴性对照 3 案+vue 形状两向——六命令守卫/键盘零路由/磁盘不变量/形状四域；失败复测=variant ctrl+z→flag 翻真成对在案）+pnpm build 绿 | blockers: 无 | next: T-02（生产入口与说明状态改造）。 |
 - 2026-10-02T12:50:00Z：stage: work | plan_id: PLAN-035 | plan_revision: 1 | outcome: executing（T-02 完成） | code_commit: c08e547（T-01）+本批 | task_ids: T-02 | evidence: app.at/editor_store.at 生产改造（三 shortcut 删+toolbar 两钮移除+菜单单入口+根说明 dialog+store 旗标/双 msg/六守卫 handler；status_bar 零改）+probe 真实 Store 臂 27 案全绿（六 handler 直派零编辑+save_note 保持+键盘零路由+磁盘恒等）+e2e/command-availability.spec.ts 3/3（入口/键程/不变量）+pnpm build 绿+生成 keymap 三键消除核验 | blockers: 无（e2e/editor-host-capabilities commands 案过渡红按计划 T-03 适配，同会话） | next: T-03（键程/旧核验测试/原生矩阵适配）。 |
 - 2026-10-02T13:45:00Z：stage: work | plan_id: PLAN-035 | plan_revision: 1 | outcome: executing（T-03 完成） | code_commit: d286f95（T-02）+本批 | task_ids: T-03 | evidence: editor-host-capabilities commands 案适配 4/4+probe_editor_host 盘点三锚对齐 --phase all 全绿+vm_matrix E 组+结构基线 v27 重锁（merged 20/20 两跑——落锁跑+零漂移复跑；diff=state+1 行/snapshot 两处收缩/新弹层闭态子树，逐项解释在 T-03 记录与契约 §5 对读） | blockers: 无 | next: T-04（回归/规范落位/复审交接）。 |
+- 2026-10-02T14:50:00Z：stage: work | plan_id: PLAN-035 | plan_revision: 1 | outcome: pass | code_commit: 1bffd15→c08e547→d286f95→77a8f74→本批（直接 main 线性，工作树零 WIP 休止态） | task_ids: T-01..T-04 全闭环 | evidence: 全量门=T-04 记录（build/双探针/vm merged 20/20 v27 零漂移/split A/B 定谳/七套 e2e 单跑/git diff --check）；AC-01..09 证据映射=AC-01（vm E 组六执行项零恰等钮+e2e 入口案 toolbar count 0/菜单单入口）/AC-02（e2e 文案逐字+无/有文档双开+DOM 标记零重挂载+vm 开关 state 断言）/AC-03（probe 真实 Store 臂六 handler 逐项直派 last_cmd 判别+零编辑+variant 阴性对照+live registry=生成面六 action 保留核验）/AC-04（生成 keymap 三键消除 grep+vm 键盘零路由+e2e Shift 三变体零弹出+bind 零改）/AC-05（e2e 真键 Ctrl+Z 撤销 Ctrl+Y 重做+input Ctrl+A 局部替换正文磁盘保持）/AC-06（probe 磁盘 walk 恒等+e2e 说明后继续输入+vm E 正文/脏标恒等）/AC-07（probe save_note=草稿已保护 逐值保持+e2e 未保存/草稿已保护 前后可见）/AC-08（e2e Ctrl+S 真落盘+vm 六检查/重载组全绿+split A/B 在录族单列）/AC-09（双轨证据=probe merged+e2e vue+vm E/矩阵+规范 SD-01..04 落位+路线图 R-03 整体未完成声明三处在案+v27 逐项解释） | blockers: 无本片新增（split 臂 10b/linkify=在录时序族 A/B 定谳在案；lifecycle ⑩/matrix 套内单跑复绿=F-33-R1/D-21 在录处置；F-24-2 今日未复现如实记录） | next: review（auto-plan-review）。工作树零 WIP；诊断 worktree 已删（git worktree list 单一主检出）。
 
 ## 10. 待澄清事项
 
