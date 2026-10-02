@@ -1403,4 +1403,4 @@ if (failures.length > 0) {
   console.error(`\n[probe-wiki-link] FAIL（${failures.length} 项）:\n  - ${failures.join('\n  - ')}`)
   process.exit(1)
 }
-console.log(`\n[probe-wiki-link] RESULT: phase ${PHASE} 全案通过（T-01 协调形态冻结——生产实施归 T-02/T-03/T-04）`)
+console.log(`\n[probe-wiki-link] RESULT: phase ${PHASE} 全案通过（协调形态冻结+单参解析+生产接线同构见证）`)

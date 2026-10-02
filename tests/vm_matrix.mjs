@@ -10,15 +10,15 @@
 //   5 save    保存落盘（toolbar 保存 → 脏标清 + 磁盘字节含标记 + frontmatter 保留
 //             + updated_at 自动维护——PLAN-015：已有键保存即更新值[当日形]）
 //   6 reload  重载可见（磁盘外改 → toolbar 重载 → 编辑器见新内容）
-//   B base    结构基线 v27 零漂移（仅 merged 臂；必须在 1-6 后、扩单前采集
-//             ——v27 锁的是六检查终态，扩单不漂移基线；v27=PLAN-035 编辑
-//             命令入口真实化批[store editor_commands_help_open 入 dump——
-//             false 缺省；toolbar 撤销/重做两钮 vnode 消失+编辑菜单六执
-//             行项→单说明入口——snapshot id 序列两处收缩，逐项解释在
-//             PLAN-035 T-03 记录；v26=PLAN-033 名称查找批留档]；v20=
-//             PLAN-025 目录合并三择批[v19 留档]；v19=PLAN-021 试用赋能批
-//             [v18 留档]；v18=PLAN-020 孤页+recents 切片[第五模式
-//             action/menubar 项入 id 序列——计划内重锁第五例]；v17=
+//   B base    结构基线 v28 零漂移（仅 merged 臂；必须在 1-6 后、扩单前采集
+//             ——v28 锁的是六检查终态，扩单不漂移基线；v28=PLAN-036 正文
+//             内链导航批[state 纯增 10 字段：store sel_gen/active_uid/
+//             wiki_nav_note + App nav_seq/navc_* 七件——snapshot id 序列
+//             零变化视图零漂移，逐项解释在 PLAN-036 T-05 记录；v27=
+//             PLAN-035 编辑命令入口真实化批留档；v26=PLAN-033 名称查找批
+//             留档]；v20=PLAN-025 目录合并三择批[v19 留档]；v19=PLAN-021
+//             试用赋能批[v18 留档]；v18=PLAN-020 孤页+recents 切片[第五
+//             模式 action/menubar 项入 id 序列——计划内重锁第五例]；v17=
 //             PLAN-019、v16=PLAN-018、v15=PLAN-016、v14=PLAN-015、
 //             v13=PLAN-014、v12=PLAN-013、v11=PLAN-012 等留档）
 //   E cmd-avail 编辑命令入口真实化（PLAN-035；B 后 7 前单臂子步——fail 即
@@ -197,7 +197,7 @@ const argOf = (name) => {
   return i >= 0 ? args[i + 1] : undefined
 }
 const ARM = argOf('--arm') ?? 'all' // all | merged | split
-const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v27.txt')
+const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v28.txt')
 const SAVE_BASELINE = argOf('--save-baseline')
 
 const EDIT_MARKER = 'jade-edit 冒烟标记：编辑回写可见。'
@@ -643,21 +643,25 @@ async function runArm(arm, port) {
       const stateDump = (await callTool('autoui_state', {})).trim()
       const snapIds = JSON.stringify([...(await snapshotText()).matchAll(/#(vnode_\d+)/g)].map((m) => m[1]))
       const headerFor = (file) =>
-        `// jade-edit vm 结构基线 v27（PLAN-035 T-03 重锁；v26=PLAN-033 批、v25=PLAN-032 批[头注字面 v21 系陈旧文案——
+        `// jade-edit vm 结构基线 v28（PLAN-036 T-05 重锁；v27=PLAN-035 批、v26=PLAN-033 批、v25=PLAN-032 批[头注字面 v21 系陈旧文案——
 ` +
         `// F-32-R3 同类面，v25 锁起逐版实写]；v20=PLAN-025、v19=PLAN-021、v18=PLAN-020、v17=PLAN-019、
 ` +
         `// v16=PLAN-018、v15=PLAN-016、v14=PLAN-015、v13=PLAN-014、v12=PLAN-013、v11=PLAN-012 等均留档）。
 ` +
-        `// 重锁因由：编辑命令入口真实化批（PLAN-035）——store editor_commands_help_open 入 dump（false 缺省，
+        `// 重锁因由：正文内链导航批（PLAN-036）——**state 段纯增 10 字段、snapshot id 序列零变化**（视图
 ` +
-        `// B 位终态值恒 false——说明未开）+ toolbar 撤销/重做两执行钮 vnode 消失 + 编辑菜单六执行项→单
+        `// 结构零漂移：status_bar wiki_nav_note 条件行闭态不渲染、编辑器 on "open-wiki-link" 为属性发射
 ` +
-        `// 「编辑命令说明…」入口（snapshot id 序列两处收缩；说明 alert-dialog 闭态恒渲染——闭态零可见面）。
+        `// 不占 id 序列）：store sel_gen/active_uid（活动选择世代/实例投影——NavCommit 票据门，B 位终态
 ` +
-        `// 计划内重锁第十例——store 新字段+入口结构收缩面（E 组新增不占检查位，逐项解释在 PLAN-035 T-03 记录）。
+        `// 值 1/1=开档一次）+ wiki_nav_note（独立导航提示 "" 缺省）；App 模型 nav_seq/navc_active/
 ` +
-        `// 仪器同 v2..v26：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态
+        `// navc_uid/navc_gen/navc_key/navc_body/navc_anchor（导航请求号+缺页确认票据——CreateGo 来源
+` +
+        `// 失效门，终态全缺省）。计划内重锁第十一例——store/App 新字段纯增面（逐项解释在 PLAN-036 T-05）。
+` +
+        `// 仪器同 v2..v27：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态
 ` +
         `//（chrome 全套 + Hello World.ad 开；查找面板/建页弹层/新建弹层/属性弹层/新建目录
 ` +
@@ -665,7 +669,9 @@ async function runArm(arm, port) {
 ` +
         `// 面板/反链面板/重载确认弹层未开——find_*/names_*/create_*/new_*/meta_*/dir_*/move_*/movedir_*/
 ` +
-        `// deldir_*/rendir_*/rename_*/delete_*/tags_*/mention_rows/reload_*/editor_commands_help_open 全为默认值入 dump）。
+        `// deldir_*/rendir_*/rename_*/delete_*/tags_*/mention_rows/reload_*/editor_commands_help_open/
+` +
+        `// nav_*/navc_*/sel_gen/active_uid/wiki_nav_note 全为默认值入 dump）。
 ` +
         `// 再生成：node tests/vm_matrix.mjs --save-baseline ${path.relative(repoRoot, file).replace(/\\\\/g, '/')}\n`
       const baselineBodyOf = () => `## state\n${stateDump}\n\n## snapshot-ids\n${snapIds}\n`
@@ -676,9 +682,9 @@ async function runArm(arm, port) {
       } else if (fs.existsSync(BASELINE)) {
         const raw = fs.readFileSync(BASELINE, 'utf8')
         const ok = raw === headerFor(BASELINE) + baselineBodyOf()
-        check('B', 'baseline', ok, ok ? '结构基线 v27 零漂移（state 逐字节 + id 序列）——PLAN-035 T-03 重锁（store editor_commands_help_open 入 dump false 缺省+toolbar 两执行钮 vnode 消失+编辑菜单六执行项→单说明入口——id 序列两处收缩，逐项解释在 PLAN-035 T-03）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
+        check('B', 'baseline', ok, ok ? '结构基线 v28 零漂移（state 逐字节 + id 序列）——PLAN-036 T-05 重锁（state 纯增 10 字段：store sel_gen/active_uid/wiki_nav_note + App nav_seq/navc_* 七件——snapshot id 序列零变化视图零漂移，逐项解释在 PLAN-036 T-05）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
       } else {
-        console.log('  [baseline] structure-v27 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v27.txt')
+        console.log('  [baseline] structure-v28 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v28.txt')
       }
     }
 

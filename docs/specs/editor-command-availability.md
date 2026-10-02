@@ -26,7 +26,7 @@
 
 | 键 | 归属 | 证据 |
 | --- | --- | --- |
-| Ctrl+Z / Ctrl+Y（及 Shift 变体） | **宿主不注册**——vue 生成 keymap 无三键映射、原生 action 表无三键路由、bind 层零改动（仍仅 F5）。编辑器正文内 Ctrl+Z/Y = 引擎内部历史栈（vue 轨已可消费，行为不回退）；原生轨内部撤销不存在（034 结论维持，key_press 词表无修饰键） | 生成 App.vue keymap grep + vm E 组键盘零路由 + e2e 真键 Ctrl+Z 撤销/Ctrl+Y 重做+Shift 三变体零说明弹出 |
+| Ctrl+Z / Ctrl+Y（及 Shift 变体） | **宿主不注册**——vue 生成 keymap 无三键映射、原生 action 表无三键路由、bind 层零改动（仍仅 F5）。编辑器正文内 Ctrl+Z/Y = 引擎内部历史栈（vue 轨已可消费，行为不回退）；原生轨内部撤销描述更正（PLAN-036 SD-05）——core.rs 内部撤销路径在册，「不存在」系旧推论过强：key_press 词表无修饰键只证明仪器受限，真键与编辑类型覆盖待补证（宿主桥缺口不变） | 生成 App.vue keymap grep + vm E 组键盘零路由 + e2e 真键 Ctrl+Z 撤销/Ctrl+Y 重做+Shift 三变体零说明弹出 |
 | Ctrl+A | 宿主不注册——普通 input（快开等）Ctrl+A 原生全选仅作用该 input；编辑器内 Ctrl+A = 浏览器 contenteditable 原生全选 | e2e input Ctrl+A 替换仅改 input、正文/磁盘保持 |
 | Ctrl+X/C/V | **不新增**全局截获（无替代键注册）；剪贴板权限不接管 | keymap grep 零新增 |
 | Ctrl+S / F5 / Ctrl+P 等 | 既有声明保持——主保存三入口、脏页确认、查找入口不回归 | e2e Ctrl+S 真落盘 + vm 六检查/重载组全绿 |
@@ -43,4 +43,4 @@
   - `node tests/vm_matrix.mjs --arm merged`——E cmd-avail 组（生产面入口/说明/键盘零路由）+ B 基线 v27（state +1 行 editor_commands_help_open: false；snapshot 收缩=toolbar 两钮子树+菜单六执行项；新说明弹层闭态恒渲染子树入序列——v26 逐项解释在 PLAN-035 T-03 记录）。
   - `pnpm exec playwright test -c e2e/playwright.config.ts e2e/command-availability.spec.ts`（单跑）——入口/键程/不变量三案。
   - `node tests/probe_editor_host.mjs --phase all`——034 缺桥模拟相位保留（隔离工程历史证据，与生产守卫分域）；live 盘点对齐本规范现状。
-- **暂不可用边界**：六命令宿主执行桥、保存来源身份、正文链接接线、位置族、Shift 丢失修复均为上游解锁项（[editor-host-capabilities](editor-host-capabilities.md) §3 供给表 A-1/A-2/A-3/B-1/B-2）；本片不消费、不绕过、不提前宣称。上游交付后另立消费 Plan 重新核对 API 与测试。
+- **暂不可用边界（PLAN-036 刷新）**：六命令宿主执行桥、保存来源身份、位置族、Shift 丢失修复仍为上游解锁项（[editor-host-capabilities](editor-host-capabilities.md) §3 供给表 A-1/A-2/A-3/B-3/B-4）；正文链接的 Vue 片已由 PLAN-036 交付（[wiki-link-navigation](wiki-link-navigation.md)——不恢复任何失效编辑命令入口，六守卫与本规范不变；原生轨正文点击仍待 B-2）。本片不消费、不绕过、不提前宣称。上游交付后另立消费 Plan 重新核对 API 与测试。

@@ -137,6 +137,17 @@ src/back/api.at           /api 契约（自有 Auto 源，与实现同 commit—
   [specs/editor-command-availability.md](specs/editor-command-availability.md)；
   能力结论（宿主命令桥缺供给）不因入口收口翻案，真执行仍按上游
   解锁门推进。
+- **正文内链导航（SD-3601，PLAN-036 R-03b2）**：Vue 正文
+  `on "open-wiki-link"` 完整事件名消费（双参=target+可选目标锚点，
+  缺参显式归一）→ `POST /api/resolve_wiki_link` 单目标只读解析（共享
+  四级 resolver，目录现读零写面）→ `store.NavCommit` 同步门导航（源
+  票据/活动选择世代/每等待期门/迟到拒绝零副作用、内存脏目标优先、
+  最近文件仅真实成功后变化）+ 缺页确认来源失效门 + 独立导航提示
+  （wiki_nav_note 不占 save_note）；锚点=开页后如实提示不支持定位
+  （开页≠reveal）见
+  [specs/wiki-link-navigation.md](specs/wiki-link-navigation.md)；
+  原生轨正文点击、输入期 wikilink 解析、caret/reveal 仍为上游缺口
+  （宿主能力边界 SD-3401 维持分列）。
 - engine rust/VM 平台面 experimental（engine ARCHITECTURE §2）——深层
   行为差异入 [parity-ledger.md](parity-ledger.md)。
 

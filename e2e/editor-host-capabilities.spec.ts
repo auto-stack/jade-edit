@@ -176,7 +176,7 @@ test('宿主能力核验·commands（菜单收口说明入口 + 引擎内部撤�
   console.log('[commands] PASS — Ctrl+Shift+O 被 ActOpen 抢占（keymap Shift 丢失在录面）：孤页清单不开、无崩溃（dialog 取消垫片）')
 })
 
-test('宿主能力核验·navigation（wiki 链接点击零导航 + 块域稳定面）', async ({ page }) => {
+test('宿主能力核验·navigation（wiki 链接真实导航 + 块域稳定面）', async ({ page }) => {
   test.setTimeout(180_000)
   await page.goto('/')
   await expect(page.getByText('ready', { exact: true }).first()).toBeVisible({ timeout: 15_000 })
@@ -189,24 +189,24 @@ test('宿主能力核验·navigation（wiki 链接点击零导航 + 块域稳定
   await expect(link).toBeVisible()
   console.log('[navigation] wiki 链接渲染面可见（span.autodown-wikilink-label + data-wikilink-title=Hello World）')
 
-  // 点击链接 → @open-wiki-link 无监听：零导航（活动档仍 index.ad、无新
-  // tab、无跳转错误——调查通过、接口尚不可用）
+  // **PLAN-036 起真实导航**（旧「@open-wiki-link 无监听零导航」面随接线
+  // 退役——调查通过、接口已消费）：点击链接 → resolve→read→NavCommit →
+  // Hello World.ad 打开激活（新 tab + 编辑器切换；vue 载体完整事件名消费
+  // 直证；旧缺供给模拟证据分域见 probe_editor_host navigation 相位与
+  // editor-host-capabilities 规范历史行）
   await link.click()
-  await page.waitForTimeout(800)
-  await expect(visibleEditor(page)).toContainText('Jade Garden 测试知识库', { timeout: 10_000 })
-  await expect(page.locator('button[class*="h-8 px-3"]', { hasText: 'Hello World' })).toHaveCount(0)
-  console.log('[navigation] PASS — 链接点击零导航（emit 无消费者；title 不被当 path 打开——安全侧现状）')
+  await expect(visibleEditor(page)).toContainText('这是一段示例文本', { timeout: 10_000 })
+  await expect(page.locator('button[class*="h-8 px-3"]', { hasText: 'Hello World' })).toHaveCount(1)
+  console.log('[navigation] PASS — 链接点击真实导航（目标页打开激活——PLAN-036 接线交付；原生轨正文点击仍无通道=上游边界维持）')
 
-  // 缺页点击（title 无对应档）同形零导航——这里复用同一链接面即可：链接
-  // 点击本身未接线，缺页/在页路由无分野（一并记录）
   // 块域稳定面（data-block-id——^anchor 显式或 block-<i> 位置回退，同内
   // 容确定性）：切档往返后 id 集稳定
   const idsBefore = await page.locator('.autodown-editor:visible [data-block-id]').evaluateAll((els) => els.map((e) => e.getAttribute('data-block-id')))
   expect(idsBefore.length).toBeGreaterThan(0)
   await page.getByText('Tasks', { exact: true }).first().click()
   await expect(visibleEditor(page)).toContainText('原型设计', { timeout: 10_000 })
-  await page.getByText('首页', { exact: true }).first().click()
-  await expect(visibleEditor(page)).toContainText('Jade Garden 测试知识库', { timeout: 10_000 })
+  await page.getByText('Hello World', { exact: true }).first().click()
+  await expect(visibleEditor(page)).toContainText('这是一段示例文本', { timeout: 10_000 })
   const idsAfter = await page.locator('.autodown-editor:visible [data-block-id]').evaluateAll((els) => els.map((e) => e.getAttribute('data-block-id')))
   expect(idsAfter, '块域 id 集切档往返稳定（同内容确定性——reveal 定位候选坐标域）').toEqual(idsBefore)
   console.log('[navigation] PASS — data-block-id 块域切档往返稳定（getBlockMap 公开契约 DOM 面；caret/reveal 原语缺口以 probe navigation UNSUPPORTED 行在案）')

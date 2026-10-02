@@ -22,18 +22,20 @@
 
 | 面 | 事实 | 证据 |
 | --- | --- | --- |
-| ①② native | **缺供给**（结论维持）：宿主通道可达 handler，但 handler→编辑器无执行桥（回执 6/6 正文零变化）；编辑器内部撤销不存在——key_press 词表无修饰键（`'ctrl+z'` Invalid keyspec 实录，PLAN-057 v1） | probe C1/C2（隔离工程缺桥模拟——历史证据，与生产守卫分域） |
+| ①② native | **缺供给**（结论维持）：宿主通道可达 handler，但 handler→编辑器无执行桥（回执 6/6 正文零变化）。**native 内部撤销描述更正（PLAN-036 SD-04）**：core.rs 已有 Ctrl+Z/Y → block_undo_redo → undo/redo 路径（源码在册，binary 标识提交对应源亦含）；「内部撤销不存在」系旧推论过强——自动化 key_press 词表无修饰键只证明**仪器受限**，不证明运行时无内部撤销；真键与各类编辑历史覆盖仍待补证（宿主命令桥缺口不因内部实现存在而消失） | probe C1/C2（隔离工程缺桥模拟——历史证据，与生产守卫分域）+ 上游复核记录 §2 |
 | ③ Vue 内部快捷键 | **已可消费**（编辑器内部；035 后宿主 keymap 三键移除——引擎内部撤销独占不被空 handler 并行）：引擎内部 Ctrl+Z/Y 真键撤销/重做生效（onContentKeydown runHistory）；cut/copy/paste/select-all=浏览器 contenteditable 原生面 | e2e commands + editor-command-availability §2 |
 | ③ Vue 宿主菜单 | **缺供给→已收口**（035）：六菜单执行项移除，唯一入口=「编辑命令说明…」可见 dialog；直派兼容消息=守卫说明零编辑（C-2 独立分支交付，命令桥仍缺） | probe_command_availability 真实 Store 臂 + editor-command-availability §1 |
 | 全局热键冲突 | **035 收口半**：Ctrl+Z/Y/A 宿主注册已移除（空 handler 不再截获正文/输入框按键）；**生成器组合键丢 Shift 位维持**：`Ctrl+Shift+O` 实测被 `'Ctrl+o'→ActOpen` 抢占（孤页清单快捷键失效；Ctrl+Shift+F/D 同族塌缩）——上游缺口不在 035 修复 | e2e commands 实录 + App.vue `__autoActionsKeymap`（三键已消） |
 
 ### 1.3 链接（link）
 
+> **PLAN-036 刷新（2026-10-02）**：③ Vue 正文链接已由「缺供给双层」升级为**已消费**——完整事件名接线+单目标只读解析+导航保护交付，现行契约见 [wiki-link-navigation.md](wiki-link-navigation.md)。简称 `onopenwikilink` 生成名不匹配的兼容修复仍归 auto-lang（本片消费完整事件名绕开，B-1 依赖缩窄为兼容面）；①② native 链接事件缺供给维持。
+
 | 面 | 事实 | 证据 |
 | --- | --- | --- |
-| 后端解析供给 | **已可消费**：`link_index` 行 `{target, anchor, exists, target_path}` 四级已解析（stems 精确→aliases 精确→stems casefold→aliases casefold；anchor=`#` 首现拆分透传）——merged 直调与 split HTTP 双臂已知答案全过 | probe N3/B2（目标页/靶心→Tgt.ad；tgt casefold；缺失页悬空；`目标页#sec1` anchor 伴随） |
-| ③ Vue 链接事件 | **缺供给双层**：渲染面公开（`span.autodown-wikilink-label[data-wikilink-title]`）；点击 emit `'open-wiki-link'(title, blockId?)` 但 ① App.vue 零监听（点击零导航——title 不被当 path 打开，安全侧现状）② 生成器发射名为 `@openwikilink`，与 emit kebab 名不匹配（事件不可达） | e2e navigation + probe vue 形状 |
-| ①② native 链接事件 | **缺供给**：VM 编辑壳无链接点击路由与消息通道（M3/N2 零回执） | probe M3/N2 + widget.rs |
+| 后端解析供给 | **已可消费**：`link_index` 行 `{target, anchor, exists, target_path}` 四级已解析（stems 精确→aliases 精确→stems casefold→aliases casefold；anchor=`#` 首现拆分透传）——merged 直调与 split HTTP 双臂已知答案全过。**PLAN-036 增补单目标口**：`POST /api/resolve_wiki_link`（只读零写、目录现读、无效/missing 严格区分——导航主承面） | probe N3/B2 + probe_wiki_link B3 十案 |
+| ③ Vue 链接事件+导航 | **已消费（PLAN-036 交付）**：完整事件名 `on "open-wiki-link"` 双参消费（第二参=目标锚点非来源身份；缺参显式归一）→ 单目标解析 → NavCommit 同步门导航（源票据/选择世代/每等待期门/迟到拒绝/缺页确认/独立提示）——**title 不被当 path、外链零路由**；简称 `@openwikilink` 兼容面仍不匹配（零监听，归 auto-lang） | e2e wiki-link-navigation 八测 + editor-host-capabilities navigation 案（真实导航）+ [wiki-link-navigation.md](wiki-link-navigation.md) |
+| ①② native 链接事件 | **缺供给**：VM 编辑壳无链接点击路由与消息通道（M3/N2 零回执）——原生正文点击维持未供给 | probe M3/N2 + widget.rs |
 | 宿主开档口 | `OpenLink(path)` 接收**已解析 path**（反链/出链 target_path、拾取、建页导航共用）——是开档口不是 title resolver；title 不入链接身份（name-search 规范边界延续） | app.at OpenLink + name-search §2 |
 
 ### 1.4 selection / cursor / reveal
@@ -60,8 +62,8 @@
 按仓最小需求、拟议接口（**尚非现行 API**）与解锁证据见 [034-editor-host-supply.md](../plans/attachments/034-editor-host-supply.md)。摘要：
 
 - **auto-down**（§A）：A-1 保存/链接/聚焦事件载荷增实例身份（本仓消费 @save 的前置解锁）；A-2 showActions/canEdit 真消费 prop；A-3 六命令宿主可调面（runCommand 或等价回执对）。
-- **auto-lang**（§B）：B-1 open-wiki-link 生成名 kebab 不匹配（优先解锁，小改动）；B-2 原生轨 save/link 消息通道；B-3 原生轨命令原语（key_press 词表无修饰键为源码锚定）；B-4 位置族原语（caret/选区/reveal——R-08/R-11 方向输入）。
-- **jade-edit**（§C，本仓可实施面，后续 Plan 细化）：C-1 @save 消费接线（依赖 A-1）；C-2 六命令菜单真实化/失效收口——**已由 PLAN-035 交付独立分支**（失效收口形态：入口移除+可见说明+兼容守卫+三键归还，见 [editor-command-availability.md](editor-command-availability.md)；真执行仍待 A-3/B-3 解锁后另立消费片）；C-3 open-wiki-link 接线（依赖 B-1，消费四级解析）；C-4 双轨保存同门链一致性。
+- **auto-lang**（§B）：B-1 open-wiki-link **简称** `@openwikilink` 生成名兼容（**PLAN-036 后缩窄为兼容面**——完整事件名 `on "open-wiki-link"` 已消费，正文导航不依赖本项；另 B-0 族新增上游缺口见 [wiki-link-navigation](wiki-link-navigation.md) §4：输入期 wikilink 解析缺失/空编辑器零块/块底 boundary 命中区遮挡——如实上告 owner=auto-down）；B-2 原生轨 save/link 消息通道；B-3 原生轨命令原语（key_press 词表无修饰键为仪器受限锚定——native 内部撤销源码路径在册，真键覆盖待补证）；B-4 位置族原语（caret/选区/reveal——R-08/R-11 方向输入）。
+- **jade-edit**（§C，本仓可实施面，后续 Plan 细化）：C-1 @save 消费接线（依赖 A-1）；C-2 六命令菜单真实化/失效收口——**已由 PLAN-035 交付独立分支**（失效收口形态：入口移除+可见说明+兼容守卫+三键归还，见 [editor-command-availability.md](editor-command-availability.md)；真执行仍待 A-3/B-3 解锁后另立消费片）；C-3 open-wiki-link 接线——**已由 PLAN-036 交付 Vue 片**（完整事件名消费+单目标解析+导航保护，见 [wiki-link-navigation.md](wiki-link-navigation.md)；原生轨点击待 B-2 另立消费片）；C-4 双轨保存同门链一致性。
 - **已知上游边界维持**：F-32-R2（VM 局部槽串扰）、F-24-2（jade 应用 split boot）、F-31-R1（engine dist 新鲜度义务）、F-31-R2（vue handler 互调未 await）、vue 多文件 e2e 时序族——本片如实分列，不因调查结论翻案。
 
 ## 4. 验证与边界
