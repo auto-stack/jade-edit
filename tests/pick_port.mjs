@@ -17,6 +17,12 @@
 
 import net from 'node:net'
 
+// ⚠ 0.0.0.0 绑定测试（PLAN-036 T-01 执行期校正——F-R8-1/F-R13-1 家族新
+// 形态）：AutoVM HTTP 子进程绑定 **0.0.0.0**（全接口），而本机客户端出站
+// 连接会随机占用 LAN 接口临时端口（实测 192.168.68.6:8221 ESTABLISHED 使
+// 0.0.0.0:8221 bind 撞 os error 10048，127.0.0.1:8221 却可绑——单接口测试
+// 假阳性，serve-back 子进程「exit 0 无输出」即此）。0.0.0.0 可绑严格强于
+// 127.0.0.1 可绑，故探测缺省改绑 0.0.0.0。
 const canBind = (host, port) =>
   new Promise((resolve) => {
     const srv = net.createServer()
@@ -25,7 +31,7 @@ const canBind = (host, port) =>
     srv.listen(port, host)
   })
 
-export async function pickPort({ host = '127.0.0.1', start = 8221, end = 8260, env = 'JADE_PROBE_PORT' } = {}) {
+export async function pickPort({ host = '0.0.0.0', start = 8221, end = 8260, env = 'JADE_PROBE_PORT' } = {}) {
   const forced = Number(process.env[env] ?? 0)
   if (Number.isInteger(forced) && forced > 0) return forced
   for (let p = start; p <= end; p++) {
