@@ -75,6 +75,8 @@ if rawa == "undefined" {
 | B-6 | **引擎无输入期 wikilink 解析**：insertText/逐键键入的 `[[X]]` 保持字面文本（markdown 解析仅在 content 载入期）；blur 不重解析 | e2e E3 首版快照（追加后 `[[Hello World#sec-x]]` 字面渲染）+ U2 实证 | e2e 语料链接一律磁盘预写（加载期解析）；**AC-04 的「untitled 源带链接点击导航」在此引擎构建上结构性不可达**（untitled 空编辑器不可输入——B-7），保护面由具名脏源承载，如实上报告复审；输入期解析能力缺口 owner=auto-down |
 | B-7 | **空编辑器渲染零块**：content="" 的编辑器无任何块节点——无 caret 目标，点击（含多点高度）与逐键/insertText 键入均不落 | U2 五高度点击+真实逐键实测（received 恒空） | 上游 UX 边界（新建页键入体验）owner=auto-down；本片 e2e 的 untitled 案降级为「untitled 存在时导航零波及」形态 |
 | B-8 | **块底 boundary 命中区**：`.autodown-block-boundary:after`（块底下 20px+下沿溢出 8px，pointer-events:auto）按块高遮挡 span 中心点——单行链接段点击被拦截 | e2e clickLink 拦截实录（NavAnchor/NavSrc 单行链接段） | e2e clickLink 多高度点重试（span 内 y 序列，拦截抛错即换）；真实用户单行短段落链接可点性受同一几何影响（UX 观感项，owner=auto-down，不阻塞功能） |
+| B-9 | **创建流双写竞态**：nav 确认创建成功后若经 OpenLink（store.Open await 窗）与锚点 NavCommit 并行开页——两写者互切重复建 tab（§5.2③ 不追加重复 tab 的创建流特化） | e2e M4 全套件时序实录（tab count=2；solo 时序不复现） | nav 来源创建后开页走 NavCommit 单口（read_wiki→fresh 票据→提交；读失败回落 OpenLink）；面板建页口不变 |
+| B-10 | **ESC 关确认不派发取消**：AlertDialog Escape 仅 v-model 清开态——navc_active 残留；面板 CreateClick 入口清旗标（面板确认永不被旧导航票据门染） | M3 ESC 实测 + CreateClick 清旗标设计 | nav 门消费三路（取消/失效/消费）+ CreateClick 清旗标；来源失效门的直派验证归 T-05 vm 矩阵（vue 模态下 UI 不可切档——门为防御性不变式） |
 
 ## 5. 四级解析与已知答案（T-02 义务基线）
 

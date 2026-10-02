@@ -1310,6 +1310,17 @@ widget App {
         // /新输入/第二点击均递增使旧流程失效）；源票据为 handler 局部捕获
         //（单次不可变），仅请求号入模型。----
         var nav_seq int = 0
+        // —— 导航缺页确认来源票据（PLAN-036 T-04；契约 §2/§5.3）：missing
+        // 开既有确认时捕获（uid/gen/key/body + 锚点），CreateGo 消费——
+        // 确认期切档/新输入使来源失效 → 拒绝旧确认提交（取消+提示重新点
+        // 击，零建页）；取消/消费/失效三路均清旗标（不污染面板建页口）。
+        //----
+        var navc_active bool = false
+        var navc_uid int = 0
+        var navc_gen int = 0
+        var navc_key str = ""
+        var navc_body str = ""
+        var navc_anchor str = ""
     }
 
     computed {
@@ -3048,8 +3059,28 @@ widget App {
                             tp = ""
                         }
                         if tp == "" {
-                            // 正常 missing（T-04 接确认流；本片不开建页）
-                            console_log("nav: missing " + target)
+                            // 正常 missing（T-04；§5.3）：票据复检有效才开
+                            // 既有确认（复用 store.CreateConfirmOpen——零
+                            // create_page 调用）；票据入 App（CreateGo 来
+                            // 源失效门）；无效/跨行不进本支（行缺臂）。
+                            var g0 bool = true
+                            if .nav_seq != myseq { g0 = false }
+                            if .store.active_uid != t_uid { g0 = false }
+                            if .store.sel_gen != t_gen { g0 = false }
+                            if .store.active_key != t_key { g0 = false }
+                            if .store.active_body != t_body { g0 = false }
+                            if !g0 {
+                                console_log("nav: missing stale dropped " + target)
+                            } else {
+                                .navc_uid = t_uid
+                                .navc_gen = t_gen
+                                .navc_key = t_key
+                                .navc_body = t_body
+                                .navc_anchor = anc
+                                .navc_active = true
+                                store.CreateConfirmOpen(target)
+                                console_log("nav: missing confirm " + target)
+                            }
                         } else {
                             // —— 门①（解析后）：请求号 + 来源身份 + 世代 ——
                             var g1 bool = true
@@ -3312,9 +3343,15 @@ widget App {
         // —— 悬空建页（PLAN-005 T-02/T-03）——悬空行点击 → 确认弹层
         //（store 弹层态）→ 创建流或取消。CreateGo 四步流（§2.3）：
         .CreateClick(target) -> {
+            // 面板来源确认入口（PLAN-036 T-04）：清导航确认旗标——面板确认
+            // 永不被旧导航票据门染（ESC 关闭不派发取消的泄漏面封死）
+            .navc_active = false
             store.CreateConfirmOpen(target)
         }
         .CreateCancel -> {
+            // 取消（PLAN-036 T-04）：关确认零建页；导航确认旗标同清（不污
+            // 染后续面板建页口的守卫面）
+            .navc_active = false
             store.CreateConfirmCancel()
         }
         // CreateGo 四步流（§2.3）：
@@ -3324,24 +3361,76 @@ widget App {
         //  exists 翻转）④树重取（G3——EXPLORER 新行 + 快开 ft_nodes
         //  数据源随之新鲜）。失败/空名守卫 = 弹层留置 + console 注记
         //（用户可取消）。
+        // CreateGo 导航确认门（PLAN-036 T-04；契约 §5.3）：navc_active =
+        // 由正文 missing 确认进入——来源失效（确认期切档/新输入）→ 拒绝旧
+        // 确认提交（关弹层+独立提示重新点击，**零 create_page 调用**零建
+        // 页）；有效 → 消费旗标走既有建页流（复用 create_page 校验/幂等
+        // ——已存在页不覆盖），成功且锚点非空 → 真实开页回执（fresh 票据
+        // + NavCommit）后锚点说明保留。旗标三路（取消/失效/消费）均清，
+        // 面板建页口不受染。
         .CreateGo -> {
-            var r str = ""
-            var ok bool = true
-            try {
-                r = create_page(.store.create_target)
-            } catch (e) {
-                ok = false
+            var nav_reject bool = false
+            var nav_mode bool = false
+            var nav_anc str = ""
+            if .navc_active {
+                .navc_active = false
+                var gok bool = true
+                if .store.active_uid != .navc_uid { gok = false }
+                if .store.sel_gen != .navc_gen { gok = false }
+                if .store.active_key != .navc_key { gok = false }
+                if .store.active_body != .navc_body { gok = false }
+                if !gok {
+                    nav_reject = true
+                    store.CreateConfirmCancel()
+                    store.NavNote("页面创建确认已过期——请重新点击链接")
+                    console_log("nav-create: stale confirm rejected")
+                } else {
+                    nav_mode = true
+                    nav_anc = .navc_anchor
+                }
             }
-            if !ok {
-                console_log("create: failed")
-            }
-            if r != "" {
-                store.CreateConfirmCancel()
-                .OpenLink(r)
-                .LinksRefreshOf(r)
-                .TagsRefresh()
-                .TreeRefresh()
-                .NamesInvalidate()
+            if !nav_reject {
+                var r str = ""
+                var ok bool = true
+                try {
+                    r = create_page(.store.create_target)
+                } catch (e) {
+                    ok = false
+                }
+                if !ok {
+                    console_log("create: failed")
+                }
+                if r != "" {
+                    store.CreateConfirmCancel()
+                    .LinksRefreshOf(r)
+                    .TagsRefresh()
+                    .TreeRefresh()
+                    .NamesInvalidate()
+                    if nav_mode {
+                        // 开新档走 NavCommit 单口（§5.2③ 不追加重复 tab——
+                        // OpenLink 的 store.Open await 窗与 NavCommit 构造
+                        // 互切会双建；创建期弹层模态护住状态面，fresh 票据
+                        // 门前无变化窗）；锚点说明随真实提交回执。
+                        var body2 str = ""
+                        var dok bool = true
+                        try {
+                            body2 = read_wiki(r)
+                        } catch (e2) {
+                            dok = false
+                        }
+                        if dok {
+                            var f_uid int = .store.active_uid
+                            var f_gen int = .store.sel_gen
+                            var f_key str = .store.active_key
+                            var f_body str = .store.active_body
+                            store.NavCommit({ uid: f_uid, gen: f_gen, key: f_key, body: f_body, path: r, anchor: nav_anc, body2: body2 })
+                        } else {
+                            .OpenLink(r)
+                        }
+                    } else {
+                        .OpenLink(r)
+                    }
+                }
             }
         }
         // —— 新建页面流（PLAN-007 T-02；§2.3）——

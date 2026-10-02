@@ -42,7 +42,7 @@ const openTreePage = async (page: import('@playwright/test').Page, label: string
 }
 
 const tabButton = (page: import('@playwright/test').Page, title: string) =>
-  page.locator('button[class*="h-8 px-3"]', { hasText: title })
+  page.locator('button[class*="h-8 px-3"]').filter({ hasText: new RegExp(`^${title}$`) })
 
 const tabCount = async (page: import('@playwright/test').Page) =>
   await page.locator('button[class*="h-8 px-3"]').count()
@@ -383,4 +383,151 @@ test('wiki 导航·过期·读盘窗与逆序（stale-after-read/第二点击，
   const activeTab = page.locator('button[class*="text-foreground font-medium"]')
   await expect(activeTab).toHaveText(/Projects/)
   console.log('[stale-resolve] PASS — 逆序双点击：快者提交、慢者零效（active 恒 Projects）')
+})
+
+test('wiki 导航·缺页确认（取消零建页/确认创建/来源失效拒绝/锚点保留，AC-07/09）', async ({ page }) => {
+  test.setTimeout(300_000)
+  fs.writeFileSync(`${WORKSPACE}/NavMiss.ad`, '# 缺页源\n\n跳 [[NavMiss 页]] 与 [[NavMiss 锚#sec-n]] 一处。\n\n尾部段落。\n', 'utf8')
+  await page.goto('/')
+  await expect(page.getByText('ready', { exact: true }).first()).toBeVisible({ timeout: 15_000 })
+  await page.keyboard.press('Control+p')
+  const mFind = page.getByPlaceholder('过滤文件名…')
+  await expect(mFind).toBeVisible({ timeout: 5_000 })
+  await mFind.fill('NavMiss')
+  await page.getByText('NavMiss', { exact: true }).first().click()
+  await expect(visibleEditor(page)).toContainText('跳 NavMiss 页 与 NavMiss 锚#sec-n 一处。', { timeout: 10_000 })
+  const dialog = page.getByRole('alertdialog')
+
+  // M1 取消：确认弹层可见（目标+路径预览）→ 取消 → 零建页零 tab
+  await clickLink(page, 'NavMiss 页')
+  await expect(dialog).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByText('创建缺失页面？', { exact: true })).toBeVisible()
+  await expect(page.getByText('将创建：NavMiss 页.ad', { exact: true })).toBeVisible()
+  await dialog.getByRole('button', { name: '取消', exact: true }).click()
+  await expect(dialog).toBeHidden({ timeout: 5_000 })
+  expect(fs.existsSync(`${WORKSPACE}/NavMiss 页.ad`), '取消零建页').toBe(false)
+  await expect(tabButton(page, 'NavMiss 页')).toHaveCount(0)
+  console.log('[missing] 取消：弹层关、零建页、零 tab')
+
+  // M2 确认创建：复用既有确认 → create_page 真建 → tab 开 + recents
+  await clickLink(page, 'NavMiss 页')
+  await expect(dialog).toBeVisible({ timeout: 10_000 })
+  await dialog.getByRole('button', { name: '创建', exact: true }).click()
+  await expect(tabButton(page, 'NavMiss 页')).toHaveCount(1, { timeout: 15_000 })
+  expect(fs.existsSync(`${WORKSPACE}/NavMiss 页.ad`), '确认创建真建页').toBe(true)
+  await page.keyboard.press('Control+p')
+  await expect(page.getByPlaceholder('过滤文件名…')).toBeVisible({ timeout: 5_000 })
+  await expect(page.getByText('NavMiss 页.ad', { exact: true })).toBeVisible({ timeout: 10_000 })
+  await page.getByRole('button', { name: '收起', exact: true }).first().click()
+  console.log('[missing] PASS — 确认创建：真建页开 tab + 入最近文件（成功副作用面）')
+
+  // M3 来源失效拒绝：确认期切 tab → 创建被拒（零建页+独立提示重新点击）
+  await tabButton(page, 'NavMiss').click()
+  await expect(visibleEditor(page)).toContainText('跳 NavMiss 页 与 NavMiss 锚#sec-n 一处。', { timeout: 10_000 })
+  // M3 来源失效门（防御性不变式——vue 模态确认期 UI 不可切档，直派验证
+  // 归 T-05 vm 矩阵）：ESC 关确认 → 零建页 + 后续建页口不受染（面板/导航
+  // 建页照常）
+  await clickLink(page, 'NavMiss 锚#sec-n')
+  await expect(dialog).toBeVisible({ timeout: 10_000 })
+  await page.keyboard.press('Escape')
+  await expect(dialog).toBeHidden({ timeout: 5_000 })
+  expect(fs.existsSync(`${WORKSPACE}/NavMiss 锚.ad`), 'ESC 关确认零建页').toBe(false)
+  // ESC 不污染建页口：导航确认旗标已被清理——重发确认可正常创建（M4 共用）
+  console.log('[missing] PASS — ESC 关确认零建页（来源失效门直派验证归 T-05 vm）')
+
+  // M4 锚点保留（创建后）：重发确认 → 创建 → 真实开页后锚点说明保留
+  await tabButton(page, 'NavMiss').click()
+  await expect(visibleEditor(page)).toContainText('跳 NavMiss 页 与 NavMiss 锚#sec-n 一处。', { timeout: 10_000 })
+  await clickLink(page, 'NavMiss 锚#sec-n')
+  await expect(dialog).toBeVisible({ timeout: 10_000 })
+  await dialog.getByRole('button', { name: '创建', exact: true }).click()
+  await expect(tabButton(page, 'NavMiss 锚')).toHaveCount(1, { timeout: 15_000 })
+  await expect(page.getByText('已打开页面，暂不支持定位到锚点：sec-n', { exact: true })).toBeVisible({ timeout: 10_000 })
+  console.log('[missing] PASS — 确认创建后锚点说明保留（真实开页回执面）')
+})
+
+test('wiki 导航·失败终态（离线/畸形/恢复不覆盖，AC-08）', async ({ page }) => {
+  test.setTimeout(300_000)
+  fs.writeFileSync(`${WORKSPACE}/NavFail.ad`, '# 失败源\n\n跳 [[Projects]] 一处。\n\n尾部段落。\n', 'utf8')
+  await page.goto('/')
+  await expect(page.getByText('ready', { exact: true }).first()).toBeVisible({ timeout: 15_000 })
+  await page.keyboard.press('Control+p')
+  const fFind = page.getByPlaceholder('过滤文件名…')
+  await expect(fFind).toBeVisible({ timeout: 5_000 })
+  await fFind.fill('NavFail')
+  await page.getByText('NavFail', { exact: true }).first().click()
+  await expect(visibleEditor(page)).toContainText('跳 Projects 一处。', { timeout: 10_000 })
+
+  // F1 离线（请求拒）：错误可见、零 tab；恢复臂随后（旧错误不覆盖新成功）
+  let mode = 'abort'
+  await page.route('**/api/resolve_wiki_link', async (route) => {
+    if (mode === 'abort') await route.abort()
+    else if (mode === 'garbage') await route.fulfill({ status: 200, contentType: 'application/json', body: 'not-json{{{' })
+    else await route.continue()
+  })
+  const tabsBefore = await tabCount(page)
+  await clickLink(page, 'Projects')
+  await expect(page.getByText('链接解析失败，请重试', { exact: true })).toBeVisible({ timeout: 10_000 })
+  expect(await tabCount(page), '离线零 tab').toBe(tabsBefore)
+  console.log('[fail] 离线：解析失败可见、零 tab（不错误当成功）')
+
+  // F2 畸形 JSON：同错误面（与 missing 严格区分）
+  mode = 'garbage'
+  await clickLink(page, 'Projects')
+  await expect(page.getByText('链接解析失败，请重试', { exact: true })).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByText('创建缺失页面？', { exact: true })).toHaveCount(0, '错误不当 missing 开确认')
+  console.log('[fail] PASS — 畸形响应：错误可见、不开建页确认（与 missing 严格区分）')
+
+  // F3 恢复：再点（通行）→ 成功打开 + 旧错误被新成功清零
+  mode = 'pass'
+  await clickLink(page, 'Projects')
+  await expect(tabButton(page, 'Projects')).toHaveCount(1, { timeout: 15_000 })
+  await expect(page.getByText('链接解析失败，请重试', { exact: true })).toHaveCount(0, { timeout: 10_000 })
+  console.log('[fail] PASS — 恢复后再点成功：旧错误不覆盖新成功（提示清零）')
+})
+
+test('wiki 导航·边界（普通外链零路由/save_note 分域，AC-09）', async ({ page }) => {
+  test.setTimeout(300_000)
+  fs.writeFileSync(
+    `${WORKSPACE}/NavExt.ad`,
+    '# 外链源\n\n见 [外部页](https://example.com/x) 与 [[Hello World#sec-e]] 一处。\n\n尾部段落。\n',
+    'utf8',
+  )
+  await page.goto('/')
+  await expect(page.getByText('ready', { exact: true }).first()).toBeVisible({ timeout: 15_000 })
+  await page.keyboard.press('Control+p')
+  const bFind = page.getByPlaceholder('过滤文件名…')
+  await expect(bFind).toBeVisible({ timeout: 5_000 })
+  await bFind.fill('NavExt')
+  await page.getByText('NavExt', { exact: true }).first().click()
+  await expect(visibleEditor(page)).toContainText('见 外部页 与 Hello World#sec-e 一处。', { timeout: 10_000 })
+
+  // B1 普通外链零 resolver 路由：点击 [外部页]（引擎非 wikilink 渲染）
+  // → /api/resolve_wiki_link 请求数恒零
+  let resolveCalls = 0
+  await page.route('**/api/resolve_wiki_link', async (route) => {
+    resolveCalls = resolveCalls + 1
+    await route.continue()
+  })
+  const ext = visibleEditor(page).getByText('外部页', { exact: true }).first()
+  await ext.waitFor({ timeout: 10_000 })
+  let extClickable = true
+  try {
+    await ext.click({ timeout: 3000 })
+  } catch {
+    extClickable = false
+  }
+  await sleep(800)
+  expect(resolveCalls, '普通 Markdown 外链零 resolver 请求').toBe(0)
+  await expect(tabButton(page, 'Hello World')).toHaveCount(0, '外链零导航')
+  console.log(`[boundary] 外链：零 resolver 请求、零导航（可点=${extClickable}——渲染形态不冒充 wikilink）`)
+
+  // B2 save_note 分域：脏源（未保存）+ 带锚导航成功 → 两注记并存
+  await appendToEditor(page, ` B2-脏化标记。`)
+  await expect(page.getByText('未保存', { exact: true }).first()).toBeVisible({ timeout: 10_000 })
+  await clickLink(page, 'Hello World#sec-e')
+  await expect(page.getByText('已打开页面，暂不支持定位到锚点：sec-e', { exact: true })).toBeVisible({ timeout: 10_000 })
+  await tabButton(page, 'NavExt').click()
+  await expect(page.getByText('未保存', { exact: true }).first()).toBeVisible({ timeout: 10_000 })
+  console.log('[boundary] PASS — save_note 与导航提示分域并存（锚点开页零定位宣称）')
 })
