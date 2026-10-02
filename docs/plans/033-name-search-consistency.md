@@ -1,10 +1,10 @@
 ---
 plan_id: PLAN-033
-status: execution_done
+status: reviewed
 feature_name: 名称查找一致（R-04）
 author: [agent]
 created_at: 2026-10-02T01:18:59Z
-updated_at: 2026-10-02T09:40:00Z
+updated_at: 2026-10-02T16:00:00Z
 plan_revision: 1
 current_step: 5
 total_steps: 5
@@ -213,6 +213,7 @@ T-01 输出逐入口触点表：查找入口开启／重新进入、现有手动
 - 2026-10-02T12:00:00Z：stage: work | plan_id: PLAN-033 | plan_revision: 1 | outcome: executing（T-03 完成，含 T-04 e2e 面）| code_commit: 本批 | task_ids: T-03（T-04 e2e 前置）| evidence: pnpm build 绿+gen TS 静态核验（快照-回读门/computed files_rows/await 在 handler 体内）+ e2e name-search 6/6 + e2e matrix 全套（回归零漂移；⑩⑤ recents ready 门修正）| blockers: 无 | next: T-04（probe 刷新案+vm_matrix N 组）。
 - 2026-10-02T13:00:00Z：stage: work | plan_id: PLAN-033 | plan_revision: 1 | outcome: executing（T-04 完成）| code_commit: 本批 | task_ids: T-04 | evidence: probe 刷新弧双臂全绿+vm merged 19/19（N 组+基线 v26+12/13/R/9 当前代码全绿）+e2e 7/7+执行期实勘五件（D-30① 阴影/VM 视图解箱/computed 行集改道/已知答案校准/LC3 安全终态断言化）| blockers: F-32-R2（上游，LC3 安全终态单列在录——非本片新增）；F-24-2（split boot，分段判绿在录）| next: T-05（回归、规范落位与复审交接）。
 - 2026-10-02T14:30:00Z：stage: work | plan_id: PLAN-033 | plan_revision: 1 | outcome: pass | code_commit: 0f047ea→06e1955→253db35→37f4517→1f61011→本批（直接 main 线性）| task_ids: T-01..T-05 全闭环 | evidence: 规范 name-search.md 四节+ARCHITECTURE 双段注记+路线图三处；probe 相位 2 双臂全绿（含刷新弧七案）+四回归探针全绿；vm merged 19/19（N 组+v26 基线+LC3 blocker 单列）+split F-24-2 分段判绿；e2e 全量三轮 19-20/21 过且挂集每轮不同、单跑全数复绿（matrix 5/5/name-search 6/6/lifecycle 9/9）+A/B 86a2808 同组合同形挂（vue 多文件时序族在录，非本片引入）| blockers: 无本片新增（F-32-R2/F-24-2/F-31-R2 族按在录口径分列）| next: review（auto-plan-review 独立复跑门）。工作树零 WIP；worktree 诊断件已删（git worktree list 单一主检出）。
+- 2026-10-02T16:00:00Z：stage: review | plan_id: PLAN-033 | plan_revision: 1 | outcome: pass | reviewed_commit: 992f3a2 | base_commit: 86a2808（032 cleaned；链 86a2808→f2ccacd→0f047ea→06e1955→253db35→37f4517→1f61011→992f3a2 直接 main 线性 ancestor-OK，git worktree list 单一主检出，工作树零 WIP）| dependency_revisions: auto.exe v0.4.2-2511-gb50dce902-dirty（debug 10-01）；@autodown/engine dist stamp f46a2f188e86faab（T-01 就地重建对齐已提交 src——F-31-R1 谱系，零源变更）| spec_inputs: docs/specs/name-search.md@992f3a2（SD-01..04 四节实勘=§1 目录与查找域/§2 身份与兼容/§3 刷新失效与请求门/§4 验证与边界）；ARCHITECTURE SD-401/SD-1301 注记@992f3a2（旧排除口径标历史立面、链接身份文本零改写）；frontmatter supersedes=[]、new=[name-search.md]、touched=[路线图 R-04] 恰当 | acceptance_results: AC-01 pass（probe 相位 2 翻转案 f1 首页命中 title-only 页+title=stem+snippet=""双臂；e2e ① wiki/index.ad+nm/Home.ad 双行）/AC-02 pass（probe f2-f5 五域+f6 active 负向+e2e ④⑤）/AC-03 pass（probe 形状恰三字段+limit 0→1 钳+fb 基线逐字节+名称-only snippet=""；e2e ③ 域隔离）/AC-04 pass（probe 目录集合=磁盘一一对应+nm/ 子树逐字节 walk 序+Quoted 转义读回[引号/反斜杠/制表]+零点前缀+5 层深档）/AC-05 pass（e2e ①③ 同名逐路径打开各开各档+拾取即关/保持+vm N ①②③）/AC-06 pass（e2e 请求计数：入口 1 次 page_names+逐键零 fetch+Enter 逐次+键入零检索；空查询 recents 段=matrix ⑧⑨⑩ 回归绿）/AC-07 pass（probe [[首页]] 悬空+磁盘零副作用+语料逐字节；probe_casefold pristine 零漂移）/AC-08 pass（probe 刷新弧七案：属性 title/建页/改名/删除/回收站前后读回随磁盘新+写入面恰白名单；e2e 保存刷新+过期横幅弧；vm N ⑤ 外部刷新）/AC-09 pass（e2e 失败重试+route 延迟 STALE 行不落地+畸形态可区分——网络可观测面；merged 无网络层不设虚假案=口径在录）/AC-10 pass（本复审独立复跑：pnpm build 绿+probe 相位 2 双臂全绿+四回归探针全绿+vm merged 19/19[基线 v26 零漂移+N 组+LC3 F-32-R2 安全终态精确断言单列]+e2e 逐件单跑 draft 3/3·matrix 1/1·name-search 6/6·reload 1/1·lifecycle 9/9[⑩ 弧单独复跑绿]+git diff --check 清；原生/Vue/split 后端覆盖表=vm_matrix merged+e2e 五套件+probe 双臂[split HTTP]）| findings: F-33-R1（nonblocking/既有面定谳——vue 轨 e2e 多文件调用不稳[menubar 菜单项 click 饿死/弹层关闭瞬态，挂集每轮不同]：本复审 vm merged 前两跑遇 v11③ 内容窗瞬态（快速打开/切换反链钮 6s 未现）第三跑 19/19；lifecycle ⑩ 套内挂×2[删除… 菜单项 click 420s 饿死]单跑绿×3；**A/B 定谳 86a2808 同组合[lifecycle+matrix 双文件]同形挂 matrix（孤页空态瞬态——又一不同点）=在录 D-21 v11③/v34+F-31-R2 族，非本片引入**；诊断 worktree 用后即删）；F-31-R1 续（环境——engine dist 陈旧已 T-01 就地重建，义务仍在上游）| evidence: 本文 §9 work 逐任务回执+attachments/033-name-contract.md（冻结件）+tests/baseline/structure-v26.txt（v25→v26 差异恰七行 state 字段、snapshot id 序列零变化）+docs/specs/name-search.md@992f3a2 | next: merge（auto-plan-merge；复审独立复跑门全绿，F-32-R2/F-24-2/vue 多文件时序族按在录口径分列不合并称全绿）。复审限制披露：本复审在实施会话内进行——以工件重建为准（全门独立复跑+diff 实勘），未采信执行摘要。
 
 ## 10. 待澄清事项
 
