@@ -4,7 +4,7 @@
 
 进度更新（2026-10-02）：[PLAN-030](../plans/archived/030-safe-manual-reload.md) archived/delivered（R-01）；[PLAN-031](../plans/archived/031-draft-recovery.md) archived/delivered（R-02a）；[PLAN-032](../plans/archived/032-document-lifecycle-safety.md) archived/delivered（R-02b），十类应用内文件操作的受检门、真实回执和定向协调已沉淀至 [document-lifecycle](../specs/document-lifecycle.md)。R-02 的这两个交付片已完成，原生 VM 帧槽串扰 F-32-R2、Vue 排水时序 F-32-R1 等限制按现行 Specs 保留，不能宣称全平台问题已消失。[PLAN-033 名称查找一致](../plans/archived/033-name-search-consistency.md)（R-04）已 archived/delivered：只读名称目录 page_names、快开/全文统一名称匹配域（显示标题/别名/stem/带 .ad 文件名/相对路径）、同名行逐路径消歧、刷新失效与请求门、可见加载/错误/过期三形已落地，现行规范增 [name-search](../specs/name-search.md)，probe 双臂全绿（含刷新弧）+ vm merged 19/19（N 组新增）+ e2e name-search 6/6；F-32-R2/F-24-2 按在录口径分列。Jade/Musk 产品结合方向尚未纳入实施范围。
 
-进度更新（2026-10-02·二）：[PLAN-034 编辑器宿主能力核验与供给契约](../plans/034-editor-host-capabilities.md)（R-03a）T-01..04 执行闭环（execution_done 待复审）：六类宿主接口×三载体能力矩阵与入口盘点已实证——宿主保存三入口（toolbar/菜单/Ctrl+S）双轨真实落盘、vue 引擎 Save 钮/@save 供给存在未接线（show-actions 为 attr 透传非 prop）、六命令宿主面 console 降级（引擎内部 Ctrl+Z/Y 仅 vue 轨）、链接点击零导航（生成器 emit 名 @openwikilink 与 kebab 不匹配为双层缺口之一）、后端四级解析供给已可消费、caret/reveal 无原语；现行规范增 [editor-host-capabilities](../specs/editor-host-capabilities.md)，ARCHITECTURE §4 加指针（SD-3401）。可重跑探针 tests/probe_editor_host.mjs 四相位 + e2e editor-host-capabilities 四小案；逐仓供给需求与解锁门见 attachments/034-editor-host-supply.md。R-03 整体未完成——调查交付不等于宿主接线完成。
+进度更新（2026-10-02·二）：[PLAN-034 编辑器宿主能力核验与供给契约](../plans/archived/034-editor-host-capabilities.md)（R-03a）已 archived/delivered：六类宿主接口×三载体能力矩阵与入口盘点已实证——宿主保存三入口（toolbar/菜单/Ctrl+S）双轨真实落盘、vue 引擎 Save 钮/@save 供给存在未接线（show-actions 为 attr 透传非 prop）、六命令宿主面 console 降级（引擎内部 Ctrl+Z/Y 仅 vue 轨）、链接点击零导航（生成器 emit 名 @openwikilink 与 kebab 不匹配为双层缺口之一）、后端四级解析供给已可消费、caret/reveal 无原语；现行规范增 [editor-host-capabilities](../specs/editor-host-capabilities.md)，ARCHITECTURE §4 加指针（SD-3401）。可重跑探针 tests/probe_editor_host.mjs 四相位 + e2e editor-host-capabilities 四小案；逐仓供给需求与解锁门见 attachments/034-editor-host-supply.md。R-03 整体未完成——调查交付不等于宿主接线完成。
 
 ## 1. 如何把建议转成执行
 
@@ -26,12 +26,12 @@
 | --- | --- | --- | --- |
 | R-01 安全手动重载 | F5/菜单/工具栏保护未保存正文；取消不变，明确放弃后才读盘 | 当前输入必须已同步或能可靠冲刷 | PLAN-030 已交付归档；两轨三入口与失败／失效保护在册 |
 | R-02 草稿与生命周期保护 | R-02a＝PLAN-031、R-02b＝PLAN-032 均已交付归档；应用内十类入口受检门／真实回执／定向协调在册 | R-01/R-02a 已交付；032 消费稳定草稿身份与协议 | 草稿恢复、受影响脏页阻断、晚输入保留与部分结果协调已按局部规范交付；保留 F-32-R1/R2、031 上游边界，不扩大为断电／多进程事务保证 |
-| R-03 编辑器宿主接线 | R-03a＝PLAN-034 已实施 execution_done 待复审：六类接口×三载体矩阵、入口盘点、可重跑探针与逐仓供给契约已交付（规范 editor-host-capabilities）；R-03b 实际接线待核验结果与上游解锁项详细化 | 原生／Vue 公开接口不同；先验证 save/command/link/selection/cursor/reveal，可分本仓消费与上游供给 | 034 验收能力矩阵、可重跑证据、身份／安全消费约束和明确解锁条件；完整 R-03 仍以保存磁盘字节、正文正确目标、命令各入口有效为完成门 |
+| R-03 编辑器宿主接线 | R-03a＝PLAN-034 已 archived/delivered：六类接口×三载体矩阵、入口盘点、可重跑探针与逐仓供给契约已交付（规范 editor-host-capabilities）；R-03b 实际接线待核验结果与上游解锁项详细化 | 原生／Vue 公开接口不同；先验证 save/command/link/selection/cursor/reveal，可分本仓消费与上游供给 | 034 验收能力矩阵、可重跑证据、身份／安全消费约束和明确解锁条件；完整 R-03 仍以保存磁盘字节、正文正确目标、命令各入口有效为完成门 |
 | R-04 名称查找一致 | PLAN-033 已 archived/delivered：名称目录 + 快开/全文统一匹配域 + 同名逐路径消歧 + 刷新/请求门 + 可见加载/错误/过期；不改变链接身份域 | 已有 title/aliases 数据；双轨名称载体与刷新/请求门已实证（契约附件 033-name-contract） | 首页≠index 断言双臂全绿；属性标题/别名/stem/.ad 文件名/相对路径均可找回；同名逐路径正确打开；逐键零额外请求；失效/失败/过期可见可区分；链接目标不变（[[首页]] 仍悬空） |
 | R-05 导航分工 | 左侧全库导航，右侧当前页上下文，快开轻弹层，基本响应式 | R-03/R-04；纯壳可先准备 | 全库搜索与页面引用各有位置；窄屏入口可用；旧快捷键保留 |
 | R-06 工作区与设置 | 创建/打开/最近知识库、基础设置、安装与启动；先调研运行时根切换能力 | T-工作区调查；基础打包接口 | 普通用户能启动并定位自己的文件，退出重开回到原库；无开发工具依赖承诺前验证 |
 
-默认推进顺序：R-01/R-02a/R-02b/R-04（030/031/032/033 已交付归档）→ R-03a（PLAN-034 能力核验与供给契约，已实施待复审）→ R-03b（按核验结果分本仓接线／上游供给，未分配编号）→ R-05；R-06 在运行时与打包调查有结论后进入实施。调查交付不等于宿主接线完成；已有安全交付的上游限制继续登记，不借推进后续计划消除。
+默认推进顺序：R-01/R-02a/R-02b/R-04（030/031/032/033 已交付归档）→ R-03a（PLAN-034 能力核验与供给契约，已交付归档）→ R-03b（按核验结果分本仓接线／上游供给，未分配编号）→ R-05；R-06 在运行时与打包调查有结论后进入实施。调查交付不等于宿主接线完成；已有安全交付的上游限制继续登记，不借推进后续计划消除。
 
 ### B. 日常记录、查找与复用
 
@@ -157,7 +157,7 @@ R-16 手机记录与读取、R-17 同步与分享、R-18 协作、R-19 AI、R-20
 ## 11. 后续交接：PLAN-034
 
 - 前序：PLAN-033 已交付归档，名称查找与刷新规则见 name-search；当前 main 规划基线 4f7de84。
-- 下一项：[PLAN-034 编辑器宿主能力核验与供给契约](../plans/034-editor-host-capabilities.md) r1（R-03a）——T-01..04 已执行闭环（execution_done 待复审）；4 个任务、8 条验收、3 项规范增量。
+- 下一项：[PLAN-034 编辑器宿主能力核验与供给契约](../plans/archived/034-editor-host-capabilities.md) r1（R-03a）——已交付归档（archived/delivered）；4 个任务、8 条验收、3 项规范增量。规范 editor-host-capabilities 与账本 v39（SD-3401..3403+D-51）已沉淀。
 - 拆分依据：编辑器只有 content/oninput 接线，Vue 引擎 Save 按钮未接宿主，六个编辑菜单 handler 仅日志。原生转换层未见 save/link/command 供给；生成器发射 show_actions 也不等于当前引擎真控制动作栏。不能先假设所有接口已有，再承诺直接完成接线。
 - 本片交付：save/command/link/selection/cursor/reveal 的三载体矩阵、六命令和用户入口实证、可重跑隔离探针、可靠来源／输入／保存保护设计、按 auto-down/auto-lang/jade-edit 划分的最小供给需求与解锁门。
 - 第一任务：T-01 固定工具链／dist／二进制指纹，盘点真实入口，建立最小探针；每类一次原型加一次失败复测，未知项记录具体受阻证据、owner 和重入条件。
