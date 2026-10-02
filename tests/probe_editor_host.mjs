@@ -485,10 +485,17 @@ async function runMergedArm(rec) {
           rec.c2_backspace_err = String(e.message).slice(0, 200)
         }
         try {
-          await callTool('autoui_action', { element_id: rec.editors[0]?.id, action: 'key_press', value: 'c:Z' })
+          // 词表外键名（修饰键组合不在 PLAN-057 v1 词表）——预期工具报错，
+          // 拒绝原文即「VM 编辑壳无快捷键消费场景」的运行面锚点；不提交
+          // "c:Z"（单字符形态会被接受为字面键入，突变正文）。
+          await callTool('autoui_action', { element_id: rec.editors[0]?.id, action: 'key_press', value: 'ctrl+z' })
           rec.c2_ctrlz_accepted = true
         } catch (e) {
           rec.c2_ctrlz_err = String(e.message).slice(0, 220)
+        }
+        {
+          const st3 = (await callTool('autoui_state', {})).trim()
+          rec.c2_body_a_no_stray = strField(st3, 'body_a')
         }
         const st2 = (await callTool('autoui_state', {})).trim()
         rec.c2_undo_after = intField(st2, 'cmd_undo')
@@ -730,8 +737,9 @@ function checks(rec) {
     } else {
       bl(`C2 key_press backspace 不可用：${rec.c2_backspace_err ?? '(no attempt)'}`)
     }
-    ck(rec.c2_ctrlz_err !== undefined, `C2 修饰键词表外：key_press "c:Z" 被拒（${(rec.c2_ctrlz_err ?? '').slice(0, 90)}…）——VM 编辑壳逐键词表无修饰键=源码锚定无快捷键消费场景`)
+    ck(rec.c2_ctrlz_err !== undefined, `C2 修饰键词表外：key_press "ctrl+z" 被拒（${(rec.c2_ctrlz_err ?? '').slice(0, 90)}…）——VM 编辑壳逐键词表无修饰键=源码锚定无快捷键消费场景`)
     ck((rec.c2_undo_after ?? 0) === (rec.c1_undo ?? 0), 'C2 词表外键不产生任何回执（cmd_undo 不增——编辑器内部撤销不可达）')
+    ck(rec.c2_body_a_no_stray === rec.m2_sent, 'C2 词表外键零正文突变（body_a 逐字节不变）')
     uns('undo/redo 内部快捷键：native 编辑壳 key_press 词表无修饰键（PLAN-057 v1）+ core 无历史消费场景——native 轨内部撤销=不存在；vue 轨内部撤销=EngineEditor onContentKeydown（vue e2e 面）')
   }
 

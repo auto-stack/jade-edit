@@ -41,17 +41,19 @@
 | --- | --- | --- | --- | --- | --- | --- |
 | ① merged | VM 编辑壳 core.handle_input（INPUT_TEXT） | oninput→on_change 全文单参；**无 save 消息通道**（View::AutodownEditor 仅 key/value/is_final/on_change/on_focus/placeholder/style） | `oninput: .Edit(str)`（在册）；`onsave:` 候选语法被视图模板保留但零消费（快照显形、零回执） | app.at L1613 仅 content/oninput；ActSave→store.Save | 探针 M2（type_text 全文回写逐字节含 CJK）+ M3（save 零回执）+ I5（Ctrl+S→宿主回执） | 缺供给（编辑器 save 事件）＝auto-lang 转换+VM 壳；宿主捷径/按钮=已可消费入口（store 门链真实） |
 | ② 原生 split | 同①（同转换层） | 同① | 同① | 同①（Jade 应用 split boot 阻断 F-24-2 在录——接口面与①同层，探针工程 boot 成功证最小宿主不受阻断） | 探针 B1（boot 成功）；接口判定继承①（同转换层） | 同① |
-| ③ Vue | EngineEditor emit('save', serialize(engine.doc,true)) + defineExpose handleSave；Save 钮无条件渲染（showActions prop 不存在） | `@save`（emit 名匹配）；`handleSave`（ref 面） | 生成器 `onsave:`→`@save` 发射（形状检查实证）；App.vue 现状仅 @update:modelValue | e2e inventory（按钮在、attr 透传）+ save 相位 T-02（点击零宿主效果 vs 宿主入口真落盘） | **供给存在待接线**（T-02 终判：来源身份缺口同段落 §3） |
+| ③ Vue | EngineEditor emit('save', serialize(engine.doc,true)) + defineExpose handleSave；Save 钮无条件渲染（showActions prop 不存在——`:show-actions` 落 DOM attr，e2e inventory 实证 attr 透传） | `@save`（emit 名匹配）；`handleSave`（ref 面） | 生成器 `onsave:`→`@save` 发射（形状检查实证）；App.vue 现状仅 @update:modelValue | e2e save 案：引擎 Save 钮点击=零落盘+脏标保（emit 无消费者）；宿主 toolbar 保存=真落盘（原文/标记/frontmatter 三验）；编辑器聚焦态真键 Ctrl+S=真落盘且单次（引擎无内部 Ctrl+S——零双保存面） | **供给存在待接线**（消费设计=§3/§5；show_actions 隐藏按钮路线不可作为修复假设——prop 不存在） |
 
-### command（六命令 undo/redo/cut/copy/paste/select-all——逐项）
+### command（六命令 undo/redo/cut/copy/paste/select-all——逐项终判）
 
-| 命令 | ①② native | ③ Vue | T-02 终判 |
+| 命令 | ①② native（源码观察/运行证明） | ③ Vue（真组件/真键） | 终判 |
 | --- | --- | --- | --- |
-| undo | 宿主 action 捷径可达 handler（探针 C1）；编辑器内部撤销**不存在**（key_press 词表无修饰键=PLAN-057 v1 锚定） | 引擎内部 Ctrl+Z 有效（onContentKeydown runHistory）+ 宿主菜单 ActUndo 仅 console_log；两通道并行实录（T-02 e2e） | native=缺供给（编辑器执行桥）；vue=内部可用+宿主桥缺 |
-| redo | 同 undo | 同 undo（Ctrl+Y） | 同 undo |
-| cut/copy/paste | 宿主按钮/菜单可达 handler（探针 C1 按钮）；无捷径在册；编辑器执行桥缺失 | contenteditable 浏览器原生命中（真键面）；宿主菜单仅 console_log | native=缺供给；vue=真键可用（浏览器面）+宿主桥缺 |
-| select-all | 宿主 Ctrl+A 回执（探针 C1）；编辑器执行桥缺失 | 浏览器原生 select-all（contenteditable）+宿主 ActSelectAll console_log | 同 cut 族 |
-| 全局热键冲突 | vue keymap 无焦点甄别的修饰键全局拦截（Ctrl+Z/A 在编辑器内同时触发引擎内部+宿主 console——当前无害）；Shift 丢失致 Ctrl+Shift+O 被 ActOpen 抢占（在录） | 同左 | 记录为下一片处理建议（不修复） |
+| undo | 宿主 action 捷径可达 handler（探针 C1 undo=1）；编辑器内部撤销**不存在**：key_press 词表拒绝 'ctrl+z'（Invalid keyspec 实录——PLAN-057 v1 词表无修饰键）且零回执零突变 | 引擎内部 Ctrl+Z 真键撤销生效（内容复原，e2e commands）；宿主菜单 撤销点击=零效果（console_log 降级直证） | native=缺供给（无内部栈+无执行桥，双缺）；vue=内部快捷键已可消费+宿主桥缺供给 |
+| redo | 同 undo（C1 redo=1；同词表拒绝面） | 同 undo（Ctrl+Y 内部；菜单零效果同族） | 同 undo |
+| cut | 宿主按钮回执（C1 cut=1）；无捷径在册；执行桥缺失 | contenteditable 浏览器原生命中（真键面——浏览器能力非组件 API）；宿主菜单零效果（同族在录） | native=缺供给；vue=真键可用（浏览器面）+宿主桥缺 |
+| copy | 同 cut（C1 copy=1） | 同 cut | 同 cut |
+| paste | 同 cut（C1 paste=1） | 同 cut | 同 cut |
+| select-all | 宿主 Ctrl+A 回执（C1 selectall=1）；正文零变化 | Ctrl+A 编辑器内=浏览器原生全选与宿主 ActSelectAll 并行、内容零破坏（e2e commands） | 同 cut 族 |
+| 全局热键冲突 | MCP 合成通道无焦点语义（key_bindings 查找派发——真键焦点行为不由此通道代表） | vue keymap 修饰键全局拦截无焦点甄别（当前无害：Ctrl+Z/A 双通道并行零互扰）；**Shift 修饰丢失**：Ctrl+Shift+O 实测被 'Ctrl+o'→ActOpen 抢占（e2e commands 实录——孤页清单快捷键失效、dialog 取消垫片下无害）；Ctrl+Shift+F/D 同族塌缩 'Ctrl+f'/'Ctrl+d' | 下一片处理建议：菜单不可用项显式禁用/提示；keymap Shift 修复=auto-lang 生成器供给（不在本片） |
 
 ### link
 
@@ -69,9 +71,9 @@
 | cursor | 无 caret 行列字段；oncursor 仅 code_editor 壳（vue.rs base_event_to_dom 注） | 块聚焦≠caret 判定 T-03 | T-03 |
 | reveal | getBlockMap（vue 公开）+ data-block-id DOM 域；scroll_sync offset 写入通道（PLAN-043 native）；无块/锚 reveal 原语 | e2e inventory 块域在 + 探针 T-03 | T-03 |
 
-## 3. 保存来源身份缺口（AC-03 预记录；T-02 终判）
+## 3. 保存来源身份缺口（AC-03；T-02 终判）
 
-探针 S1 反例（T-02 执行）：A/B 编辑器同正文、active_key 恒指 doc-a、事件源于 B——INPUT_TEXT 载荷=全文 md 单参，无 tab_uid/实例世代字段；宿主仅凭载荷+active 读回不可辨识来源。缺层：上游无来源字段供给（auto-lang 事件载荷 + auto-down emit 载荷均无实例身份）；jade-edit 消费设计须按 034 §5.2 方案（Store 门快照+世代绑定）另行真实验证。
+探针 S1 反例（已执行）：A/B 编辑器同正文、active_key 恒指 doc-a、事件源于 B——INPUT_TEXT 载荷=全文 md 单参（无 tab_uid/实例世代字段），B 键入零串扰 A（通道独立可分）但宿主仅凭载荷+active 读回不可辨识来源。vue 侧 emit('save', md) 同为 md 单参（EngineEditor emit 签名）。缺层：上游无来源字段供给（auto-lang 事件载荷 + auto-down emit 载荷均无实例身份）；jade-edit 消费设计须按 034 §5.2 方案（Store 门快照+世代绑定+迟到拒绝）另行真实验证——两条候选路线（可靠接入 / 控制动作栏仅留宿主入口）中后者受限于 showActions prop 不存在（按钮无条件渲染，隐藏能力=上游新增面）。
 
 ## 4. 复跑命令
 

@@ -4,9 +4,9 @@ status: executing
 feature_name: 编辑器宿主能力核验与供给契约（R-03a）
 author: [agent]
 created_at: 2026-10-02T04:10:23Z
-updated_at: 2026-10-02T06:30:00Z
+updated_at: 2026-10-02T07:10:00Z
 plan_revision: 1
-current_step: 1
+current_step: 2
 total_steps: 4
 supersedes_spec_components: []
 new_spec_components:
@@ -181,6 +181,8 @@ show_actions:false 目前只证明生成器发射 :show-actions，不能据此�
 - 验证：node tests/probe_editor_host.mjs --phase save；node tests/probe_editor_host.mjs --phase commands；pnpm exec playwright test -c e2e/playwright.config.ts e2e/editor-host-capabilities.spec.ts --grep 'save|commands'。事件／文件／状态结果与各项结论一致，缺能力案明确标 unsupported，真实受阻独立列出。
 - 对应 AC-01/02/03/04/07，SD-01/02。
 
+- [x] T-02 [✅ 已完成 2026-10-02] probe save 相位全绿（S1 同正文双页+active 恒指 A 事件源于 B——md 单参载荷零来源字段=身份缺口直证；B 键入零串扰 A 通道独立；S2 编辑器 save 回执恒零+宿主捷径唯一入口）；probe commands 相位全绿（C1 六命令宿主通道回执 6/6[捷径三件+按钮三件]且正文零变化=执行桥缺失直证；C2 key_press backspace 真实按键同构回执续发+'ctrl+z' 词表拒绝[Invalid keyspec 实录——PLAN-057 v1 词表无修饰键]且零回执零突变；C2 探针动作修正：c:Z 单字符形态会被接受为字面键入不作为修饰键证据——改提交词表外键名取拒绝原文）+ C2 探针缺陷修正一件（element_id 回退对象形——修复后重跑）。e2e --grep 'save|commands' 2/2（引擎 Save 钮点击零落盘+脏标保=未接线直证 vs 宿主 toolbar/Ctrl+S 真落盘三验+单次无双保存面；引擎内部 Ctrl+Z 真键撤销生效 vs 宿主菜单撤销零效果=console 降级直证；Ctrl+A 并行零破坏；Ctrl+Shift+O 被 'Ctrl+o'→ActOpen 抢占实录[keymap Shift 丢失在录面]）。附件 save/command 判定列终判落表。
+
 ### T-03 链接／位置能力与逐仓供给设计
 
 - 依赖：T-01，保存／命令方案消费 T-02 结果。只读 src/back/wsys.at resolve_target/extract_links_json、app.OpenLink/CreateClick、Auto 通用多参数事件／VM 读出，以及引擎公开链接／块地图；补 navigation 相位，覆盖 link/selection/cursor/reveal。
@@ -204,6 +206,7 @@ show_actions:false 目前只证明生成器发射 :show-actions，不能据此�
 - 2026-10-02T04:10:23Z：stage: new；plan_id: PLAN-034；plan_revision: 1；outcome: pass；next: work（能力核验与契约交付，按用户执行指令进入工作阶段）。
 - 新增 T-01..04、AC-01..08、SD-01..03；已确认 033 归档与当前实现，未知机制由有界探针和明确供给出口负责，不承诺完整 R-03 功能在本仓立即可实施。
 - 本记录是规划交接，非实现复审。此次未运行应用／接口探针、未改生产代码或 canonical Specs、未自动继续 work/review/merge。
+- 2026-10-02T07:10:00Z：stage: work | plan_id: PLAN-034 | plan_revision: 1 | outcome: executing（T-02 完成）| code_commit: 013ad6f(T-01)+本批 | task_ids: T-02 | evidence: probe save/commands 相位全绿 + e2e save|commands 2/2 + 附件判定列终判 | blockers: 无 | next: T-03（navigation 与供给附件）。
 - 2026-10-02T06:30:00Z：stage: work | plan_id: PLAN-034 | plan_revision: 1 | outcome: executing（T-01 完成）| code_commit: 08d7c08(落档)+本批 | task_ids: T-01 | evidence: 探针 inventory 相位全绿（probe_editor_host.mjs）+ e2e inventory 1/1 + pnpm build 绿 + 附件 034-editor-host-contract.md T-01 判定列落表 | blockers: 无 | next: T-02（save/commands 核验）。工作树=主检出（直接 main 线性惯例 001..033 在册）。
 
 ## 10. 待澄清事项
