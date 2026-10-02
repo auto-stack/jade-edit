@@ -184,6 +184,13 @@ src/back/api.at           /api 契约（自有 Auto 源，与实现同 commit—
   POST body CJK 已证——write_wiki 同款）。检索面 = **stem + body**
   （read_body frontmatter 剥离面；frontmatter 的 title/tags/summary 均
   不入检索——tags 检索后续批）；title = 文件 stem（链接域同语义）。
+  **查找域现行口径（PLAN-033 修订——出处 [name-search](specs/name-search.md)
+  §1.2）**：上句"stem + body、title 不入检索"为历史立面；现行命中域 =
+  stem ∪ 显示标题（fm title）∪ aliases ∪ 相对路径 ∪ body（统一名称规则
+  trim/to_lower/contains），响应形状/limit/walk 序/snippet 规则零变化；
+  tags/summary 等非名称 frontmatter 字段仍不入域；快开同规（名称目录
+  page_names 过滤，同名行以实际路径消歧）。**链接身份域零变化**——四级
+  解析/改写仍按 SD-302/SD-1301 原文。
   匹配语义 v1：query trim 空守卫 → `[]`；大小写 = **两侧 to_lower**
   （探针 A 定谳：vue 发射在册——ts_adapter Plan 053 M1
   `to_lower→toLowerCase` + 构建期 gen 源检）；命中序 = walk 序
@@ -508,7 +515,11 @@ src/back/api.at           /api 契约（自有 Auto 源，与实现同 commit—
   **两域边界定文（本域核心规范）**：**解析域**（SD-302）title 键
   **不进任何匹配面**——链接解析 = stem ∪ aliases 精确匹配恒定
   （`[[首页]]` 对 index.ad 仍悬空零变化）、检索 title 面 = stem ∪
-  aliases 口径不变、改名/移动改写面零接入；**显示域**（本域）title
+  aliases 口径不变、改名/移动改写面零接入；**查找域修订注记（PLAN-033
+  ——出处 [name-search](specs/name-search.md) §2）**：上句"检索 title
+  面"的排除口径已由查找域修订代替（title/dtitle/别名/相对路径可检索），
+  **解析域本体零变化**——链接解析/提及转换/改写面仍不接入 title；
+  **显示域**（本域）title
   = 显示名——**有 title 显示 title、无 title 显示 stem**（G1 口径
   ——back 装配面即定值，front fallback 参数仅 stale 防御）。两域
   并表防混淆：title 编辑零链接扰动（解析域无感），改名/移动不改

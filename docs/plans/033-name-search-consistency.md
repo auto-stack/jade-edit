@@ -1,12 +1,12 @@
 ---
 plan_id: PLAN-033
-status: executing
+status: execution_done
 feature_name: 名称查找一致（R-04）
 author: [agent]
 created_at: 2026-10-02T01:18:59Z
 updated_at: 2026-10-02T09:40:00Z
 plan_revision: 1
-current_step: 4
+current_step: 5
 total_steps: 5
 supersedes_spec_components: []
 new_spec_components:
@@ -191,7 +191,8 @@ T-01 输出逐入口触点表：查找入口开启／重新进入、现有手动
 
 ### T-05 回归、规范落位与复审交接
 
-- 依赖：T-04。实施阶段新增 docs/specs/name-search.md 落位 SD-01..04，在 docs/ARCHITECTURE.md 的旧检索／title 排除段注明现行查找规则出处，保持链接身份文本。必要时新增 tests/baseline/structure-v26.txt 并解释 v25→v26；不改写旧三个安全 Specs 的承诺。更新路线图 R-04 状态和实际限制。
+- [x] **T-05**。依赖：T-04。实施阶段新增 docs/specs/name-search.md 落位 SD-01..04，在 docs/ARCHITECTURE.md 的旧检索／title 排除段注明现行查找规则出处，保持链接身份文本。必要时新增 tests/baseline/structure-v26.txt 并解释 v25→v26；不改写旧三个安全 Specs 的承诺。更新路线图 R-04 状态和实际限制。
+  [✅ 已完成 2026-10-02] 规范落位：docs/specs/name-search.md 新四节（§1 目录与查找域/§2 身份与兼容/§3 刷新失效与请求门[含 T-04 实勘实现纪律] /§4 验证与边界——SD-01..04 全落位）；docs/ARCHITECTURE.md SD-401 检索段+SD-1301 两域边界段加注查找域修订出处（旧排除口径标历史立面；链接解析/改写身份文本零改写）；路线图顶部进度+R-04 行+推进顺序+§10 交接段更新。基线 v25→v26 已随 T-04 落位并逐项解释（App 模型七新字段入 dump——五默认+names_gen=1/find_stale=true 系 check5 ActSave→NamesInvalidate 确定性副作用；snapshot vnode id 序列零变化）。验证（绑定 revision 1f61011 链 0f047ea→06e1955→253db35→37f4517→1f61011）：pnpm build 绿；node tests/probe_name_search.mjs 相位 2 双臂全绿+probe_dir_move/probe_page_meta/probe_casefold/probe_alias_linkify 四探针全绿（回归零新增失败）；vm merged 19/19 全绿（基线 v26 零漂移+LC3=F-32-R2 安全终态精确断言单列）+vm split=F-24-2 boot FAIL+9 组 PASS+10m 边界（032 在录同状）；e2e 全量 21 测三轮：19-20 过/轮，挂集每轮不同（lifecycle⑩+matrix → matrix+name-search⑧ → matrix）且全部单跑清场复绿（matrix 5/5+name-search 6/6+ lifecycle 9/9）；**A/B 定谳**：86a2808（033 前）一次性诊断 worktree 同组合（lifecycle+matrix 双文件）同形挂 matrix（另一瞬态点 孤页空态）——vue 轨多文件调用不稳为在录时序族（D-21 v11③/v34+F-31-R2），非本片引入；诊断 worktree 用后即删（单一主检出恢复）。git diff --check 通过。AC-01..10 证据映射：AC-01/02/03/04（probe 相位 2 翻转案+目录已知答案+形状/limit/snippet+转义读回）；AC-05/06（e2e name-search ①②③+请求计数）；AC-07（probe 链接身份+磁盘零副作用+e2e 脏不变量）；AC-08（e2e 保存刷新弧+probe 刷新弧七案+vm N 组外部刷新）；AC-09（e2e 失败重试+迟到门；错误/迟到门=网络可观测面）；AC-10（本记录覆盖表）。
 - 验证：pnpm build；node tests/probe_name_search.mjs；T-02 的四个相关 probe；pnpm test:e2e；node tests/vm_matrix.mjs。目标全过、受影响回归无新增失败；已有精确 blocker 单列证据与替代覆盖，不合并称“全绿”。git diff --check 通过；只读／身份／安全不变量及 SD 全覆盖。
 - 输出：Plan 任务勾选与绑定 revision 的验证命令／结果、生成工具链指纹、原生／Vue／split 后端覆盖表和待核验项；具备复审材料后按工作技能交接 review，不自行跳过审查／合入。
 - 对应 AC-01..10，SD-01..04。
@@ -202,6 +203,8 @@ T-01 输出逐入口触点表：查找入口开启／重新进入、现有手动
 
 ## 9. 复审记录
 
+（work 全记录见下方逐任务回执；本节 outcome=pass 记录为 work→review 交接面，非 review 结论。）
+
 - 2026-10-02T01:18:59Z：stage: new；plan_id: PLAN-033；plan_revision: 1；outcome: pass；next: work（执行时按用户实施指令和 auto-plan-work 进入专属工作树）。
 - 本次规划新增 T-01..05、AC-01..10、SD-01..04；已核对 032 归档、当前局部规范与相关实现，任务／验收／增量覆盖完整。新增载体与异步机制有 T-01 有界调查出口，不以未知机制宣称已可用。
 - 本记录仅为规划交接，不是实现复审 pass；本次未运行应用测试、未改实现或 canonical Specs、未自动继续 work/review/merge。
@@ -209,6 +212,7 @@ T-01 输出逐入口触点表：查找入口开启／重新进入、现有手动
 - 2026-10-02T11:10:00Z：stage: work | plan_id: PLAN-033 | plan_revision: 1 | outcome: executing（T-02 完成）| code_commit: 本批 | task_ids: T-02 | evidence: node tests/probe_name_search.mjs 相位 2 双臂全绿（翻转案+目录已知答案逐字节+转义读回）+ probe_dir_move/probe_page_meta/probe_casefold/probe_alias_linkify 全绿（回归零新增失败）| blockers: 无 | next: T-03（快开与查找行接线）。
 - 2026-10-02T12:00:00Z：stage: work | plan_id: PLAN-033 | plan_revision: 1 | outcome: executing（T-03 完成，含 T-04 e2e 面）| code_commit: 本批 | task_ids: T-03（T-04 e2e 前置）| evidence: pnpm build 绿+gen TS 静态核验（快照-回读门/computed files_rows/await 在 handler 体内）+ e2e name-search 6/6 + e2e matrix 全套（回归零漂移；⑩⑤ recents ready 门修正）| blockers: 无 | next: T-04（probe 刷新案+vm_matrix N 组）。
 - 2026-10-02T13:00:00Z：stage: work | plan_id: PLAN-033 | plan_revision: 1 | outcome: executing（T-04 完成）| code_commit: 本批 | task_ids: T-04 | evidence: probe 刷新弧双臂全绿+vm merged 19/19（N 组+基线 v26+12/13/R/9 当前代码全绿）+e2e 7/7+执行期实勘五件（D-30① 阴影/VM 视图解箱/computed 行集改道/已知答案校准/LC3 安全终态断言化）| blockers: F-32-R2（上游，LC3 安全终态单列在录——非本片新增）；F-24-2（split boot，分段判绿在录）| next: T-05（回归、规范落位与复审交接）。
+- 2026-10-02T14:30:00Z：stage: work | plan_id: PLAN-033 | plan_revision: 1 | outcome: pass | code_commit: 0f047ea→06e1955→253db35→37f4517→1f61011→本批（直接 main 线性）| task_ids: T-01..T-05 全闭环 | evidence: 规范 name-search.md 四节+ARCHITECTURE 双段注记+路线图三处；probe 相位 2 双臂全绿（含刷新弧七案）+四回归探针全绿；vm merged 19/19（N 组+v26 基线+LC3 blocker 单列）+split F-24-2 分段判绿；e2e 全量三轮 19-20/21 过且挂集每轮不同、单跑全数复绿（matrix 5/5/name-search 6/6/lifecycle 9/9）+A/B 86a2808 同组合同形挂（vue 多文件时序族在录，非本片引入）| blockers: 无本片新增（F-32-R2/F-24-2/F-31-R2 族按在录口径分列）| next: review（auto-plan-review 独立复跑门）。工作树零 WIP；worktree 诊断件已删（git worktree list 单一主检出）。
 
 ## 10. 待澄清事项
 
