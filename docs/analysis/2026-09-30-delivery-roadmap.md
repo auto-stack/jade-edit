@@ -2,7 +2,7 @@
 
 日期：2026-09-30。来源：[产品分析](2026-09-30-product-review.md)。本文件是交付组织建议，不替代单项 Plan，也不修改当前产品规范。界面草案中选择的“文档工作台”作为默认设计方向；日志视图作为同库可选入口。
 
-进度更新（2026-10-02）：[PLAN-030](../plans/archived/030-safe-manual-reload.md) archived/delivered（R-01）；[PLAN-031](../plans/archived/031-draft-recovery.md) archived/delivered（R-02a）；[PLAN-032](../plans/archived/032-document-lifecycle-safety.md) archived/delivered（R-02b），十类应用内文件操作的受检门、真实回执和定向协调已沉淀至 [document-lifecycle](../specs/document-lifecycle.md)。R-02 的这两个交付片已完成，原生 VM 帧槽串扰 F-32-R2、Vue 排水时序 F-32-R1 等限制按现行 Specs 保留，不能宣称全平台问题已消失。[PLAN-033 名称查找一致](../plans/033-name-search-consistency.md)（R-04）已实施 execution_done 待复审：只读名称目录 page_names、快开/全文统一名称匹配域（显示标题/别名/stem/带 .ad 文件名/相对路径）、同名行逐路径消歧、刷新失效与请求门、可见加载/错误/过期三形已落地，现行规范增 [name-search](../specs/name-search.md)，probe 双臂全绿（含刷新弧）+ vm merged 19/19（N 组新增）+ e2e name-search 6/6；F-32-R2/F-24-2 按在录口径分列。Jade/Musk 产品结合方向尚未纳入实施范围。
+进度更新（2026-10-02）：[PLAN-030](../plans/archived/030-safe-manual-reload.md) archived/delivered（R-01）；[PLAN-031](../plans/archived/031-draft-recovery.md) archived/delivered（R-02a）；[PLAN-032](../plans/archived/032-document-lifecycle-safety.md) archived/delivered（R-02b），十类应用内文件操作的受检门、真实回执和定向协调已沉淀至 [document-lifecycle](../specs/document-lifecycle.md)。R-02 的这两个交付片已完成，原生 VM 帧槽串扰 F-32-R2、Vue 排水时序 F-32-R1 等限制按现行 Specs 保留，不能宣称全平台问题已消失。[PLAN-033 名称查找一致](../plans/archived/033-name-search-consistency.md)（R-04）已 archived/delivered：只读名称目录 page_names、快开/全文统一名称匹配域（显示标题/别名/stem/带 .ad 文件名/相对路径）、同名行逐路径消歧、刷新失效与请求门、可见加载/错误/过期三形已落地，现行规范增 [name-search](../specs/name-search.md)，probe 双臂全绿（含刷新弧）+ vm merged 19/19（N 组新增）+ e2e name-search 6/6；F-32-R2/F-24-2 按在录口径分列。Jade/Musk 产品结合方向尚未纳入实施范围。
 
 ## 1. 如何把建议转成执行
 
@@ -29,7 +29,7 @@
 | R-05 导航分工 | 左侧全库导航，右侧当前页上下文，快开轻弹层，基本响应式 | R-03/R-04；纯壳可先准备 | 全库搜索与页面引用各有位置；窄屏入口可用；旧快捷键保留 |
 | R-06 工作区与设置 | 创建/打开/最近知识库、基础设置、安装与启动；先调研运行时根切换能力 | T-工作区调查；基础打包接口 | 普通用户能启动并定位自己的文件，退出重开回到原库；无开发工具依赖承诺前验证 |
 
-默认推进顺序：R-01/R-02a/R-02b/R-04（030/031/032 已交付；033 已实施待复审）→ R-03 → R-05；R-06 在运行时与打包调查有结论后进入实施。R-04 是独立可验证的查找改进；R-03 仍先调查编辑器接口能力。已有安全交付的上游限制继续登记，不借推进后续计划消除。
+默认推进顺序：R-01/R-02a/R-02b/R-04（030/031/032/033 已交付归档）→ R-03 → R-05；R-06 在运行时与打包调查有结论后进入实施。R-04 是独立可验证的查找改进；R-03 仍先调查编辑器接口能力。已有安全交付的上游限制继续登记，不借推进后续计划消除。
 
 ### B. 日常记录、查找与复用
 
