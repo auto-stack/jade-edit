@@ -6,7 +6,7 @@ author: [agent]
 created_at: 2026-10-02T07:21:54Z
 updated_at: 2026-10-02T15:40:00Z
 plan_revision: 1
-current_step: 1
+current_step: 2
 total_steps: 5
 supersedes_spec_components:
   - docs/specs/editor-host-capabilities.md
@@ -188,7 +188,7 @@ git diff --check
 | T-04 缺页、锚点与失败终态 | T-03 | app.at CreateClick/CreateGo，editor_store.at CreateConfirmOpen；独立导航提示／引用创建上下文（新） | 正常 missing 才确认、取消无建页、明确创建及来源失效门，错误独立可见／再次点击重试，锚点如实提示。新 e2e M/F/B 全过，页面字节与提示前后对照 | AC-07,08,09；SD-03 |
 | T-05 定向回归与规范交接 | T-02,T-03,T-04 | tests/probe_editor_host.mjs；e2e/editor-host-capabilities.spec.ts；tests/vm_matrix.mjs 及必要基线；docs/ARCHITECTURE.md、两现行 Spec、新 wiki-link-navigation.md | 按 §6 单跑相关回归，更新 live 能力案而保留历史模拟，给 SD-01..05 终版和复审证据；源/binary/dist 与 revision 绑定。git diff --check 零误差；原生限制、Shift/save/command/reveal 剩余缺口单列；不修改上游 | AC-01..10；SD-01..05 |
 
-进度：1/5（T-01 已闭环——probe 五臂 36 断言三连绿 + 契约附件落档；T-02 起按契约 §2/§3/§5 同构实施）。以上命令与新增测试是后续实施交付门，本次没有实施。新 Spec 在交付阶段落位，不在规划阶段写入当前规则。
+进度：2/5（T-02 已闭环——resolve_wiki_link 单参 POST 双臂 47 断言两连绿；T-03 起正文接线按契约 §2/§3）。以上命令与新增测试是后续实施交付门，本次没有实施。新 Spec 在交付阶段落位，不在规划阶段写入当前规则。
 
 ## 9. 复审记录
 
@@ -203,6 +203,7 @@ git diff --check
 - 语义：这是规划可执行性 handoff，**不是实施／独立复审 pass**；当前仍 drafting。授权仅本次规划检查，交付本计划后停止，不自动进入 work。
 - 2026-10-02T15:40:00Z：stage: work | plan_id: PLAN-036 | plan_revision: 1 | outcome: executing（启动） | code_commit: 基线 512b36f（035 archived/delivered tip；直接 main 线性惯例单一主检出——001..035 在册，无 worktree/dev 分支面，本片沿用仓库既定惯例） | task_ids: 无（T-01 未开工） | evidence: 用户指令「计划 036: auto-plan-work 实施」授权执行；主检出预检=路线图 M+审计记录/计划文件规划面 untracked（本计划规划产物，落档批清零），代码路径（src/tests/e2e/scripts/gen）零 WIP；规划输入实勘=上游审计记录 §3/§4（完整事件名隔离点击通过）+app.at/editor_store.at/api.at/wsys.at/probe_editor_host.mjs/regen-vue.mjs/e2e 配方全读 | blockers: 无 | next: T-01（有界协议原型与契约）。
 - 2026-10-02T17:55:00Z：stage: work | plan_id: PLAN-036 | plan_revision: 1 | outcome: pass（T-01 闭环） | code_commit: 9baa301（落档+启动）→本批（tests/probe_wiki_link_navigation.mjs 新增 + tests/pick_port.mjs 0.0.0.0 修复 + attachments/036-wiki-link-contract.md 新增 + 计划进度；直接 main 线性） | task_ids: T-01 | evidence: 新探针五臂 36 断言三连绿（node tests/probe_wiki_link_navigation.mjs 全相位于 9baa301 源码态三次运行零 FAIL）——指纹臂（auto.exe v0.4.2-2573 SHA D63B3DDC…+engine dist AE6CCD56…+双上游 rev 绑定）；形状臂 6 项（完整事件名 @open-wiki-link 发射+简称 @openwikilink 阴性对照+双参 handler 保留+主模板重建恢复——独立形状对照模板三步生成）；merged 臂 M0–M6（四级对读 back/inline 逐案 match+导航别名/带锚/大小写/中文四级直派提交+已开激活零重复 tab+缺失 missing 终态零提交+陈旧票据直派 store 门独立拒绝）；split 臂 B1–B2（HTTP 已知答案七案+page_names 行集 aliases）；运行时臂 E0–E5/S1–S4（隔离 Vite+真实 .autodown-wikilink-label 点击：缺参归一 ""/锚点保留/一次触发/missing 零提交/切档·逆序·迟到输入·A→B→A 四类迟到反例零提交零激活+字段全同仅世代不同即拒绝+S 组全零 pageerror）；执行期定谳五条入契约 §4（B-1 opener 全局单槽 last-mounted-wins/B-2 未聚焦首块点击被吞/B-3 content 回写规范化回声/B-4 pickPort 0.0.0.0 假阳性修复/B-5 探针跨 span 读联合等待） | blockers: 无本片新增（B-2 为上游边界如实记录 owner=auto-down，探针/生产语料以非首块链接规避；B-4 环境修复已落 tests/pick_port.mjs） | next: T-02（单目标只读解析——resolve_wiki_link 单参 POST+双臂换装）。
+- 2026-10-02T18:50:00Z：stage: work | plan_id: PLAN-036 | plan_revision: 1 | outcome: pass（T-02 闭环） | code_commit: 78e3bc3（T-01）→本批（src/back/wsys.at resolve_wiki_link_json 新增 + src/back/api.at resolve_wiki_link POST 端点 + 探针换装；直接 main 线性） | task_ids: T-02 | evidence: 后端=resolve_wiki_link_json 复用 collect_ad_pages/page_aliases/resolve_target 共享 resolver（零新 resolver 零身份扩；目录现读不依赖 link_index；只读零写面——无效 trim 空/跨行→"[]" 与正常 missing 行严格区分；json_esc_x 转义）；探针全案 47 断言两连绿——merged 臂 M0 对读改 link_index vs resolve_wiki_link 六案 match + M7 无效输入 resolve-invalid ≠ missing 独立终态零提交；NavStart 等待窗①换装单参 POST（形态零变化——契约 §2 同构）；split 臂 B3 十案（四级/dtitle-only 属性名未命中不拼路径/missing 行 exists=false/无效空·空白·跨行 []/工作区零写 walk-sha 恒等/旧 link_index 响应字节恒等）+ 语料 Attr.ad（fm title=属性名≠stem 身份案）；运行时臂 S 组延迟路由换装 **/api/resolve_wiki_link（四类迟到反例复绿） | blockers: 无 | next: T-03（正文导航与保护——app.at 完整事件名接线 + editor_store.at NavCommit 同步段 + e2e E/U/D/S 新套件）。
 
 ## 10. 待澄清事项
 

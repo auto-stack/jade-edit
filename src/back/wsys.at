@@ -679,6 +679,58 @@ pub fn page_names_json() str {
     return "[" + sb.build() + "]"
 }
 
+// ===== 单目标 wiki 链接解析（PLAN-036 T-02；R-03b2 正文导航数据面） =====
+
+/// 单目标只读解析（api.resolve_wiki_link 实现）：target → 现行四级解析
+/// 一行 JSON。**复用共享 resolver**（collect_ad_pages + page_aliases +
+/// resolve_target——零新 resolver、零身份语义扩）；目录现读（不用保存后
+/// 的 link_index/旧缓存——点击刚输入、尚未保存的链接同面可解析，AC-03；
+/// link_index 读磁盘正文无法代表未保存新链接的缺口由本口补）。
+/// 响应 = 顶层裸数组**恰一行**（front json.to_value 顶层形状裁定同族）：
+///   命中       → [{"target":"<归一 target>","exists":true,"target_path":"<rel>"}]
+///   正常未命中 → [{"target":"<归一 target>","exists":false,"target_path":""}]
+///   无效输入   → "[]"（trim 空／跨行——链接候选提取期已切行的形态域外，
+///                前端按无效处理不开建页，与正常 missing 严格区分——AC-08）
+/// **只读零写面**：本接口不涉 write_wiki/create_page（wsys 域内无写原语
+/// 调用）；target 不是 filesystem 路径参数——路径/URL 样式字符串只作
+/// resolver 的文字输入，未命中不得触发 read_wiki/自动建目录（§5.1 能力
+/// 边界；# 首拆在引擎侧已完成，本口 target 恒页面名）。
+/// 转义 = json_esc_x（page_names_json 同款安全编码——target/rel 可含
+/// 引号/反斜杠，严格 JSON 控制符必转义）。
+pub fn resolve_wiki_link_json(target str) str {
+    var t str = target.trim()
+    if t == "" {
+        return "[]"
+    }
+    var nl = t.split("\n")
+    if nl.len() >= 2 {
+        return "[]"
+    }
+    var pages List = collect_ad_pages("", 8)
+    var stems List = []
+    var rels List = []
+    var aliases List = []
+    var i int = 0
+    while i < pages.len() {
+        // ⚠ D-20②：列表元素先拷局部变量再取字段/调方法。
+        var p = pages[i]
+        stems.push(p.stem)
+        rels.push(p.rel)
+        var text str = File.read_text(resolve(p.rel))
+        aliases.push(page_aliases(frontmatter_of(text)))
+        i = i + 1
+    }
+    var hit str = resolve_target(stems, aliases, rels, t)
+    var sb StringBuilder = StringBuilder.new(256)
+    sb.append("[{\"target\":\"" + json_esc_x(t))
+    if hit != "" {
+        sb.append("\",\"exists\":true,\"target_path\":\"" + json_esc_x(hit) + "\"}]")
+    } else {
+        sb.append("\",\"exists\":false,\"target_path\":\"\"}]")
+    }
+    return sb.build()
+}
+
 // ===== 悬空建页（PLAN-005 T-01；知识库第三切片 back 半） =====
 
 /// title → stem 清洗（title_to_path 的去 ".ad" 拼装段版——rename_page

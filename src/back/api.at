@@ -117,6 +117,23 @@ pub fn page_names() str {
     return wsys.page_names_json()
 }
 
+/// 单目标 wiki 链接解析（PLAN-036 T-02；R-03b2 正文导航数据面，SD-01）：
+/// target（页面名——引擎 emit 已 trim，# 首拆在引擎侧）→ 现行四级解析
+/// 一行 JSON。响应 = 顶层裸数组恰一行：命中 `{"target","exists":true,
+/// "target_path"}`／正常未命中 exists false + path 空／无效输入（trim 空
+/// /跨行）→ "[]"（前端按无效处理不开建页，与正常 missing 严格区分）。
+/// **只读零写面**：复用 collect_ad_pages/page_aliases/resolve_target 共享
+/// resolver（零新 resolver、零身份语义扩——title/dtitle 不参与身份）；
+/// 目录现读不依赖保存后的 link_index（未保存来源同面可解析）；不调用
+/// write_wiki/create_page，target 非 filesystem 路径参数。语义定文见
+/// wsys.resolve_wiki_link_json（契约 attachments/036-wiki-link-contract §5）。
+/// **POST 而非 GET**（D-19：target CJK 常态，body 传参）。
+/// POST /api/resolve_wiki_link
+#[api(method = "POST", path = "/api/resolve_wiki_link")]
+pub fn resolve_wiki_link(target str) str {
+    return wsys.resolve_wiki_link_json(target)
+}
+
 /// 悬空建页（PLAN-005 第三切片；wikilink 写闭环收口）：title 清洗 →
 /// 工作区根落位 {safe}.ad。已存在 = **幂等不写**返回现路径（守卫 back
 /// 侧内移——front exists 预检对 CJK 在 split/vue 臂失效[D-19]，且

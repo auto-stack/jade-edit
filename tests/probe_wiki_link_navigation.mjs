@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// probe_wiki_link_navigation.mjs — PLAN-036 T-01 有界协议原型探针（wiki 链接
-// 导航协调形态冻结件；probe_editor_host.mjs 配方 + 上游审计隔离 vue 运行时
-// 配方〔.am/quoted-link-audit 持久化〕）。
+// probe_wiki_link_navigation.mjs — PLAN-036 正文内链导航探针（T-01 有界
+// 原型 + T-02 单参解析换装；probe_editor_host.mjs 配方 + 上游审计隔离
+// vue 运行时配方〔.am/quoted-link-audit 持久化〕）。
 //
 //   指纹臂    auto.exe 版本/SHA、auto-lang/auto-down rev、engine dist SHA、
 //            jade-edit HEAD——运行时证据绑定。
@@ -11,19 +11,22 @@
 //            阴性对照）；双参 handler 保留。
 //   merged 臂  探针工程 `auto run -r vm` + MCP：协调 handler（NavStart）
 //            同步全流程——源票据捕获/活动选择世代/四级解析已知答案
-//            （back link_index vs 内联 page_names resolver 逐案对读）/
-//            每等待期门/Store 同步提交门（含陈旧票据直派阴性对照）。
-//   split 臂   serve-back HTTP：link_index 四级已知答案 + page_names 行集
-//            （原型 resolver 输入面；T-02 起 resolve_wiki_link 单参案追加）。
+//            （link_index vs resolve_wiki_link 逐案对读——T-02 生产解析
+//            口）/每等待期门/Store 同步提交门（含陈旧票据直派阴性对照）
+//            /无效输入 resolve-invalid 独立终态。
+//   split 臂   serve-back HTTP：link_index 四级已知答案 + resolve_wiki_link
+//            单参案（裸数组协议/missing 行/无效 []/dtitle-only 不拼路径/
+//            零写面/旧 link_index 响应字节恒等）。
 //   runtime 臂 隔离 Vite 挂载生成组件（engine dist 指向真实 dist）+
 //            Playwright 真实 .autodown-wikilink-label 点击 + /api 路由
-//            拦截延迟：E 组（真实点击/缺参归一/一次触发/简称零监听）+
-//            S 组原型级迟到反例（切档/A→B→A/迟到输入/逆序双点击）。
+//            拦截延迟：E 组（真实点击/缺参归一/一次触发）+
+//            S 组原型级迟到反例（切档/A→B→A/迟到输入/逆序双点击——
+//            延迟窗 = resolve_wiki_link POST）。
 //
-// 原型边界（T-01 冻结域）：解析 = 内联 page_names 四级（T-02 换
-// resolve_wiki_link 单参后零形态变化）；缺页 = 计数终止（确认流归 T-04）；
-// tab 模型 = 最小 {uid,key,path,body}（生产构造字段归 T-03 与 Open 同构）。
-// 协调形态（票据/世代/双门/同步提交）即生产冻结形态。
+// 原型边界：缺页 = missing/invalid 计数终止（确认流归 T-04）；tab 模型 =
+// 最小 {uid,key,path,body}（生产构造字段归 T-03 与 Open 同构）；正文导航
+// 生产接线 = T-03（app.at 事件 + editor_store.at NavCommit），本探针工程
+// 即其冻结形态可执行样张。
 //
 // 结果标签：PASS（预期且实测相符）/ FAIL（意外——计失败）/ BLOCKED
 // （载体阻断——owner/重入条件在案）。
@@ -66,6 +69,7 @@ const sha = (p) => crypto.createHash('sha256').update(fs.readFileSync(p)).digest
 const CORPUS = {
   'Tgt.ad': '---\naliases:\n- 靶心\n- 目标页\n---\n\n# Tgt\n\n别名目标正文。\n',
   'Note.ad': '---\naliases:\n- 便签\n---\n\n# Note\n\n便签正文。\n',
+  'Attr.ad': '---\ntitle: 属性名\n---\n\n# Attr\n\n标题域正文。\n',
   '中文页.ad': '# 中文页\n\n中文正文。\n',
   'Other.ad': '# Other\n\n旁档正文。\n',
   'Src.ad': '# 源页\n\n见 [[靶心]] 与 [[Tgt#sec1]] 与 [[tgt]] 与 [[中文页]] 与 [[便签]] 与 [[缺失页]] 一处。\n\n尾部段落。\n',
@@ -248,89 +252,12 @@ function makeAppAt() {
 // 简称 onopenwikilink 阴性对照编辑器 + 协调 handler NavStart（源票据/
 // 请求号/每等待期门/同步提交单 owner）+ 调试直派钮（merged 臂驱动面）。
 use editor_store: EditorStore
-use back.api: write_wiki, read_wiki, link_index, page_names
+use back.api: write_wiki, read_wiki, link_index, resolve_wiki_link
 
 /// int 观察面 → 状态列文本（视图裸 computed text 节点委托——D-33② 在册
 /// 唯一形态：单函数调用；视图位零 .str() 直排实勘缺口规避）。
 fn s_of(n int) str {
     return n.str()
-}
-
-/// 原型四级 resolver（T-01 有界件——生产= T-02 resolve_wiki_link 单参
-/// back 口，本件仅冻结协调形态；序 = stem 精确→alias 精确→stem
-/// casefold→alias casefold，级内 walk 首现——wsys.resolve_target 同序）。
-/// ⚠ D-30①：参数名 rows 避开模型名；D-20②：元素先拷局部变量再取字段。
-fn proto_resolve(rows List, target str) str {
-    var hit str = ""
-    var i int = 0
-    while i < rows.len() {
-        if hit == "" {
-            var r = rows[i]
-            var t str = r.title
-            if t == target {
-                hit = r.path
-            }
-        }
-        i = i + 1
-    }
-    if hit != "" {
-        return hit
-    }
-    var p int = 0
-    while p < rows.len() {
-        if hit == "" {
-            var r2 = rows[p]
-            var als List = r2.aliases
-            var a int = 0
-            while a < als.len() {
-                if hit == "" {
-                    var al str = als[a]
-                    if al == target {
-                        hit = r2.path
-                    }
-                }
-                a = a + 1
-            }
-        }
-        p = p + 1
-    }
-    if hit != "" {
-        return hit
-    }
-    var tl str = target.to_lower()
-    var i2 int = 0
-    while i2 < rows.len() {
-        if hit == "" {
-            var r3 = rows[i2]
-            var t3 str = r3.title
-            if t3.to_lower() == tl {
-                hit = r3.path
-            }
-        }
-        i2 = i2 + 1
-    }
-    if hit != "" {
-        return hit
-    }
-    var p2 int = 0
-    while p2 < rows.len() {
-        if hit == "" {
-            var r4 = rows[p2]
-            var als2 List = r4.aliases
-            var a2 int = 0
-            while a2 < als2.len() {
-                if hit == "" {
-                    var al2 str = als2[a2]
-                    if al2.to_lower() == tl {
-                        hit = r4.path
-                    }
-                }
-                a2 = a2 + 1
-            }
-        }
-        p2 = p2 + 1
-    }
-    return hit
 }
 
 /// link_index Src.ad 出链行 target→target_path 摘取（back 已知答案面）。
@@ -362,16 +289,16 @@ widget App {
     msg {
         Init,
         NavStart(str, str),
-        NavAlias, NavAnchor, NavCase, NavCjk, NavMiss,
+        NavAlias, NavAnchor, NavCase, NavCjk, NavMiss, NavInvalid,
         GotoSrc, GotoOther, DebugType, DebugStale,
         Edit(str),
     }
     model {
         var boot str = "booting"
-        // —— 四级已知答案对读（back link_index vs 内联 resolver）——
+        // —— 四级已知答案对读（back link_index vs resolve_wiki_link）——
         var lk_check str = ""
         var lk_back str = ""
-        var lk_inline str = ""
+        var lk_resolve str = ""
         // —— 导航协调观察面 ——
         var nav_starts int = 0
         var nav_seq int = 0
@@ -380,6 +307,7 @@ widget App {
         var nav_ticket str = ""
         var nav_reject str = "none"
         var nav_missing int = 0
+        var nav_invalid int = 0
     }
     computed {
         s_starts => s_of(.nav_starts)
@@ -398,6 +326,7 @@ widget App {
                 button (text: "导航大小写", variant: "ghost") { onclick: .NavCase, style: "h-6 px-2 text-[11px]" }
                 button (text: "导航中文", variant: "ghost") { onclick: .NavCjk, style: "h-6 px-2 text-[11px]" }
                 button (text: "导航缺失", variant: "ghost") { onclick: .NavMiss, style: "h-6 px-2 text-[11px]" }
+                button (text: "导航无效", variant: "ghost") { onclick: .NavInvalid, style: "h-6 px-2 text-[11px]" }
                 button (text: "到Src", variant: "ghost") { onclick: .GotoSrc, style: "h-6 px-2 text-[11px]" }
                 button (text: "到Other", variant: "ghost") { onclick: .GotoOther, style: "h-6 px-2 text-[11px]" }
                 button (text: "键入", variant: "ghost") { onclick: .DebugType, style: "h-6 px-2 text-[11px]" }
@@ -444,13 +373,15 @@ widget App {
             // 语料播种（幂等——复跑零漂移）
             write_wiki("Tgt.ad", "${atLit(CORPUS['Tgt.ad'])}")
             write_wiki("Note.ad", "${atLit(CORPUS['Note.ad'])}")
+            write_wiki("Attr.ad", "${atLit(CORPUS['Attr.ad'])}")
             write_wiki("中文页.ad", "${atLit(CORPUS['中文页.ad'])}")
             write_wiki("Other.ad", "${atLit(CORPUS['Other.ad'])}")
             write_wiki("Src.ad", "${atLit(CORPUS['Src.ad'])}")
             store.ProtoOpen({ path: "Other.ad" })
             store.ProtoOpen({ path: "Src.ad" })
             // —— 四级已知答案对读：back link_index（back resolver 产物）
-            // vs 内联 proto_resolve（page_names 行）——六案逐对——
+            // vs resolve_wiki_link 单参口（T-02 共享 resolver 双读恒等见证）
+            // ——六案逐对——（⚠ D-20⑤：json.to_value 恒 call-arg 形内联）——
             var pages List = []
             var pok bool = true
             try {
@@ -458,43 +389,82 @@ widget App {
             } catch (e) {
                 pok = false
             }
-            var names List = []
-            var nok bool = true
-            try {
-                names = json.to_value(page_names())
-            } catch (e2) {
-                nok = false
-            }
             if pok {
-                if nok {
-                    var b1 str = back_path_of(pages, "靶心")
-                    var b2 str = back_path_of(pages, "Tgt")
-                    var b3 str = back_path_of(pages, "tgt")
-                    var b4 str = back_path_of(pages, "中文页")
-                    var b5 str = back_path_of(pages, "便签")
-                    var b6 str = back_path_of(pages, "缺失页")
-                    var i1 str = proto_resolve(names, "靶心")
-                    var i2 str = proto_resolve(names, "Tgt")
-                    var i3 str = proto_resolve(names, "tgt")
-                    var i4 str = proto_resolve(names, "中文页")
-                    var i5 str = proto_resolve(names, "便签")
-                    var i6 str = proto_resolve(names, "缺失页")
-                    .lk_back = b1 + "|" + b2 + "|" + b3 + "|" + b4 + "|" + b5 + "|" + b6
-                    .lk_inline = i1 + "|" + i2 + "|" + i3 + "|" + i4 + "|" + i5 + "|" + i6
-                    var same bool = true
-                    if b1 != i1 { same = false }
-                    if b2 != i2 { same = false }
-                    if b3 != i3 { same = false }
-                    if b4 != i4 { same = false }
-                    if b5 != i5 { same = false }
-                    if b6 != i6 { same = false }
-                    if same {
-                        .lk_check = "match"
-                    } else {
-                        .lk_check = "diff"
+                var b1 str = back_path_of(pages, "靶心")
+                var b2 str = back_path_of(pages, "Tgt")
+                var b3 str = back_path_of(pages, "tgt")
+                var b4 str = back_path_of(pages, "中文页")
+                var b5 str = back_path_of(pages, "便签")
+                var b6 str = back_path_of(pages, "缺失页")
+                // resolve_wiki_link 单参六案（每案一行裸数组；未命中行
+                // exists=false → path 记 ""——与 link_index 悬空行同口径）
+                var p1 str = ""
+                var p2 str = ""
+                var p3 str = ""
+                var p4 str = ""
+                var p5 str = ""
+                var p6 str = ""
+                var q1 List = json.to_value(resolve_wiki_link("靶心"))
+                if q1.len() >= 1 {
+                    var e1r = q1[0]
+                    var ex1 bool = e1r.exists
+                    if ex1 {
+                        p1 = e1r.target_path
                     }
+                }
+                var q2 List = json.to_value(resolve_wiki_link("Tgt"))
+                if q2.len() >= 1 {
+                    var e2r = q2[0]
+                    var ex2 bool = e2r.exists
+                    if ex2 {
+                        p2 = e2r.target_path
+                    }
+                }
+                var q3 List = json.to_value(resolve_wiki_link("tgt"))
+                if q3.len() >= 1 {
+                    var e3r = q3[0]
+                    var ex3 bool = e3r.exists
+                    if ex3 {
+                        p3 = e3r.target_path
+                    }
+                }
+                var q4 List = json.to_value(resolve_wiki_link("中文页"))
+                if q4.len() >= 1 {
+                    var e4r = q4[0]
+                    var ex4 bool = e4r.exists
+                    if ex4 {
+                        p4 = e4r.target_path
+                    }
+                }
+                var q5 List = json.to_value(resolve_wiki_link("便签"))
+                if q5.len() >= 1 {
+                    var e5r = q5[0]
+                    var ex5 bool = e5r.exists
+                    if ex5 {
+                        p5 = e5r.target_path
+                    }
+                }
+                var q6 List = json.to_value(resolve_wiki_link("缺失页"))
+                if q6.len() >= 1 {
+                    var e6r = q6[0]
+                    var ex6 bool = e6r.exists
+                    if ex6 {
+                        p6 = e6r.target_path
+                    }
+                }
+                .lk_back = b1 + "|" + b2 + "|" + b3 + "|" + b4 + "|" + b5 + "|" + b6
+                .lk_resolve = p1 + "|" + p2 + "|" + p3 + "|" + p4 + "|" + p5 + "|" + p6
+                var same bool = true
+                if b1 != p1 { same = false }
+                if b2 != p2 { same = false }
+                if b3 != p3 { same = false }
+                if b4 != p4 { same = false }
+                if b5 != p5 { same = false }
+                if b6 != p6 { same = false }
+                if same {
+                    .lk_check = "match"
                 } else {
-                    .lk_check = "names-error"
+                    .lk_check = "diff"
                 }
             } else {
                 .lk_check = "links-error"
@@ -502,9 +472,10 @@ widget App {
             .boot = "ready"
         }
 
-        // —— 协调 handler（T-01 冻结形态；生产 = T-03 同构换 resolve_
-        // wiki_link 单参）——入口同步捕获源票据与请求号；两级等待窗
-        //（解析/读盘）各自后过门；最终同步提交（store.NavCommit）。
+        // —— 协调 handler（T-02 起生产形态：等待窗① = resolve_wiki_link
+        // 单参 POST——T-01 page_names 内联原型退役，形态零变化；契约 §2）——
+        // 入口同步捕获源票据与请求号；两级等待窗（解析/读盘）各自后过门；
+        // 最终同步提交（store.NavCommit）。
         .NavStart(target, anchor) -> {
             .nav_starts = .nav_starts + 1
             .nav_seq = .nav_seq + 1
@@ -525,22 +496,33 @@ widget App {
             .nav_last_target = target
             .nav_last_anchor = anc
             .nav_ticket = t_uid.str() + ":" + t_gen.str() + ":" + t_key
-            // —— 等待窗①：解析（现行目录现读）——
-            var names List = []
+            // —— 等待窗①：解析（单参 POST 裸数组——无效 [] 与 missing
+            // 行严格区分：行缺 = resolve-invalid 不开建页，AC-08）——
+            var res List = []
             var rok bool = true
             try {
-                names = json.to_value(page_names())
+                res = json.to_value(resolve_wiki_link(target))
             } catch (e) {
                 rok = false
             }
             if !rok {
                 .nav_reject = "resolve-error"
             } else {
-                var tp str = proto_resolve(names, target)
-                if tp == "" {
-                    .nav_missing = .nav_missing + 1
-                    .nav_reject = "missing"
+                if res.len() < 1 {
+                    .nav_invalid = .nav_invalid + 1
+                    .nav_reject = "resolve-invalid"
                 } else {
+                    // ⚠ D-20②：行元素先拷局部变量再取字段。
+                    var r0 = res[0]
+                    var ex bool = r0.exists
+                    var tp str = r0.target_path
+                    if !ex {
+                        tp = ""
+                    }
+                    if tp == "" {
+                        .nav_missing = .nav_missing + 1
+                        .nav_reject = "missing"
+                    } else {
                     // —— 门①（解析后）：请求号 + 来源身份 + 选择世代 ——
                     var g1 bool = true
                     if .nav_seq != myseq { g1 = false }
@@ -586,8 +568,6 @@ widget App {
                 }
             }
         }
-        .NavShort(t, a) -> {
-            .nav_short = .nav_short + 1
         }
 
         // —— 调试直派（merged 臂驱动面；runtime 臂真实点击不经此）——
@@ -596,6 +576,7 @@ widget App {
         .NavCase -> { .NavStart("tgt", "") }
         .NavCjk -> { .NavStart("中文页", "") }
         .NavMiss -> { .NavStart("缺失页", "") }
+        .NavInvalid -> { .NavStart("", "") }
         .GotoSrc -> { store.ProtoGoto("Src.ad") }
         .GotoOther -> { store.ProtoGoto("Other.ad") }
         .DebugType -> { store.ProtoType("（迟到输入）") }
@@ -808,7 +789,7 @@ async function runMergedArm(rec) {
     rec.m0_boot = strField(st0, 'boot')
     rec.m0_lk_check = strField(st0, 'lk_check')
     rec.m0_lk_back = strField(st0, 'lk_back')
-    rec.m0_lk_inline = strField(st0, 'lk_inline')
+    rec.m0_lk_resolve = strField(st0, 'lk_resolve')
     rec.m0_tab_count = intField(st0, 'tab_count')
     rec.m0_active_path = strField(st0, 'active_path')
 
@@ -880,6 +861,17 @@ async function runMergedArm(rec) {
       rec.m6_tabs = intField(st, 'tab_count')
       rec.m6_active = strField(st, 'active_path')
     }
+
+    // —— M7 无效输入（空 target → resolve [] ）：resolve-invalid ≠ missing ——
+    await pressBtn('导航无效')
+    {
+      const st = await statePoll('nav_invalid', 1)
+      rec.m7_invalid = intField(st, 'nav_invalid')
+      rec.m7_missing = intField(st, 'nav_missing')
+      rec.m7_reject = strField(st, 'nav_reject')
+      rec.m7_commits = intField(st, 'commit_count')
+      rec.m7_active = strField(st, 'active_path')
+    }
     rec.merged_tail = appOut.slice(-300)
   } finally {
     try { execFileSync('taskkill', ['/PID', String(app.pid), '/T', '/F'], { stdio: 'ignore' }) } catch {}
@@ -923,7 +915,64 @@ async function runSplitHttp(rec) {
     const names = unwrap(await getJson('page_names'))
     rec.split_names_rows = Array.isArray(names) ? names.length : -1
     rec.split_names_has_alias = Array.isArray(names) && names.some((n) => Array.isArray(n.aliases) && n.aliases.includes('靶心'))
-    // T-02 扩展点：resolve_wiki_link 单参案（merged/split 已知答案 + 失败区分）追加于此。
+    // —— T-02：resolve_wiki_link 单参案（POST 裸数组协议 + 失败区分 +
+    // 零写面 + 旧 link_index 响应恒等——AC-02/03/08）——
+    const walkWs = (dir, prefix = '') => {
+      const out = {}
+      for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+        const rel = prefix ? `${prefix}/${e.name}` : e.name
+        if (e.isDirectory()) Object.assign(out, walkWs(path.join(dir, e.name), rel))
+        else out[rel] = sha(path.join(dir, e.name))
+      }
+      return out
+    }
+    const rawLinkIndex = async () => {
+      const v = unwrap(await getJson('link_index', '?path=&depth=8'))
+      return typeof v === 'string' ? v : JSON.stringify(v)
+    }
+    const wsBefore = walkWs(back.workspace)
+    const linkIndexBefore = await rawLinkIndex()
+    const postResolve = async (target) => {
+      const res = await fetch(`${back.url}/api/resolve_wiki_link`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target }),
+      })
+      if (!res.ok) throw new Error(`POST resolve_wiki_link -> HTTP ${res.status}`)
+      const text = await res.text()
+      let v
+      try { v = JSON.parse(text) } catch { return { parse_err: text.slice(0, 80) } }
+      if (typeof v === 'string') {
+        try { v = JSON.parse(v) } catch { return { parse_err: String(v).slice(0, 80) } }
+      }
+      return v
+    }
+    const fmtResolve = (rows) => {
+      const r = Array.isArray(rows) && rows.length >= 1 ? rows[0] : null
+      if (!r) return '(no-row)'
+      return `${r.target}>${r.exists ? r.target_path : ''}`
+    }
+    const invalidLen = async (target) => {
+      const rows = await postResolve(target)
+      return Array.isArray(rows) ? rows.length : -1
+    }
+    rec.split_resolve = {
+      alias: fmtResolve(await postResolve('靶心')),
+      exact: fmtResolve(await postResolve('Tgt')),
+      casefold: fmtResolve(await postResolve('tgt')),
+      cjk: fmtResolve(await postResolve('中文页')),
+      note: fmtResolve(await postResolve('便签')),
+      miss: fmtResolve(await postResolve('缺失页')),
+      // dtitle-only 未命中（title 不参与链接身份——Attr.ad fm title=属性名）
+      title_only: fmtResolve(await postResolve('属性名')),
+      invalid_empty_len: await invalidLen(''),
+      invalid_blank_len: await invalidLen('   '),
+      invalid_multiline_len: await invalidLen('两\n行'),
+    }
+    // 零写面 + 旧 link_index 响应字节恒等（AC-03）。
+    rec.split_ws_zero_write = JSON.stringify(walkWs(back.workspace)) === JSON.stringify(wsBefore)
+    rec.split_link_index_stable = (await rawLinkIndex()) === linkIndexBefore
+    // T-03 扩展点：正文导航 e2e（E/U/D/S/M/F/B 组）追加于 e2e/wiki-link-navigation.spec.ts。
   } finally {
     await back.stop()
   }
@@ -1088,7 +1137,7 @@ async function runRuntimeArm(rec) {
 
     // —— S1 解析等待窗切档：旧结果零提交零激活 ——
     let delayMs = 0
-    await page.route('**/api/page_names', async (route) => {
+    await page.route('**/api/resolve_wiki_link', async (route) => {
       if (delayMs > 0) {
         const d = delayMs
         delayMs = 0
@@ -1250,7 +1299,7 @@ function checks(rec) {
   if (RUN_BACKEND) {
     console.log('\n[probe-wiki-link] merged 臂（协调形态同步全流程）：')
     if (rec.m0_boot === 'ready') {
-      ck(rec.m0_lk_check === 'match', `M0 四级对读 match（back=[${(rec.m0_lk_back ?? '').slice(0, 60)}] inline=[${(rec.m0_lk_inline ?? '').slice(0, 60)}]）`)
+      ck(rec.m0_lk_check === 'match', `M0 四级对读 match（link_index vs resolve_wiki_link——back=[${(rec.m0_lk_back ?? '').slice(0, 60)}] resolve=[${(rec.m0_lk_resolve ?? '').slice(0, 60)}]）`)
       ck(rec.m0_tab_count === 2 && rec.m0_active_path === 'Src.ad', `M0 Init 双 tab 开档激活 Src.ad（tabs=${rec.m0_tab_count}）`)
       ck(rec.m1_target === '靶心' && rec.m1_anchor === '' && rec.m1_reject === 'none', 'M1 导航别名直派：target=靶心 anchor=""（缺参归一）reject=none')
       ck(rec.m1_commits === 1 && rec.m1_active === 'Tgt.ad' && rec.m1_tabs === 3, `M1 同步提交：commits=1 active=Tgt.ad 新建 tab（3）`)
@@ -1259,6 +1308,7 @@ function checks(rec) {
       ck(rec.m4_active === '中文页.ad' && rec.m4_reject === 'none' && rec.m4_tabs === 4, 'M4 中文 stem 级 [[中文页]] → 中文页.ad（新 tab=4）')
       ck(rec.m5_missing === 1 && rec.m5_commits === rec.m4s_commits && rec.m5_tabs === rec.m4s_tabs && rec.m5_reject === 'missing', `M5 缺失页：missing=1 零提交零 tab（missing 终态计数——确认流归 T-04）`)
       ck(rec.m6_rejects === 1 && rec.m6_commits === 4 && rec.m6_tabs === rec.m4s_tabs && rec.m6_active === 'Src.ad', 'M6 陈旧票据直派：store 同步门独立拒绝（rejects=1 零 tab 零激活——阴性对照）')
+      ck(rec.m7_invalid === 1 && rec.m7_missing === 1 && rec.m7_reject === 'resolve-invalid' && rec.m7_commits === 4, 'M7 无效输入：resolve-invalid ≠ missing（invalid 计数独立、零提交——AC-08）')
     } else {
       bl(`merged 臂 boot 未达：${String(rec.merged_error ?? rec.m0_boot ?? '').slice(0, 260)}`)
     }
@@ -1273,9 +1323,25 @@ function checks(rec) {
       ck(h.note === '便签>Note.ad', `B1 split [[便签]] alias → Note.ad（实际：${h.note}）`)
       ck(h.miss === '缺失页>', `B1 split [[缺失页]] 悬空（实际：${h.miss}）`)
       ck(h.anchor === 'Tgt#sec1>Tgt.ad', `B1 split anchor 伴随解析（实际：${h.anchor}）`)
-      ck(rec.split_names_rows > 0 && rec.split_names_has_alias === true, `B2 split page_names 行集含 aliases（rows=${rec.split_names_rows}——原型 resolver 输入面）`)
+      ck(rec.split_names_rows > 0 && rec.split_names_has_alias === true, `B2 split page_names 行集含 aliases（rows=${rec.split_names_rows}）`)
     } else {
       bl(`split 臂未达：${String(rec.split_error ?? '').slice(0, 260)}`)
+    }
+    console.log('\n[probe-wiki-link] split 臂·resolve_wiki_link 单参案（T-02）：')
+    if (rec.split_resolve) {
+      const r = rec.split_resolve
+      ck(r.alias === '靶心>Tgt.ad', `B3 split resolve 靶心 alias 级（实际：${r.alias}）`)
+      ck(r.exact === 'Tgt>Tgt.ad', `B3 split resolve Tgt stem 精确（实际：${r.exact}）`)
+      ck(r.casefold === 'tgt>Tgt.ad', `B3 split resolve tgt casefold 级（实际：${r.casefold}）`)
+      ck(r.cjk === '中文页>中文页.ad', `B3 split resolve 中文页 CJK stem（实际：${r.cjk}）`)
+      ck(r.note === '便签>Note.ad', `B3 split resolve 便签 alias（实际：${r.note}）`)
+      ck(r.miss === '缺失页>', `B3 split resolve 缺失页 正常 missing 行（exists=false path 空——实际：${r.miss}）`)
+      ck(r.title_only === '属性名>', `B3 split resolve dtitle-only 未命中不拼路径（title 不参与身份——实际：${r.title_only}）`)
+      ck(r.invalid_empty_len === 0 && r.invalid_blank_len === 0 && r.invalid_multiline_len === 0, `B3 split resolve 无效输入 []（空=${r.invalid_empty_len} 空白=${r.invalid_blank_len} 跨行=${r.invalid_multiline_len}——与 missing 严格区分）`)
+      ck(rec.split_ws_zero_write === true, 'B3 split resolve 零写面（工作区文件集合/字节恒等——AC-03）')
+      ck(rec.split_link_index_stable === true, 'B3 split resolve 前后旧 link_index 响应字节恒等（AC-03 旧语义不变）')
+    } else {
+      bl(`split resolve 案未达：${String(rec.split_error ?? '').slice(0, 200)}`)
     }
   }
 
