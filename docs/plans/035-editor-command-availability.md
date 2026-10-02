@@ -6,7 +6,7 @@ author: [agent]
 created_at: 2026-10-02T05:05:19Z
 updated_at: 2026-10-02T11:30:00Z
 plan_revision: 1
-current_step: 0
+current_step: 1
 total_steps: 4
 supersedes_spec_components:
   - docs/specs/editor-host-capabilities.md
@@ -155,6 +155,8 @@ Vue 用区域定位验证两个 toolbar 按钮和六执行菜单项不存在、�
 - 验证：node tests/probe_command_availability.mjs；pnpm build。基础案证明六消息可见说明／零编辑，取消三 shortcut 的注册效果可观察；证据含 binary／dist 指纹，source 与 binary 漂移分列。
 - 对应 AC-02/03/04/06/09，SD-01/02/03/04。
 
+- [x] T-01 [✅ 已完成 2026-10-02] 契约冻结件 attachments/035-command-availability-contract.md（§1 入口/§2 元数据与快捷键/§3 状态与守卫/§4 两轨验证配方/§5 v26→v27 预期清单/§6 红线/§7 实测）+ 探针 tests/probe_command_availability.mjs 基础案全绿：主工程六命令逐个「按钮派发→说明开（last_cmd 逐命令判别）→零编辑逐值恒等→关闭仅清旗标」18 案+Ctrl+Z/Y/A 键盘零宿主路由 6 案+Ctrl+S 对照回执+磁盘 walk 恒等；variant 阴性对照（undo 挂回 Ctrl+Z→flag 翻真+last_cmd=undo）=失败复测完成，键盘→action→handler→flag 仪器链两向可测；vue 形状两向（主工程 keymap 仅 Ctrl+s/variant 含 Ctrl+z；canary enabled_if:"false" 转译 :disabled="!(false)" 良构→六 action 采纳为元数据标注）。验证：node tests/probe_command_availability.mjs 全绿（EXIT=0）+ pnpm build 绿。指纹：auto.exe v0.4.2-2573-g982e80004-dirty（debug）·auto-lang 4614bd9 dirty（外部 WIP 分列）·auto-down 895f8d0f clean·jade-edit 1bffd15·engine dist AE6CCD56——source=binary 同检出（jade-edit），auto-lang source dirty 为外部会话面不扰证据。
+
 ### T-02 生产入口与说明状态改造
 
 - 依赖：T-01。修改 src/front/app.at 的六 action 元数据与 shortcut、toolbar 两项、编辑菜单与根说明 dialog；保留六 App 委托。修改 src/front/editor_store.at 新开态／Open/Close msg，六旧 handler 改为可见说明守卫。src/front/status_bar.at 不改，避免占用安全注记。
@@ -183,6 +185,7 @@ Vue 用区域定位验证两个 toolbar 按钮和六执行菜单项不存在、�
 - 新增 T-01..04、AC-01..09、SD-01..04；确认 034 已归档且 C-2 独立分支可规划。原生禁用元数据与实际派发用 T-01 限定核验，handler 自身始终守卫，不降低可见说明／零编辑验收。
 - 本记录仅为规划交接，非实现复审 pass；本次未运行应用测试或探针、未改生产代码／canonical Specs、未自动继续 work/review/merge。
 - 2026-10-02T11:30:00Z：stage: work | plan_id: PLAN-035 | plan_revision: 1 | outcome: executing（启动） | code_commit: 本批（规划落档+work 启动；直接 main 线性惯例单一主检出——001..034 在册，无 worktree/dev 分支面） | task_ids: 无（T-01 未开工） | evidence: 用户指令「计划 035 auto-plan-work 实施」授权执行；主检出预检=路线图+计划文件规划面 WIP（本批落档清零），代码路径零 WIP | blockers: 无 | next: T-01（收口载体与兼容守卫确认）。
+- 2026-10-02T12:10:00Z：stage: work | plan_id: PLAN-035 | plan_revision: 1 | outcome: executing（T-01 完成） | code_commit: 1bffd15（规划落档）+本批 | task_ids: T-01 | evidence: 契约冻结件 attachments/035-command-availability-contract.md（§1..§7，含 enabled_if 实测修订）+node tests/probe_command_availability.mjs 全绿（主工程 25 案+variant 阴性对照 3 案+vue 形状两向——六命令守卫/键盘零路由/磁盘不变量/形状四域；失败复测=variant ctrl+z→flag 翻真成对在案）+pnpm build 绿 | blockers: 无 | next: T-02（生产入口与说明状态改造）。 |
 
 ## 10. 待澄清事项
 
