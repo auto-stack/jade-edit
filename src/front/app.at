@@ -193,7 +193,7 @@ fn name_dtitle_of(dir List, path str, fallback str) str {
     var i int = 0
     while i < dir.len() {
         // ⚠ D-20②：列表元素先拷局部变量再取字段。
-        var r = names[i]
+        var r = dir[i]
         var rp str = r.path
         if rp == path {
             var dt str = r.dtitle
@@ -204,6 +204,15 @@ fn name_dtitle_of(dir List, path str, fallback str) str {
         i = i + 1
     }
     return fallback
+}
+
+/// 查找行 path 次行文本（PLAN-033 T-04 实勘件——json.to_value 行字段在
+/// VM 视图 widget content 位置不隐式解箱（call-arg/赋值边界才有 str 收敛
+/// ——text 模式行 path 次行 VM 臂空渲染实录，vue 臂正常）；模块纯函数
+/// 出口恒 str，两循环统一走本件）。
+fn find_row_path(r) str {
+    var p str = r.path
+    return p
 }
 
 /// 快开名称过滤（PLAN-033——files 行集统一名称规则，两端同规见
@@ -220,7 +229,7 @@ fn name_rows_of(dir List, q str) List {
     var i int = 0
     while i < dir.len() {
         // ⚠ D-20②：列表元素先拷局部变量再取字段。
-        var r = names[i]
+        var r = dir[i]
         var hit bool = false
         if nq == "" {
             hit = true
@@ -1198,6 +1207,12 @@ widget App {
         var find_seq int = 0
         var find_err str = ""
         var find_stale bool = false
+        // files 行集 = model 字段（T-04 实勘改道：computed 行集在 VM 视图
+        // 渲染不可靠[空结果态丢空态行/后续渲染区整体消失——debug-n4 复现
+        // 在录]，model 字段 + handler 内重算 = find_rows/wanted_rows 全证
+        // 形态；重算点 = NamesRefresh 提交（目录/输入最新配对——vue 臂
+        // fire-and-forget 亦收敛）+ FindEdit files 分支逐键）。
+        var files_rows List = []
         // —— 最近打开数据态（PLAN-020 T-02；SD-2001 recents 半）：会话
         // 域 App 态（**持久化不做**——v1 重启即失，§10.3 留口）——开档
         // 成功触点头插（push_recent：去重置顶 + 容量 10 截断；触点族 =
@@ -1292,11 +1307,6 @@ widget App {
 
     computed {
         ft_rows => flatten_tree(.ft_nodes, .ft_expanded, true, .ft_sel)
-        // 快开 files 行集（PLAN-033）：名称目录 × 查询词统一名称过滤
-        //（name_rows_of 纯函数委托）——目录回包/输入变化自动重算，
-        // "提交时使用最新 find_q"结构性成立（无时序窗）。零 fetch
-        //（FindEdit 逐键纯内存——AC-06 请求计数零增）。
-        files_rows => name_rows_of(.names, .find_q)
         // 悬空建页弹层路径预览（PLAN-005）：title_to_path 镜像消费
         // .store.create_target（widget computed——ft_rows 同族先例）。
         create_preview => title_to_path(.store.create_target)
@@ -1702,7 +1712,7 @@ widget App {
                                                     onclick: .FindPick(r.path)
                                                     style: "w-full justify-start px-3 h-6 text-left text-[12px]"
                                                 }
-                                                text r.path { style: "text-[10px] text-muted-foreground px-3" }
+                                                text find_row_path(r) { style: "text-[10px] text-muted-foreground px-3" }
                                             }
                                         }
                                     }
@@ -1717,7 +1727,7 @@ widget App {
                                                 onclick: .FindPick(r.path)
                                                 style: "w-full justify-start px-3 h-6 text-left text-[12px]"
                                             }
-                                            text r.path { style: "text-[10px] text-muted-foreground px-3" }
+                                            text find_row_path(r) { style: "text-[10px] text-muted-foreground px-3" }
                                         }
                                     }
                                 }
@@ -1763,7 +1773,7 @@ widget App {
                                                 onclick: .FindPick(r.path)
                                                 style: "w-full justify-start px-3 h-6 text-left text-[12px]"
                                             }
-                                            text r.path { style: "text-[10px] text-muted-foreground px-3" }
+                                            text find_row_path(r) { style: "text-[10px] text-muted-foreground px-3" }
                                         }
                                     }
                                 }
@@ -3001,6 +3011,10 @@ widget App {
         //（find_seq 递增——查询修改后旧响应不得提交，§5.3 门）。
         .FindEdit(q) -> {
             .find_q = q
+            if .store.find_mode == "files" {
+                // 逐键纯内存重算（零 fetch——AC-06 请求计数零增）。
+                .files_rows = name_rows_of(.names, .find_q)
+            }
             if .store.find_mode == "text" {
                 .find_seq = .find_seq + 1
             }
@@ -3032,7 +3046,22 @@ widget App {
                 if ok {
                     .find_err = ""
                     .find_stale = false
-                    .find_rows = rows
+                    // 行投影（PLAN-033 T-04 实勘——json.to_value 行字段在
+                    // VM 视图 widget content 位置空渲染[VM 臂 path 次行
+                    // 实录；call-arg 位置正常]：mentions_of 同款 VM map
+                    // 投影先例，行对象 {path,title,snippet} 逐字段 str 化）。
+                    var rows2 List = []
+                    var ri int = 0
+                    while ri < rows.len() {
+                        // ⚠ D-20②：列表元素先拷局部变量再取字段。
+                        var r = rows[ri]
+                        var rp str = r.path
+                        var rt str = r.title
+                        var rs str = r.snippet
+                        rows2.push({ path: rp, title: rt, snippet: rs })
+                        ri = ri + 1
+                    }
+                    .find_rows = rows2
                     .find_ran = true
                 } else {
                     .find_err = "搜索失败——请重试"
@@ -3066,6 +3095,9 @@ widget App {
                     if .names_gen == mygen {
                         .names = rows
                         .names_state = "ready"
+                        // files 行集随目录提交重算（最新 find_q 配对——
+                        // 同 handler 体内，vue 臂 fire-and-forget 收敛）。
+                        .files_rows = name_rows_of(.names, .find_q)
                     }
                 } else {
                     .names_state = "error"

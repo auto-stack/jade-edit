@@ -81,6 +81,13 @@
 //             逐行 RecCap12..RecCap3 + 快开「最近」段渲染]；⑩c 防线案
 //             [fs 造 201 页微语料→ActDaily 树刷新→ws_warn 警示文案+警示
 //             窗内快开可用（纯显示面零功能影响）→清料→零警示回归]
+//   N name    名称查找一致（PLAN-033）：标题域同名双行（title-only 页
+//             +fm title 页——path 次行可辨）/逐路径打开（各开各档）/
+//             alias·相对路径·5 层深档（入口重开 NamesRefresh 读新目录）
+//             /模式门（text 正文词行不泄漏 files 面）/外部刷新（fs 改
+//             title→重进→新 dtitle）。执行序在 11 后 12 前。错误/迟到
+//             门=网络可观测面由 e2e name-search.spec 承载（merged 无
+//             网络层不设虚假案）
 //   12 rename 重命名+反链改写全弧线（PLAN-006；七子步——禁用态 untitled
 //             +脏档/弹层锚[预填+影响面预览]/取消零落盘/改名弧线[active
 //             投影+磁盘改写 index·CAP 定理]/面板+树新 stem/case-only 弧线
@@ -183,7 +190,7 @@ const argOf = (name) => {
   return i >= 0 ? args[i + 1] : undefined
 }
 const ARM = argOf('--arm') ?? 'all' // all | merged | split
-const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v25.txt')
+const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v26.txt')
 const SAVE_BASELINE = argOf('--save-baseline')
 
 const EDIT_MARKER = 'jade-edit 冒烟标记：编辑回写可见。'
@@ -629,33 +636,35 @@ async function runArm(arm, port) {
       const stateDump = (await callTool('autoui_state', {})).trim()
       const snapIds = JSON.stringify([...(await snapshotText()).matchAll(/#(vnode_\d+)/g)].map((m) => m[1]))
       const headerFor = (file) =>
-        `// jade-edit vm 结构基线 v21（PLAN-030 T-04 重锁；v20=PLAN-025 T-03、v19=PLAN-021 T-03、v18=PLAN-020
+        `// jade-edit vm 结构基线 v26（PLAN-033 T-04 重锁；v25=PLAN-032 批[头注字面 v21 系陈旧文案——
 ` +
-        `// T-03、v17=PLAN-019
+        `// F-32-R3 同类面，本锁起逐版实写]；v20=PLAN-025、v19=PLAN-021、v18=PLAN-020、v17=PLAN-019、
 ` +
-        `// T-04、v16=PLAN-018
+        `// v16=PLAN-018、v15=PLAN-016、v14=PLAN-015、v13=PLAN-014、v12=PLAN-013、v11=PLAN-012 等均留档）。
 ` +
-        `// T-04、v15=PLAN-016 T-04[头注字面 v14 系 v15 重锁窗漏改——016 教训同款，v16 随锁已
+        `// 重锁因由：名称查找一致批（PLAN-033）——App 模型七新字段入 dump（names/names_state/
 ` +
-        `// 校正]、v14=PLAN-015、v13=PLAN-014、v12=PLAN-013、v11=PLAN-012 等 21 版均留档）。
+        `// names_seq/names_gen/find_seq/find_err/find_stale——名称目录与查找请求门态。B 位终态值：
 ` +
-        `// 重锁因由：安全手动重载批（PLAN-030）——store reload_* 五字段入 dump（reload_confirm_open/
+        `// names=[]、names_state=""、names_seq=0、find_seq=0、find_err=""（查找面板未开过）+
 ` +
-        `// reload_target_key/reload_target_path/reload_target_body/reload_nonce）+ 重载确认弹层
+        `// names_gen=1、find_stale=true（check 5 ActSave→NamesInvalidate 触点副作用——每臂
 ` +
-        `//（alert-dialog 在册族第四实例——闭态恒渲染 D-23③ → snapshot vnode id 序列随批扩；
+        `// 确定性一存）；查找
 ` +
-        `// F5 移 bind 层零视觉面）。计划内重锁第八例——store 新字段面。
+        `// 面板闭态零视觉面（snapshot vnode id 序列零变化——diff 仅 state 段七行，逐项解释在
 ` +
-        `// 仪器同 v2..v20：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态
+        `// PLAN-033 T-04 记录）。计划内重锁第九例——App 模型新字段面。
+` +
+        `// 仪器同 v2..v25：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态
 ` +
         `//（chrome 全套 + Hello World.ad 开；查找面板/建页弹层/新建弹层/属性弹层/新建目录
 ` +
         `// 弹层/移动弹层/删除目录弹层/重命名目录弹层/移动目录弹层/重命名弹层/删除弹层/标签
 ` +
-        `// 面板/反链面板/重载确认弹层未开——find_*/create_*/new_*/meta_*/dir_*/move_*/movedir_*/deldir_*/
+        `// 面板/反链面板/重载确认弹层未开——find_*/names_*/create_*/new_*/meta_*/dir_*/move_*/movedir_*/
 ` +
-        `// rendir_*/rename_*/delete_*/tags_*/mention_rows/reload_* 全为默认值入 dump）。
+        `// deldir_*/rendir_*/rename_*/delete_*/tags_*/mention_rows/reload_* 全为默认值入 dump）。
 ` +
         `// 再生成：node tests/vm_matrix.mjs --save-baseline ${path.relative(repoRoot, file).replace(/\\\\/g, '/')}\n`
       const baselineBodyOf = () => `## state\n${stateDump}\n\n## snapshot-ids\n${snapIds}\n`
@@ -666,9 +675,9 @@ async function runArm(arm, port) {
       } else if (fs.existsSync(BASELINE)) {
         const raw = fs.readFileSync(BASELINE, 'utf8')
         const ok = raw === headerFor(BASELINE) + baselineBodyOf()
-        check('B', 'baseline', ok, ok ? '结构基线 v24 零漂移（state 逐字节 + id 序列）——PLAN-031 T-05 重锁（离开目标快照九标量入 dump：close_target_*/quit_keys/reload_target_doc·seq·conf/reload_was_dirty——diff 逐项解释在档）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
+        check('B', 'baseline', ok, ok ? '结构基线 v26 零漂移（state 逐字节 + id 序列）——PLAN-033 T-04 重锁（App 模型七新字段入 dump：七行中五行默认值+names_gen=1/find_stale=true 系 check5 ActSave→NamesInvalidate 确定性副作用——snapshot id 序列零变化，diff 仅 state 段七行，逐项解释在 PLAN-033 T-04）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
       } else {
-        console.log('  [baseline] structure-v24 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v24.txt')
+        console.log('  [baseline] structure-v26 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v26.txt')
       }
     }
 
@@ -2132,6 +2141,151 @@ async function runArm(arm, port) {
     check('11', 'find', recentsReplacedOk && proOk && cjkFilterOk && notRanOk && hitOk && emptyFindOk && aliasHitOk && trashCopyOk && trashRerouteOk && trashRowOk && purgeCopyOk && purgeCancelOk && trashEmptyOk && purgeDiskOk && trashRows2Ok && trashTreeInvisibleOk && trashSaveBackOk && restoreAllEmptyOk && restoreAllDiskOk && orphNoInput && orphListedOk && orphClearedOk && orphDanglingOk && recAccumOk && recOrderOk && recDedupOk && recCapOk && recDiskOk && snapNoJade,
       `快开（input 锚/空q recents 替换面[PLAN-020 断言修订——最近段+已开档行+未开档排除]/Pro→Projects 独行拾取即关/定理→CAP 独行+CJK 拾取开档双臂[PLAN-028 POST 化收口]）+ 检索（text 切换/未运行提示/CJK「任务列表」POST 双臂命中/行导航面板保持开/运行后空态）+ alias 检索（PLAN-012——fs 造档→搜「检别名」→AliasTgt.ad 行→拾取开档双臂）+ trash 模式[PLAN-016 ⑥：＋新建 TrashMe→菜单删除 弹层文案「将移入回收站」+改道磁盘面→回收站第四模式 清单行→清空强确认[M=1 派生+取消留置零落盘]→清空→空态闭环+磁盘 .trash 消]+ **trash 增强 ⑦[PLAN-019：双条目清单→行点击预览[.trash 路径 tab 开 active_title=.trash/TrashR1+树不可见]+保存落回 .trash 原位[磁盘标记直证——可编辑口径]+恢复全部[循环 restore→清单空态+磁盘双档回根字节保真]]+ **⑧ orphans 第五模式[PLAN-020：无 input 负向面+fs 造纯孤页档入列[back walk 零树依赖]+行点击开档+造链清孤[ActSave 顺产重算行消]+悬空出链计入出链度[OrphanD 非孤——resolved 面直证]]+ ⑨ recents 弧线[PLAN-020：清 q[type_text 空]→「最近」段累积态→3 开[index/Tasks/Hello World ASCII 拾取]→头 3 行逆序→拾取即关→去重置顶[重拾 Tasks 头位]→容量截断[RecCap×12+ActDaily 树刷新→12 开→10 行 头 RecCap12 尾 RecCap3]]+ **⑩ 持久化逐行验[PLAN-021：⑨ 弧终态 ↔ .jade/recents.txt 磁盘逐行一致+快照免索引负向]**`)
 
+    // N name（PLAN-033 T-04）：名称查找一致原生组（R-04）。语料 = fs 造
+    // nm/ 子树（外部变更面——查找入口重开即 NamesRefresh 取新目录：本组
+    // 首弧即该规则的原生直证，10m fs 造档先例）。错误/迟到门 = 网络可
+    // 观测面——vue 轨 e2e name-search.spec 承载（merged 无网络层，不设
+    // 虚假案）；本组 = 输入与行集 / 同名逐路径打开 / 标题·alias·相对
+    // 路径查找 / 模式门（行域隔离）/ 外部刷新。
+    fs.mkdirSync(path.join(FIXTURE, 'nm', 'deep', 'l2', 'l3', 'l4', 'l5'), { recursive: true })
+    fs.writeFileSync(path.join(FIXTURE, 'nm', 'NmHome.ad'), '---\ntitle: 首页\naliases:\n- 起点\n---\n\n普通正文段落。\n')
+    fs.writeFileSync(path.join(FIXTURE, 'nm', 'NmDupA.ad'), '---\ntitle: 重名页\n---\n\n甲处正文。\n')
+    fs.writeFileSync(path.join(FIXTURE, 'nm', 'NmDupB.ad'), '---\ntitle: 重名页\n---\n\n乙处正文。\n')
+    fs.writeFileSync(path.join(FIXTURE, 'nm', 'NmAlias.ad'), '---\naliases:\n- 独角兽\n---\n\n别名页正文。\n')
+    fs.writeFileSync(path.join(FIXTURE, 'nm', 'deep', 'l2', 'l3', 'l4', 'l5', 'NmDeep.ad'), 'deep line\n')
+    // 同名行按 path 次行定址 press（行 = button + path text 兄弟——text
+    // 节点 ownText 恰等 rel，其父域内唯一 button）。
+    const pressPanelRowByPath = async (rel) => {
+      const dl = Date.now() + 8000
+      for (;;) {
+        const t = await snapshot()
+        const region = panelRegion(t)
+        if (region) {
+          const pathNode = findFirst(region, (n) => !n.head.startsWith('button ') && ownText(n) === rel)
+          if (pathNode) {
+            const wrap = findParent(region, pathNode)
+            const btn = wrap ? findFirst(wrap, (n) => n.head.startsWith('button ') && elementIdOf(n)) : null
+            if (btn) {
+              const res = await callTool('autoui_action', { element_id: elementIdOf(btn), action: 'press' })
+              if (!/status: ok/.test(res)) throw new Error(`press row by path "${rel}" not ok: ${res}`)
+              return
+            }
+          }
+        }
+        if (Date.now() > dl) {
+          const dbg = await snapshotText()
+          fs.writeFileSync(`e2e/.runtime/fail-snap-${Date.now()}.txt`, dbg)
+          throw new Error(`panel row by path "${rel}" not found (snap dumped)`)
+        }
+        await sleep(300)
+      }
+    }
+    // ① 标题域直证 + 同名双行逐路径（title-only 页 NmHome 正文无 首页
+    // ——行出现即 page_names 名称域原生直证；wiki/index.ad fm title=首页
+    // 同显——同名双行 path 次行可辨）。
+    await pressButton('视图', { exact: true })
+    await pressButton('快速打开', { exact: true })
+    await stateIs('find_open', 'true')
+    await stateIs('names_state', 'ready')
+    const findTreeN1 = await snapshot()
+    const findInputN1 = findFirst(findTreeN1, (n) => n.head.startsWith('input ') && elementIdOf(n))
+    await callTool('autoui_action', { element_id: elementIdOf(findInputN1), action: 'type_text', value: '首页' })
+    await stateHas('find_q', '首页')
+    const nTitleTexts = await panelTexts()
+    const nTitleOk = nTitleTexts.includes('nm/NmHome.ad') && nTitleTexts.includes('wiki/index.ad')
+    if (!nTitleOk) throw new Error(`N① 标题域同名双行失守 texts=${JSON.stringify(nTitleTexts)}`)
+    await pressPanelRowByPath('nm/NmHome.ad')
+    await stateIs('active_title', 'nm/NmHome')
+    await stateIs('find_open', 'false')
+    // ② 同名双页逐路径打开（重名页 A/B——path 定址各开各档）。
+    await pressButton('视图', { exact: true })
+    await pressButton('快速打开', { exact: true })
+    const findTreeN2 = await snapshot()
+    const findInputN2 = findFirst(findTreeN2, (n) => n.head.startsWith('input ') && elementIdOf(n))
+    await callTool('autoui_action', { element_id: elementIdOf(findInputN2), action: 'type_text', value: '重名页' })
+    await stateHas('find_q', '重名页')
+    const nDupTexts = await panelTexts()
+    const nDupOk = nDupTexts.includes('nm/NmDupA.ad') && nDupTexts.includes('nm/NmDupB.ad')
+    if (!nDupOk) throw new Error(`N② 同名双页行失守 texts=${JSON.stringify(nDupTexts)}`)
+    await pressPanelRowByPath('nm/NmDupB.ad')
+    await stateIs('active_title', 'nm/NmDupB')
+    // ③ alias + 相对路径 + 5 层深档（入口重开即取新目录——② 后面板
+    // 已关，本弧重开触发 NamesRefresh 读入 NmAlias/NmDeep）。
+    await pressButton('视图', { exact: true })
+    await pressButton('快速打开', { exact: true })
+    const findTreeN3 = await snapshot()
+    const findInputN3 = findFirst(findTreeN3, (n) => n.head.startsWith('input ') && elementIdOf(n))
+    await callTool('autoui_action', { element_id: elementIdOf(findInputN3), action: 'type_text', value: '独角兽' })
+    await stateHas('find_q', '独角兽')
+    const nAliasOk = (await panelTexts()).includes('nm/NmAlias.ad')
+    if (!nAliasOk) throw new Error('N③ alias「独角兽」未出 NmAlias 行')
+    await pressPanelRowByPath('nm/NmAlias.ad')
+    await stateIs('active_title', 'nm/NmAlias')
+    await pressButton('视图', { exact: true })
+    await pressButton('快速打开', { exact: true })
+    const findTreeN4 = await snapshot()
+    const findInputN4 = findFirst(findTreeN4, (n) => n.head.startsWith('input ') && elementIdOf(n))
+    await callTool('autoui_action', { element_id: elementIdOf(findInputN4), action: 'type_text', value: 'nm/deep' })
+    await stateHas('find_q', 'nm/deep')
+    const nDeepOk = (await panelTexts()).includes('nm/deep/l2/l3/l4/l5/NmDeep.ad')
+    if (!nDeepOk) throw new Error('N③ 相对路径「nm/deep」未出 5 层深档行')
+    await pressPanelRowByPath('nm/deep/l2/l3/l4/l5/NmDeep.ad')
+    await stateIs('active_title', 'nm/deep/l2/l3/l4/l5/NmDeep')
+    await stateIs('find_open', 'false')
+    // ④ 模式门（行域隔离）：text 检索正文词「任务列表」→ Tasks 行；切
+    // files 同残留查询 → files 行集不收正文词（无匹配文件 + Tasks 钮不
+    // 泄漏）——find_rows/files_rows 双源结构隔离的原生断言。
+    await pressButton('视图', { exact: true })
+    await pressButton('全文检索', { exact: true })
+    await stateIs('find_mode', 'text')
+    const findTreeN5 = await snapshot()
+    const findInputN5 = findFirst(findTreeN5, (n) => n.head.startsWith('input ') && elementIdOf(n))
+    await callTool('autoui_action', { element_id: elementIdOf(findInputN5), action: 'type_text', value: '任务列表' })
+    await stateHas('find_q', '任务列表')
+    await pressButton('检索', { exact: true })
+    await stateIs('find_ran', 'true')
+    const nTextTexts = await panelTexts()
+    // 已知答案 = check 11 同款（「任务列表」命中 Hello World——正文词）；
+    // path 次行在（VM 视图 content 位置 str 收敛随行投影修复直证）。
+    const nTextOk = nTextTexts.includes('wiki/Hello World.ad') && nTextTexts.includes('Hello World')
+    if (!nTextOk) {
+      const dbg = await snapshotText()
+      fs.writeFileSync(`e2e/.runtime/fail-n4-${Date.now()}.txt`, dbg + '\n=====PANELTEXTS=====\n' + JSON.stringify(nTextTexts, null, 1) + '\n=====STATE=====\n' + (await callTool('autoui_state', {})))
+      throw new Error(`N④ text「任务列表」未出 Hello World 行 texts=${JSON.stringify(nTextTexts)}`)
+    }
+    await pressButton('视图', { exact: true })
+    await pressButton('快速打开', { exact: true })
+    await stateIs('find_mode', 'files')
+    // 渲染落定轮询（行区/空态随 mode 切换重渲染——快照节拍容差）。
+    let nGateTexts = await panelTexts()
+    for (let i = 0; i < 15 && !nGateTexts.includes('（无匹配文件）'); i++) {
+      await sleep(300)
+      nGateTexts = await panelTexts()
+    }
+    const nGateOk = nGateTexts.includes('（无匹配文件）') && !nGateTexts.includes('wiki/Hello World.ad')
+    if (!nGateOk) {
+      fs.writeFileSync(`e2e/.runtime/fail-n4gate-${Date.now()}.txt`, '=====PANELTEXTS=====\n' + JSON.stringify(nGateTexts, null, 1) + '\n=====STATE=====\n' + (await callTool('autoui_state', {})))
+      throw new Error(`N④ 模式门失守——text 行泄漏 files 面 texts=${JSON.stringify(nGateTexts)}`)
+    }
+    await pressButton('收起', { exact: true })
+    await stateIs('find_open', 'false')
+    // ⑤ 外部刷新：fs 改 NmAlias 增 title 另称页（外部变更）→ 重进查找
+    // 入口 → 新 dtitle 可查、旧 alias 查询退出（NamesRefresh 入口即取新
+    // 目录——AC-08 外部变更观察口原生直证）。
+    fs.writeFileSync(path.join(FIXTURE, 'nm', 'NmAlias.ad'), '---\ntitle: 另称页\naliases:\n- 独角兽\n---\n\n别名页正文。\n')
+    await pressButton('视图', { exact: true })
+    await pressButton('快速打开', { exact: true })
+    const findTreeN6 = await snapshot()
+    const findInputN6 = findFirst(findTreeN6, (n) => n.head.startsWith('input ') && elementIdOf(n))
+    await callTool('autoui_action', { element_id: elementIdOf(findInputN6), action: 'type_text', value: '另称页' })
+    await stateHas('find_q', '另称页')
+    const nRefreshOk = (await panelTexts()).includes('nm/NmAlias.ad')
+    if (!nRefreshOk) throw new Error('N⑤ 外部 title 变更重进后未出 NmAlias 行（NamesRefresh 入口取新）')
+    const nTitleBtn = await panelRowTexts()
+    if (!nTitleBtn.includes('另称页')) throw new Error(`N⑤ 行显示名未随新 title（rows=${JSON.stringify(nTitleBtn)}）`)
+    check('N', 'name', nTitleOk && nDupOk && nAliasOk && nDeepOk && nTextOk && nGateOk && nRefreshOk,
+      `名称查找一致原生组（PLAN-033）：标题域同名双行（NmHome title-only+index fm title——path 次行可辨）+ 逐路径打开（NmHome/NmDupB 各开各档 active_title）+ alias/相对路径/5 层深档（入口重开 NamesRefresh 读新目录）+ 模式门（text 正文词行不泄漏 files 面）+ 外部刷新（fs 改 title→重进→新 dtitle 行）。错误/迟到门 = 网络可观测面由 e2e name-search.spec 承载（merged 无网络层不设虚假案）`)
+
     // 12 rename（PLAN-006 T-04）：重命名+反链改写全弧线（七子步——组内
     // 子步不占检查位，fail 即臂败，10c 同款）。素材 Projects.ad（ASCII
     // 双臂——D-19 面无；入链 index/CAP 定理 两页两处 = 预览/改写断言
@@ -3336,24 +3490,65 @@ async function runArm(arm, port) {
     await pressButton('文件', { exact: true })
     await pressButton('删除…', { exact: true })
     await pressButton('删除', { exact: true })
+    // **F-32-R2 上游 blocker 精确断言口径（PLAN-033 T-04 承 032 在录）**：
+    // vm 臂 LC3-delete 落上游帧槽别名安全终态（verdict=reject 零磁盘变更
+    // +弹层留置+save_note 如实——032 LC3-DBG 转储定谳值）。超时不再中止
+    // 臂（中止会连带放弃 12/13/R 组当前代码验证面）：匹配安全终态四断言
+    // → 单列 blocker 续跑；不匹配（终态漂移）才 fail——blocker 与本片
+    // 新增失败严格分列，不合并称全绿。
     const lcDelDl = Date.now() + 10000
+    let lc3Landed = false
     for (;;) {
-      if (!fs.existsSync(lcDelFile)) break
-      if (Date.now() > lcDelDl) {
-        for (const f of ['lc_verdict', 'lc_status', 'lc_hold', 'save_note', 'delete_open', 'lc_block_open', 'lc_block_list', 'ft_sel', 'active_path', 'console']) {
-          console.log('[LC3-DBG]', f, '=', await stateText(f))
-        }
-        throw new Error('LC delete never landed')
-      }
+      if (!fs.existsSync(lcDelFile)) { lc3Landed = true; break }
+      if (Date.now() > lcDelDl) break
       await sleep(200)
     }
-    const lc3Ok = !fs.existsSync(lcDelFile) && fs.existsSync(path.join(FIXTURE, '.trash', LC_DEL))
+    let lc3Ok = lc3Landed && !fs.existsSync(lcDelFile) && fs.existsSync(path.join(FIXTURE, '.trash', LC_DEL))
+    let lc3SafeOk = false
+    if (!lc3Landed) {
+      const verdictTxt = await stateText('lc_verdict')
+      const noteTxt = await stateText('save_note')
+      const dlgTxt = await stateText('delete_open')
+      const verdict = verdictTxt.match(/lc_verdict:\s*"([^"]*)"/)?.[1] ?? ''
+      const note = noteTxt.match(/save_note:\s*"([^"]*)"/)?.[1] ?? ''
+      const dlgOpen = /delete_open:\s*true/.test(dlgTxt)
+      lc3SafeOk = verdict === 'reject' && dlgOpen && note.includes('文件操作被拒绝')
+        && fs.existsSync(lcDelFile) && !fs.existsSync(path.join(FIXTURE, '.trash', LC_DEL))
+      console.log(`  [LC3 blocker] F-32-R2 安全终态断言=${lc3SafeOk ? 'PASS' : 'FAIL'}（verdict=${verdict} 弹层留置=${dlgOpen} 零磁盘变更=${fs.existsSync(lcDelFile)} save_note="${note.slice(0, 30)}"——单列不合并全绿）`)
+      // 现场复原：取消删除弹层（pressInDeleteDialog 同款两级父锚——
+      // title→header→content，按钮在 content；后续组 12/13 弹层锚消歧
+      // 不受留置弹层串扰）。
+      if (lc3SafeOk) {
+        const dl2 = Date.now() + 8000
+        for (;;) {
+          const t = await snapshot()
+          const title = findFirst(t, (n) => ownText(n) === '删除页面')
+          if (title) {
+            const header = findParent(t, title)
+            const content = header ? findParent(t, header) : null
+            const cancel = content ? findFirst(content, (n) => n.head.startsWith('button ') && elementIdOf(n) && ownText(n) === '取消') : null
+            if (cancel) {
+              await callTool('autoui_action', { element_id: elementIdOf(cancel), action: 'press' })
+              break
+            }
+          }
+          if (Date.now() > dl2) throw new Error('LC3 blocker 复原失败（删除弹层取消钮未现）')
+          await sleep(300)
+        }
+        await stateIs('delete_open', 'false')
+      }
+    }
     await stateIs('lc_block_open', 'false')
-    check('LC', 'lifecycle', lc1Ok && lc2Ok && lc3Ok,
-      `生命周期受检组（LC1 脏引用源阻断+取消零提交=${lc1Ok}/LC2 保存后重试 ok+源页改写+被迁档跟随=${lc2Ok}/LC3 清洁开档删除协调关闭+回收站落点=${lc3Ok}——无守卫 Reload/TabsRenamed/CloseTabsOf 收尾退役面；无关脏页不列断言=e2e lifecycle ①；键入有界=单检查点窗 D-45②）`)
+    check('LC', 'lifecycle', lc1Ok && lc2Ok && (lc3Ok || lc3SafeOk),
+      `生命周期受检组（LC1 脏引用源阻断+取消零提交=${lc1Ok}/LC2 保存后重试 ok+源页改写+被迁档跟随=${lc2Ok}/LC3 清洁开档删除协调关闭+回收站落点=${lc3Ok || `F-32-R2 上游 blocker 安全终态精确断言=${lc3SafeOk}[reject+零变更+弹层留置+save_note 如实——032 在录单列，非本片新增失败]`}——无守卫 Reload/TabsRenamed/CloseTabsOf 收尾退役面；无关脏页不列断言=e2e lifecycle ①；键入有界=单检查点窗 D-45②）`)
 
     // 9 退出存盘：dirty → 文件菜单退出 → 确认弹层 → QuitSaveClose →
     // 磁盘三验 + 进程退出。恒为臂内最后一项（Process.exit 杀进程）。
+    // **激活复原前置（PLAN-033 T-04——LC 组 blocker 终态复原后活跃=LC-Del
+    // 留置；032 时代臂中止于 LC3 本点从未达）**：断言域 = Hello World 落盘
+    // ——先复原激活再键入。
+    await pressTree('Hello World')
+    await stateHas('active_body', PARA_ANCHOR)
     await typeWholeDoc(`${bodyOf(fs.readFileSync(targetFile, 'utf8'))}\n\n${QUIT_MARKER}`)
     await stateIs('active_dirty', 'true')
     await pressButton('文件', { exact: true })

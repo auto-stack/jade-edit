@@ -132,9 +132,10 @@ const SEARCH_CALLS = [
 
 const PROBE_AT = `// 探针 widget（tests/probe_name_search.mjs 生成件——直证后随 .runtime 再生，
 // 非入库源）。Init 内进程内直调 search_wiki 案表 + page_names 目录 +
-// link_index 载体案 + int 字段计数，返回值落 model 字段供 autoui_state
-// dump 读回。入口文件名固定 app.at（auto 前端入口约定）。
-use back.api: search_wiki, link_index, page_names
+// link_index 载体案 + int 字段计数 + 刷新弧（元数据/建页/改名/删除/
+// 回收站五触点前后目录读回），返回值落 model 字段供 autoui_state dump
+// 读回。入口文件名固定 app.at（auto 前端入口约定）。
+use back.api: search_wiki, link_index, page_names, set_page_meta, create_page, rename_page, delete_page, trash_restore
 
 widget App {
     msg { Init }
@@ -143,6 +144,13 @@ widget App {
         var c1 int = 0
         var lk str = ""
         var pn str = ""
+        var r1 str = ""
+        var r2 str = ""
+        var r3 str = ""
+        var r4 str = ""
+        var r5 str = ""
+        var r6 str = ""
+        var r7 str = ""
         var f1 str = ""
         var f2 str = ""
         var f3 str = ""
@@ -178,6 +186,19 @@ widget App {
             f9 = ${SEARCH_CALLS[8].call}
             fa = ${SEARCH_CALLS[9].call}
             fb = ${SEARCH_CALLS[10].call}
+            // —— 刷新弧（T-04：目录每次调用读当前磁盘——前端触点表的正
+            // 确性根基；前置 pn 之后执行零干扰）——
+            // r1 属性 title 变更 → 目录 dtitle 随读随新
+            r1 = set_page_meta("nm/Plain.ad", "换名页", "", "")
+            r2 = page_names()
+            // r3 建页 → 新档入目录
+            r3 = create_page("新建页")
+            r4 = page_names()
+            // r5 改名 → 旧 path 消新 path 入（r6 读回）
+            r5 = rename_page("新建页.ad", "另名页")
+            r6 = page_names()
+            // r7 删除 → 目录排除（回收站面——.trash 点前缀不入目录）
+            r7 = delete_page("nm/Dup B.ad")
             done = true
         }
     }
@@ -275,16 +296,21 @@ async function runMergedArm(preSnap) {
     const lk = strField(dump, 'lk')
     if (lk === null) throw new Error('probe state missing lk')
     let pn = null
+    const refresh = {}
     if (PHASE >= 2) {
       pn = strField(dump, 'pn')
       if (pn === null) throw new Error('probe state missing pn')
+      for (const f of ['r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7']) {
+        refresh[f] = strField(dump, f)
+        if (refresh[f] === null) throw new Error(`probe state missing ${f}`)
+      }
     }
     // 磁盘不变量：检索（Init 内全部案）执行后工作区与检索前快照逐件相等
     //（检索零副作用圈定——目录/全文/链接索引皆只读）。
     const postSnap = wsSnapshot(MERGED_WS)
     const drift = Object.keys(preSnap).filter((k) => preSnap[k] !== postSnap[k])
       .concat(Object.keys(postSnap).filter((k) => !(k in preSnap)))
-    return { searches, lk, pn, drift, ws: MERGED_WS }
+    return { searches, lk, pn, refresh, drift, ws: MERGED_WS }
   } finally {
     try { execFileSync('taskkill', ['/PID', String(app.pid), '/T', '/F'], { stdio: 'ignore' }) } catch {}
     await sleep(400)
@@ -323,14 +349,26 @@ async function runSplitArm(preSnap) {
     }
     const lk = await getJson('link_index', '?path=&depth=8')
     let pn = null
+    const refresh = {}
     if (PHASE >= 2) {
       const raw = await getJson('page_names', '')
       pn = typeof raw === 'string' ? raw : JSON.stringify(raw)
+      // 刷新弧（与 merged Init 尾段同案序——元数据/建页/改名/删除/回收站）。
+      refresh.r1 = await post('set_page_meta', { path: 'nm/Plain.ad', title: '换名页', tags: '', aliases: '' })
+      refresh.r2 = await getJson('page_names', '')
+      refresh.r2 = typeof refresh.r2 === 'string' ? refresh.r2 : JSON.stringify(refresh.r2)
+      refresh.r3 = await post('create_page', { title: '新建页' })
+      refresh.r4 = await getJson('page_names', '')
+      refresh.r4 = typeof refresh.r4 === 'string' ? refresh.r4 : JSON.stringify(refresh.r4)
+      refresh.r5 = await post('rename_page', { old_path: '新建页.ad', new_name: '另名页' })
+      refresh.r6 = await getJson('page_names', '')
+      refresh.r6 = typeof refresh.r6 === 'string' ? refresh.r6 : JSON.stringify(refresh.r6)
+      refresh.r7 = await post('delete_page', { path: 'nm/Dup B.ad' })
     }
     const postSnap = wsSnapshot(back.workspace)
     const drift = Object.keys(preSnap).filter((k) => preSnap[k] !== postSnap[k])
       .concat(Object.keys(postSnap).filter((k) => !(k in preSnap)))
-    return { searches, lk, pn, drift, ws: back.workspace }
+    return { searches, lk, pn, refresh, drift, ws: back.workspace }
   } finally {
     await back.stop()
   }
@@ -422,8 +460,40 @@ function checks(tag, data, failures) {
   ck(linkerLink?.target === '首页' && linkerLink?.exists === false && linkerLink.target_path === '', '[[首页]] 悬空——title 不进链接解析器（AC-07 身份不变量）')
   ck(!!lkDeep, '5 层深档 nm/deep/l2/l3/l4/l5/Deep.ad 入索引（depth 8 覆盖）')
 
-  // ---- 磁盘不变量：检索零副作用（pre-search 快照对照）----
-  ck(data.drift.length === 0, `检索零磁盘副作用（drift：${data.drift.slice(0, 5).join(', ') || '无'}）`)
+  // ---- 磁盘不变量：检索零副作用（pre-search 快照对照；相位 2 的刷新
+  // 弧写入面 = 显式白名单——setup 变更自身，其余零 drift）----
+  if (PHASE === 1) {
+    ck(data.drift.length === 0, `检索零磁盘副作用（drift：${data.drift.slice(0, 5).join(', ') || '无'}）`)
+  } else {
+    const allowed = (k) =>
+      k === 'nm/Plain.ad' || k === 'nm/Dup B.ad' || k === '新建页.ad' || k === '另名页.ad' || k.startsWith('.trash/')
+    const bad = data.drift.filter((k) => !allowed(k))
+    ck(bad.length === 0, `检索零副作用+刷新弧写入面恰白名单（bad drift：${bad.slice(0, 5).join(', ') || '无'}）`)
+  }
+
+  // ---- 相位 2：刷新弧（T-04——目录每次调用读当前磁盘：元数据/建页/
+  // 改名/删除触点前后读回；前端触点表正确性的根基案）----
+  if (PHASE >= 2) {
+    const rf = data.refresh
+    const dirRows = (raw) => {
+      try { return JSON.parse(raw) } catch { return null }
+    }
+    ck(rf.r1 === 'ok', `刷新弧 r1 set_page_meta title=换名页 ok（实际：${rf.r1}）`)
+    const d2 = dirRows(rf.r2)
+    const plain2 = Array.isArray(d2) ? d2.find((r) => r.path === 'nm/Plain.ad') : null
+    ck(plain2?.dtitle === '换名页', `刷新弧 r2 属性 title 变更后目录 dtitle 随读随新（实际：${JSON.stringify(plain2)?.slice(0, 140)}）`)
+    ck(rf.r3 === '新建页.ad', `刷新弧 r3 create_page 返回（实际：${rf.r3}）`)
+    const d4 = dirRows(rf.r4)
+    ck(Array.isArray(d4) && d4.some((r) => r.path === '新建页.ad'), `刷新弧 r4 建页后新档入目录`)
+    ck(rf.r5 === '另名页.ad', `刷新弧 r5 rename_page 返回（实际：${rf.r5}）`)
+    const d6 = dirRows(rf.r6)
+    ck(Array.isArray(d6) && !d6.some((r) => r.path === '新建页.ad') && d6.some((r) => r.path === '另名页.ad'), `刷新弧 r6 改名后旧 path 消新 path 入`)
+    ck(rf.r7 === 'nm/Dup B.ad', `刷新弧 r7 delete_page 返回（实际：${rf.r7}）`)
+    // 删除后磁盘终态：Dup B 在 .trash（回收站点前缀——不入目录）、根新建页已改名。
+    ck(!fs.existsSync(path.join(data.ws, 'nm/Dup B.ad')), `刷新弧 r7 原位档消失`)
+    ck(fs.existsSync(path.join(data.ws, '.trash', 'nm', 'Dup B.ad')), `刷新弧 r7 回收站副本在（.trash 点前缀不入目录面）`)
+    ck(!fs.existsSync(path.join(data.ws, '新建页.ad')) && fs.existsSync(path.join(data.ws, '另名页.ad')), `刷新弧 r5 改名终态 新建页.ad→另名页.ad`)
+  }
 
   // ---- 相位 2：page_names 目录已知答案（AC-04 域）----
   if (PHASE >= 2) {
@@ -446,7 +516,12 @@ function checks(tag, data, failures) {
       }
       walkAds(data.ws, '')
       const dirPaths = dir.map((r) => r.path).sort()
-      ck(JSON.stringify(dirPaths) === JSON.stringify([...diskAds].sort()), `目录 path 集合 = 磁盘 .ad 集合（${diskAds.length} 页，一页一记录）`)
+      // pn 为刷新弧前读回——对照基线 = 现磁盘集合经弧增量还原（新建页
+      // 已改名另名页：−另名页 +Dup B）。
+      const baseline = PHASE >= 2
+        ? diskAds.filter((x) => x !== '另名页.ad').concat(['nm/Dup B.ad'])
+        : diskAds
+      ck(JSON.stringify(dirPaths) === JSON.stringify([...baseline].sort()), `目录 path 集合 = 磁盘 .ad 集合（${baseline.length} 页，一页一记录）`)
       // nm/ 子树 walk 序逐字节（dirs-first + casefold 已知答案）
       const nmJson = JSON.stringify(dir.filter((r) => r.path.startsWith('nm/')))
       ck(nmJson === NM_DIR_JSON, `nm/ 子树已知答案逐字节 walk 序（实际：${nmJson.slice(0, 240)}）`)
@@ -458,9 +533,19 @@ function checks(tag, data, failures) {
     }
   }
 
-  // ---- 语料在盘逐字节（已知答案输入自证）----
+  // ---- 语料在盘逐字节（已知答案输入自证；相位 2 的刷新弧变更面按
+  // 终态期望——Plain title 换名、Dup B 已入回收站）----
   for (const c of CORPUS) {
     const full = path.join(data.ws, c.rel)
+    if (PHASE >= 2 && c.rel === 'nm/Plain.ad') {
+      const t = fs.existsSync(full) ? fs.readFileSync(full, 'utf8') : ''
+      ck(t.includes('title: 换名页') && t.includes('# Plain') && t.includes('plain corpus line'), `语料终态 nm/Plain.ad（title 增建+body 保留）`)
+      continue
+    }
+    if (PHASE >= 2 && c.rel === 'nm/Dup B.ad') {
+      ck(!fs.existsSync(full), `语料终态 nm/Dup B.ad 已入回收站（原位消失）`)
+      continue
+    }
     ck(fs.existsSync(full) && fs.readFileSync(full, 'utf8') === c.body, `语料在盘逐字节 ${c.rel}`)
   }
 }

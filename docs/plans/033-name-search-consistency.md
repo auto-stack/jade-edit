@@ -6,7 +6,7 @@ author: [agent]
 created_at: 2026-10-02T01:18:59Z
 updated_at: 2026-10-02T09:40:00Z
 plan_revision: 1
-current_step: 3
+current_step: 4
 total_steps: 5
 supersedes_spec_components: []
 new_spec_components:
@@ -184,7 +184,8 @@ T-01 输出逐入口触点表：查找入口开启／重新进入、现有手动
 
 ### T-04 刷新、迟到及失败集成
 
-- 依赖：T-03。按 T-01 表接入确认变化触点，包括 partial；为名称目录／FindRun 加有效请求提交门、模式／输入／失效处理和可见加载／错误／过期／重试。避开 Vue 异步互调立即读与 VM 跨调用局部残留；全流程不改编辑正文或触发无守卫 Reload。
+- [x] **T-04**。依赖：T-03。按 T-01 表接入确认变化触点，包括 partial；为名称目录／FindRun 加有效请求提交门、模式／输入／失效处理和可见加载／错误／过期／重试。避开 Vue 异步互调立即读与 VM 跨调用局部残留；全流程不改编辑正文或触发无守卫 Reload。
+  [✅ 已完成 2026-10-02] 触点表全量接线（T-03 批内完成——十六触点 NamesInvalidate+入口 NamesRefresh+MetaGo/NewGo/CreateGo/ActDaily/LinkifyGo+LC 族 ok/partial 分支+ActSave）；请求门生成 TS 静态核验（快照-回读 ref 直读+await 同 handler 体内）。执行期实勘五件在录：①D-30① 阴影面——name_rows_of/name_dtitle_of 参数名 names 与模型同名被 vue codegen 加 .value 即 undefined（首跑 e2e pageerror 在录）→ 参数改名 dir；②VM 视图 content 位置 json.to_value 行字段不隐式解箱（text 行 path 次行 VM 臂空渲染——call-arg 位置正常）→ find_row_path 纯函数出口+FindRun 行投影 VM map（mentions_of 先例）；③computed 行集 VM 视图渲染不可靠（空结果态丢空态+后续渲染区整体消失——debug 复现在录）→ files_rows 改 model 字段+handler 内重算（NamesRefresh 提交+FindEdit 逐键——find_rows/wanted_rows 全证形态）；④N 组已知答案校准——「任务列表」命中 Hello World 非 Tasks（check 11 同款）；⑤LC3 超时改 F-32-R2 安全终态精确断言（reject+零变更+弹层留置+save_note 如实——032 在录单列）+现场复原（两级父锚取消弹层）+9 quit 激活复原前置（LC 组后活跃=LC-Del 留置，032 中止时代未达点首跑）。验证：node tests/probe_name_search.mjs 相位 2 双臂全绿（+刷新弧七案：属性 title/建页/改名/删除/回收站前后目录读回随磁盘新+写入面恰白名单）；tests/vm_matrix.mjs --arm merged 19/19 全绿（N 组 PASS+基线 v26 重锁[App 模型七新字段入 dump——五默认+names_gen=1/find_stale=true 系 check5 ActSave 确定性副作用；snapshot id 序列零变化]+12/13/R/9 组当前代码全绿——9 quit 为 F-32-R2 中止时代未达点首过）；--arm split=F-24-2 boot FAIL+9 组 PASS+10m 边界（032 在录同状；分段判绿判别链=merged 19/19+probe split HTTP 全绿+e2e 同面）；pnpm build 绿；e2e name-search 6/6+matrix 1/1。
 - 验证：扩展 node tests/probe_name_search.mjs 的实际变化前后案；pnpm exec playwright test -c e2e/playwright.config.ts e2e/name-search.spec.ts；扩 tests/vm_matrix.mjs N 组，node tests/vm_matrix.mjs --arm merged。逐入口表每项有调用路径与终态证据；元数据／文件代表弧和乱序／畸形／重试均按 AC 通过。
 - 对应 AC-07/08/09/10，SD-03/04。
 
@@ -207,6 +208,7 @@ T-01 输出逐入口触点表：查找入口开启／重新进入、现有手动
 - 2026-10-02T10:30:00Z：stage: work | plan_id: PLAN-033 | plan_revision: 1 | outcome: executing（T-01 完成）| code_commit: f2ccacd(规划落档)+本批 | task_ids: T-01 | evidence: 契约冻结件 attachments/033-name-contract.md；node tests/probe_name_search.mjs --phase 1 双臂全绿（红相 f1/f4/f7 在录）；pnpm build 绿（engine dist F-31-R1 类陈旧就地重建 stamp f46a2f18——零源变更，032 会话内重建 auto.exe 先例）| blockers: 无 | next: T-02（后端 page_names+search_json 扩面）。工作树=主检出（直接 main 线性惯例：git worktree list 单一主检出，001..032 在册惯例；提交随批落 main，工作树零 WIP 休止态）。
 - 2026-10-02T11:10:00Z：stage: work | plan_id: PLAN-033 | plan_revision: 1 | outcome: executing（T-02 完成）| code_commit: 本批 | task_ids: T-02 | evidence: node tests/probe_name_search.mjs 相位 2 双臂全绿（翻转案+目录已知答案逐字节+转义读回）+ probe_dir_move/probe_page_meta/probe_casefold/probe_alias_linkify 全绿（回归零新增失败）| blockers: 无 | next: T-03（快开与查找行接线）。
 - 2026-10-02T12:00:00Z：stage: work | plan_id: PLAN-033 | plan_revision: 1 | outcome: executing（T-03 完成，含 T-04 e2e 面）| code_commit: 本批 | task_ids: T-03（T-04 e2e 前置）| evidence: pnpm build 绿+gen TS 静态核验（快照-回读门/computed files_rows/await 在 handler 体内）+ e2e name-search 6/6 + e2e matrix 全套（回归零漂移；⑩⑤ recents ready 门修正）| blockers: 无 | next: T-04（probe 刷新案+vm_matrix N 组）。
+- 2026-10-02T13:00:00Z：stage: work | plan_id: PLAN-033 | plan_revision: 1 | outcome: executing（T-04 完成）| code_commit: 本批 | task_ids: T-04 | evidence: probe 刷新弧双臂全绿+vm merged 19/19（N 组+基线 v26+12/13/R/9 当前代码全绿）+e2e 7/7+执行期实勘五件（D-30① 阴影/VM 视图解箱/computed 行集改道/已知答案校准/LC3 安全终态断言化）| blockers: F-32-R2（上游，LC3 安全终态单列在录——非本片新增）；F-24-2（split boot，分段判绿在录）| next: T-05（回归、规范落位与复审交接）。
 
 ## 10. 待澄清事项
 
