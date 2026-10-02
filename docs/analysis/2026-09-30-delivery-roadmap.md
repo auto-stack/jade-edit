@@ -2,7 +2,9 @@
 
 日期：2026-09-30。来源：[产品分析](2026-09-30-product-review.md)。本文件是交付组织建议，不替代单项 Plan，也不修改当前产品规范。界面草案中选择的“文档工作台”作为默认设计方向；日志视图作为同库可选入口。
 
-**当前下一项（2026-10-02·五）**：[PLAN-036 Vue 正文内链导航](../plans/036-wiki-link-navigation.md) r1 / 已交付归档（R-03b2 delivered），5 任务闭环、10 验收复审 pass（独立复跑门全绿）。Vue 正文 `[[页面]]`/`[[别名#锚点]]` 点击已可导航：完整事件名消费、`resolve_wiki_link` 单目标只读解析、源票据/选择世代/每等待期门的迟到拒绝、内存脏目标优先、缺页确认来源失效门、独立导航提示、锚点如实说明（开页≠定位）。执行期定谳：引擎无输入期 wikilink 解析（键入 `[[` 保持字面——untitled 带链接点击导航结构性不可达）、空编辑器零块、块底 boundary 命中区遮挡、简称 `@openwikilink` 兼容仍归 auto-lang；原生内部撤销源码路径在册（真键覆盖待补证）、保存来源／动作栏、宿主命令桥、原生正文事件、定位和 Shift 缺口维持。依据见 [上游依赖复核](2026-10-02-upstream-dependency-audit.md) 与计划契约附件；旧进度段是历史记录。
+**当前下一项（2026-10-02·六）**：[PLAN-037 VM 原生正文内链导航](../plans/037-native-wiki-link-navigation.md) r1 / drafting（R-03b3），5 任务、10 验收、4 规范增量。结合两版一致性的关注，先在 auto-lang 解锁原生语义／命中／消息通道，再由 Jade 复用 036 的解析、来源保护、NavCommit、缺页确认与提示。**new handoff: blocked**——当前没有合格上游供给，T-02..05 未解锁；[上游需求包](../upstream/2026-10-native-wiki-link-supply.md) 已具体化六项供给与版本／真实事件解锁门。不能将这份草案或 resolver 双臂成功当 VM 点击已交付。
+
+036 交付更新（2026-10-02·五）：[PLAN-036 Vue 正文内链导航](../plans/archived/036-wiki-link-navigation.md) r1 / 已交付归档（R-03b2 delivered），5 任务闭环、10 验收复审 pass（独立复跑门全绿）。Vue 正文 `[[页面]]`/`[[别名#锚点]]` 点击已可导航：完整事件名消费、`resolve_wiki_link` 单目标只读解析、源票据/选择世代/每等待期门的迟到拒绝、内存脏目标优先、缺页确认来源失效门、独立导航提示、锚点如实说明（开页≠定位）。执行期定谳：引擎无输入期 wikilink 解析（键入 `[[` 保持字面——untitled 带链接点击导航结构性不可达）、空编辑器零块、块底 boundary 命中区遮挡、简称 `@openwikilink` 兼容仍归 auto-lang；原生内部撤销源码路径在册（真键覆盖待补证）、保存来源／动作栏、宿主命令桥、原生正文事件、定位和 Shift 缺口维持。依据见 [上游依赖复核](2026-10-02-upstream-dependency-audit.md) 与计划契约附件；旧进度段是历史记录。B-7 空白页不能输入影响基础写作，应由 auto-down 优先修复，与原生通道供给并列，037 不把它记为已解决。
 
 进度更新（2026-10-02）：[PLAN-030](../plans/archived/030-safe-manual-reload.md) archived/delivered（R-01）；[PLAN-031](../plans/archived/031-draft-recovery.md) archived/delivered（R-02a）；[PLAN-032](../plans/archived/032-document-lifecycle-safety.md) archived/delivered（R-02b），十类应用内文件操作的受检门、真实回执和定向协调已沉淀至 [document-lifecycle](../specs/document-lifecycle.md)。R-02 的这两个交付片已完成，原生 VM 帧槽串扰 F-32-R2、Vue 排水时序 F-32-R1 等限制按现行 Specs 保留，不能宣称全平台问题已消失。[PLAN-033 名称查找一致](../plans/archived/033-name-search-consistency.md)（R-04）已 archived/delivered：只读名称目录 page_names、快开/全文统一名称匹配域（显示标题/别名/stem/带 .ad 文件名/相对路径）、同名行逐路径消歧、刷新失效与请求门、可见加载/错误/过期三形已落地，现行规范增 [name-search](../specs/name-search.md)，probe 双臂全绿（含刷新弧）+ vm merged 19/19（N 组新增）+ e2e name-search 6/6；F-32-R2/F-24-2 按在录口径分列。Jade/Musk 产品结合方向尚未纳入实施范围。
 
@@ -34,12 +36,12 @@
 | --- | --- | --- | --- |
 | R-01 安全手动重载 | F5/菜单/工具栏保护未保存正文；取消不变，明确放弃后才读盘 | 当前输入必须已同步或能可靠冲刷 | PLAN-030 已交付归档；两轨三入口与失败／失效保护在册 |
 | R-02 草稿与生命周期保护 | R-02a＝PLAN-031、R-02b＝PLAN-032 均已交付归档；应用内十类入口受检门／真实回执／定向协调在册 | R-01/R-02a 已交付；032 消费稳定草稿身份与协议 | 草稿恢复、受影响脏页阻断、晚输入保留与部分结果协调已按局部规范交付；保留 F-32-R1/R2、031 上游边界，不扩大为断电／多进程事务保证 |
-| R-03 编辑器宿主接线 | R-03a＝034、R-03b1＝035 已交付归档；R-03b2＝036 已交付归档（delivered）：Vue 正文内链导航交付（完整事件名+单目标解析+迟到门+缺页确认+锚点边界），规范 wiki-link-navigation 与账本 v41（SD-3601..3605+D-53）已沉淀 | Vue 片已消费完整事件名（简称兼容仍归 auto-lang）；原生正文、保存来源／动作栏、命令桥和位置供给仍缺 | 036 以 e2e 八测+探针四臂+vm merged 20/20 验证；双后端解析不等于原生正文点击已交付；R-03 整体仍以保存磁盘字节、正文正确目标、实际命令执行为完成门 |
+| R-03 编辑器宿主接线 | 034/035/036 已交付归档；R-03b3＝037 原生正文内链导航 drafting，当前等待上游供给；Vue 036 已消费同一四级解析与保护链 | auto-lang 先交付原生语义／命中／事件与来源回执，再解锁 Jade；auto-down 空白输入／输入期解析另列且基础输入应优先 | 037 需真实原生 widget→handler→正确目标与拖选／来源反例，不能只凭后端双臂或合成状态；native split boot、save／command／reveal 分列 |
 | R-04 名称查找一致 | PLAN-033 已 archived/delivered：名称目录 + 快开/全文统一匹配域 + 同名逐路径消歧 + 刷新/请求门 + 可见加载/错误/过期；不改变链接身份域 | 已有 title/aliases 数据；双轨名称载体与刷新/请求门已实证（契约附件 033-name-contract） | 首页≠index 断言双臂全绿；属性标题/别名/stem/.ad 文件名/相对路径均可找回；同名逐路径正确打开；逐键零额外请求；失效/失败/过期可见可区分；链接目标不变（[[首页]] 仍悬空） |
 | R-05 导航分工 | 左侧全库导航，右侧当前页上下文，快开轻弹层，基本响应式 | R-03/R-04；纯壳可先准备 | 全库搜索与页面引用各有位置；窄屏入口可用；旧快捷键保留 |
 | R-06 工作区与设置 | 创建/打开/最近知识库、基础设置、安装与启动；先调研运行时根切换能力 | T-工作区调查；基础打包接口 | 普通用户能启动并定位自己的文件，退出重开回到原库；无开发工具依赖承诺前验证 |
 
-默认推进顺序：R-01/R-02a/R-02b/R-04（030/031/032/033 已交付归档）→ R-03a（034 已归档）→ R-03b1（035 已归档）→ R-03b2（036 Vue 正文内链导航，已交付归档）→ 其余保存／原生链接／命令桥按最新供给证据分别立项 → R-05；R-06 在运行时与打包调查有结论后进入实施。Vue 片已交付；调查、入口收口及单载体导航均不等于完整宿主接线交付。
+默认推进顺序：030/031/032/033 已交付 → 034 能力核验 → 035 入口收口 → 036 Vue 内链（后三者均已归档）→ auto-lang 原生 link 供给 → 037 原生共享消费 → 其余保存／命令桥按供给分别立项 → R-05。auto-down 空白输入／输入期解析作为并列供给跟踪，基础写作问题应优先修复；R-06 待运行时／打包调查。原生供给未交付时不启动 037 接入代码，不伪称 R-03 完成。
 
 ### B. 日常记录、查找与复用
 
@@ -188,13 +190,25 @@ R-16 手机记录与读取、R-17 同步与分享、R-18 协作、R-19 AI、R-20
 
 ## 13. 后续交接：PLAN-036
 
+本节保留 036 规划与交付历史；当前下一项见 §14。
+
 - 前序：035 已交付归档，九条验收复审通过；main 规划基线 512b36f。在录源码漂移、split boot 和套件时序 findings 不是未交付验收。
 - **实施状态（2026-10-02）**：T-01..T-05 已完成（execution_done）+ 复审 pass（94e66b7 独立复跑门全绿，F-36-R1..R4 nonblocking 分列）+ merge delivered（账本 v41@本批）。契约冻结件 attachments/036-wiki-link-contract.md（T-01 协调形态+B-1..B-10 执行期定谳）；探针 tests/probe_wiki_link_navigation.mjs 四臂 47 断言；e2e/wiki-link-navigation.spec.ts 八测（E/U/D/S/M/F/B）；resolve_wiki_link 单参只读口（api.at/wsys.at 共享 resolver）；生产接线（app.at OpenWikiLink 协调 handler+editor_store.at NavCommit 同步门/sel_gen/wiki_nav_note+status_bar 独立提示行）；editor-host navigation 案改真实导航；vm 结构基线 v27→v28（state 纯增 10 字段、id 序列零变化）。规范 SD-01..05 落位：wiki-link-navigation 新增+host-capabilities §1.2/§1.3/§3 更正+command-availability §2/§4 缩窄+ARCHITECTURE §4 SD-3601 指针。交付链 9baa301→78e3bc3→6a2689b→efb6da2→4b8690b→本批（直接 main 线性）。
 - 仍欠：untitled 源带链接点击导航（引擎输入期解析 B-6）、原生正文点击（B-2）、简称兼容（B-1 归 auto-lang）、caret/reveal、保存来源与动作栏、六命令桥——按负责仓解锁后另立消费片。来源失效确认门的 vm 直派证据缺（MCP 词表无 msg dispatch——门为防御性不变式，e2e+生成面证据在案）。
-- 下一项：[036 Vue 正文内链导航](../plans/036-wiki-link-navigation.md) r1（drafting，R-03b2）；5 任务、10 验收、5 规范增量。
+- 当时下一项：[036 Vue 正文内链导航](../plans/archived/036-wiki-link-navigation.md) r1（新建时 drafting，现 archived/delivered，R-03b2）；5 任务、10 验收、5 规范增量。
 - 选择依据：现有公开 `on "open-wiki-link"` 可生成正确监听，隔离真实引擎点击已通过。此前“必须等 B-1 修复”的依赖描述需要缩窄；完整事件名可先消费，简称兼容仍由 auto-lang 修复。第二参是目标锚点而非源身份。
 - 范围：只读单目标四级解析、Vue 正文点击、真实完成后记最近文件、未保存源与内存脏目标保护、全部等待期迟到门、正常缺页确认、错误独立可见、锚点不伪报定位。
 - 第一任务：T-01 固化缺参归一、源票据、活动选择世代、单 handler 异步流程／Store 同步提交，以及延迟反例；有界原型不能满足时记 blocker，不减少保护验收。
 - 规范提议：新增 wiki-link-navigation；修正 host-capabilities 和 command-availability 中的 Vue 链接前置与 native 内部撤销误推论。仅源码证明 native 历史实现存在，真键与各类编辑覆盖仍未补证，宿主命令桥仍缺。
 - 其余依赖：保存来源与动作栏、六命令桥、原生正文事件、定位和 Shift；owner／重入门见上游复核。原生事件与锚定位不纳入本片交付承诺。
 - 本次只完成规划、依赖审计与隔离点击验证；未改生产源码／canonical Specs／上游，未自动 work/review/merge。
+
+## 14. 后续交接：PLAN-037
+
+- 前序：036 已 archived/delivered，交付／复审／账本／归档链 bac7905→94e66b7→36e83a9→3ee11a3。当前规划基线 3ee11a3，单一主检出、起始 clean。
+- 下一项：[037 VM 原生正文内链导航](../plans/037-native-wiki-link-navigation.md) r1 / drafting，5 任务、10 验收、4 规范增量；对应 R-03b3。选择基于此前对 VM 版支持的关注，不再默认只扩 Vue。
+- 依赖复核：native core 仅存链接样式，DocOutput／widget／View／renderer／AURA 尚无目标消息。收尾上游 binary 外部更新为 v0.4.2-2607 / 0688B145…45F33，五环源码指纹仍恒等，未有合格原生供给证据；旧 binary 的 split／时序限制须重新核判。完整事件名只解锁 Vue，不解锁 native 链路。
+- 分工：上游 auto-lang 独立 Plan 交付六项供给与真实事件证据；Jade 037 的 T-01 冻结交接、T-02 验收解锁、T-03 共享消费、T-04 原生终态／保护、T-05 定向回归与规范交接。[上游需求包](../upstream/2026-10-native-wiki-link-supply.md) 包含准确路径、指纹与责任门，不替上游占号或批准代码执行。
+- 当前 handoff＝blocked，next＝上游正式立项交付，再解锁 T-02；不是立即可做的 Jade 接入功能，也不以有蓝字／计数器／后端响应冒称点击成功。
+- 保留缺口：036 的输入期解析／Vue 空白页（空白输入应优先修）、首块点击与 boundary，native split boot、保存来源／动作栏、六命令桥、Shift／reveal。037 只承诺 native merged 加载期链接与 Vue 零回退，不抹除原始未覆盖场景。
+- 本次只完成规划和只读检查；未改生产源码、canonical Specs、上游或运行应用／cargo 测试，未自动 work/review/merge。
