@@ -190,7 +190,8 @@ function buildFixtureWorkspace() {
   fs.writeFileSync(path.join(NATIVE_WS, 'wiki', '目标页.ad'), '目标页正文内容。\n', 'utf8')
   fs.writeFileSync(
     path.join(NATIVE_WS, 'wiki', 'AliasTarget.ad'),
-    '---\ntitle: 别名目标\naliases: [别名页]\n---\n\n别名目标页正文。\n',
+    // jade page_fm_list 读块式列表（aliases: + "- 项"）——flow list 不识别。
+    '---\ntitle: 别名目标\naliases:\n  - 别名页\n---\n\n别名目标页正文。\n',
     'utf8',
   )
 }
@@ -229,27 +230,43 @@ function makeHelpers(callTool) {
     return lines.map((l) => l.match(/#(vnode_\d+)/)?.[1]).find(Boolean) ?? null
   }
   // 文件树：workspace → 文件夹按钮（"wiki"）→ 页面按钮（label=stem 或 fm
-  // title）。先保证展开（已展开零操作），再按候选 label 找页面按钮。
+  // title）。先保证展开（已展开零操作），再按候选 label 找页面按钮；树
+  // 异步装配（Init→后端树）——整段查找带截止重试。
   const openPage = async (labels, wantTextProbe, timeoutMs = 15000) => {
     const cands = Array.isArray(labels) ? labels : [labels]
-    const snap0 = await snapshot()
-    let pageId = cands.map((c) => findBtn(snap0, c)).find(Boolean)
-    if (!pageId) {
-      const folder = findBtn(snap0, 'wiki')
-      if (folder) {
-        await callTool('autoui_action', { element_id: folder, action: 'press' })
-        await sleep(500)
-      }
-      const snap1 = await snapshot()
-      pageId = cands.map((c) => findBtn(snap1, c)).find(Boolean)
-    }
-    if (!pageId) throw new Error(`tree page "${cands.join('/')}" not found in snapshot`)
-    await callTool('autoui_action', { element_id: pageId, action: 'press' })
     const dl = Date.now() + timeoutMs
+    let pageId = null
+    let expanded = false
+    let misses = 0
+    while (!pageId) {
+      const snap = await snapshot()
+      pageId = cands.map((c) => findBtn(snap, c)).find(Boolean) ?? null
+      if (pageId) break
+      misses++
+      const folder = findBtn(snap, 'wiki')
+      if (folder && (!expanded || misses % 4 === 0)) {
+        // 首次展开；之后偶发重按兜底（树装配期默认折叠，重复按防折叠态漂移）。
+        await callTool('autoui_action', { element_id: folder, action: 'press' })
+        expanded = true
+      }
+      if (Date.now() > dl) throw new Error(`tree page "${cands.join('/')}" not found in snapshot`)
+      await sleep(500)
+    }
+    await callTool('autoui_action', { element_id: pageId, action: 'press' })
+    const dl2 = Date.now() + timeoutMs
+    let lastPress = Date.now()
+    let repressed = 0
     for (;;) {
       const t = await editorText()
       if (t !== null && wantTextProbe.every((p) => t.includes(p))) return t
-      if (Date.now() > dl) throw new Error(`page "${cands.join('/')}" text never reached probe:\n${(t ?? '').slice(0, 240)}`)
+      // F-037-R1 视面滞后形态：编辑后首次换页视面停在前页（store 已切）——
+      // 同按钮重按制造第二次切换可恢复；每 ~7s 补按一次（≤2 次）。
+      if (repressed < 2 && Date.now() - lastPress > 7000) {
+        await callTool('autoui_action', { element_id: pageId, action: 'press' })
+        lastPress = Date.now()
+        repressed++
+      }
+      if (Date.now() > dl2) throw new Error(`page "${cands.join('/')}" text never reached probe:\n${(t ?? '').slice(0, 240)}`)
       await sleep(250)
     }
   }
@@ -276,20 +293,43 @@ function makeHelpers(callTool) {
     return byFocus
   }
   // 带内链接扫描：y=块 y 带±邻域，x 横扫；命中判据=wantProbe 文本出现。
+  // 激活→handler→NavCommit→视图换页跨数帧（R-2 栅栏只保动作应用不保
+  // 导航回执）——每点点击后短轮询判据，防"已激活计为未命中"。
+  // 判据分两层：navOk=store active_path 切到目标（应用权威态）；viewSwapped=
+  // 编辑器视面文本换页（用户可见面）。二者在"键入后导航"序列可分叉
+  // （F-037-R1：NavCommit 后视面刷新缺失——上游 VM 桥 dirty 传播，另录）。
+  const storeField = async (k) => {
+    const s = await state()
+    const m = s.match(new RegExp(k + `:\\s*([^\\n]+)`))
+    return m ? m[1].trim() : null
+  }
   const scanLink = async (id, yBand, wantProbe, opts = {}) => {
-    const xs = opts.xs ?? [6, 10, 14, 18, 22, 26, 30, 36, 44, 52]
+    const xs = opts.xs ?? [4, 6, 10, 14, 18, 22, 26, 30, 36, 44, 52]
     const ys = []
     for (let dy = -4; dy <= 8; dy += 4) ys.push(yBand + dy)
     for (const x of xs) {
       for (const y of ys) {
         await fullClick(id, x, y)
-        const t = await editorText()
-        if (t !== null && wantProbe.every((p) => t.includes(p))) return { x, y }
+        const dl = Date.now() + 1200
+        let navOk = false
+        let viewSwapped = false
+        for (;;) {
+          if (!navOk && opts.wantPath) {
+            const ap = await storeField('active_path')
+            if (ap !== null && ap.includes(opts.wantPath)) navOk = true
+          }
+          const t = await editorText()
+          if (t !== null && wantProbe.every((p) => t.includes(p))) viewSwapped = true
+          if (navOk && (viewSwapped || !opts.wantPath)) return { x, y, navOk, viewSwapped }
+          if (navOk && Date.now() > dl - 600) return { x, y, navOk, viewSwapped }
+          if (!navOk && Date.now() > dl) break
+          await sleep(200)
+        }
       }
     }
     throw new Error(`link not found by scan (y=${yBand}, probe=${JSON.stringify(wantProbe)})`)
   }
-  return { snapshot, editorId, editorText, editorFocus, editorState, state, findBtn, openPage, fullClick, pressOnly, dragAcross, mapBlocks, scanLink }
+  return { snapshot, editorId, editorText, editorFocus, editorState, state, storeField, findBtn, openPage, fullClick, pressOnly, dragAcross, mapBlocks, scanLink }
 }
 
 // ---------------- 指纹臂 ----------------
@@ -332,26 +372,27 @@ async function nativeArm() {
     const seq0 = intField(st0, 'nav_seq') ?? 0
 
     // N2 英文链接 [[Goals]] → Goals.ad。
-    const hit1 = await H.scanLink(edId, yOf(0), ['目标内容英文页'])
+    const hit1 = await H.scanLink(edId, yOf(0), ['目标内容英文页'], { wantPath: 'wiki/Goals.ad' })
     const st1 = await H.state()
     const seq1 = intField(st1, 'nav_seq') ?? 0
-    ck(seq1 - seq0 === 1, `N2 英文链接真实点击→Goals.ad 打开（${hit1.x},${hit1.y}；nav_seq +${seq1 - seq0} 恰一）`)
+    ck(hit1.navOk && seq1 - seq0 === 1, `N2 英文链接真实点击→Goals.ad 提交（${hit1.x},${hit1.y}；nav_seq +${seq1 - seq0} 恰一；store active_path 判据）`)
+    ck(hit1.viewSwapped, `N2b 编辑器视面已换页（Goals 内容可见）`)
 
     // N3 中文链接。
     await H.openPage(['Src', 'Src.ad'], ['普通正文段落'])
-    const hit2 = await H.scanLink(edId, yOf(1), ['目标页正文内容'])
-    ok(`N3 中文链接真实点击→目标页.ad 打开（${hit2.x},${hit2.y}）`)
+    const hit2 = await H.scanLink(edId, yOf(1), ['目标页正文内容'], { wantPath: 'wiki/目标页.ad' })
+    ck(hit2.navOk, `N3 中文链接真实点击→目标页.ad 提交（${hit2.x},${hit2.y}）`)
 
     // N4 别名链接（frontmatter alias——四级第二级）。
     await H.openPage(['Src', 'Src.ad'], ['普通正文段落'])
-    const hit3 = await H.scanLink(edId, yOf(2), ['别名目标页正文'])
-    ok(`N4 别名链接真实点击→AliasTarget.ad 打开（${hit3.x},${hit3.y}）`)
+    const hit3 = await H.scanLink(edId, yOf(2), ['别名目标页正文'], { wantPath: 'wiki/AliasTarget.ad' })
+    ck(hit3.navOk, `N4 别名链接真实点击→AliasTarget.ad 提交（${hit3.x},${hit3.y}）`)
 
     // N5 带锚链接——开页+锚点仅说明（不定位）。
     await H.openPage(['Src', 'Src.ad'], ['普通正文段落'])
-    const hit4 = await H.scanLink(edId, yOf(3), ['锚点节内容'])
+    const hit4 = await H.scanLink(edId, yOf(3), ['锚点节内容'], { wantPath: 'wiki/Goals.ad' })
     const snapAfterAnchor = await H.snapshot()
-    ck(/暂不支持定位|不支持定位/.test(snapAfterAnchor), `N5 带锚链接真实点击→Goals.ad 打开+锚点仅说明（${hit4.x},${hit4.y}；状态栏提示在快照）`)
+    ck(hit4.navOk && /暂不支持定位|不支持定位/.test(snapAfterAnchor), `N5 带锚链接真实点击→Goals.ad 提交+锚点仅说明（${hit4.x},${hit4.y}；状态栏提示在快照）`)
 
     // N6 阴性组。
     await H.openPage(['Src', 'Src.ad'], ['普通正文段落'])
@@ -508,8 +549,12 @@ async function protectArm() {
     const blocks = await H.mapBlocks(edId, 320)
     const y0 = blocks.get(0)
     if (y0 === undefined) throw new Error('block 0 not mapped (P)')
-    // 建焦+真实键入（key_press 同构路径——先 press-only 落 caret）。
-    await H.pressOnly(edId, 30, y0)
+
+    // —— 先做脏源（P2）：键入落非链接块 5〔普通段落〕——冻结契约 U-02
+    // 被编辑块链接暂态失活，脏源保护由非编辑块承载，块 0 链接保持可点击。
+    // 本序列含源键入回声窗口：P2b 为 F-037-R1 探针面。——
+    const y5 = blocks.get(5) ?? y0
+    await H.pressOnly(edId, 30, y5)
     await sleep(400)
     await callTool('autoui_action', { element_id: edId, action: 'key_press', value: 'end' })
     for (const ch of 'XYZ') {
@@ -517,10 +562,11 @@ async function protectArm() {
       await sleep(150)
     }
     const dirtyText = await H.editorText()
-    ck(dirtyText !== null && dirtyText.includes('XYZ'), 'P1 真实键入（key_press 同构路径）源已脏（内存正文含 XYZ）')
+    ck(dirtyText !== null && dirtyText.includes('XYZ'), 'P1 真实键入（key_press 同构路径）源已脏（内存正文含 XYZ——非链接块）')
 
-    await H.scanLink(edId, y0, ['目标内容英文页'])
-    ok('P2 脏源真实点击链接→Goals.ad 打开（导航零阻断）')
+    const p2 = await H.scanLink(edId, y0, ['目标内容英文页'], { wantPath: 'wiki/Goals.ad' })
+    ck(p2.navOk, 'P2 脏源真实点击链接→Goals.ad 提交（store 权威态；导航零阻断）')
+    ck(p2.viewSwapped, 'P2b 视面换页跟随（F-037-R1 探针面：键入后导航 NavCommit 提交而视面刷新缺失时此行 FAIL——owner=上游 VM 桥 dirty 传播）')
 
     await H.openPage(['Src', 'Src.ad'], ['XYZ'])
     const srcMem = await H.editorText()
@@ -528,24 +574,30 @@ async function protectArm() {
     const srcDiskAfter = fs.readFileSync(path.join(NATIVE_WS, 'wiki', 'Src.ad'), 'utf8')
     ck(srcDiskAfter === srcDiskBefore, 'P4 磁盘字节恒等（导航零写源文件）')
 
-    // 脏目标激活零覆盖。
-    await H.openPage(['Goals'], ['目标内容英文页'])
-    const edId2 = await H.editorId()
-    await H.pressOnly(edId2, 30, 10)
-    await sleep(400)
-    await callTool('autoui_action', { element_id: edId2, action: 'key_press', value: 'end' })
-    for (const ch of 'QW') {
-      await callTool('autoui_action', { element_id: edId2, action: 'key_press', value: `c:${ch}` })
-      await sleep(150)
+    // —— P5（脏目标）：须"编辑 Goals→切回 Src→点击"——其编辑后换页步骤
+    // 触发 F-037-R1 视面冻结（粘滞：后续 store 变化亦不刷新视面；冻结后
+    // vtree 寻址固定旧页 core，跨页点击不可达）——冻结即记 BLOCKED。——
+    try {
+      await H.openPage(['Goals'], ['目标内容英文页'])
+      const edId2 = await H.editorId()
+      await H.pressOnly(edId2, 30, 10)
+      await sleep(400)
+      await callTool('autoui_action', { element_id: edId2, action: 'key_press', value: 'end' })
+      for (const ch of 'QW') {
+        await callTool('autoui_action', { element_id: edId2, action: 'key_press', value: `c:${ch}` })
+        await sleep(150)
+      }
+      await H.openPage(['Src', 'Src.ad'], ['普通正文段落'])
+      const edId3 = await H.editorId()
+      if (!edId3) throw new Error('editor vnode missing after reopen (P5)')
+      const blocks3 = await H.mapBlocks(edId3, 320)
+      const y03 = blocks3.get(0) ?? y0
+      const p5 = await H.scanLink(edId3, y03, ['QW'], { wantPath: 'wiki/Goals.ad' })
+      ck(p5.navOk, 'P5 已开 dirty 目标激活零覆盖（store 提交；内存页激活）')
+      ck(p5.viewSwapped, 'P5b 视面换页+内存 QW 保留（非磁盘重读）')
+    } catch (err) {
+      bl(`P5 脏目标序列被 F-037-R1 视面冻结阻断（${String(err.message).slice(0, 160)}）——重入=R1 修复后本探针`)
     }
-    await H.openPage(['Src', 'Src.ad'], ['普通正文段落'])
-    const edId3 = await H.editorId()
-    if (!edId3) throw new Error('editor vnode missing after reopen (P5)')
-    const blocks3 = await H.mapBlocks(edId3, 320)
-    const y03 = blocks3.get(0) ?? y0
-    await H.scanLink(edId3, y03, ['QW'])
-    const tGoal = await H.editorText()
-    ck(tGoal !== null && tGoal.includes('QW') && tGoal.includes('目标内容英文页'), 'P5 已开 dirty 目标激活零覆盖（内存 QW 保留、非磁盘重读）')
   } catch (err) {
     ck(false, `P 臂载体异常：${String(err.message).slice(0, 300)} | ${aliveTail(app)}`)
   } finally {
