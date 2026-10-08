@@ -44,7 +44,7 @@
 ## 4. 不变量与验证
 
 - 不变量：导航前后源页 body/dirty/doc_id/draft_erev 磁盘字节恒定；目标已开 dirty 实例激活后内存正文不被磁盘覆盖；最近文件只在真实成功后变化；save_note/草稿注记与 wiki_nav_note 互不覆盖。
-- 原生 merged 交付证据（PLAN-037）：真实左键完整点击（生产 core.handle_input 完整点击门）英文/中文/别名/带锚四链接导航正确目标、拖选/press-only/非链接/围栏零激活、双实例来源隔离、缺页确认取消/创建真建页——`tests/probe_native_wiki_link.mjs`（指纹/N 真实点击/O origin/P 保护/M 缺页五臂；N 臂 M1..M2d+O 组全绿在案）。
+- 原生 merged 交付证据（PLAN-037）：真实左键完整点击（生产 core.handle_input 完整点击门）英文/中文/别名/带锚四链接导航正确目标、拖选/press-only/非链接/围栏零激活、双实例来源隔离、缺页确认取消/创建真建页——`tests/probe_native_wiki_link.mjs`（指纹/N 真实点击/O origin/P 保护/M 缺页五臂；N/O/P/M 各臂全绿在案）。
 - 已知边界（如实分列，不因本片宣称消失）：引擎无输入期 wikilink 解析（键入 `[[` 保持字面——链接仅加载期解析，untitled 源带链接点击导航结构性不可达，契约 B-6）；空编辑器渲染零块无 caret 目标（B-7）；块底 boundary 命中区遮挡单行链接段中心点（B-8）；caret/reveal 供给维持缺口；原生 split 载体的链接消费未联验（单列 editor-host-capabilities §1.3）；native merged 的等待窗迟到族无真实异步窗（消费同步，036 vue S 组+上游语料承载）。
 - 可重跑：`node tests/probe_wiki_link_navigation.mjs`（四臂全案）；`pnpm exec playwright test -c e2e/playwright.config.ts e2e/wiki-link-navigation.spec.ts`（八测单跑）。
 - 历史证据不改写：034 的「链接缺供给」与 035 的入口收口记录维持其时点结论；本片消费面以本规范为准。

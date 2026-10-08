@@ -719,7 +719,7 @@ if (PHASE === 'all' || PHASE === 'missing') await missingArm()
 
 if (PHASE === 'all') {
   console.log('\n[probe-native-wiki-link] S 臂（分列）：')
-  bl('S 等待窗迟到族：merged 消费同步无真实等待窗；split 原生载体 boot=F-24-2 家族在录（owner=auto-lang split 前端）——上游六环语料+036 vue S 组证据在案，native 等待窗 live 验证重入=split boot 修复')
+  bl('S 等待窗迟到族：merged 消费同步无真实等待窗；原生 split 载体 boot 已恢复（probe_editor_host B1——F-24-2 未复现）而 split 链接消费未联验，等待窗 live 验证随 split 消费片；上游六环语料+036 vue S 组证据在案')
   bl('E 右/中键：MCP 词表无右/中键合成——上游 plan732_click_gate_negatives（右/中键零激活）承载，本仓仪器边界如实分列')
   bl('F 错误臂：merged 后端同步调用无真实错误窗（解析/读盘失败可见性=036 vue e2e F 组承载）——merged 强制错误缺仪器通道，如实分列')
 }
