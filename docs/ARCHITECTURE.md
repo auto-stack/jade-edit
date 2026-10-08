@@ -137,6 +137,7 @@ src/back/api.at           /api 契约（自有 Auto 源，与实现同 commit—
   [specs/editor-command-availability.md](specs/editor-command-availability.md)；
   能力结论（宿主命令桥缺供给）不因入口收口翻案，真执行仍按上游
   解锁门推进。
+- **双轨快速打开独立弹层（SD-3801，PLAN-038 R-05a）**：Ctrl+P／菜单／工具栏三入口共口 ActFindFiles→独立根模态弹层（store.quick_open 开态单点+App quick_* 数据态——与 find_* 全分离）；共享名称目录（names/names_state/入口即重取/逐键零 fetch）与统一匹配域（name_rows_of），行集 {path,dtitle,sec} handler 侧物化（最近/目录/空态三分）；拾取 = 真实 path 票据 + exists/read 两等待窗门（关态+世代+来源五查）→ store.NavCommit 同步提交（脏目标内存页直激活），**真实完成回执 = active_path==目标且 sel_gen 前进**（「目标=当前页」误判族解除）——成功才关层/记最近/刷上下文，失败留层独立错误零建页；Vue Escape/X v-model 关态由 App 关态门+世代兜住。VM 程序化聚焦 ui.focus（__focus_result 观察位）；VM Escape/Tab 键程无公开形态（F-038-R1 单列上游）。证据 `tests/probe_quick_open.mjs`（t1 载体+prod 两相位）+ `e2e/quick-open.spec.ts` + 契约 [038-quick-open-contract](plans/attachments/038-quick-open-contract.md)；规范沉淀见 [quick-open](specs/quick-open.md)（T-05 随批）。
 - **原生正文内链导航（SD-3701，PLAN-037 R-03b3）**：VM merged 载体同一 `on "open-wiki-link"` 消费全门——上游供给链 auto-lang PLAN-732/737/739（wikilink attr 语义消费→合成通道派发→输入补丁摘臂）后，生产左键完整点击直达 OpenWikiLink/resolver/NavCommit（结构性 per-instance origin，双实例反例在案）；native split 消费未联验单列。证据 `tests/probe_native_wiki_link.mjs` 五臂+规范 [wiki-link-navigation](wiki-link-navigation.md) 原生行/[editor-host-capabilities](editor-host-capabilities.md) §1.3。
 - **正文内链导航（SD-3601，PLAN-036 R-03b2）**：Vue 正文
   `on "open-wiki-link"` 完整事件名消费（双参=target+可选目标锚点，

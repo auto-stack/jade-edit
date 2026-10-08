@@ -1,12 +1,12 @@
 ---
 plan_id: PLAN-038
-status: executing
+status: execution_done
 feature_name: 双轨快速打开独立弹层（R-05a）
 author: [agent]
 created_at: 2026-10-03T03:31:53Z
 updated_at: 2026-10-08T15:51:51Z
 plan_revision: 2
-current_step: 1
+current_step: 5
 total_steps: 5
 supersedes_spec_components:
   - docs/specs/name-search.md
@@ -183,12 +183,12 @@ git diff --check
 | 步骤 | 依赖 | 已核实路径／符号 | 交付／验证 | AC / SD |
 | --- | --- | --- | --- | --- |
 | T-01 双轨弹层与完成门原型 | 无；**r2 复基已完成**（037 delivered@0d92d99、共享文件指纹恒等、binary 2730-dirty 在册）——开工时按§4.1 复核 HEAD／指纹／binary 即可，可在隔离工程验证 | app.at根dialog/input/ActFindFiles/NamesRefresh，editor_store.at NavCommit/FindOpen；新probe、契约附件 | 冻结dialog聚焦、input Enter、ESC/外部关态清理、Tab结果键程、列表宽度；验证uid=0／untitled和共享同步提交；每关键未知一次原型＋一次原因针对复测。公开形态不可达报blocker，不能改成Vue-only或删除键程 | AC-01,02,03,07,08；SD-01,03 |
-| T-02 独立快开状态与目录消费 | T-01；037生产写窗口收口，复基完成 | app.at模型/ActFindFiles/FindEdit/NamesRefresh/NamesInvalidate/FindPick；editor_store.at开关/兼容消息 | 新quick状态与query，目录共享／逐键零fetch、最新query配有效目录；全文与其他面板隔离；新probe Q/C/R全过 | AC-04,05,06；SD-02,04 |
-| T-03 三入口与根弹层迁移 | T-02 | app.at action/toolbar/menubar/右栏files分支/根dialog；find_panel.at壳；新e2e | 快开独立根弹层，候选名称/path首选、加载/错误/无结果/最近；旧files用户面移出右栏，其他模式不动。生成后两轨I/K/W通过，双轨指定四视口检查，编辑器仅开关零重挂载 | AC-01,02,03,04；SD-01 |
-| T-04 真实开页和过期门 | T-01,T-02,T-03 | app.at新QuickPick协调段、既有recents/context；editor_store.at NavCommit共享同步段 | path票据+每等待期门、dirty目标优先、成功才关闭/recents，失败独立提示；新probe/e2e O/S/P全过，取消零副作用 | AC-07,08,09；SD-03 |
-| T-05 回归与规范交接 | T-02,T-03,T-04 | §6旧tests/e2e、vm基线；新quick-open Spec、name-search拟议修订、ARCHITECTURE指针、路线图 | 定向门全过、基线差异解释、SD-01..04终版；**跑037正式native回归（probe_native_wiki_link 四臂，已交付无休止分列）**，不删其未通过证据；git diff --check清，递交独立review | AC-01..10；SD-01..04 |
+| T-02 [✅ 已完成] 独立快开状态与目录消费 | T-01；037生产写窗口收口，复基完成 | app.at模型/ActFindFiles/FindEdit/NamesRefresh/NamesInvalidate/FindPick；editor_store.at开关/兼容消息 | 新quick状态与query，目录共享／逐键零fetch、最新query配有效目录；全文与其他面板隔离；新probe Q/C/R全过 | AC-04,05,06；SD-02,04 |
+| T-03 [✅ 已完成] 三入口与根弹层迁移 | T-02 | app.at action/toolbar/menubar/右栏files分支/根dialog；find_panel.at壳；新e2e | 快开独立根弹层，候选名称/path首选、加载/错误/无结果/最近；旧files用户面移出右栏，其他模式不动。生成后两轨I/K/W通过，双轨指定四视口检查，编辑器仅开关零重挂载 | AC-01,02,03,04；SD-01 |
+| T-04 [✅ 已完成] 真实开页和过期门 | T-01,T-02,T-03 | app.at新QuickPick协调段、既有recents/context；editor_store.at NavCommit共享同步段 | path票据+每等待期门、dirty目标优先、成功才关闭/recents，失败独立提示；新probe/e2e O/S/P全过，取消零副作用 | AC-07,08,09；SD-03 |
+| T-05 [✅ 已完成] 回归与规范交接 | T-02,T-03,T-04 | §6旧tests/e2e、vm基线；新quick-open Spec、name-search拟议修订、ARCHITECTURE指针、路线图 | 定向门全过、基线差异解释、SD-01..04终版；**跑037正式native回归（probe_native_wiki_link 四臂，已交付无休止分列）**，不删其未通过证据；git diff --check清，递交独立review | AC-01..10；SD-01..04 |
 
-进度1/5。T-01 闭环（2026-10-08）：**[✅ 已完成]** 载体探针 `tests/probe_quick_open.mjs --phase t1` 全绿（10 pass/0 fail/2 blocked）+ 契约冻结件 `attachments/038-quick-open-contract.md`。冻结面：弹层公开构件（dialog/input/onenter/行钮/取消钮/overflow-y-auto 列表）；VM 程序化聚焦 `ui.focus(".事件名")` 有效且回执落盘须模型声明 `var __focus_result str = ""`（未声明=renderer write_state FieldNotFound 静默——首跑 FAIL→补声明复测 PASS 一次闭环）；uid=0 无文档源经真实 store NavCommit 建页+激活（autoui_action submit 定址派发 onenter）；脏目标直激活零覆盖零重复 tab；stale 目录 missing 独立错误零建页弹层留置；完成回执=`active_path==path && sel_gen 前进`（误判族解除）；busy/零结果 Enter 零动作；取消零副作用。blocked 边界 F-038-R1：VM Escape 无公开关闭形态（modal 不消费+合成通道零派发；不新增全局 Escape bind——035 让位纪律同面，取消钮承载同终态）、VM Tab 键程遍历不可合成（vue 原生 DOM 焦点序+VM 鼠标点击承载全候选）。vue 轨聚焦=DialogContent 原生 autofocus（slot 先于 X 钮实勘）+Escape=v-model 直写开态（030 同型），e2e 于 T-03 首验。生产共享文件按顺序写入；后续实施命令于对应任务运行。
+进度5/5（T-01..T-04 已落 2026-10-08/09；T-05 全门绿 2026-10-09）：T-01 **[✅ 已完成]** 载体探针 `tests/probe_quick_open.mjs --phase t1` 全绿（10 pass/0 fail/2 blocked）+ 契约冻结件 `attachments/038-quick-open-contract.md`。冻结面：弹层公开构件（dialog/input/onenter/行钮/取消钮/overflow-y-auto 列表）；VM 程序化聚焦 `ui.focus(".事件名")` 有效且回执落盘须模型声明 `var __focus_result str = ""`（未声明=renderer write_state FieldNotFound 静默——首跑 FAIL→补声明复测 PASS 一次闭环）；uid=0 无文档源经真实 store NavCommit 建页+激活（autoui_action submit 定址派发 onenter）；脏目标直激活零覆盖零重复 tab；stale 目录 missing 独立错误零建页弹层留置；完成回执=`active_path==path && sel_gen 前进`（误判族解除）；busy/零结果 Enter 零动作；取消零副作用。blocked 边界 F-038-R1：VM Escape 无公开关闭形态（modal 不消费+合成通道零派发；不新增全局 Escape bind——035 让位纪律同面，取消钮承载同终态）、VM Tab 键程遍历不可合成（vue 原生 DOM 焦点序+VM 鼠标点击承载全候选）。vue 轨聚焦=DialogContent 原生 autofocus（slot 先于 X 钮实勘）+Escape=v-model 直写开态（030 同型），e2e 于 T-03 首验。T-05 交接批：docs/specs/quick-open.md（新·SD-01..03 终版）+name-search.md 修订（SD-04 消费面归属）+ARCHITECTURE SD-3801 指针+路线图 R-05a 落地行。全门：probe_quick_open t1 10/0/2+prod 18/0/0、probe_name_search 双臂全案、probe_native_wiki_link 31/0/3（既有 blocked 单列）、probe_editor_host 全案（unsupported 按行在案）、vm_matrix merged 20/20+⑩b⑩c（基线 v29）、e2e quick-open 5/5+name-search 6/6+wiki-link 8/8+command-availability 3/3+reload/draft/lifecycle/editor-host 19 passed、regen-vue 绿、git diff --check 清。
 
 ## 9. 复审记录
 
@@ -228,3 +228,5 @@ r2（2026-10-08 复基修订，依据用户同日请求）：
 - F-038-R1（owner=上游 VM modal/键盘语义；nonblocking 边界）：VM 轨 Escape 无公开关闭形态（vm modal 不消费 Escape〔036 在案〕+autoui_keyboard Escape 合成通道零派发〔T-01 F9 实测〕）、Tab 键程遍历不可合成（F10 实录）。处置=不新增全局 Escape bind（035 让位纪律同面）；VM 同终态由取消钮承载、全候选鼠标点击承载；vue Escape/Tab 由 e2e 承载全绿判据。重入门=上游 modal Escape 语义或合成键盘通道解锁。
 - 无需用户再决定本片产品范围；箭头高亮遍历、全部侧栏重排、拖拽宽度、布局恢复留作后续候选，不占正式号。
 - 036 B-6/B-7、037的live原生点击核验以及保存／命令／位置／Shift供给维持各自归属；本片不宣布解决这些缺口。
+
+- 2026-10-09T02:40:00Z：stage: work | plan_id: PLAN-038 | plan_revision: 2 | outcome: pass（execution_done） | code_commit: d6bceb3（T-02）→T-03/T-04 批（src/front app.at+find_panel.at+editor_store.at=T-02 已含；tests/probe_quick_open prod 相位+vm_matrix v29 迁移+e2e 五套件适配+e2e/quick-open.spec 新建+tests/baseline/structure-v29）→T-05 批（docs/specs/quick-open.md 新+name-search.md 修订+ARCHITECTURE SD-3801+路线图 R-05a 行） | task_ids: T-02/T-03/T-04/T-05（T-01 前批已录） | evidence: **T-02** store quick_open+QuickOpen/QuickClose+App quick_* 七字段+QuickEdit（零 fetch）+NamesRefresh/NamesInvalidate 门扩（生产 boot 冒烟+载体探针回归恒等基线）；**T-03** ActFindFiles 三入口共口迁移+根弹层视图（quick_view_rows 物化行集——VM 恒渲染子树 len() 过渡不重评实勘规避[曾误判渲染边界，实勘定谳=查询跨开合保留语义，视图正确]）+旧 files 用户面退役+ui.focus 入口；**T-04** QuickPick 协调（票据+两窗门+NavCommit+sel_gen 回执+missing 独立错误）——probe prod 18/0/0（I 四入口/K 键程/Q 五域同名/C 独立/R 重取+外部改名/O stale missing 拒开）+e2e quick-open 5/5（含 route-delay 迟到票据+脏目标直激活+missing）+vm_matrix 全绿；**T-05** 规范 SD-01..03 终版（quick-open.md 新）+SD-04（name-search 消费面归属修订——目录/匹配/门语义零变化）+ARCHITECTURE SD-3801+路线图+037 native 回归 31/0/3（既有 blocked 单列）+probe_editor_host 全案+probe_name_search 双臂+regen-vue 绿+git diff --check 清+matrix.spec/vue matrix/wiki-link/command-availability/reload/draft/lifecycle/editor-host 套件选择器迁移（弹层面+menuitem 锚——名称/保护断言零删除） | blockers: 无（F-038-R1 nonblocking 上游键程单列 §10） | next: 独立复审（auto-plan-review）。
