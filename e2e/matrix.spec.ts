@@ -299,6 +299,18 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   // 缺口（D-19 上游先在缺口），vue 轨同败故跳过（D-17 先例：轨内机制
   // 差异注记）。
   const panel = page.locator('.w-72')
+  // **PLAN-038 T-03 迁移**：快开独立根弹层面（dialog role 定域；菜单口
+  // = menuitem role 锚——工具栏钮文本同名 strict 冲突消歧；行集/输入/
+  // 拾取全走弹层域，text/orphans/trash 面板域不变）。
+  const quickDialog = page.getByRole('dialog')
+  const openQuick = async () => {
+    await page.getByRole('menuitem', { name: '视图' }).click()
+    await page.getByRole('menuitem', { name: '快速打开' }).click()
+    await expect(page.getByPlaceholder('输入标题、别名或路径…')).toBeVisible({ timeout: 10_000 })
+  }
+  const quickRowNames = async () =>
+    (await quickDialog.getByRole('button').allTextContents()).filter((t) => t !== '取消' && t !== 'Close' && t !== '')
+  const quickInput = page.getByPlaceholder('输入标题、别名或路径…')
   await page.getByText('视图', { exact: true }).click()
   await page.getByText('切换反链', { exact: true }).click()
   await expect(page.getByText('LINKS', { exact: true })).toBeVisible({ timeout: 10_000 })
@@ -530,24 +542,19 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await page.getByText('孤页清单', { exact: true }).click()
   await expect(page.getByText('（无孤页）', { exact: true })).toBeVisible({ timeout: 10_000 })
   console.log('[11 find] PASS — orphans 第五模式空态（pristine 全连接——T-01 首锁）')
-  // 快开子步：开面板（文件模式）→ **空 q「最近」段（PLAN-021 修订——
-  // 10m goto 重载 = 新 Init，recents 自 .jade/recents.txt 跨会话载入
-  // [020「会话域复位零记录」语义随持久化退役——本位 = G1 跨会话恢复
-  // e2e 首证位]）** → 过滤 → 拾取即关
-  const panelRowNames = async () =>
-    (await panel.getByRole('button').allTextContents()).filter((t) => t !== '收起' && t !== '')
-  await page.getByText('视图', { exact: true }).click()
-  await page.getByText('快速打开', { exact: true }).click()
-  const findInput = page.getByPlaceholder('过滤文件名…')
-  await expect(findInput).toBeVisible({ timeout: 10_000 })
+  // 快开子步：开弹层 → **空 q「最近」段（PLAN-021 修订——10m goto 重载
+  // = 新 Init，recents 自 .jade/recents.txt 跨会话载入[020「会话域复位
+  // 零记录」语义随持久化退役——本位 = G1 跨会话恢复 e2e 首证位]）** →
+  // 过滤 → 拾取即关（PLAN-038 弹层面迁移）
+  await openQuick()
   await expect(page.getByText('最近', { exact: true })).toBeVisible({ timeout: 10_000 })
-  await expect((await panelRowNames()).length).toBeGreaterThanOrEqual(1)
-  await findInput.fill('Pro')
-  await expect(panel.getByRole('button', { name: 'Projects', exact: true })).toBeVisible()
-  await expect(panel.getByRole('button', { name: 'CAP 定理', exact: true })).toHaveCount(0)
-  await panel.getByRole('button', { name: 'Projects', exact: true }).click()
+  await expect((await quickRowNames()).length).toBeGreaterThanOrEqual(1)
+  await quickInput.fill('Pro')
+  await expect(quickDialog.getByRole('button', { name: 'Projects', exact: true })).toBeVisible()
+  await expect(quickDialog.getByRole('button', { name: 'CAP 定理', exact: true })).toHaveCount(0)
+  await quickDialog.getByRole('button', { name: 'Projects', exact: true }).click()
   await expect(visibleEditor(page)).toContainText('当前进行中的项目', { timeout: 15_000 })
-  await expect(findInput).toHaveCount(0, { timeout: 10_000 })
+  await expect(quickInput).toHaveCount(0, { timeout: 10_000 })
   console.log('[11 find] PASS — 快开：空 q「最近」段跨会话载入[PLAN-021] + 过滤 Pro→Projects 独行 + 拾取开档即关')
   // 检索子步：text 模式 → 未运行提示 → CJK 查询（POST 通道）→ 行导航
   // 面板保持开 → 运行后空态
@@ -597,7 +604,7 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   // 关孤页 tab。
   await page.getByText('视图', { exact: true }).click()
   await page.getByText('孤页清单', { exact: true }).click()
-  await expect(page.getByPlaceholder('过滤文件名…')).toHaveCount(0, { timeout: 10_000 })
+  await expect(quickInput).toHaveCount(0, { timeout: 10_000 })
   await expect(panel.getByRole('button', { name: 'Orphan Pg', exact: true })).toHaveCount(0)
   await request.post('/api/write_wiki', { data: { path: 'Orphan Pg.ad', body: '# Orphan Pg\n\n' } })
   await page.getByText('视图', { exact: true }).click()
@@ -632,46 +639,38 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   // 去重置顶[重拾 Tasks 头位]→ 容量截断[write_wiki RecCap1..12 + 菜单
   // 今日笔记 ActDaily 树刷新→12 开→10 行 头 RecCap12 尾 RecCap3]→
   // 收尾 find 面板关[12 反链面板负向断言区域文本集防污染——vm 同款]。
-  await page.getByText('视图', { exact: true }).click()
-  await page.getByText('快速打开', { exact: true }).click()
-  const findInput9 = page.getByPlaceholder('过滤文件名…')
-  await expect(findInput9).toBeVisible({ timeout: 10_000 })
-  await findInput9.fill('')
+  await openQuick()
+  await quickInput.fill('')
   await expect(page.getByText('最近', { exact: true })).toBeVisible({ timeout: 10_000 })
-  await expect((await panelRowNames()).length).toBeGreaterThanOrEqual(1)
+  await expect((await quickRowNames()).length).toBeGreaterThanOrEqual(1)
   const pick9 = async (query: string, label: string) => {
-    await page.getByText('视图', { exact: true }).click()
-    await page.getByText('快速打开', { exact: true }).click()
-    const inp = page.getByPlaceholder('过滤文件名…')
-    await expect(inp).toBeVisible({ timeout: 10_000 })
-    await inp.fill(query)
-    await panel.getByRole('button', { name: label, exact: true }).click()
+    await openQuick()
+    await quickInput.fill(query)
+    await quickDialog.getByRole('button', { name: label, exact: true }).click()
   }
   await pick9('index', '首页')
   await expect(visibleEditor(page)).toContainText('提示', { timeout: 15_000 })
   await pick9('Tasks', 'Tasks')
   await pick9('Hello', 'Hello World')
-  await page.getByText('视图', { exact: true }).click()
-  await page.getByText('快速打开', { exact: true }).click()
-  await findInput9.fill('')
+  await openQuick()
+  await quickInput.fill('')
   await expect(page.getByText('最近', { exact: true })).toBeVisible({ timeout: 10_000 })
-  expect((await panelRowNames()).slice(0, 3), '「最近」逆序').toEqual(['Hello World', 'Tasks', '首页'])
-  await panel.getByRole('button', { name: 'Hello World', exact: true }).click()
-  await expect(findInput9).toHaveCount(0, { timeout: 10_000 })
+  expect((await quickRowNames()).slice(0, 3), '「最近」逆序').toEqual(['Hello World', 'Tasks', '首页'])
+  await quickDialog.getByRole('button', { name: 'Hello World', exact: true }).click()
+  await expect(quickInput).toHaveCount(0, { timeout: 10_000 })
   await pick9('Tasks', 'Tasks')
-  await page.getByText('视图', { exact: true }).click()
-  await page.getByText('快速打开', { exact: true }).click()
-  await page.getByPlaceholder('过滤文件名…').fill('')
+  await openQuick()
+  await quickInput.fill('')
   await expect(page.getByText('最近', { exact: true })).toBeVisible({ timeout: 10_000 })
-  expect((await panelRowNames()).slice(0, 3), '去重置顶').toEqual(['Tasks', 'Hello World', '首页'])
+  expect((await quickRowNames()).slice(0, 3), '去重置顶').toEqual(['Tasks', 'Hello World', '首页'])
   for (let i = 1; i <= 12; i++) {
     await request.post('/api/write_wiki', { data: { path: `RecCap${i}.ad`, body: `# RecCap${i}\n\n` } })
   }
   // 先收起 find 面板再走菜单（⑥ 先例——files 模式标签「文件」与文件菜
   // 单触发同名 strict 冲突），ActDaily 树刷新后重开快开拾取。
-  await page.getByRole('button', { name: '收起', exact: true }).first().click()
-  await expect(page.getByPlaceholder('过滤文件名…')).toHaveCount(0, { timeout: 10_000 })
-  await page.getByText('文件', { exact: true }).click()
+  await page.getByRole('dialog').getByRole('button', { name: '取消', exact: true }).click()
+  await expect(quickInput).toHaveCount(0, { timeout: 10_000 })
+  await page.getByRole('menuitem', { name: '文件' }).click()
   await page.getByText('今日笔记', { exact: true }).click()
   await expect(page.getByText('未保存', { exact: true })).toHaveCount(0, { timeout: 10_000 })
   // 拾取循环 = 负载窗敏感面（12×4 菜单/面板交互——popover 内容窗家族
@@ -681,12 +680,9 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
     for (let attempt = 0; attempt < 3 && !picked; attempt++) {
       try {
         await page.waitForTimeout(250)
-        await page.getByText('视图', { exact: true }).click({ timeout: 8000 })
-        await page.getByText('快速打开', { exact: true }).click({ timeout: 8000 })
-        const inp = page.getByPlaceholder('过滤文件名…')
-        await expect(inp).toBeVisible({ timeout: 8000 })
-        await inp.fill(`RecCap${i}`)
-        await panel.getByRole('button', { name: `RecCap${i}`, exact: true }).click({ timeout: 8000 })
+        await openQuick()
+        await quickInput.fill(`RecCap${i}`)
+        await quickDialog.getByRole('button', { name: `RecCap${i}`, exact: true }).click({ timeout: 8000 })
         picked = true
       } catch {
         if (attempt === 2) throw new Error(`RecCap${i} 拾取三试未达（负载窗家族）`)
@@ -694,16 +690,15 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
       }
     }
   }
-  await page.getByText('视图', { exact: true }).click()
-  await page.getByText('快速打开', { exact: true }).click()
-  await page.getByPlaceholder('过滤文件名…').fill('')
+  await openQuick()
+  await quickInput.fill('')
   await expect(page.getByText('最近', { exact: true })).toBeVisible({ timeout: 10_000 })
-  const capped = await panelRowNames()
+  const capped = await quickRowNames()
   expect(capped.length, '容量 10 截断').toBe(10)
   expect(capped[0], '截断头').toBe('RecCap12')
   expect(capped[9], '截断尾').toBe('RecCap3')
-  await page.getByRole('button', { name: '收起', exact: true }).first().click()
-  await expect(page.getByPlaceholder('过滤文件名…')).toHaveCount(0, { timeout: 10_000 })
+  await page.getByRole('dialog').getByRole('button', { name: '取消', exact: true }).click()
+  await expect(quickInput).toHaveCount(0, { timeout: 10_000 })
   console.log('[11 find] PASS — ⑨ recents 弧线（清 q「最近」段→3 开逆序→拾取即关→去重置顶→容量截断 RecCap×12→10 行）')
 
   // ⑩ 持久化三面（PLAN-021 T-03；SD-2101——vm 矩阵 ⑩/⑩b/⑩c 同单）：
@@ -721,17 +716,15 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   // 复位）+ 反链面板复位关态 = 12 段「反链关」口径。
   await page.goto('/')
   await expect(page.getByText('ready', { exact: true }).first()).toBeVisible({ timeout: 15_000 })
-  await page.getByText('视图', { exact: true }).click()
-  await page.getByText('快速打开', { exact: true }).click()
-  await expect(page.getByPlaceholder('过滤文件名…')).toBeVisible({ timeout: 10_000 })
+  await openQuick()
   await expect(page.getByText('最近', { exact: true })).toBeVisible({ timeout: 10_000 })
-  expect(await panelRowNames(), '⑤ 重载后「最近」段跨会话恢复').toEqual(
+  expect(await quickRowNames(), '⑤ 重载后「最近」段跨会话恢复').toEqual(
     Array.from({ length: 10 }, (_, k) => `RecCap${12 - k}`),
   )
-  await page.getByPlaceholder('过滤文件名…').fill('Hello')
-  await panel.getByRole('button', { name: 'Hello World', exact: true }).click()
+  await quickInput.fill('Hello')
+  await quickDialog.getByRole('button', { name: 'Hello World', exact: true }).click()
   await expect(visibleEditor(page)).toContainText('这是一段示例文本', { timeout: 15_000 })
-  await expect(page.getByPlaceholder('过滤文件名…')).toHaveCount(0, { timeout: 10_000 })
+  await expect(quickInput).toHaveCount(0, { timeout: 10_000 })
   await page.getByText('wiki', { exact: true }).first().click()
   // ⑩b 防线案（P≤200——D-35② 知情警示面）：fs 造 201 页微语料（安全线
   // +1 直证阈值 >200）→ ActDaily 树刷新（今日笔记重入幂等 + TreeRefresh
@@ -748,11 +741,8 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
         await page.waitForTimeout(250)
-        await page.getByText('视图', { exact: true }).click({ timeout: 8000 })
-        await page.getByText('快速打开', { exact: true }).click({ timeout: 8000 })
-        const inp = page.getByPlaceholder('过滤文件名…')
-        await expect(inp).toBeVisible({ timeout: 8000 })
-        await inp.fill('')
+        await openQuick()
+        await quickInput.fill('')
         await expect(page.getByText('最近', { exact: true })).toBeVisible({ timeout: 8000 })
         return
       } catch {
@@ -765,8 +755,8 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await page.getByText('今日笔记', { exact: true }).click()
   await expect(page.getByText(WARN_TEXT, { exact: true })).toBeVisible({ timeout: 20_000 })
   await openFilesPanelRetry()
-  await page.getByRole('button', { name: '收起', exact: true }).first().click()
-  await expect(page.getByPlaceholder('过滤文件名…')).toHaveCount(0, { timeout: 10_000 })
+  await page.getByRole('dialog').getByRole('button', { name: '取消', exact: true }).click()
+  await expect(quickInput).toHaveCount(0, { timeout: 10_000 })
   for (let i = 1; i <= 201; i++) {
     fs.rmSync(path.join(WORKSPACE, `WarnFill${i}.ad`), { force: true })
   }
@@ -1615,12 +1605,11 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await expect(page.getByText('页面属性', { exact: true })).toBeHidden({ timeout: 10_000 })
   // index.ad 开档（ASCII——快开面板 check 11 已证形态；开面板前 Tasks
   // 出链行按钮同名风险不涉 index）→ 出链段 帽烟别名 行 exists 断言
-  await page.getByRole('menuitem', { name: '视图' }).click()
-  await page.getByText('快速打开', { exact: true }).click()
-  await page.getByPlaceholder('过滤文件名…').fill('index')
+  await openQuick()
+  await quickInput.fill('index')
   // 行显示名：wiki/index.ad → '首页'（root index.ad 行 = stem 'index'——
-  // 面板区锚点击 wiki 档行）
-  await panel.getByRole('button', { name: '首页', exact: true }).click()
+  // 弹层区锚点击 wiki 档行）
+  await quickDialog.getByRole('button', { name: '首页', exact: true }).click()
   await expect(visibleEditor(page)).toContainText('Jade Garden', { timeout: 15_000 })
   await page.getByRole('menuitem', { name: '视图' }).click()
   await page.getByText('切换反链', { exact: true }).click()
@@ -1629,10 +1618,9 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   console.log('[14 meta] 属性弧线 — alias 帽烟别名 exists 翻转（出链行非悬空）')
   // ⑤ 删值弧线：tags 清空（空值 = 删键）→ tags 面板行消失（快开重开
   // 显式清过滤——find_q 跨段残留[④ 'index']非确定面，执行期校正 T-04）
-  await page.getByRole('menuitem', { name: '视图' }).click()
-  await page.getByText('快速打开', { exact: true }).click()
-  await page.getByPlaceholder('过滤文件名…').fill('')
-  await panel.getByRole('button', { name: 'Tasks', exact: true }).click()
+  await openQuick()
+  await quickInput.fill('')
+  await quickDialog.getByRole('button', { name: 'Tasks', exact: true }).click()
   await expect(visibleEditor(page)).toContainText('原型设计', { timeout: 15_000 })
   await page.getByRole('menuitem', { name: '文件' }).click()
   await page.getByText('页面属性…', { exact: true }).click()

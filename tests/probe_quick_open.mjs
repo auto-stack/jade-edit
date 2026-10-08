@@ -622,15 +622,395 @@ async function t1NarrowChecks(callTool) {
   await press(callTool, await waitButton(callTool, '取消'))
 }
 
+// ---------------- 生产 App 相位（T-03/T-04；真实 jade 应用 merged） ----------------
+
+const PROD_WS = path.join(RUNTIME, 'quick-open-prod-ws')
+
+// 已知答案语料（名称五域 + 同名 + 深层；正文不含名称词——title/alias-only
+// 命中形态锚；walk 序 = dirs-first + casefold）。
+const PROD_CORPUS = [
+  { rel: 'wiki/Home.ad', body: '---\ntitle: 首页\naliases:\n- 起点\n---\n\n# Doc\n\n普通正文段落。\n' },
+  { rel: 'wiki/Dup A.ad', body: '---\ntitle: 重名页\n---\n\n甲处正文。\n' },
+  { rel: 'wiki/Dup B.ad', body: '---\ntitle: 重名页\n---\n\n乙处正文。\n' },
+  { rel: 'wiki/Plain.ad', body: '# Plain\n\nplain corpus line\n' },
+  { rel: 'wiki/deep/Deep.ad', body: 'deep line\n' },
+]
+
+function buildProdWorkspace() {
+  fs.rmSync(PROD_WS, { recursive: true, force: true })
+  fs.mkdirSync(PROD_WS, { recursive: true })
+  for (const c of PROD_CORPUS) {
+    fs.mkdirSync(path.join(PROD_WS, c.rel, '..'), { recursive: true })
+    fs.writeFileSync(path.join(PROD_WS, c.rel), c.body, 'utf8')
+  }
+}
+
+async function prodChecks(callTool) {
+  const state = async () => (await callTool('autoui_state', {})).trim()
+  const snap = async () => await callTool('autoui_snapshot', {})
+  const findBtnId = async (label) => {
+    const s = await snap()
+    const line = s.split('\n').find((l) => l.includes('button') && l.includes(`"${label}"`))
+    return line ? line.match(/#(vnode_\d+)/)[1] : null
+  }
+  const pressBtn = async (label, timeoutMs = 10000) => {
+    const dl = Date.now() + timeoutMs
+    for (;;) {
+      const vid = await findBtnId(label)
+      if (vid) {
+        const r = await callTool('autoui_action', { element_id: vid, action: 'press' })
+        if (/status: ok/.test(r)) return
+      }
+      if (Date.now() > dl) throw new Error(`button "${label}" not found/press failed`)
+      await sleep(400)
+    }
+  }
+  // 快开入口（三入口分立锚）：
+  //   工具栏钮 ownText = `file-search快速打开`（图标名+标题拼连——VM toolbar
+  //   渲染约定，T-03 实勘）——恒在册无 popover 态伪影，确定性重开口。
+  //   菜单项 = 视图 popover 展开后的 `"快速打开"`（引号锚——与工具栏行
+  //   拼连文本区分）；⚠ popover 开合态：触发钮 press 为 toggle 语义。
+  const pressQuickOpenToolbar = async () => {
+    const dl = Date.now() + 8000
+    for (;;) {
+      const s = await snap()
+      const lines = s.split('\n')
+      // 工具栏钮锚 = onclick .ActFindFiles 行回溯最近 button 行（ownText =
+      // `file-search<不可见分隔符>快速打开`——图标名+标题拼连含私有分隔符，
+      // 直串匹配恒 miss，T-03 实勘）。
+      const oi = lines.findIndex((l) => l.includes('onclick: .ActFindFiles'))
+      for (let j = oi; j >= Math.max(0, oi - 3); j--) {
+        const m = lines[j].match(/button #(\d+)/) ?? lines[j].match(/button #(vnode_\d+)/)
+        if (lines[j].includes('button') && lines[j].match(/#(vnode_\d+)/)) {
+          const vid = lines[j].match(/#(vnode_\d+)/)[1]
+          const r = await callTool('autoui_action', { element_id: vid, action: 'press' })
+          if (/status: ok/.test(r)) return
+        }
+      }
+      if (Date.now() > dl) throw new Error('toolbar quick-open button not found')
+      await sleep(400)
+    }
+  }
+  const pressQuickOpenMenu = async () => {
+    await pressBtn('视图')
+    await pressBtn('"快速打开"'.slice(1, -1))
+  }
+  const fld = (d, name) => d.match(new RegExp(`(?:^|\\n)\\s*${name}:\\s*([^\\n]+)`))?.[1]?.trim().replace(/\s*\((?:str|int|bool|float|map|list)\)\s*$/, '') ?? null
+  const strF = (d, name) => {
+    const raw = fld(d, name)
+    if (raw === null) return null
+    const m = raw.match(/^"((?:[^"\\]|\\.)*)"/)
+    if (!m) return raw
+    try { return JSON.parse(`"${m[1]}"`) } catch { return m[1] }
+  }
+  const dialogInputId = async () => {
+    // 标题锚 content 子树扫（D-29③ 纪律——闭态弹层恒渲染，全树首 input
+    // 在多弹层并存期不稳；「快速打开」标题上溯取本弹层 input）。
+    const s = await snap()
+    const lines = s.split('\n')
+    const ti = lines.findIndex((l) => l.includes('"快速打开"'))
+    for (let j = ti; j < Math.min(lines.length, ti + 12); j++) {
+      if (/^\s*input /.test(lines[j])) return lines[j].match(/#(vnode_\d+)/)[1]
+    }
+    return null
+  }
+  // 快开弹层取消钮（标题锚向后扫——**不能全树首匹配**：alert-dialog 族
+  // 闭态恒渲染且在快开弹层之前，全树首「取消」= 关闭确认弹层钮
+  // [ConfirmCancel no-op]——T-03 实勘）。
+  const pressQuickCancel = async () => {
+    const dl = Date.now() + 8000
+    for (;;) {
+      const s = await snap()
+      const lines = s.split('\n')
+      const ti = lines.findIndex((l) => l.includes('"快速打开"'))
+      for (let j = ti; j < Math.min(lines.length, ti + 120); j++) {
+        if (lines[j].includes('button') && lines[j].includes('"取消"')) {
+          const vid = lines[j].match(/#(vnode_\d+)/)?.[1]
+          if (vid) {
+            const r = await callTool('autoui_action', { element_id: vid, action: 'press' })
+            if (/status: ok/.test(r)) return
+          }
+        }
+      }
+      if (Date.now() > dl) throw new Error('quick-dialog cancel button not found (title-scoped)')
+      await sleep(400)
+    }
+  }
+  const stateIs = async (name, want, timeoutMs = 8000) => {
+    const dl = Date.now() + timeoutMs
+    for (;;) {
+      const d = await state()
+      if (fld(d, name) === want) return d
+      if (Date.now() > dl) throw new Error(`state.${name} never = ${want} (got ${fld(d, name)})`)
+      await sleep(200)
+    }
+  }
+
+  // —— I1 菜单口开弹层 + ui.focus 聚焦 + 无文档可用（boot 零 tab）——
+  await pressQuickOpenMenu()
+  await stateIs('quick_open', 'true')
+  const inp1 = await dialogInputId()
+  const st1 = await state()
+  ck(
+    inp1 !== null && /__focus_result:\s*"ok"/.test(st1) && fld(st1, 'tab_count') === '0' && strF(st1, 'quick_first_path') === 'wiki/deep/Deep.ad',
+    `I1 菜单口开弹层：无文档可用+ui.focus ok+首选=显示集首项（空 q 全量 walk 序=dirs-first 深层档首行 wiki/deep/Deep.ad；实际 first=${strF(st1, 'quick_first_path')}；tab_count=${fld(st1, 'tab_count')}）`,
+  )
+
+  // —— I4 重复开关循环幂等（单弹层结构保证——开态单 bool 旗标；弹层
+  // 开启期模态域不含 toolbar/菜单钮[快照实测]，重触发经关层后入口）——
+  await pressQuickCancel()
+  await stateIs('quick_open', 'false')
+  await pressQuickOpenToolbar()
+  await stateIs('quick_open', 'true')
+  await pressQuickCancel()
+  await stateIs('quick_open', 'false')
+  await pressQuickOpenToolbar()
+  await stateIs('quick_open', 'true')
+  const s4 = await snap()
+  const tiCount = (s4.match(/"快速打开"/g) ?? []).length
+  ck((await dialogInputId()) !== null && tiCount === 1,
+    `I4 重复开关循环幂等（三度开层照常可用；弹层标题快照恰=${tiCount} 处——零叠层）`)
+  await pressQuickCancel()
+  await stateIs('quick_open', 'false')
+
+  // —— I2 工具栏口（第三入口；图标钮 ownText=file-search快速打开）——
+  await pressQuickOpenToolbar()
+  await stateIs('quick_open', 'true')
+  ck((await dialogInputId()) !== null, 'I2 工具栏口开同一弹层（独立根弹层——菜单/工具栏共口 ActFindFiles）')
+  await pressQuickCancel()
+  await stateIs('quick_open', 'false')
+
+  // —— I3 Ctrl+P 合成通道（action_config 快捷键路由实勘）——
+  let ctrlP = ''
+  try { ctrlP = await callTool('autoui_keyboard', { key: 'p', modifiers: ['ctrl'] }) } catch (e) { ctrlP = String(e.message).slice(0, 100) }
+  await sleep(600)
+  const st3 = await state()
+  if (fld(st3, 'quick_open') === 'true') {
+    ck(true, `I3 Ctrl+P 合成通道开弹层（${ctrlP.replace(/\n/g, ' ').slice(0, 60)}）——快捷键入口在册`)
+    await pressQuickCancel()
+    await stateIs('quick_open', 'false')
+  } else {
+    bl(`I3 Ctrl+P 合成通道不开弹层（${ctrlP.replace(/\n/g, ' ').slice(0, 60)}；quick_open=${fld(st3, 'quick_open')}）——MCP 合成键盘对 action 快捷键的路由边界，真实用户 iced 键盘监听不在合成面；键盘入口证据由 vue e2e page.keyboard 承载`)
+  }
+
+  // —— Q1 名称五域（title≠stem/alias/case/相对路径/同名双 path）——
+  await pressQuickOpenToolbar()
+  await stateIs('quick_open', 'true')
+  let inp = await dialogInputId()
+  await callTool('autoui_action', { element_id: inp, action: 'type_text', value: '首页' })
+  const q1 = await state()
+  ck(strF(q1, 'quick_first_path') === 'wiki/Home.ad', `Q1a title≠stem「首页」首选 wiki/Home.ad（实际 ${strF(q1, 'quick_first_path')}）`)
+  inp = await dialogInputId()
+  await callTool('autoui_action', { element_id: inp, action: 'clear' })
+  await callTool('autoui_action', { element_id: inp, action: 'type_text', value: '起点' })
+  ck(strF(await state(), 'quick_first_path') === 'wiki/Home.ad', 'Q1b alias「起点」命中 Home')
+  inp = await dialogInputId()
+  await callTool('autoui_action', { element_id: inp, action: 'clear' })
+  await callTool('autoui_action', { element_id: inp, action: 'type_text', value: 'deep/deep' })
+  ck(strF(await state(), 'quick_first_path') === 'wiki/deep/Deep.ad', 'Q1c 相对路径 casefold「deep/deep」命中深层档')
+  inp = await dialogInputId()
+  await callTool('autoui_action', { element_id: inp, action: 'clear' })
+  await callTool('autoui_action', { element_id: inp, action: 'type_text', value: '重名页' })
+  let sQ = await snap()
+  const dupCount = (sQ.match(/"重名页"/g) ?? []).length
+  const dQ = await state()
+  ck(dupCount >= 2, `Q1d 同名双页逐 path 双行呈现（快照行文本=${dupCount} 处；Dup A/Dup B 独立行）`)
+  // Q1e 同名第二行点击开各自磁盘正文（行点击口——B 行）。
+  const dupBLines = sQ.split('\n').filter((l) => l.includes('button') && l.includes('"重名页"'))
+  if (dupBLines.length >= 2) {
+    await callTool('autoui_action', { element_id: dupBLines[1].match(/#(vnode_\d+)/)[1], action: 'press' })
+    const dAfter = await stateIs('quick_open', 'false')
+    ck(strF(dAfter, 'active_path') === 'wiki/Dup B.ad', `Q1e 同名第二行点击开 Dup B（实际 ${strF(dAfter, 'active_path')}——身份域恒 path）`)
+  } else {
+    ck(false, 'Q1e 同名双行快照不足（无法点第二行）')
+  }
+
+  // —— K1 输入 Enter 首选开页（真实开页事务：NavCommit+关层+recents）——
+  await pressQuickOpenToolbar()
+  await stateIs('quick_open', 'true')
+  inp = await dialogInputId()
+  await callTool('autoui_action', { element_id: inp, action: 'type_text', value: '首页' })
+  const k0 = await state()
+  const tabs0 = fld(k0, 'tab_count')
+  inp = await dialogInputId()
+  await callTool('autoui_action', { element_id: inp, action: 'submit' })
+  const k1 = await stateIs('quick_open', 'false')
+  ck(
+    strF(k1, 'active_path') === 'wiki/Home.ad' && fld(k1, 'tab_count') === String(Number(tabs0) + 1),
+    `K1 输入 Enter 首选真实开页（active_path=wiki/Home.ad；tab ${tabs0}→${fld(k1, 'tab_count')}；NavCommit+关层）`,
+  )
+
+  // —— Q1f 空 q「最近」替换式（开档后重开：最近段首选 = 首条最近）。
+  // ⚠ 查询跨开合保留（find_q 同语义——K1 遗留 首页 需先清）——T-03 实勘：
+  // 重开不重置 quick_q，输入框遗留值与行集恒一致（视图正确性锚）。——
+  await pressQuickOpenToolbar()
+  await stateIs('quick_open', 'true')
+  let qfInp = await dialogInputId()
+  await callTool('autoui_action', { element_id: qfInp, action: 'clear' })
+  const qf = await state()
+  // 快照轮询（视图渲染节拍滞后状态一拍——单拍快照竞态 T-03 实勘）。
+  let recentsVisible = false
+  for (let i = 0; i < 12 && !recentsVisible; i++) {
+    recentsVisible = (await snap()).includes('最近')
+    if (!recentsVisible) await sleep(300)
+  }
+  if (!recentsVisible) {
+    const dbgLines = (await snap()).split('\n')
+    const dti = dbgLines.findIndex((l) => l.includes('"快速打开"'))
+    console.log('[Q1F-DBG] ti=', dti, 'region:')
+    console.log(dbgLines.slice(dti, dti + 34).map((l) => l.trim().slice(0, 84)).join('\n'))
+  }
+  ck(
+    strF(qf, 'quick_first_path') === 'wiki/Home.ad' && recentsVisible,
+    `Q1f 空 q「最近」替换式：首选=首条最近（实际 first=${strF(qf, 'quick_first_path')} recents=${fld(qf, 'recent_paths')}）+ 最近段标题在快照=${recentsVisible}`,
+  )
+
+  // —— Q2 逐键零 fetch（names_seq 恒定——重取仅入口触点）——
+  const seq0 = fld(await state(), 'names_seq')
+  inp = await dialogInputId()
+  await callTool('autoui_action', { element_id: inp, action: 'type_text', value: '重' })
+  inp = await dialogInputId()
+  await callTool('autoui_action', { element_id: inp, action: 'type_text', value: '名' })
+  inp = await dialogInputId()
+  await callTool('autoui_action', { element_id: inp, action: 'type_text', value: '页' })
+  const seq1 = fld(await state(), 'names_seq')
+  ck(seq0 === seq1, `Q2 逐键零 fetch（names_seq ${seq0}→${seq1} 恒定；纯内存过滤）`)
+
+  // —— C1 全文独立状态（text 检索结果不被快开覆盖/互不写查询）——
+  await pressQuickCancel()
+  await stateIs('quick_open', 'false')
+  await pressBtn('视图')
+  await pressBtn('全文检索')
+  await stateIs('find_mode', '"text"')
+  inp = await dialogInputId()
+  // text 面板输入行 = 右栏（快速打开弹层已关——placeholder 在 input 行
+  // 次行渲染，逐行 lookahead 定位）。
+  const sTxt = await snap()
+  const sLines = sTxt.split('\n')
+  const txtIdx = sLines.findIndex((l, i) => /^\s*input /.test(l) && sLines[i + 1]?.includes('输入查询词'))
+  if (txtIdx < 0) throw new Error('text-panel input not found in snapshot')
+  await callTool('autoui_action', { element_id: sLines[txtIdx].match(/#(vnode_\d+)/)[1], action: 'type_text', value: '正文' })
+  await pressBtn('检索')
+  await stateIs('find_ran', 'true')
+  const c0 = await state()
+  const fq0 = strF(c0, 'find_q')
+  const fr0 = fld(c0, 'find_ran')
+  // 开快开并输入——全文状态必须原样
+  await pressQuickOpenToolbar()
+  await stateIs('quick_open', 'true')
+  inp = await dialogInputId()
+  await callTool('autoui_action', { element_id: inp, action: 'type_text', value: 'plain' })
+  const c1 = await state()
+  ck(
+    strF(c1, 'find_q') === fq0 && fld(c1, 'find_ran') === fr0 && strF(c1, 'quick_q') === 'plain',
+    `C1 全文独立：快开输入不动 find_q（=${strF(c1, 'find_q')}）与 find_ran（=${fld(c1, 'find_ran')}）；quick_q 独立（=${strF(c1, 'quick_q')}）`,
+  )
+  await pressQuickCancel()
+  await stateIs('quick_open', 'false')
+  // 反链/标签开态保持（ActBacklinks 开 → 快开开关 → 仍开）。
+  await pressBtn('视图')
+  await pressBtn('切换反链')
+  await stateIs('backlinks_open', 'true')
+  await pressQuickOpenToolbar()
+  await stateIs('quick_open', 'true')
+  await pressQuickCancel()
+  await stateIs('quick_open', 'false')
+  const cb = await state()
+  ck(fld(cb, 'backlinks_open') === 'true', 'C1b 反链开态在快开开关间保持')
+  await pressBtn('视图')
+  await pressBtn('切换反链')
+  await stateIs('backlinks_open', 'false')
+
+  // —— K2 零结果 Enter 零动作 ——
+  await pressQuickOpenToolbar()
+  await stateIs('quick_open', 'true')
+  inp = await dialogInputId()
+  await callTool('autoui_action', { element_id: inp, action: 'type_text', value: 'zzz-无此词-xyz' })
+  const k2a = await state()
+  const tabsK2 = fld(k2a, 'tab_count')
+  inp = await dialogInputId()
+  await callTool('autoui_action', { element_id: inp, action: 'submit' })
+  await sleep(500)
+  const k2 = await state()
+  ck(
+    fld(k2, 'quick_open') === 'true' && fld(k2, 'tab_count') === tabsK2 && (strF(k2, 'quick_err') ?? '') === '',
+    'K2 零结果 Enter 零动作（弹层留置+零开页+零错误面）',
+  )
+
+  // —— R1 入口重取（names_seq 入口触点递增）+ R2 外部改名后再开新档可见 ——
+  await pressQuickCancel()
+  await stateIs('quick_open', 'false')
+  const seqR0 = fld(await state(), 'names_seq')
+  await pressQuickOpenToolbar()
+  await stateIs('quick_open', 'true')
+  const seqR1 = fld(await state(), 'names_seq')
+  ck(Number(seqR1) === Number(seqR0) + 1, `R1 入口无条件重取目录（names_seq ${seqR0}→${seqR1} 恰一递增）`)
+  await pressQuickCancel()
+  fs.renameSync(path.join(PROD_WS, 'wiki', 'Plain.ad'), path.join(PROD_WS, 'wiki', 'Renamed.ad'))
+  await pressQuickOpenToolbar()
+  await stateIs('quick_open', 'true')
+  inp = await dialogInputId()
+  await callTool('autoui_action', { element_id: inp, action: 'type_text', value: 'renamed' })
+  const r2 = await state()
+  ck(strF(r2, 'quick_first_path') === 'wiki/Renamed.ad', `R2 外部改名后再开新档可见（首选 ${strF(r2, 'quick_first_path')}——入口重取观察口）`)
+  await pressQuickCancel()
+  fs.renameSync(path.join(PROD_WS, 'wiki', 'Renamed.ad'), path.join(PROD_WS, 'wiki', 'Plain.ad'))
+
+  // —— K3 取消钮零副作用收尾 + O 缺页拒绝（stale 目录案——开层内 fs 删档）——
+  await pressQuickOpenToolbar()
+  await stateIs('quick_open', 'true')
+  inp = await dialogInputId()
+  await callTool('autoui_action', { element_id: inp, action: 'type_text', value: 'deep' })
+  fs.rmSync(path.join(PROD_WS, 'wiki', 'deep', 'Deep.ad'), { force: true })
+  const o0 = await state()
+  const tabsO = fld(o0, 'tab_count')
+  const dupLines = (await snap()).split('\n').filter((l) => l.includes('button') && l.includes('"Deep"'))
+  if (dupLines.length >= 1) {
+    await callTool('autoui_action', { element_id: dupLines[0].match(/#(vnode_\d+)/)[1], action: 'press' })
+    const o1 = await state()
+    ck(
+      strF(o1, 'quick_err')?.includes('目标不存在') === true && fld(o1, 'quick_open') === 'true' && fld(o1, 'tab_count') === tabsO && !fs.existsSync(path.join(PROD_WS, 'wiki', 'deep', 'Deep.ad')),
+      `O stale 目录 missing 拒开（错误="${strF(o1, 'quick_err')}"；弹层留置+零建页+tab ${tabsO} 不变）`,
+    )
+  } else {
+    ck(false, 'O stale 行未呈现（目录/快照异常）')
+  }
+  await pressQuickCancel()
+  await stateIs('quick_open', 'false')
+}
+
+async function runProdArm() {
+  buildProdWorkspace()
+  const port = await pickPort()
+  const app = launchVmApp(port, 'jade-probe-quick-open-prod', repoRoot, { JADE_WORKSPACE: PROD_WS })
+  try {
+    const { callTool } = await waitMcpAndUi(port, 'jade-probe-quick-open-prod', app, app._out)
+    for (let i = 0; i < 90; i++) {
+      const d = (await callTool('autoui_state', {})).trim()
+      if (/status:\s*"ready"/.test(d) && /names_seq:\s*[1-9]/.test(d)) break
+      await sleep(500)
+    }
+    await prodChecks(callTool)
+  } catch (err) {
+    ck(false, `[prod] 生产臂异常：${String(err.message).slice(0, 400)} | ${aliveTail(app)}`)
+  } finally {
+    await app._kill()
+  }
+}
+
 // ---------------- run ----------------
 
-if (PHASE === 't1') {
+if (PHASE === 't1' || PHASE === 'all') {
   console.log(`[probe-quick-open] phase t1 — 载体形态冻结（base 1024x768 @ :${await pickPort()}）`)
   const port1 = await pickPort()
   await runCarrier('base', '1024x768', port1, t1BaseChecks)
   console.log(`[probe-quick-open] 窄窗载体（640x480 @ :${await pickPort()}）`)
   const port2 = await pickPort()
   await runCarrier('narrow', '640x480', port2, t1NarrowChecks)
+}
+if (PHASE === 'prod' || PHASE === 'all') {
+  console.log('[probe-quick-open] phase prod — 生产 App I/K/Q/C/R/O 组（真实 jade 应用 merged）')
+  await runProdArm()
 }
 
 console.log('\n[probe-quick-open] 结果：')

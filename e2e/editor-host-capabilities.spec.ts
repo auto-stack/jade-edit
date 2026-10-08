@@ -172,7 +172,7 @@ test('宿主能力核验·commands（菜单收口说明入口 + 引擎内部撤�
   // 孤页清单面板不开（034 实录缺口维持——不在本片修复范围）
   await page.keyboard.press('Control+Shift+o')
   await page.waitForTimeout(600)
-  await expect(page.getByPlaceholder('过滤文件名…')).toHaveCount(0)
+  await expect(page.getByPlaceholder('输入标题、别名或路径…')).toHaveCount(0)
   console.log('[commands] PASS — Ctrl+Shift+O 被 ActOpen 抢占（keymap Shift 丢失在录面）：孤页清单不开、无崩溃（dialog 取消垫片）')
 })
 

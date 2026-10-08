@@ -10,17 +10,19 @@
 //   5 save    保存落盘（toolbar 保存 → 脏标清 + 磁盘字节含标记 + frontmatter 保留
 //             + updated_at 自动维护——PLAN-015：已有键保存即更新值[当日形]）
 //   6 reload  重载可见（磁盘外改 → toolbar 重载 → 编辑器见新内容）
-//   B base    结构基线 v28 零漂移（仅 merged 臂；必须在 1-6 后、扩单前采集
-//             ——v28 锁的是六检查终态，扩单不漂移基线；v28=PLAN-036 正文
-//             内链导航批[state 纯增 10 字段：store sel_gen/active_uid/
-//             wiki_nav_note + App nav_seq/navc_* 七件——snapshot id 序列
-//             零变化视图零漂移，逐项解释在 PLAN-036 T-05 记录；v27=
-//             PLAN-035 编辑命令入口真实化批留档；v26=PLAN-033 名称查找批
-//             留档]；v20=PLAN-025 目录合并三择批[v19 留档]；v19=PLAN-021
-//             试用赋能批[v18 留档]；v18=PLAN-020 孤页+recents 切片[第五
-//             模式 action/menubar 项入 id 序列——计划内重锁第五例]；v17=
-//             PLAN-019、v16=PLAN-018、v15=PLAN-016、v14=PLAN-015、
-//             v13=PLAN-014、v12=PLAN-013、v11=PLAN-012 等留档）
+//   B base    结构基线 v29 零漂移（仅 merged 臂；必须在 1-6 后、扩单前采集
+//             ——v29 锁的是六检查终态，扩单不漂移基线；v29=PLAN-038 快开
+//             独立弹层批[state 纯增 8 字段 quick_* 七件+store quick_open、
+//             files_rows 退役；id 序列 = 快开根弹层新节点+工具栏 快速打开
+//             钮+右栏 files 分支退役——逐项解释在 PLAN-038 T-03 记录]；
+//             v28=PLAN-036 正文内链导航批[state 纯增 10 字段，id 序列零
+//             变化]留档；v27=PLAN-035 编辑命令入口真实化批留档；v26=
+//             PLAN-033 名称查找批留档；v20=PLAN-025 目录合并三择批[v19
+//             留档]；v19=PLAN-021 试用赋能批[v18 留档]；v18=PLAN-020 孤页
+//             +recents 切片[第五模式 action/menubar 项入 id 序列——计划内
+//             重锁第五例]；v17=PLAN-019、v16=PLAN-018、v15=PLAN-016、
+//             v14=PLAN-015、v13=PLAN-014、v12=PLAN-013、v11=PLAN-012 等
+//             留档）
 //   E cmd-avail 编辑命令入口真实化（PLAN-035；B 后 7 前单臂子步——fail 即
 //             臂败不占检查位）：toolbar/编辑菜单六执行项零恰等钮（说明
 //             dialog description 长句非短词全等——闭态恒渲染不误中）→
@@ -197,7 +199,7 @@ const argOf = (name) => {
   return i >= 0 ? args[i + 1] : undefined
 }
 const ARM = argOf('--arm') ?? 'all' // all | merged | split
-const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v28.txt')
+const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v29.txt')
 const SAVE_BASELINE = argOf('--save-baseline')
 
 const EDIT_MARKER = 'jade-edit 冒烟标记：编辑回写可见。'
@@ -643,35 +645,41 @@ async function runArm(arm, port) {
       const stateDump = (await callTool('autoui_state', {})).trim()
       const snapIds = JSON.stringify([...(await snapshotText()).matchAll(/#(vnode_\d+)/g)].map((m) => m[1]))
       const headerFor = (file) =>
-        `// jade-edit vm 结构基线 v28（PLAN-036 T-05 重锁；v27=PLAN-035 批、v26=PLAN-033 批、v25=PLAN-032 批[头注字面 v21 系陈旧文案——
+        `// jade-edit vm 结构基线 v29（PLAN-038 T-03 重锁；v28=PLAN-036 批、v27=PLAN-035 批、v26=PLAN-033 批、
 ` +
-        `// F-32-R3 同类面，v25 锁起逐版实写]；v20=PLAN-025、v19=PLAN-021、v18=PLAN-020、v17=PLAN-019、
+        `// v25=PLAN-032 批、v20=PLAN-025、v19=PLAN-021、v18=PLAN-020、v17=PLAN-019、v16=PLAN-018、
 ` +
-        `// v16=PLAN-018、v15=PLAN-016、v14=PLAN-015、v13=PLAN-014、v12=PLAN-013、v11=PLAN-012 等均留档）。
+        `// v15=PLAN-016、v14=PLAN-015、v13=PLAN-014、v12=PLAN-013、v11=PLAN-012 等均留档）。
 ` +
-        `// 重锁因由：正文内链导航批（PLAN-036）——**state 段纯增 10 字段、snapshot id 序列零变化**（视图
+        `// 重锁因由：双轨快速打开独立弹层批（PLAN-038 T-03）——**state 纯增 8 字段 + App files_rows
 ` +
-        `// 结构零漂移：status_bar wiki_nav_note 条件行闭态不渲染、编辑器 on "open-wiki-link" 为属性发射
+        `// 退役 + snapshot id 序列变化**（逐项解释在 PLAN-038 T-03 计划档）：App quick_q/quick_rows/
 ` +
-        `// 不占 id 序列）：store sel_gen/active_uid（活动选择世代/实例投影——NavCommit 票据门，B 位终态
+        `// quick_first_path/quick_err/quick_busy/quick_seq/__focus_result（独立查询/行集/首选/错误/
 ` +
-        `// 值 1/1=开档一次）+ wiki_nav_note（独立导航提示 "" 缺省）；App 模型 nav_seq/navc_active/
+        `// 忙碌/世代 + ui.focus 回执观察位——终态全缺省）+ store quick_open（独立弹层开态 false）；
 ` +
-        `// navc_uid/navc_gen/navc_key/navc_body/navc_anchor（导航请求号+缺页确认票据——CreateGo 来源
+        `// files_rows 退役（files 模式用户面迁快开弹层）。id 序列变化面 = 快开根弹层新节点
 ` +
-        `// 失效门，终态全缺省）。计划内重锁第十一例——store/App 新字段纯增面（逐项解释在 PLAN-036 T-05）。
+        `//（dialog/input/行区/取消钮——闭态恒渲染 D-23③ 同族入树）+ 工具栏新增 快速打开 图标钮 +
 ` +
-        `// 仪器同 v2..v27：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态
+        `// 右栏 files 模式分支退役（input 行/行集区/模式标签移除）+ 行集行形状 {path,dtitle,sec}
+` +
+        `//（行区 for 循环节点）。其余结构零漂移。
+` +
+        `// 仪器同 v2..v28：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态
 ` +
         `//（chrome 全套 + Hello World.ad 开；查找面板/建页弹层/新建弹层/属性弹层/新建目录
 ` +
-        `// 弹层/移动弹层/删除目录弹层/重命名目录弹层/移动目录弹层/重命名弹层/删除弹层/标签
+        `// 弹层/移动弹层/删除目录弹层/重命名目录弹层/移动目录弹层/重命名弹层/删除弹层/快开弹层/
 ` +
-        `// 面板/反链面板/重载确认弹层未开——find_*/names_*/create_*/new_*/meta_*/dir_*/move_*/movedir_*/
+        `// 标签面板/反链面板/重载确认弹层未开——find_*/quick_*/names_*/create_*/new_*/meta_*/
 ` +
-        `// deldir_*/rendir_*/rename_*/delete_*/tags_*/mention_rows/reload_*/editor_commands_help_open/
+        `// dir_*/move_*/movedir_*/deldir_*/rendir_*/rename_*/delete_*/tags_*/mention_rows/reload_*/
 ` +
-        `// nav_*/navc_*/sel_gen/active_uid/wiki_nav_note 全为默认值入 dump）。
+        `// editor_commands_help_open/nav_*/navc_*/sel_gen/active_uid/wiki_nav_note/__focus_result
+` +
+        `// 全为默认值入 dump）。
 ` +
         `// 再生成：node tests/vm_matrix.mjs --save-baseline ${path.relative(repoRoot, file).replace(/\\\\/g, '/')}\n`
       const baselineBodyOf = () => `## state\n${stateDump}\n\n## snapshot-ids\n${snapIds}\n`
@@ -682,9 +690,9 @@ async function runArm(arm, port) {
       } else if (fs.existsSync(BASELINE)) {
         const raw = fs.readFileSync(BASELINE, 'utf8')
         const ok = raw === headerFor(BASELINE) + baselineBodyOf()
-        check('B', 'baseline', ok, ok ? '结构基线 v28 零漂移（state 逐字节 + id 序列）——PLAN-036 T-05 重锁（state 纯增 10 字段：store sel_gen/active_uid/wiki_nav_note + App nav_seq/navc_* 七件——snapshot id 序列零变化视图零漂移，逐项解释在 PLAN-036 T-05）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
+        check('B', 'baseline', ok, ok ? '结构基线 v29 零漂移（state 逐字节 + id 序列）——PLAN-038 T-03 重锁（state 纯增 8 字段 quick_* 七件+store quick_open + files_rows 退役；id 序列 = 快开弹层新节点+工具栏钮+files 面板分支退役，逐项解释在 PLAN-038 T-03）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
       } else {
-        console.log('  [baseline] structure-v28 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v28.txt')
+        console.log('  [baseline] structure-v29 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v29.txt')
       }
     }
 
@@ -1788,13 +1796,43 @@ async function runArm(arm, port) {
       const i = txt.indexOf('反链')
       return i < 0 ? '' : txt.slice(i, i + 1200)
     }
+    // —— 快开弹层区（PLAN-038 T-03）：标题 ownText 精确 '快速打开' 非按钮
+    // 节点上溯两代 = dialog-content；menubar popover 闭态不渲染菜单内容，
+    // 工具栏钮 ownText = 图标名拼连（非全等）——标题节点在弹层开启期唯一。
+    function quickDialogRegion(t) {
+      const title = findFirst(t, (n) => ownText(n) === '快速打开' && !n.head.startsWith('button '))
+      if (!title) return null
+      const header = findParent(t, title)
+      return header ? findParent(t, header) : null
+    }
+    const quickDialogTexts = (t) => {
+      const region = quickDialogRegion(t)
+      if (!region) return []
+      const out = []
+      const walk = (n) => {
+        out.push(ownText(n))
+        for (const c of n.children) walk(c)
+      }
+      walk(region)
+      return out
+    }
+    /** 快开弹层 input（区域锚——弹层 input 声明位在其他弹层族之前，但
+     *  闭态弹层族恒渲染 input[D-23③]，全树首 input 锚不可靠——区域扫）。 */
+    const quickDialogInput = (t) => {
+      const region = quickDialogRegion(t)
+      return region ? findFirst(region, (n) => n.head.startsWith('input ') && elementIdOf(n)) : null
+    }
 
-    // 11 find（PLAN-004 T-04）：查找面板双模式。执行序在 quit 前（quit
-    // 恒为臂内最后一项）；先关反链面板（check 10 开着）——find 行断言免
-    // 反链行 .ad 路径文本重叠。快开：input 锚 + 空 q 全量 5 行 + 过滤
-    //（Pro→Projects 独行；CJK 定理→CAP 独行——纯前端 casefold contains
-    // 双臂同跑）+ 拾取即关（Projects/CAP——CJK 拾取导航子步 PLAN-028
-    // 双臂化：三契约 POST 化收口，split 同单）。
+    // 11 find（PLAN-004 T-04；**PLAN-038 T-03 迁移**）：快开子步迁独立
+    // 根弹层（快速打开入口开 quick_open 弹层——files 用户面退役），行集
+    // /recents 断言走弹层区域锚；检索 text 模式子步留右栏面板（input 锚
+    // 改面板区域扫——快开弹层闭态 input 恒渲染[D-23③]且声明位居前，全树
+    // 首 input 锚失效）。执行序在 quit 前（quit 恒为臂内最后一项）；先关
+    // 反链面板（check 10 开着）——find 行断言免反链行 .ad 路径文本重叠。
+    // 快开：入口（菜单）→ quick_open true + 弹层可见 + 空 q recents 替换
+    // 式（开档记录累积后）+ 过滤（Pro→Projects 独行；CJK 定理→CAP 独行
+    // ——纯前端 casefold contains 双臂同跑）+ 拾取即关（Projects/CAP——
+    // CJK 拾取导航子步 PLAN-028 双臂化：三契约 POST 化收口，split 同单）。
     // 检索：text 切模式 + 未运行提示 + CJK 查询「任务列表」（POST 通道
     // ——D-19 面无，双臂同跑）→ Hello World 行（ASCII 路径导航双臂）+
     // 面板保持开 + 运行后空态。
@@ -1803,11 +1841,10 @@ async function runArm(arm, port) {
     await stateIs('backlinks_open', 'false')
     await pressButton('视图', { exact: true })
     await pressButton('快速打开', { exact: true })
-    await stateIs('find_open', 'true')
-    await stateIs('find_mode', 'files')
+    await stateIs('quick_open', 'true')
     const findTree0 = await snapshot()
-    const findInput0 = findFirst(findTree0, (n) => n.head.startsWith('input ') && elementIdOf(n))
-    if (!findInput0) throw new Error('find input not found in snapshot（快开子步）')
+    const findInput0 = quickDialogInput(findTree0)
+    if (!findInput0) throw new Error('quick dialog input not found in snapshot（快开子步）')
     // 行文本 = 显示名（PLAN-013 快开面——dtitle_of fallback=path：有 title
     // 显 title、无 title 显全路径）；断言域 = panelRowTexts 面板行集（树行
     // 同文名不误中——区域锚）。
@@ -1818,42 +1855,62 @@ async function runArm(arm, port) {
     // ——替换式直证）；**首跑无记录全量面**[005 零漂移] = T-02 冒烟一次
     // 性件承载[.runtime——boot 后零开档窗全量 5 行实录]，README N 定谳
     // 注记（arm 内 recent_paths 会话域自 boot 累积，六检查位无零记录窗）。
-    const panelRows0 = await panelRowTexts()
-    const panelAll0 = await panelTexts()
-    const recentsReplacedOk = panelAll0.includes('最近') && panelRows0.includes('Hello World')
+    const panelRows0 = await quickDialogTexts(findTree0)
+    const recentsReplacedOk = panelRows0.includes('最近') && panelRows0.includes('Hello World')
       && !panelRows0.includes('Projects') && panelRows0.length >= 1
-    if (!recentsReplacedOk) throw new Error(`空 q recents 替换面失守 rows=${JSON.stringify(panelRows0)} all=${JSON.stringify(panelAll0)}`)
+    if (!recentsReplacedOk) throw new Error(`空 q recents 替换面失守 rows=${JSON.stringify(panelRows0)}`)
     await callTool('autoui_action', { element_id: elementIdOf(findInput0), action: 'type_text', value: 'Pro' })
-    await stateHas('find_q', 'Pro')
-    const proRows = await panelRowTexts()
+    await stateHas('quick_q', 'Pro')
+    const proRows = await quickDialogTexts(await snapshot())
     const proOk = proRows.includes('Projects') && !proRows.includes('CAP 定理') && !proRows.includes('首页')
-    if (!proOk) throw new Error('files 过滤 "Pro" 未隔离 Projects 独行')
-    await pressPanelRow('Projects')
+    if (!proOk) throw new Error('快开过滤 "Pro" 未隔离 Projects 独行')
+    // 弹层行点击（QuickPick——区域锚消歧；拾取成功即关——quick_open false）
+    const pressQuickRow = async (label) => {
+      const t = await snapshot()
+      const region = quickDialogRegion(t)
+      const btn = region ? findFirst(region, (n) => n.head.startsWith('button ') && elementIdOf(n) && ownText(n) === label) : null
+      if (!btn) throw new Error(`quick row "${label}" not found`)
+      const res = await callTool('autoui_action', { element_id: elementIdOf(btn), action: 'press' })
+      if (!/status: ok/.test(res)) throw new Error(`press quick row "${label}" not ok: ${res}`)
+    }
+    await pressQuickRow('Projects')
     await stateIs('active_title', 'wiki/Projects')
-    await stateIs('find_open', 'false')
-    // CJK 文件名过滤（重开面板；行断言 + 拾取导航子步双臂——PLAN-028
+    await stateIs('quick_open', 'false')
+    // CJK 文件名过滤（重开弹层；行断言 + 拾取导航子步双臂——PLAN-028
     // 三契约 POST 化收口）
     await pressButton('视图', { exact: true })
     await pressButton('快速打开', { exact: true })
+    await stateIs('quick_open', 'true')
     const findTree1 = await snapshot()
-    const findInput1 = findFirst(findTree1, (n) => n.head.startsWith('input ') && elementIdOf(n))
+    const findInput1 = quickDialogInput(findTree1)
+    if (!findInput1) throw new Error('quick dialog input not found in snapshot（CJK 子步）')
     await callTool('autoui_action', { element_id: elementIdOf(findInput1), action: 'type_text', value: '定理' })
-    await stateHas('find_q', '定理')
-    const cjkRows = await panelRowTexts()
+    await stateHas('quick_q', '定理')
+    const cjkRows = await quickDialogTexts(await snapshot())
     const cjkFilterOk = cjkRows.includes('CAP 定理') && !cjkRows.includes('Projects')
     if (!cjkFilterOk) throw new Error('CJK 文件名过滤「定理」未隔离 CAP 定理')
-    await pressPanelRow('CAP 定理')
+    await pressQuickRow('CAP 定理')
     await stateIs('active_title', 'wiki/CAP 定理')
-    await stateIs('find_open', 'false')
-    // 检索子步（text 模式）
+    await stateIs('quick_open', 'false')
+    // 检索子步（text 模式；input = 右栏面板区域扫——闭态快开弹层 input
+    // 恒渲染且声明位居前，全树首 input 锚失效，PLAN-038 T-03）
     await pressButton('视图', { exact: true })
     await pressButton('全文检索', { exact: true })
     await stateIs('find_mode', 'text')
     await stateIs('find_open', 'true')
     const notRanOk = (await snapshotText()).includes('（输入查询词后检索）')
     if (!notRanOk) throw new Error('text 未运行空态提示缺失')
-    const findTree2 = await snapshot()
-    const findInput2 = findFirst(findTree2, (n) => n.head.startsWith('input ') && elementIdOf(n))
+    const panelInputOf = async () => {
+      for (let i = 0; i < 10; i++) {
+        const t = await snapshot()
+        const region = panelRegion(t)
+        const inp = region ? findFirst(region, (n) => n.head.startsWith('input ') && elementIdOf(n)) : null
+        if (inp) return inp
+        await sleep(300)
+      }
+      throw new Error('text-panel input not found in panel region')
+    }
+    const findInput2 = await panelInputOf()
     await callTool('autoui_action', { element_id: elementIdOf(findInput2), action: 'type_text', value: '任务列表' })
     await stateHas('find_q', '任务列表')
     await pressButton('检索', { exact: true })
@@ -1864,8 +1921,7 @@ async function runArm(arm, port) {
     await pressPanelRow('Hello World')
     await stateIs('active_title', tabTitleOf(TARGET_LABEL))
     await stateIs('find_open', 'true')
-    const findTree3 = await snapshot()
-    const findInput3 = findFirst(findTree3, (n) => n.head.startsWith('input ') && elementIdOf(n))
+    const findInput3 = await panelInputOf()
     await callTool('autoui_action', { element_id: elementIdOf(findInput3), action: 'type_text', value: 'zzz-无此词-xyz' })
     await stateHas('find_q', 'zzz-无此词-xyz')
     await pressButton('检索', { exact: true })
@@ -1876,8 +1932,7 @@ async function runArm(arm, port) {
     // r.title 恒 stem 口径，title=stem 面由 T-01 probe ⑨ 直证）→ 拾取
     // 开档（ASCII 双臂）→ 复原 Hello World 激活（check 12 前置口径）。
     fs.writeFileSync(path.join(FIXTURE, 'AliasTgt.ad'), '---\ntags:\naliases:\n  - 检别名\n---\n# AliasTgt\n\n正文无别名一词。\n')
-    const findTree4 = await snapshot()
-    const findInput4 = findFirst(findTree4, (n) => n.head.startsWith('input ') && elementIdOf(n))
+    const findInput4 = await panelInputOf()
     await callTool('autoui_action', { element_id: elementIdOf(findInput4), action: 'type_text', value: '检别名' })
     await stateHas('find_q', '检别名')
     await pressButton('检索', { exact: true })
@@ -2144,66 +2199,90 @@ async function runArm(arm, port) {
     // 不变）→ 去重置顶（重拾 Tasks → 头位）→ **容量截断**（fs 造
     // RecCap1..12 + ActDaily 树刷新[018 素材承载同款]→ 12 开 → 10 行
     // 头 RecCap12 尾 RecCap3——daily/旧记录全数位移出窗）。
+    // **PLAN-038 T-03 迁移**：⑨ 弧全走快开根弹层面（入口=菜单口；输入=
+    // 弹层 input 区域锚；行序断言 = 弹层区 button 标签序[排除取消钮]；
+    // 拾取 = QuickPick 行钮——成功即关 quick_open false）。
     const clearFindQ = async () => {
-      const ft = await snapshot()
-      const fi = findFirst(ft, (n) => n.head.startsWith('input ') && elementIdOf(n))
-      if (!fi) throw new Error('find input not found（recents 清 q）')
-      await callTool('autoui_action', { element_id: elementIdOf(fi), action: 'type_text', value: '' })
-      await stateIs('find_q', '')
+      for (let i = 0; i < 10; i++) {
+        const ft = await snapshot()
+        const fi = quickDialogInput(ft)
+        if (fi) {
+          await callTool('autoui_action', { element_id: elementIdOf(fi), action: 'type_text', value: '' })
+          await stateIs('quick_q', '')
+          return
+        }
+        await sleep(300)
+      }
+      throw new Error('quick dialog input not found（recents 清 q）')
     }
-    const pickViaFiles = async (query, label) => {
+    const pickViaQuick = async (query, label) => {
       await pressButton('视图', { exact: true })
       await pressButton('快速打开', { exact: true })
-      const ft = await snapshot()
-      const fi = findFirst(ft, (n) => n.head.startsWith('input ') && elementIdOf(n))
-      if (!fi) throw new Error('find input not found（recents 拾取）')
-      await callTool('autoui_action', { element_id: elementIdOf(fi), action: 'type_text', value: query })
-      await stateHas('find_q', query)
-      await pressPanelRow(label)
+      await stateIs('quick_open', 'true')
+      for (let i = 0; i < 10; i++) {
+        const ft = await snapshot()
+        if (quickDialogInput(ft)) break
+        await sleep(300)
+      }
+      const ft2 = await snapshot()
+      const fi2 = quickDialogInput(ft2)
+      if (!fi2) throw new Error('quick dialog input not found（recents 拾取）')
+      await callTool('autoui_action', { element_id: elementIdOf(fi2), action: 'type_text', value: query })
+      await stateHas('quick_q', query)
+      await pressQuickRow(label)
+      await stateIs('quick_open', 'false')
     }
     await pressButton('视图', { exact: true })
     await pressButton('快速打开', { exact: true })
+    await stateIs('quick_open', 'true')
     await clearFindQ()
-    // 行集过滤「收起」（FindPanel 壳钮在 vm 快照面板区——行序断言域排除）
-    const recRows = async () => (await panelRowTexts()).filter((t) => t !== '收起')
-    const recRows0 = await recRows()
-    const recAccumOk = (await panelTexts()).includes('最近') && recRows0.length >= 1
+    // 行序断言域 = 弹层区 button 标签（取消钮排除；行显示名 + 无他钮）
+    const quickRowLabels = async () => {
+      const t = await snapshot()
+      const region = quickDialogRegion(t)
+      if (!region) return []
+      const out = []
+      const walk = (n) => {
+        if (n.head.startsWith('button ') && elementIdOf(n) && ownText(n) !== '取消') out.push(ownText(n))
+        for (const c of n.children) walk(c)
+      }
+      walk(region)
+      return out
+    }
+    const recRows0 = await quickRowLabels()
+    const recAccumOk = recRows0.length >= 1 && quickDialogTexts(await snapshot()).includes('最近')
     if (!recAccumOk) throw new Error(`「最近」段失守（累积态 rows=${JSON.stringify(recRows0)}）`)
-    await pickViaFiles('index', '首页')
-    await pickViaFiles('Tasks', 'Tasks')
-    await pickViaFiles('Hello', 'Hello World')
+    await pickViaQuick('index', '首页')
+    await pickViaQuick('Tasks', 'Tasks')
+    await pickViaQuick('Hello', 'Hello World')
     await pressButton('视图', { exact: true })
     await pressButton('快速打开', { exact: true })
+    await stateIs('quick_open', 'true')
     await clearFindQ()
-    const recRows1 = await recRows()
+    const recRows1 = await quickRowLabels()
     const recOrderOk = recRows1[0] === 'Hello World' && recRows1[1] === 'Tasks' && recRows1[2] === '首页'
     if (!recOrderOk) throw new Error(`「最近」逆序失守 rows=${JSON.stringify(recRows1)}`)
-    await pressPanelRow('Hello World')
-    await stateIs('find_open', 'false')
+    await pressQuickRow('Hello World')
+    await stateIs('quick_open', 'false')
     await stateIs('active_title', tabTitleOf(TARGET_LABEL))
-    await pickViaFiles('Tasks', 'Tasks')
+    await pickViaQuick('Tasks', 'Tasks')
     await pressButton('视图', { exact: true })
     await pressButton('快速打开', { exact: true })
+    await stateIs('quick_open', 'true')
     await clearFindQ()
-    const recRows2 = await recRows()
+    const recRows2 = await quickRowLabels()
     const recDedupOk = recRows2[0] === 'Tasks' && recRows2[1] === 'Hello World' && recRows2[2] === '首页'
     if (!recDedupOk) throw new Error(`去重置顶失守 rows=${JSON.stringify(recRows2)}`)
     for (let i = 1; i <= 12; i++) fs.writeFileSync(path.join(FIXTURE, `RecCap${i}.ad`), `# RecCap${i}\n\n`, 'utf8')
     await pressButton('今日笔记')
     for (let i = 1; i <= 12; i++) {
-      await pressButton('视图', { exact: true })
-      await pressButton('快速打开', { exact: true })
-      const ft = await snapshot()
-      const fi = findFirst(ft, (n) => n.head.startsWith('input ') && elementIdOf(n))
-      if (!fi) throw new Error('find input not found（RecCap 拾取）')
-      await callTool('autoui_action', { element_id: elementIdOf(fi), action: 'type_text', value: `RecCap${i}` })
-      await stateHas('find_q', `RecCap${i}`)
-      await pressPanelRow(`RecCap${i}`)
+      await pickViaQuick(`RecCap${i}`, `RecCap${i}`)
     }
     await pressButton('视图', { exact: true })
     await pressButton('快速打开', { exact: true })
+    await stateIs('quick_open', 'true')
     await clearFindQ()
-    const recRows3 = await recRows()
+    const recRows3 = await quickRowLabels()
     const recCapOk = recRows3.length === 10 && recRows3[0] === 'RecCap12' && recRows3[9] === 'RecCap3'
     if (!recCapOk) throw new Error(`容量截断失守 len=${recRows3.length} rows=${JSON.stringify(recRows3)}`)
     // ⑩ 持久化逐行验（PLAN-021 T-03；SD-2101 落盘面——fail 即臂败）：
@@ -2221,13 +2300,20 @@ async function runArm(arm, port) {
     // 感知；state dump 侧由基线 v19 全文承载零感知）。
     const snapNoJade = !(await snapshotText()).includes('.jade')
     if (!snapNoJade) throw new Error('.jade 泄漏进树/面板快照（免索引面失守）')
-    // 收尾：find 面板关（⑨ 终态 files 模式「最近」段行集含 Projects/
-    // RecCap*——check 12 反链面板负向断言 !includes('Projects') 的区域
-    // 文本集会被 recents 行污染；关面板复位，⑦ trash 留置态先例同款）。
-    await pressButton('收起', { exact: true })
-    await stateIs('find_open', 'false')
+    // 收尾：快开弹层关（⑨ 终态「最近」段行集含 RecCap*——取消钮关层
+    // 复位；弹层闭态行区不渲染，check 12 反链面板负向断言不受污染）。
+    const pressQuickCancel = async () => {
+      const t = await snapshot()
+      const region = quickDialogRegion(t)
+      const btn = region ? findFirst(region, (n) => n.head.startsWith('button ') && elementIdOf(n) && ownText(n) === '取消') : null
+      if (!btn) throw new Error('quick cancel button not found')
+      const res = await callTool('autoui_action', { element_id: elementIdOf(btn), action: 'press' })
+      if (!/status: ok/.test(res)) throw new Error(`press quick cancel not ok: ${res}`)
+    }
+    await pressQuickCancel()
+    await stateIs('quick_open', 'false')
     check('11', 'find', recentsReplacedOk && proOk && cjkFilterOk && notRanOk && hitOk && emptyFindOk && aliasHitOk && trashCopyOk && trashRerouteOk && trashRowOk && purgeCopyOk && purgeCancelOk && trashEmptyOk && purgeDiskOk && trashRows2Ok && trashTreeInvisibleOk && trashSaveBackOk && restoreAllEmptyOk && restoreAllDiskOk && orphNoInput && orphListedOk && orphClearedOk && orphDanglingOk && recAccumOk && recOrderOk && recDedupOk && recCapOk && recDiskOk && snapNoJade,
-      `快开（input 锚/空q recents 替换面[PLAN-020 断言修订——最近段+已开档行+未开档排除]/Pro→Projects 独行拾取即关/定理→CAP 独行+CJK 拾取开档双臂[PLAN-028 POST 化收口]）+ 检索（text 切换/未运行提示/CJK「任务列表」POST 双臂命中/行导航面板保持开/运行后空态）+ alias 检索（PLAN-012——fs 造档→搜「检别名」→AliasTgt.ad 行→拾取开档双臂）+ trash 模式[PLAN-016 ⑥：＋新建 TrashMe→菜单删除 弹层文案「将移入回收站」+改道磁盘面→回收站第四模式 清单行→清空强确认[M=1 派生+取消留置零落盘]→清空→空态闭环+磁盘 .trash 消]+ **trash 增强 ⑦[PLAN-019：双条目清单→行点击预览[.trash 路径 tab 开 active_title=.trash/TrashR1+树不可见]+保存落回 .trash 原位[磁盘标记直证——可编辑口径]+恢复全部[循环 restore→清单空态+磁盘双档回根字节保真]]+ **⑧ orphans 第五模式[PLAN-020：无 input 负向面+fs 造纯孤页档入列[back walk 零树依赖]+行点击开档+造链清孤[ActSave 顺产重算行消]+悬空出链计入出链度[OrphanD 非孤——resolved 面直证]]+ ⑨ recents 弧线[PLAN-020：清 q[type_text 空]→「最近」段累积态→3 开[index/Tasks/Hello World ASCII 拾取]→头 3 行逆序→拾取即关→去重置顶[重拾 Tasks 头位]→容量截断[RecCap×12+ActDaily 树刷新→12 开→10 行 头 RecCap12 尾 RecCap3]]+ **⑩ 持久化逐行验[PLAN-021：⑨ 弧终态 ↔ .jade/recents.txt 磁盘逐行一致+快照免索引负向]**`)
+      `快开（**PLAN-038 T-03 独立根弹层**——quick_open/quick_q 弹层面[区域锚]/空q recents 替换面[PLAN-020 断言修订语义迁移——最近段+已开档行+未开档排除]/Pro→Projects 独行拾取即关[QuickPick→quick_open false]/定理→CAP 独行+CJK 拾取开档双臂[PLAN-028 POST 化收口]）+ 检索（text 切换/未运行提示/CJK「任务列表」POST 双臂命中/行导航面板保持开/运行后空态）+ alias 检索（PLAN-012——fs 造档→搜「检别名」→AliasTgt.ad 行→拾取开档双臂）+ trash 模式[PLAN-016 ⑥：＋新建 TrashMe→菜单删除 弹层文案「将移入回收站」+改道磁盘面→回收站第四模式 清单行→清空强确认[M=1 派生+取消留置零落盘]→清空→空态闭环+磁盘 .trash 消]+ **trash 增强 ⑦[PLAN-019：双条目清单→行点击预览[.trash 路径 tab 开 active_title=.trash/TrashR1+树不可见]+保存落回 .trash 原位[磁盘标记直证——可编辑口径]+恢复全部[循环 restore→清单空态+磁盘双档回根字节保真]]+ **⑧ orphans 第五模式[PLAN-020：无 input 负向面+fs 造纯孤页档入列[back walk 零树依赖]+行点击开档+造链清孤[ActSave 顺产重算行消]+悬空出链计入出链度[OrphanD 非孤——resolved 面直证]]+ ⑨ recents 弧线[PLAN-020：清 q[type_text 空]→「最近」段累积态→3 开[index/Tasks/Hello World ASCII 拾取]→头 3 行逆序→拾取即关→去重置顶[重拾 Tasks 头位]→容量截断[RecCap×12+ActDaily 树刷新→12 开→10 行 头 RecCap12 尾 RecCap3]]+ **⑩ 持久化逐行验[PLAN-021：⑨ 弧终态 ↔ .jade/recents.txt 磁盘逐行一致+快照免索引负向]**`)
 
     // N name（PLAN-033 T-04）：名称查找一致原生组（R-04）。语料 = fs 造
     // nm/ 子树（外部变更面——查找入口重开即 NamesRefresh 取新目录：本组
@@ -2271,63 +2357,92 @@ async function runArm(arm, port) {
     // ① 标题域直证 + 同名双行逐路径（title-only 页 NmHome 正文无 首页
     // ——行出现即 page_names 名称域原生直证；wiki/index.ad fm title=首页
     // 同显——同名双行 path 次行可辨）。
+    // **PLAN-038 T-03 迁移**：N 组全走快开根弹层面（输入=弹层 input 区域
+    // 锚；行断言=弹层 texts；行定址=path 次行 text 父域内 button——同名
+    // dtitle 不作定位键；拾取=QuickPick 成功即关）。
+    const quickInputReady = async () => {
+      for (let i = 0; i < 10; i++) {
+        const ft = await snapshot()
+        const fi = quickDialogInput(ft)
+        if (fi) return fi
+        await sleep(300)
+      }
+      throw new Error('quick dialog input not found（N 组）')
+    }
+    const pressQuickRowByPath = async (rel) => {
+      const t = await snapshot()
+      const region = quickDialogRegion(t)
+      if (!region) throw new Error('quick dialog region not found（N 组）')
+      const hits = []
+      const walk = (n) => {
+        if (n.head.startsWith('text ') && ownText(n) === rel) hits.push(n)
+        for (const c of n.children) walk(c)
+      }
+      walk(region)
+      if (!hits.length) throw new Error(`quick row path "${rel}" not found（N 组）`)
+      const parent = findParent(region, hits[0]) ?? region
+      const btn = findFirst(parent, (n) => n.head.startsWith('button ') && elementIdOf(n))
+      if (!btn) throw new Error(`button for "${rel}" not found（N 组）`)
+      const res = await callTool('autoui_action', { element_id: elementIdOf(btn), action: 'press' })
+      if (!/status: ok/.test(res)) throw new Error(`press quick row(${rel}) not ok: ${res}`)
+    }
     await pressButton('视图', { exact: true })
     await pressButton('快速打开', { exact: true })
-    await stateIs('find_open', 'true')
+    await stateIs('quick_open', 'true')
     await stateIs('names_state', 'ready')
-    const findTreeN1 = await snapshot()
-    const findInputN1 = findFirst(findTreeN1, (n) => n.head.startsWith('input ') && elementIdOf(n))
+    const findInputN1 = await quickInputReady()
     await callTool('autoui_action', { element_id: elementIdOf(findInputN1), action: 'type_text', value: '首页' })
-    await stateHas('find_q', '首页')
-    const nTitleTexts = await panelTexts()
+    await stateHas('quick_q', '首页')
+    const nTitleTexts = await quickDialogTexts(await snapshot())
     const nTitleOk = nTitleTexts.includes('nm/NmHome.ad') && nTitleTexts.includes('wiki/index.ad')
     if (!nTitleOk) throw new Error(`N① 标题域同名双行失守 texts=${JSON.stringify(nTitleTexts)}`)
-    await pressPanelRowByPath('nm/NmHome.ad')
+    await pressQuickRowByPath('nm/NmHome.ad')
     await stateIs('active_title', 'nm/NmHome')
-    await stateIs('find_open', 'false')
+    await stateIs('quick_open', 'false')
     // ② 同名双页逐路径打开（重名页 A/B——path 定址各开各档）。
     await pressButton('视图', { exact: true })
     await pressButton('快速打开', { exact: true })
-    const findTreeN2 = await snapshot()
-    const findInputN2 = findFirst(findTreeN2, (n) => n.head.startsWith('input ') && elementIdOf(n))
+    await stateIs('quick_open', 'true')
+    const findInputN2 = await quickInputReady()
     await callTool('autoui_action', { element_id: elementIdOf(findInputN2), action: 'type_text', value: '重名页' })
-    await stateHas('find_q', '重名页')
-    const nDupTexts = await panelTexts()
+    await stateHas('quick_q', '重名页')
+    const nDupTexts = await quickDialogTexts(await snapshot())
     const nDupOk = nDupTexts.includes('nm/NmDupA.ad') && nDupTexts.includes('nm/NmDupB.ad')
     if (!nDupOk) throw new Error(`N② 同名双页行失守 texts=${JSON.stringify(nDupTexts)}`)
-    await pressPanelRowByPath('nm/NmDupB.ad')
+    await pressQuickRowByPath('nm/NmDupB.ad')
     await stateIs('active_title', 'nm/NmDupB')
-    // ③ alias + 相对路径 + 5 层深档（入口重开即取新目录——② 后面板
+    // ③ alias + 相对路径 + 5 层深档（入口重开即取新目录——② 后弹层
     // 已关，本弧重开触发 NamesRefresh 读入 NmAlias/NmDeep）。
     await pressButton('视图', { exact: true })
     await pressButton('快速打开', { exact: true })
-    const findTreeN3 = await snapshot()
-    const findInputN3 = findFirst(findTreeN3, (n) => n.head.startsWith('input ') && elementIdOf(n))
+    await stateIs('quick_open', 'true')
+    const findInputN3 = await quickInputReady()
     await callTool('autoui_action', { element_id: elementIdOf(findInputN3), action: 'type_text', value: '独角兽' })
-    await stateHas('find_q', '独角兽')
-    const nAliasOk = (await panelTexts()).includes('nm/NmAlias.ad')
+    await stateHas('quick_q', '独角兽')
+    const nAliasOk = (await quickDialogTexts(await snapshot())).includes('nm/NmAlias.ad')
     if (!nAliasOk) throw new Error('N③ alias「独角兽」未出 NmAlias 行')
-    await pressPanelRowByPath('nm/NmAlias.ad')
+    await pressQuickRowByPath('nm/NmAlias.ad')
     await stateIs('active_title', 'nm/NmAlias')
     await pressButton('视图', { exact: true })
     await pressButton('快速打开', { exact: true })
-    const findTreeN4 = await snapshot()
-    const findInputN4 = findFirst(findTreeN4, (n) => n.head.startsWith('input ') && elementIdOf(n))
+    await stateIs('quick_open', 'true')
+    const findInputN4 = await quickInputReady()
     await callTool('autoui_action', { element_id: elementIdOf(findInputN4), action: 'type_text', value: 'nm/deep' })
-    await stateHas('find_q', 'nm/deep')
-    const nDeepOk = (await panelTexts()).includes('nm/deep/l2/l3/l4/l5/NmDeep.ad')
+    await stateHas('quick_q', 'nm/deep')
+    const nDeepOk = (await quickDialogTexts(await snapshot())).includes('nm/deep/l2/l3/l4/l5/NmDeep.ad')
     if (!nDeepOk) throw new Error('N③ 相对路径「nm/deep」未出 5 层深档行')
-    await pressPanelRowByPath('nm/deep/l2/l3/l4/l5/NmDeep.ad')
+    await pressQuickRowByPath('nm/deep/l2/l3/l4/l5/NmDeep.ad')
     await stateIs('active_title', 'nm/deep/l2/l3/l4/l5/NmDeep')
-    await stateIs('find_open', 'false')
+    await stateIs('quick_open', 'false')
     // ④ 模式门（行域隔离）：text 检索正文词「任务列表」→ Tasks 行；切
     // files 同残留查询 → files 行集不收正文词（无匹配文件 + Tasks 钮不
     // 泄漏）——find_rows/files_rows 双源结构隔离的原生断言。
     await pressButton('视图', { exact: true })
     await pressButton('全文检索', { exact: true })
     await stateIs('find_mode', 'text')
-    const findTreeN5 = await snapshot()
-    const findInputN5 = findFirst(findTreeN5, (n) => n.head.startsWith('input ') && elementIdOf(n))
+    // text 面板 input = 右栏区域锚（闭态快开弹层 input 恒渲染且声明位
+    // 居前——全树首 input 锚失效，PLAN-038 T-03）。
+    const findInputN5 = await panelInputOf()
     await callTool('autoui_action', { element_id: elementIdOf(findInputN5), action: 'type_text', value: '任务列表' })
     await stateHas('find_q', '任务列表')
     await pressButton('检索', { exact: true })
@@ -2341,36 +2456,40 @@ async function runArm(arm, port) {
       fs.writeFileSync(`e2e/.runtime/fail-n4-${Date.now()}.txt`, dbg + '\n=====PANELTEXTS=====\n' + JSON.stringify(nTextTexts, null, 1) + '\n=====STATE=====\n' + (await callTool('autoui_state', {})))
       throw new Error(`N④ text「任务列表」未出 Hello World 行 texts=${JSON.stringify(nTextTexts)}`)
     }
+    // 模式门迁移（PLAN-038）：快开弹层行集独立于 text 检索行——重开弹层
+    // （quick_q 遗留 'nm/deep'）行集零 text 命中泄漏（结构隔离原生断言；
+    // files 面已退役，空态面由 prod probe K2 与 vue e2e 承载）。
     await pressButton('视图', { exact: true })
     await pressButton('快速打开', { exact: true })
-    await stateIs('find_mode', 'files')
-    // 渲染落定轮询（行区/空态随 mode 切换重渲染——快照节拍容差）。
-    let nGateTexts = await panelTexts()
-    for (let i = 0; i < 15 && !nGateTexts.includes('（无匹配文件）'); i++) {
+    await stateIs('quick_open', 'true')
+    let nGateTexts = await quickDialogTexts(await snapshot())
+    for (let i = 0; i < 15 && !nGateTexts.includes('nm/deep/l2/l3/l4/l5/NmDeep.ad'); i++) {
       await sleep(300)
-      nGateTexts = await panelTexts()
+      nGateTexts = await quickDialogTexts(await snapshot())
     }
-    const nGateOk = nGateTexts.includes('（无匹配文件）') && !nGateTexts.includes('wiki/Hello World.ad')
+    const nGateOk = nGateTexts.includes('nm/deep/l2/l3/l4/l5/NmDeep.ad') && !nGateTexts.includes('wiki/Hello World.ad')
     if (!nGateOk) {
-      fs.writeFileSync(`e2e/.runtime/fail-n4gate-${Date.now()}.txt`, '=====PANELTEXTS=====\n' + JSON.stringify(nGateTexts, null, 1) + '\n=====STATE=====\n' + (await callTool('autoui_state', {})))
-      throw new Error(`N④ 模式门失守——text 行泄漏 files 面 texts=${JSON.stringify(nGateTexts)}`)
+      fs.writeFileSync(`e2e/.runtime/fail-n4gate-${Date.now()}.txt`, '=====DIALOGTEXTS=====\n' + JSON.stringify(nGateTexts, null, 1) + '\n=====STATE=====\n' + (await callTool('autoui_state', {})))
+      throw new Error(`N④ 模式门失守——text 行泄漏快开面 texts=${JSON.stringify(nGateTexts)}`)
     }
-    await pressButton('收起', { exact: true })
-    await stateIs('find_open', 'false')
-    // ⑤ 外部刷新：fs 改 NmAlias 增 title 另称页（外部变更）→ 重进查找
+    await pressQuickCancel()
+    await stateIs('quick_open', 'false')
+    // ⑤ 外部刷新：fs 改 NmAlias 增 title 另称页（外部变更）→ 重进快开
     // 入口 → 新 dtitle 可查、旧 alias 查询退出（NamesRefresh 入口即取新
     // 目录——AC-08 外部变更观察口原生直证）。
     fs.writeFileSync(path.join(FIXTURE, 'nm', 'NmAlias.ad'), '---\ntitle: 另称页\naliases:\n- 独角兽\n---\n\n别名页正文。\n')
     await pressButton('视图', { exact: true })
     await pressButton('快速打开', { exact: true })
-    const findTreeN6 = await snapshot()
-    const findInputN6 = findFirst(findTreeN6, (n) => n.head.startsWith('input ') && elementIdOf(n))
+    await stateIs('quick_open', 'true')
+    const findInputN6 = await quickInputReady()
     await callTool('autoui_action', { element_id: elementIdOf(findInputN6), action: 'type_text', value: '另称页' })
-    await stateHas('find_q', '另称页')
-    const nRefreshOk = (await panelTexts()).includes('nm/NmAlias.ad')
+    await stateHas('quick_q', '另称页')
+    const nRefreshOk = (await quickDialogTexts(await snapshot())).includes('nm/NmAlias.ad')
     if (!nRefreshOk) throw new Error('N⑤ 外部 title 变更重进后未出 NmAlias 行（NamesRefresh 入口取新）')
-    const nTitleBtn = await panelRowTexts()
+    const nTitleBtn = await quickDialogTexts(await snapshot())
     if (!nTitleBtn.includes('另称页')) throw new Error(`N⑤ 行显示名未随新 title（rows=${JSON.stringify(nTitleBtn)}）`)
+    await pressQuickCancel()
+    await stateIs('quick_open', 'false')
     check('N', 'name', nTitleOk && nDupOk && nAliasOk && nDeepOk && nTextOk && nGateOk && nRefreshOk,
       `名称查找一致原生组（PLAN-033）：标题域同名双行（NmHome title-only+index fm title——path 次行可辨）+ 逐路径打开（NmHome/NmDupB 各开各档 active_title）+ alias/相对路径/5 层深档（入口重开 NamesRefresh 读新目录）+ 模式门（text 正文词行不泄漏 files 面）+ 外部刷新（fs 改 title→重进→新 dtitle 行）。错误/迟到门 = 网络可观测面由 e2e name-search.spec 承载（merged 无网络层不设虚假案）`)
 
@@ -2463,7 +2582,15 @@ async function runArm(arm, port) {
     await typeIntoRenameInput(RENAME_NEW_NAME)
     await stateHas('rename_q', 'Project X')
     await pressInRenameDialog('重命名')
-    await stateIs('active_title', RENAME_NEW_TITLE)
+    try {
+      await stateIs('active_title', RENAME_NEW_TITLE)
+    } catch (e) {
+      for (const f of ['lc_hold', 'lc_status', 'lc_verdict', 'rename_open', 'rename_q', 'active_path']) {
+        console.log('[T12-DBG]', f, '=', await stateText(f))
+      }
+      console.log('[T12-DBG] console-tail =', (await stateText('console')).slice(-500))
+      throw e
+    }
     await stateIs('active_path', RENAME_NEW_REL)
     const renamedExists = fs.existsSync(renamedFile)
     const oldGone = !fs.existsSync(renameProjectsFile)
@@ -3227,17 +3354,19 @@ async function runArm(arm, port) {
     await stateIs('movedir_open', 'false')
     // ④ deep 案：快开 'DeepPg' → 5 层档行在（depth 8 front 面收口——
     // depth 4 下 ft_nodes 不含 → 行集不含）→ 拾取开档（ASCII 路径双臂）
-    // → 关档收口。
+    // → 关档收口。**PLAN-038 T-03 迁移**：弹层面（input/行/拾取区域锚）。
     await pressButton('视图', { exact: true })
     await pressButton('快速打开', { exact: true })
-    await stateIs('find_open', 'true')
-    await stateIs('find_mode', 'files')
+    await stateIs('quick_open', 'true')
     {
-      const t = await snapshot()
-      const fi = findFirst(t, (n) => n.head.startsWith('input ') && elementIdOf(n))
-      if (!fi) throw new Error('find input not found（deep 案）')
+      let fi = null
+      for (let i = 0; i < 10 && !fi; i++) {
+        fi = quickDialogInput(await snapshot())
+        if (!fi) await sleep(300)
+      }
+      if (!fi) throw new Error('quick dialog input not found（deep 案）')
       await callTool('autoui_action', { element_id: elementIdOf(fi), action: 'type_text', value: 'DeepPg' })
-      await stateHas('find_q', 'DeepPg')
+      await stateHas('quick_q', 'DeepPg')
     }
     const DEEP_REL = 'L1/L2/L3/L4/DeepPg.ad'
     // 行标签 = dtitle（titles 随 link_index depth 8 含深档 → stem
@@ -3245,12 +3374,12 @@ async function runArm(arm, port) {
     // 证）。'DeepPg' 全树唯一（素材名避让）。
     let deepRowOk = false
     for (const dl = Date.now() + 8000; ; ) {
-      deepRowOk = (await panelRowTexts()).includes('DeepPg')
+      deepRowOk = (await quickDialogTexts(await snapshot())).includes('DeepPg')
       if (deepRowOk || Date.now() > dl) break
       await sleep(300)
     }
     if (!deepRowOk) throw new Error(`deep 案快开行失守（DeepPg[${DEEP_REL}] 未现——depth 8 收口面）`)
-    await pressPanelRow('DeepPg')
+    await pressQuickRow('DeepPg')
     await stateIs('active_title', 'L1/L2/L3/L4/DeepPg')
     await stateHas('active_body', '深位档')
     await pressActiveTabClose('DeepPg')
@@ -3724,11 +3853,11 @@ async function runArm(arm, port) {
           await sleep(300)
         }
       }
-      return { app2, snap2Text, state2Text, press2, poll2 }
+      return { app2, snap2Text, state2Text, press2, poll2, call2: (name, args) => client2.callTool(name, args) }
     }
     const boot2 = await bootAgain()
     try {
-      const { snap2Text, state2Text, press2, poll2 } = boot2
+      const { snap2Text, state2Text, press2, poll2, call2 } = boot2
       await poll2(async () => /status:\s*"?ready"?/.test(await state2Text()), 'boot ready', 30000)
       // ⑩b 载入态：state 清单逐行 = 磁盘逐行（真值 = check 9 退出时磁盘
       // 件——12/13 组 rename/move/daily/deep 触点在 ⑨ 弧后仍会改写清单，
@@ -3744,12 +3873,27 @@ async function runArm(arm, port) {
       const reloadRowsOk = loadedRows.length > 0 && JSON.stringify(loadedRows) === JSON.stringify(diskRows2)
       if (!reloadRowsOk) throw new Error(`⑩b 载入态逐行失守 loaded=${JSON.stringify(loadedRows)} disk=${JSON.stringify(diskRows2)}`)
       // 载入态快开：「最近」段渲染（RecCap*.ad 同文树行在——段标题为唯
-      // 一判别面；行序面 = state 清单已逐行锁）。
+      // 一判别面；行序面 = state 清单已逐行锁）。**PLAN-038 弹层面**：
+      // 关层 = 弹层标题锚取消钮（D-29③ 族——闭态 alert-dialog 取消钮居
+      // 前，全树首「取消」误中）。
       await press2('视图')
       await press2('快速打开')
       await poll2(async () => (await snap2Text()).includes('最近'), '「最近」段渲染（载入态）')
-      await press2('收起', { exact: true })
-      await poll2(async () => /find_open:\s*false/.test(await state2Text()), 'find panel closed')
+      {
+        let btn = null
+        for (let i = 0; i < 10 && !btn; i++) {
+          const t = parseAura(await snap2Text())
+          const title = findFirst(t, (n) => ownText(n) === '快速打开' && !n.head.startsWith('button '))
+          const header = title ? findParent(t, title) : null
+          const content = header ? findParent(t, header) : null
+          btn = content ? findFirst(content, (n) => n.head.startsWith('button ') && elementIdOf(n) && ownText(n) === '取消') : null
+          if (!btn) await sleep(300)
+        }
+        if (!btn) throw new Error('quick cancel button not found（⑩b）')
+        const res = await call2('autoui_action', { element_id: elementIdOf(btn), action: 'press' })
+        if (!/status: ok/.test(res)) throw new Error(`⑩b quick cancel not ok: ${res}`)
+      }
+      await poll2(async () => /quick_open:\s*false/.test(await state2Text()), 'quick dialog closed')
       // ⑩c 防线案：201 页微语料（P≤200 安全线 +1——阈值 >200 直证）。
       for (let i = 1; i <= 201; i++) fs.writeFileSync(path.join(FIXTURE, `WarnFill${i}.ad`), `# WarnFill${i}\n\n`, 'utf8')
       await press2('今日笔记')
@@ -3760,8 +3904,21 @@ async function runArm(arm, port) {
       await press2('视图')
       await press2('快速打开')
       await poll2(async () => (await snap2Text()).includes('最近'), '警示窗内快开可用')
-      await press2('收起', { exact: true })
-      await poll2(async () => /find_open:\s*false/.test(await state2Text()), 'find panel closed (warn window)')
+      {
+        let btn = null
+        for (let i = 0; i < 10 && !btn; i++) {
+          const t = parseAura(await snap2Text())
+          const title = findFirst(t, (n) => ownText(n) === '快速打开' && !n.head.startsWith('button '))
+          const header = title ? findParent(t, title) : null
+          const content = header ? findParent(t, header) : null
+          btn = content ? findFirst(content, (n) => n.head.startsWith('button ') && elementIdOf(n) && ownText(n) === '取消') : null
+          if (!btn) await sleep(300)
+        }
+        if (!btn) throw new Error('quick cancel button not found（⑩c）')
+        const res = await call2('autoui_action', { element_id: elementIdOf(btn), action: 'press' })
+        if (!/status: ok/.test(res)) throw new Error(`⑩c quick cancel not ok: ${res}`)
+      }
+      await poll2(async () => /quick_open:\s*false/.test(await state2Text()), 'quick dialog closed (warn window)')
       // 清料回归：删 201 件 → ActDaily 再刷 → 零警示。
       for (let i = 1; i <= 201; i++) fs.rmSync(path.join(FIXTURE, `WarnFill${i}.ad`), { force: true })
       await press2('今日笔记')

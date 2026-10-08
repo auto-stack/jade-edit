@@ -47,3 +47,14 @@
 - VM Escape 关闭、VM Tab 键程遍历：上游 modal/合成通道边界，owner=上游（F-038-R1 单列计划 §10）；不阻塞本片交付（取消钮+vue Escape 承载同终态）。
 - `__focus_result` 观察位为生产模型新增字段（仅 ui.focus 回执观察，无业务消费）——SD-01 终版将记入。
 - merged 臂 exists/read 为进程内同步直调——**真实异步等待窗（busy/迟到票据）在 merged 无可验证对象**，与 036/037 同判：门代码 + vue e2e route-delay 反例（T-04）+ 上游语料承载，VM 面不假绿。
+
+## 7. T-03 执行期定谳补充（2026-10-09，生产化实勘）
+
+- **查询跨开合保留**：重开弹层不重置 quick_q（find_q 同语义）——T-03 曾误判「重开行集不刷新」为渲染边界，实勘定谳 = 输入框遗留值与行集恒一致（视图正确）；测试侧断言须先清查询。
+- **`ui.focus` 回执观察位声明要求**（§2 补充）：renderer write_state 对未声明字段 FieldNotFound 静默——生产 App 模型 `var __focus_result str = ""` 为焦点证据的**前置条件**（T-01 首跑 FAIL→补声明复测 PASS）。
+- **VM 工具栏钮锚**：toolbar 钮 ownText = `file-search<私有分隔符>快速打开`（图标名+标题拼连含不可见分隔符）——直串匹配恒 miss；锚 = `onclick: .ActFindFiles` 行回溯最近 button 行。
+- **VM 快开取消钮锚（D-29③ 族）**：闭态 alert-dialog 族恒渲染且居快开弹层之前——全树首「取消」= 关闭确认弹层钮（ConfirmCancel no-op）；取消按压必须自「快速打开」标题向后扫。
+- **Ctrl+P 合成通道在册**：autoui_keyboard {key:'p',modifiers:['ctrl']} → action_config 路由 → ActFindFiles（VM 探针 I3 实测开层）。
+- **行集物化定版**：空查询「最近/目录/空态」三分在 handler 侧物化为单行集字段（行形状 {path,dtitle,sec}，sec="header"/""/"empty"）——视图纯 for + 逐行字符串分支（VM 恒渲染子树 len() 过渡不重评家族规避；033 model 字段纪律同判）。quick_first_of 跳过伪行取首候选。
+- **vue e2e 编辑纪律**：快开拾取后编辑 = content 顶左点击（短文档 Save 钮区遮蔽容器中心）+ 落定重试 + blur 冲刷（未冲刷的 engine 内缓存在重挂载播种面被 store 旧体覆写）——036 U1「草稿已保护」store 落定锚同族。
+- **入口即重取目录的测试侧含义**：先删档后开层 = 行直接消失（无 stale 面）；stale-missing 场景须**弹层开着**删档（内存目录 stale + 纯内存过滤零重取）——VM probe O 与 vue e2e 同序。

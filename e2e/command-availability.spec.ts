@@ -123,7 +123,7 @@ test('命令可用性·键程归属（Ctrl+Z/Y 内部撤销重做、input Ctrl+A
   //（旧形态宿主 Ctrl+A preventDefault+ActSelectAll 空转；现原生全选归
   // input 自辖）
   await page.keyboard.press('Control+p')
-  const findInput = page.getByPlaceholder('过滤文件名…')
+  const findInput = page.getByPlaceholder('输入标题、别名或路径…')
   await expect(findInput).toBeVisible({ timeout: 5_000 })
   await findInput.press('Control+End')
   await findInput.type('Hel', { delay: 20 })
@@ -134,7 +134,7 @@ test('命令可用性·键程归属（Ctrl+Z/Y 内部撤销重做、input Ctrl+A
   await expect(page.getByText(HELP_TITLE, { exact: true })).toHaveCount(0)
   await expect(visibleEditor(page)).toContainText('这是一段示例文本')
   expect(fs.readFileSync(TARGET_FILE, 'utf8'), 'input 键程零磁盘写入').toBe(diskBefore)
-  await page.getByText('收起', { exact: true }).click()
+  await page.getByRole('dialog').getByRole('button', { name: '取消', exact: true }).click()
   console.log('[键程] PASS — input Ctrl+A 局部全选+替换、正文/磁盘保持、零说明弹出')
 })
 

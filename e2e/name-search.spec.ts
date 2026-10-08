@@ -20,10 +20,12 @@
 //   [6] 刷新失效（AC-08）：外部 fs 改 title → 属性保存（MetaGo）后目录
 //       更新；text 结果过期横幅 → 重新检索消解。
 //
-// 断言纪律：行定域 = 面板列（div.w-72 全页唯一）+ 精确 path 次行文本
-//（路径唯一——同名 dtitle 不作定位键）；素材 = 本测自建 nm/ 子树（boot
-// 前落位，matrix 套件遗留面零依赖——wiki/index.ad 仅作 path 断言其
-// frontmatter title=首页随 fixture 在册）。
+// 断言纪律（PLAN-038 T-03 迁移）：行定域 = 快开独立根弹层（dialog role
+// 全页唯一开态层——右栏 files 面板退役）+ 精确 path 次行文本（路径唯一
+// ——同名 dtitle 不作定位键）；素材 = 本测自建 nm/ 子树（boot 前落位，
+// matrix 套件遗留面零依赖——wiki/index.ad 仅作 path 断言其 frontmatter
+// title=首页随 fixture 在册）。入口 = 菜单口（menuitem role 锚——工具栏
+// 钮文本同名，T-03 第三入口在册）。
 import { expect, test, type Page, type Locator } from '@playwright/test'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -47,20 +49,30 @@ function writeCorpus() {
   put('nm/Quoted.ad', `---\ntitle: q"ote\\slash\naliases:\n- tab${TAB}9\n---\n\nquoted body\n`)
 }
 
-/** 查找面板列（全页唯一 w-72）。 */
+/** 快开独立根弹层（PLAN-038 T-03 迁移——dialog role 定域；右栏 files
+ *  面板退役，快开弧行断言走本域）。 */
+function quickDialog(page: Page): Locator {
+  return page.getByRole('dialog')
+}
+
+/** 全文检索面板列（text 模式右栏 w-72——快开迁移后仍承载 text/wanted/
+ *  trash/orphans 四模式；text 行断言域）。 */
 function panel(page: Page): Locator {
   return page.locator('div.w-72')
 }
 
-/** 面板内按 path 次行定行（行包装 div 的唯一子 button）。 */
-function rowByPath(panelCol: Locator, rel: string): Locator {
-  return panelCol.getByText(rel, { exact: true }).locator('..').getByRole('button')
+/** 弹层内按 path 次行定行（行包装 div 的唯一子 button——同名 dtitle 不作
+ *  定位键，路径唯一）。 */
+function rowByPath(dialogCol: Locator, rel: string): Locator {
+  return dialogCol.getByText(rel, { exact: true }).locator('..').getByRole('button')
 }
 
 async function openQuickOpen(page: Page) {
-  await page.getByText('视图', { exact: true }).click()
-  await page.getByText('快速打开', { exact: true }).click()
-  await expect(page.getByPlaceholder('过滤文件名…')).toBeVisible({ timeout: 10_000 })
+  await page.getByRole('menuitem', { name: '视图' }).click()
+  // ⚠ 工具栏钮文本同含 快速打开（PLAN-038 T-03 第三入口）——menuitem
+  // role 锚消歧（工具栏钮非 menuitem）。
+  await page.getByRole('menuitem', { name: '快速打开' }).click()
+  await expect(page.getByPlaceholder('输入标题、别名或路径…')).toBeVisible({ timeout: 10_000 })
 }
 
 async function openFindText(page: Page) {
@@ -80,8 +92,8 @@ test('名称查找核心弧（PLAN-033 T-03）', async ({ page }) => {
   // —— ① title-only 页快开可找（AC-01）：查询 首页 → fixture index.ad
   //（fm title=首页）与 nm/Home.ad 双行、同显示名、path 次行可区分。——
   await openQuickOpen(page)
-  const p = panel(page)
-  const input = page.getByPlaceholder('过滤文件名…')
+  const p = quickDialog(page)
+  const input = page.getByPlaceholder('输入标题、别名或路径…')
   await input.fill('首页')
   await expect(rowByPath(p, 'wiki/index.ad')).toBeVisible({ timeout: 10_000 })
   await expect(rowByPath(p, 'nm/Home.ad')).toBeVisible()
@@ -91,7 +103,7 @@ test('名称查找核心弧（PLAN-033 T-03）', async ({ page }) => {
   // —— ② 按实际路径点击开正确档（AC-05）+ files 拾取即关。——
   await rowByPath(p, 'nm/Home.ad').click()
   await expect(visibleEditor(page)).toContainText('普通正文段落', { timeout: 10_000 })
-  await expect(page.getByPlaceholder('过滤文件名…')).toHaveCount(0)
+  await expect(page.getByPlaceholder('输入标题、别名或路径…')).toHaveCount(0)
 
   // —— ③ 同名双页逐路径打开（AC-05）：重名页两行各开各盘正文。——
   await openQuickOpen(page)
@@ -104,7 +116,7 @@ test('名称查找核心弧（PLAN-033 T-03）', async ({ page }) => {
   await input.fill('重名页')
   await expect(rowByPath(p, 'nm/Dup A.ad')).toBeVisible({ timeout: 10_000 })
   await rowByPath(p, 'nm/Dup A.ad').click()
-  await expect(visibleEditor(page)).toContainText('甲处正文', { timeout: 10_000 })
+  await expect(visibleEditor(page)).toContainText('甲处正文', { timeout: 15_000 })
 
   // —— ④ 名称五域（AC-02/04）：alias / stem / 带 .ad 文件名 / 相对路径
   // / 5 层深档；trim 与 ASCII 大小写。——
@@ -128,8 +140,10 @@ test('名称查找核心弧（PLAN-033 T-03）', async ({ page }) => {
   // —— ⑥ 制表符 alias 可查（AC-04 转义读回面——JSON 往返后匹配）。——
   await input.fill(`tab${TAB}9`)
   await expect(rowByPath(p, 'nm/Quoted.ad')).toBeVisible({ timeout: 10_000 })
-  await page.getByRole('button', { name: '收起', exact: true }).first().click()
-  await expect(page.getByPlaceholder('过滤文件名…')).toHaveCount(0, { timeout: 10_000 })
+  // Escape 关弹层（vue 轨 reka-ui v-model 直写 store.quick_open——无 msg
+  // 派发，在途拾取由关态门兜住[契约 §5]）。
+  await input.press('Escape')
+  await expect(page.getByPlaceholder('输入标题、别名或路径…')).toHaveCount(0, { timeout: 10_000 })
 })
 
 test('全文扩面与行形态（PLAN-033 T-03）', async ({ page }) => {
@@ -141,7 +155,8 @@ test('全文扩面与行形态（PLAN-033 T-03）', async ({ page }) => {
   await expect(page.getByText('ready', { exact: true }).first()).toBeVisible({ timeout: 15_000 })
 
   // —— ① title-only 命中进全文（AC-01）：首页 → index.ad（正文 # 首页
-  // 行命中，snippet 非空）+ nm/Home.ad（title-only，snippet 空——行仍在）。——
+  // 行命中，snippet 非空）+ nm/Home.ad（title-only，snippet 空——行仍在）。
+  // text 行断言域 = 右栏面板（PLAN-038 迁移后 text 面仍在右栏）。——
   await openFindText(page)
   const p = panel(page)
   const input = page.getByPlaceholder('输入查询词…')
@@ -189,14 +204,18 @@ test('请求计数与逐键零 fetch（PLAN-033 T-03 AC-06）', async ({ page })
   await openQuickOpen(page)
   const base = namesCalls
   expect(base, '入口恰一次目录请求').toBe(1)
-  const input = page.getByPlaceholder('过滤文件名…')
+  const input = page.getByPlaceholder('输入标题、别名或路径…')
   await input.fill('H')
   await input.fill('Ho')
   await input.fill('Home')
   await page.waitForTimeout(800)
   expect(namesCalls, '逐键零 fetch').toBe(base)
 
-  // 切 text 模式（入口再取一次目录）→ Enter 逐次 search（AC-06 全文触发面）。
+  // 切 text 模式（入口再取一次目录）→ Enter 逐次 search（AC-06 全文触发
+  // 面）。⚠ 快开=根模态弹层（PLAN-038）——切菜单入口前先关层（模态域
+  // 外菜单不可达——T-03 实勘测试侧纪律）。
+  await input.press('Escape')
+  await expect(page.getByPlaceholder('输入标题、别名或路径…')).toHaveCount(0, { timeout: 10_000 })
   await page.getByText('视图', { exact: true }).click()
   await page.getByText('全文检索', { exact: true }).click()
   await expect(page.getByPlaceholder('输入查询词…')).toBeVisible({ timeout: 10_000 })
@@ -230,17 +249,23 @@ test('失败可见与重试（PLAN-033 T-04 AC-09）', async ({ page }) => {
   await expect(page.getByText('ready', { exact: true }).first()).toBeVisible({ timeout: 15_000 })
 
   await openQuickOpen(page)
-  const p = panel(page)
+  const p = quickDialog(page)
   await expect(p.getByText('名称加载失败', { exact: true })).toBeVisible({ timeout: 10_000 })
   await expect(p.getByText('（无匹配文件）', { exact: true })).toHaveCount(0)
 
-  // 恢复 + 重试 → 目录可用，行集出现，错误横幅消失。
+  // 恢复 + 重试 → 目录可用，行集出现，错误横幅消失（快开弹层面）。
   failNames = false
   await p.getByRole('button', { name: '重试', exact: true }).click()
-  const input = page.getByPlaceholder('过滤文件名…')
+  const input = page.getByPlaceholder('输入标题、别名或路径…')
   await input.fill('Home')
   await expect(rowByPath(p, 'nm/Home.ad')).toBeVisible({ timeout: 10_000 })
   await expect(p.getByText('名称加载失败', { exact: true })).toHaveCount(0)
+  // 关快开层（模态域外菜单不可达——T-03 实勘测试侧纪律）。
+  await input.press('Escape')
+  await expect(page.getByPlaceholder('输入标题、别名或路径…')).toHaveCount(0, { timeout: 10_000 })
+
+  // —— text 段（搜索失败横幅/重试 = 右栏面板域）。——
+  const tp = panel(page)
 
   // search_wiki 拒 → 搜索失败横幅（非"无结果"）；重试成功清错。
   await page.getByText('视图', { exact: true }).click()
@@ -252,12 +277,12 @@ test('失败可见与重试（PLAN-033 T-04 AC-09）', async ({ page }) => {
   const tin = page.getByPlaceholder('输入查询词…')
   await tin.fill('普通')
   await tin.press('Enter')
-  await expect(p.getByText('搜索失败——请重试', { exact: true })).toBeVisible({ timeout: 10_000 })
-  await expect(p.getByText('（无结果）', { exact: true })).toHaveCount(0)
+  await expect(tp.getByText('搜索失败——请重试', { exact: true })).toBeVisible({ timeout: 10_000 })
+  await expect(tp.getByText('（无结果）', { exact: true })).toHaveCount(0)
   await page.unroute('**/api/search_wiki')
   await tin.press('Enter')
-  await expect(rowByPath(p, 'nm/Home.ad')).toBeVisible({ timeout: 10_000 })
-  await expect(p.getByText('搜索失败——请重试', { exact: true })).toHaveCount(0)
+  await expect(rowByPath(tp, 'nm/Home.ad')).toBeVisible({ timeout: 10_000 })
+  await expect(tp.getByText('搜索失败——请重试', { exact: true })).toHaveCount(0)
 })
 
 test('迟到响应门（PLAN-033 T-04 AC-09）', async ({ page }) => {
@@ -311,19 +336,20 @@ test('保存刷新与过期横幅（PLAN-033 T-04 AC-08）', async ({ page }) =>
   // 消解（AC-08 属性编辑代表弧 + §5.3 过期门）。新 title = 甲一（与旧
   // 首页无子串重叠——contains 匹配域可正交断言）。
   await openFindText(page)
-  const p = panel(page)
+  const tp = panel(page)
   const tin = page.getByPlaceholder('输入查询词…')
   await tin.fill('甲处正文')
   await tin.press('Enter')
-  await expect(rowByPath(p, 'nm/Dup A.ad')).toBeVisible({ timeout: 10_000 })
+  await expect(rowByPath(tp, 'nm/Dup A.ad')).toBeVisible({ timeout: 10_000 })
 
-  // 开 Home 档（files 口）→ 属性弹层（文件菜单共口——radix dialog 作用域
-  // 消歧工具栏同名保存钮）→ 预填落定 → title 改 甲一 → 保存。
-  await page.getByText('视图', { exact: true }).click()
-  await page.getByText('快速打开', { exact: true }).click()
-  const input = page.getByPlaceholder('过滤文件名…')
+  // 开 Home 档（快开口——menuitem role 锚消歧工具栏同名文本钮[PLAN-038
+  // 第三入口]）→ 属性弹层（文件菜单共口——radix dialog 作用域消歧工具
+  // 栏同名保存钮）→ 预填落定 → title 改 甲一 → 保存。
+  await page.getByRole('menuitem', { name: '视图' }).click()
+  await page.getByRole('menuitem', { name: '快速打开' }).click()
+  const input = page.getByPlaceholder('输入标题、别名或路径…')
   await input.fill('Home')
-  await rowByPath(p, 'nm/Home.ad').click()
+  await rowByPath(quickDialog(page), 'nm/Home.ad').click()
   await expect(visibleEditor(page)).toContainText('普通正文段落', { timeout: 10_000 })
   await page.getByRole('menuitem', { name: '文件' }).click()
   await page.getByText('页面属性…', { exact: true }).click()
@@ -339,10 +365,13 @@ test('保存刷新与过期横幅（PLAN-033 T-04 AC-08）', async ({ page }) =>
   // 后消解。
   await openQuickOpen(page)
   await input.fill('甲一')
-  await expect(rowByPath(p, 'nm/Home.ad')).toBeVisible({ timeout: 10_000 })
+  await expect(rowByPath(quickDialog(page), 'nm/Home.ad')).toBeVisible({ timeout: 10_000 })
   await input.fill('首页')
-  await expect(rowByPath(p, 'nm/Home.ad')).toHaveCount(0, { timeout: 10_000 })
-  await expect(rowByPath(p, 'wiki/index.ad')).toBeVisible()
+  await expect(rowByPath(quickDialog(page), 'nm/Home.ad')).toHaveCount(0, { timeout: 10_000 })
+  await expect(rowByPath(quickDialog(page), 'wiki/index.ad')).toBeVisible()
+  // 关快开层（模态域外菜单不可达——T-03 实勘测试侧纪律）。
+  await input.press('Escape')
+  await expect(page.getByPlaceholder('输入标题、别名或路径…')).toHaveCount(0, { timeout: 10_000 })
 
   await page.getByText('视图', { exact: true }).click()
   await page.getByText('全文检索', { exact: true }).click()
@@ -350,6 +379,6 @@ test('保存刷新与过期横幅（PLAN-033 T-04 AC-08）', async ({ page }) =>
   const tin2 = page.getByPlaceholder('输入查询词…')
   await tin2.fill('甲一')
   await tin2.press('Enter')
-  await expect(p.getByText('结果已过期——请重新检索', { exact: true })).toHaveCount(0, { timeout: 10_000 })
-  await expect(rowByPath(p, 'nm/Home.ad')).toBeVisible({ timeout: 10_000 })
+  await expect(tp.getByText('结果已过期——请重新检索', { exact: true })).toHaveCount(0, { timeout: 10_000 })
+  await expect(rowByPath(tp, 'nm/Home.ad')).toBeVisible({ timeout: 10_000 })
 })

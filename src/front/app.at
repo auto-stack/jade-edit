@@ -273,16 +273,61 @@ fn name_rows_of(dir List, q str) List {
     return out
 }
 
-/// 快开首选路径（PLAN-038 T-02；契约 §1）：行集首项 path（"" = 无有效
-/// 候选——零结果/空行集，Enter 守卫判据）。纯函数出口恒 str（VM 视图
-/// content 位 map 字段不隐式解箱家族纪律）；⚠ D-30①：参数名 rows 避开
+/// 快开首选路径（PLAN-038 T-02；契约 §1）：显示行集中首个候选行 path
+///（sec != "" 的 header/empty 伪行跳过；"" = 无有效候选——零结果/loading/
+/// error，Enter 守卫判据）。纯函数出口恒 str；⚠ D-30①：参数名 rows 避开
 /// 模型名（quick_rows——vue codegen 阴影面）。
 fn quick_first_of(rows List) str {
-    var out str = ""
-    if rows.len() > 0 {
+    var i int = 0
+    while i < rows.len() {
         // ⚠ D-20②：列表元素先拷局部变量再取字段。
-        var r0 = rows[0]
-        out = r0.path
+        var r = rows[i]
+        var sec str = r.sec
+        if sec == "" {
+            var p str = r.path
+            return p
+        }
+        i = i + 1
+    }
+    return ""
+}
+
+/// 快开显示行集（PLAN-038 T-03；契约 §1——空查询「最近」段替换式**物化
+/// 进单一行集字段**）：VM 恒渲染弹层子树内 `.len() > 0` 分区条件过渡不
+/// 重评（recents 空转非空后视图分支不翻转——T-03 实勘，033 视图边界同族
+/// ——files_rows model 字段纪律同判），故「最近 vs 目录 vs 空态」三分
+/// 在 handler 侧物化，视图纯 for + 逐行 sec 字符串分支（字符串等值条件
+/// 逐渲染重评在册可靠——quick_q 过滤翻转同类）。行 = {path, dtitle,
+/// sec}：sec="header"（「最近」段标题伪行）/ ""（候选行）/ "empty"（空
+/// 态伪行——（无匹配文件））。⚠ D-30①：参数名避开模型名（quick_rows/
+/// quick_q/recent_paths——vue codegen 阴影面）。
+fn quick_view_rows(dir List, q str, recents List) List {
+    var nq str = q.trim().to_lower()
+    var out List = []
+    if nq == "" {
+        if recents.len() > 0 {
+            out.push({ path: "", dtitle: "最近", sec: "header" })
+            var i int = 0
+            while i < recents.len() {
+                // ⚠ D-20②：列表元素先拷局部变量再取字段/调方法。
+                var p str = recents[i]
+                out.push({ path: p, dtitle: name_dtitle_of(dir, p, p), sec: "" })
+                i = i + 1
+            }
+            return out
+        }
+    }
+    var rows List = name_rows_of(dir, q)
+    if rows.len() == 0 {
+        out.push({ path: "", dtitle: "（无匹配文件）", sec: "empty" })
+        return out
+    }
+    var j int = 0
+    while j < rows.len() {
+        // ⚠ D-20②：列表元素先拷局部变量再取字段。
+        var r = rows[j]
+        out.push({ path: r.path, dtitle: r.dtitle, sec: "" })
+        j = j + 1
     }
     return out
 }
@@ -1158,7 +1203,7 @@ widget App {
         MentionsRefreshOf(str), LinkifyGo(str),
         OpenWikiLink(str, str),
         FindEdit(str), FindRun, ActFindFiles, ActFindText, FindPick(str),
-        QuickEdit(str),
+        QuickEdit(str), QuickPick(str), QuickConfirm, QuickCancel,
         CreateClick(str), CreateGo, CreateCancel,
         TreeRefresh, LinksRefreshOf(str),
         RenameOpen, RenameEdit(str), RenameGo, RenameCancel,
@@ -1224,12 +1269,9 @@ widget App {
         var find_seq int = 0
         var find_err str = ""
         var find_stale bool = false
-        // files 行集 = model 字段（T-04 实勘改道：computed 行集在 VM 视图
-        // 渲染不可靠[空结果态丢空态行/后续渲染区整体消失——debug-n4 复现
-        // 在录]，model 字段 + handler 内重算 = find_rows/wanted_rows 全证
-        // 形态；重算点 = NamesRefresh 提交（目录/输入最新配对——vue 臂
-        // fire-and-forget 亦收敛）+ FindEdit files 分支逐键）。
-        var files_rows List = []
+        // **PLAN-038 T-03**：files_rows 模型字段退役（files 模式用户面
+        // 迁独立快开弹层——行集 = quick_rows 承接同款 model 字段形态；
+        // text 模式 find_rows 不变）。
         // —— 最近打开数据态（PLAN-020 T-02；SD-2001 recents 半）：会话
         // 域 App 态（**持久化不做**——v1 重启即失，§10.3 留口）——开档
         // 成功触点头插（push_recent：去重置顶 + 容量 10 截断；触点族 =
@@ -1341,13 +1383,16 @@ widget App {
         // 错误/忙碌/世代全在 App 模型（find_q/files_rows 同构不入 store
         // ——D-20④ 同款裁定）。quick_rows = model 字段（VM 视图对 computed
         // 行集渲染不可靠——033 T-04 实勘同判），重算点 = 入口/逐键/目录
-        // 提交（同 handler 体内收敛）；行形状 = {path,dtitle}（name_rows_of
-        // 出口恒等）。quick_first_path = ""（无有效候选——零结果/空行集，
-        // Enter 守卫判据）。quick_err = 拾取独立错误（不占 save_note 不
-        // 覆盖草稿注记——wiki_nav_note 同族分域）。quick_seq = 弹层世代/
-        // 请求号（重开/逐键/关闭/拾取启动递增——在途票据失效门）。
-        // __focus_result = ui.focus 回执观察位（renderer write_state 要求
-        // 已声明字段——未声明 FieldNotFound 静默，T-01 实勘；无业务消费）。
+        // 提交（同 handler 体内收敛）；**T-03 行形状 = {path,dtitle,sec}**
+        //（sec="header"/""/"empty"——「最近/目录/空态」三分 handler 侧物化
+        //，视图纯 for + 逐行字符串分支——恒渲染子树 len() 过渡不重评实勘
+        //，quick_view_rows 注）。quick_first_path = ""（无有效候选——零
+        // 结果/loading/error，Enter 守卫判据）。quick_err = 拾取独立错误
+        //（不占 save_note 不覆盖草稿注记——wiki_nav_note 同族分域）。
+        // quick_seq = 弹层世代/请求号（重开/逐键/关闭/拾取启动递增——
+        // 在途票据失效门）。__focus_result = ui.focus 回执观察位（renderer
+        // write_state 要求已声明字段——未声明 FieldNotFound 静默，T-01
+        // 实勘；无业务消费）。
         //----
         var quick_q str = ""
         var quick_rows List = []
@@ -1474,6 +1519,9 @@ widget App {
             item (action: "file.open")
             item (action: "file.save")
             item (action: "file.daily")
+            // 快速打开工具栏入口（PLAN-038 T-03 第三入口——始终可见，
+            // 不依赖右侧栏开态/hidden md:flex；Ctrl+P/菜单共口）
+            item (action: "view.find-files")
             item (action: "view.reload")
             // 编辑命令族不进 toolbar（PLAN-035——撤销/重做两失效钮移除；
             // 其余保存/文件/重载入口保留）
@@ -1704,100 +1752,30 @@ widget App {
                     col (style: "w-72 shrink-0 border-l border-border bg-card hidden md:flex flex-col overflow-y-auto") {
                         if .store.find_open {
                             FindPanel()
-                            // 输入行：input + 检索钮（files/text 两模式
-                            // ——wanted/trash 纯清单无 input 行/无触发钮，
-                            // PLAN-008 三分支 + PLAN-016 trash 第四模式）。
-                            if .store.find_mode == "files" || .store.find_mode == "text" {
+                            // 输入行：input + 检索钮（**PLAN-038 T-03 files
+                            // 模式退役**——快开用户面迁独立根弹层；本栏仅余
+                            // text 模式输入行——wanted/trash 纯清单无 input
+                            // 行/无触发钮，PLAN-008 三分支 + PLAN-016 trash
+                            // 第四模式）。
+                            if .store.find_mode == "text" {
                             row (style: "items-center gap-1 px-2 py-1 shrink-0") {
-                                if .store.find_mode == "files" {
-                                    input {
-                                        value: .find_q
-                                        oninput: .FindEdit
-                                        placeholder: "过滤文件名…"
-                                        style: "flex-1 h-7 px-2 text-[12px] border rounded bg-background"
-                                    }
+                                input {
+                                    value: .find_q
+                                    oninput: .FindEdit
+                                    onenter: .FindRun
+                                    placeholder: "输入查询词…"
+                                    style: "flex-1 h-7 px-2 text-[12px] border rounded bg-background"
                                 }
-                                if .store.find_mode == "text" {
-                                    input {
-                                        value: .find_q
-                                        oninput: .FindEdit
-                                        onenter: .FindRun
-                                        placeholder: "输入查询词…"
-                                        style: "flex-1 h-7 px-2 text-[12px] border rounded bg-background"
-                                    }
-                                    button (text: "检索", variant: "ghost") {
-                                        onclick: .FindRun
-                                        style: "h-7 px-2 text-[12px] shrink-0"
-                                    }
+                                button (text: "检索", variant: "ghost") {
+                                    onclick: .FindRun
+                                    style: "h-7 px-2 text-[12px] shrink-0"
                                 }
                             }
                             }
-                            // files 模式（PLAN-033 行集重排）：目录状态门
-                            //（loading/error/ready 三形可区分——首载失败
-                            // 不伪造"无结果"，§5.3）+ 行集 = computed
-                            // files_rows（名称目录 × 查询词统一过滤，纯内
-                            // 存零 fetch）。行 = dtitle 主行（FindPick 口
-                            // ——拾取即关不变）+ 实际 path 次行（同名页消
-                            // 歧显式路径——mentions 两行留根同款形态，非
-                            // 单钮双段插值 §5.2）。显示名查表切名称目录
-                            //（name_dtitle_of——titles 表只余反链/出链/
-                            // tab 消费面）。
-                            if .store.find_mode == "files" {
-                                if .names_state == "loading" {
-                                    text "名称加载中…" { style: "text-[11px] text-muted-foreground px-3" }
-                                }
-                                if .names_state == "error" {
-                                    row (style: "w-full items-center justify-between px-3") {
-                                        text "名称加载失败" { style: "text-[11px] text-destructive" }
-                                        button (text: "重试", variant: "text") {
-                                            onclick: .NamesRefresh
-                                            style: "text-[11px] h-5 px-2 text-muted-foreground shrink-0"
-                                        }
-                                    }
-                                }
-                                if .find_q == "" {
-                                    if .names_state == "ready" {
-                                        if .recent_paths.len() > 0 {
-                                            row (style: "h-6 items-center shrink-0 px-3") {
-                                                text "最近" { style: "text-[11px] font-bold text-muted-foreground" }
-                                            }
-                                            for p in .recent_paths {
-                                                button (text: name_dtitle_of(.names, p, p), variant: "ghost") {
-                                                    onclick: .FindPick(p)
-                                                    style: "w-full justify-start px-3 h-6 text-left text-[12px]"
-                                                }
-                                                text p { style: "text-[10px] text-muted-foreground px-3" }
-                                            }
-                                        }
-                                        if .recent_paths.len() == 0 {
-                                            if .files_rows.len() == 0 {
-                                                text "（无匹配文件）" { style: "text-[11px] text-muted-foreground px-3" }
-                                            }
-                                            for r in .files_rows {
-                                                button (text: r.dtitle, variant: "ghost") {
-                                                    onclick: .FindPick(r.path)
-                                                    style: "w-full justify-start px-3 h-6 text-left text-[12px]"
-                                                }
-                                                text find_row_path(r) { style: "text-[10px] text-muted-foreground px-3" }
-                                            }
-                                        }
-                                    }
-                                }
-                                if .find_q != "" {
-                                    if .names_state == "ready" {
-                                        if .files_rows.len() == 0 {
-                                            text "（无匹配文件）" { style: "text-[11px] text-muted-foreground px-3" }
-                                        }
-                                        for r in .files_rows {
-                                            button (text: r.dtitle, variant: "ghost") {
-                                                onclick: .FindPick(r.path)
-                                                style: "w-full justify-start px-3 h-6 text-left text-[12px]"
-                                            }
-                                            text find_row_path(r) { style: "text-[10px] text-muted-foreground px-3" }
-                                        }
-                                    }
-                                }
-                            }
+                            // **PLAN-038 T-03**：files 模式用户面整体退役
+                            //（快开迁独立根弹层——目录状态门/最近段/行集
+                            // 随迁；files_rows 模型字段与 FindEdit files
+                            // 分支同步退役，text 行显示名仍查表名称目录）。
                             // text 模式（PLAN-033 门化渲染）：错误横幅
                             //（find_err + 重试钮——失败不渲染成"无结果"，
                             // 既有行集保留）+ 过期横幅（find_stale——磁盘
@@ -2129,6 +2107,83 @@ widget App {
                     }
                     dialog-footer {
                         button (text: "关闭", variant: "outline") { onclick: .RecoverClose }
+                    }
+                }
+            }
+
+            // —— 快速打开独立弹层（PLAN-038 T-03；契约
+            // attachments/038-quick-open-contract.md §1..§5——T-01 载体
+            // 冻结形态生产化）：根弹层单编辑器（开/关零编辑器重挂载——
+            // editor key/content/实例不变）；**声明位在 recover 后、新建
+            // 弹层前**——vm 快照 input 序「rename 居末」锚纪律不扰
+            //（typeIntoRenameInput 末位 input 锚在册，check 12）。三入口
+            // 共口 ActFindFiles（Ctrl+P/菜单/工具栏）；vue Escape/X 经
+            // v-model 直写 store.quick_open——在途拾取由关态门+世代兜住
+            //（契约 §5）。行 = 显示名主行 + 实际 path 次行（同名消歧——
+            // 身份域恒 path）；首选行 bg-accent 高亮（双分支结构形态——
+            // T-01 载体在册）；空查询「最近」段替换式（033 §1.3 语义迁
+            // 移）；目录状态门 = names_state 共享域三形（loading/error/
+            // ready——首载失败不伪造"无结果"）。----
+            dialog (open: .store.quick_open) {
+                dialog-content {
+                    dialog-header {
+                        dialog-title "快速打开"
+                        dialog-description "输入标题、别名或路径"
+                    }
+                    input {
+                        value: .quick_q
+                        oninput: .QuickEdit
+                        onenter: .QuickConfirm
+                        placeholder: "输入标题、别名或路径…"
+                        style: "w-full h-7 px-2 text-[12px] border rounded bg-background"
+                    }
+                    if .names_state == "loading" {
+                        text "名称加载中…" { style: "text-[11px] text-muted-foreground px-1" }
+                    }
+                    if .names_state == "error" {
+                        row (style: "w-full items-center justify-between px-1") {
+                            text "名称加载失败" { style: "text-[11px] text-destructive" }
+                            button (text: "重试", variant: "text") {
+                                onclick: .NamesRefresh
+                                style: "text-[11px] h-5 px-2 text-muted-foreground shrink-0"
+                            }
+                        }
+                    }
+                    if .quick_err != "" {
+                        text .quick_err { style: "text-[11px] text-destructive px-1" }
+                    }
+                    col (style: "w-full max-h-64 overflow-y-auto") {
+                        if .names_state == "ready" {
+                            for r in .quick_rows {
+                                if r.sec == "header" {
+                                    row (style: "h-6 items-center shrink-0 px-1") {
+                                        text r.dtitle { style: "text-[11px] font-bold text-muted-foreground" }
+                                    }
+                                }
+                                if r.sec == "empty" {
+                                    text r.dtitle { style: "text-[11px] text-muted-foreground px-1" }
+                                }
+                                if r.sec == "" {
+                                    if r.path == .quick_first_path {
+                                        button (text: r.dtitle, variant: "ghost") {
+                                            onclick: .QuickPick(r.path)
+                                            style: "w-full justify-start px-3 h-6 text-left text-[12px] bg-accent"
+                                        }
+                                        text find_row_path(r) { style: "text-[10px] text-muted-foreground px-3" }
+                                    }
+                                    if r.path != .quick_first_path {
+                                        button (text: r.dtitle, variant: "ghost") {
+                                            onclick: .QuickPick(r.path)
+                                            style: "w-full justify-start px-3 h-6 text-left text-[12px]"
+                                        }
+                                        text find_row_path(r) { style: "text-[10px] text-muted-foreground px-3" }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    dialog-footer {
+                        button (text: "取消", variant: "outline") { onclick: .QuickCancel }
                     }
                 }
             }
@@ -3223,15 +3278,11 @@ widget App {
         }
 
         // —— 查找面板（PLAN-004 T-02/T-03；**PLAN-033 请求门化**）——
-        // 输入分流：files 模式即时过滤（computed files_rows 纯内存——
-        // SD-401 触发集=无保持）；text 模式更 find_q + **在途请求失效**
-        //（find_seq 递增——查询修改后旧响应不得提交，§5.3 门）。
+        // 输入分流（**PLAN-038 T-03**：files 分支退役——快开迁独立弹层
+        // QuickEdit）：text 模式更 find_q + **在途请求失效**（find_seq
+        // 递增——查询修改后旧响应不得提交，§5.3 门）。
         .FindEdit(q) -> {
             .find_q = q
-            if .store.find_mode == "files" {
-                // 逐键纯内存重算（零 fetch——AC-06 请求计数零增）。
-                .files_rows = name_rows_of(.names, .find_q)
-            }
             if .store.find_mode == "text" {
                 .find_seq = .find_seq + 1
             }
@@ -3312,12 +3363,11 @@ widget App {
                     if .names_gen == mygen {
                         .names = rows
                         .names_state = "ready"
-                        // files 行集随目录提交重算（最新 find_q 配对——
-                        // 同 handler 体内，vue 臂 fire-and-forget 收敛）。
-                        .files_rows = name_rows_of(.names, .find_q)
                         // 快开行集/首选随目录提交重算（PLAN-038 T-02——
-                        // 最新 quick_q 配对同门收敛；弹层未开重算无害幂等）。
-                        .quick_rows = name_rows_of(.names, .quick_q)
+                        // 最新 quick_q 配对同门收敛；弹层未开重算无害幂等；
+                        // 行集 = quick_view_rows 物化（最近/目录/空态三分
+                        // handler 侧），首选 = 首候选行——T-03）。
+                        .quick_rows = quick_view_rows(.names, .quick_q, .recent_paths)
                         .quick_first_path = quick_first_of(.quick_rows)
                     }
                 } else {
@@ -3337,12 +3387,25 @@ widget App {
                 .NamesRefresh()
             }
         }
-        // 快开入口（幂等重开——已开则保模式清过滤面）；**入口即取新目录**
-        //（PLAN-033 §5——重进查找入口 = 外部变更观察口；旧门控"未载才取"
-        // 会让外部改名不可见，无条件重取换 P≤200 单 walk 成本）。
+        // 快开入口（PLAN-038 T-03 三入口共口——Ctrl+P/菜单/工具栏同
+        // handler；幂等重开不叠层）。**迁移**：旧右侧 files 面板入口
+        // 退役（FindOpen("files") 不再由本口调用），改开独立根弹层：
+        // 开态单点 QuickOpen + 世代递增（旧票据失效）+ busy/错误复位 +
+        // 行集/首选现算（共享 names 目录 × 当前 quick_q——**首选 = 显示
+        // 集首项**，空 q「最近」替换式首条最近）+ 无条件重取目录（033
+        // 外部变更观察口——入口即 NamesRefresh）+ ui.focus 程序化聚焦
+        //（契约 §2：VM = __focus_result "ok" 判据；vue = DialogContent
+        // 原生 autofocus 承载、本调用 querySelector 静默空转无害）。
         .ActFindFiles -> {
-            store.FindOpen("files")
+            console_log("quick: open")
+            store.QuickOpen()
+            .quick_seq = .quick_seq + 1
+            .quick_busy = false
+            .quick_err = ""
+            .quick_rows = quick_view_rows(.names, .quick_q, .recent_paths)
+            .quick_first_path = quick_first_of(.quick_rows)
             .NamesRefresh()
+            ui.focus(".QuickEdit")
         }
         // 全文检索入口（幂等重开 + 切模式）+ 入口即取新目录（text 行显示
         // 名同源目录）；行集不动——text 面板由 find_ran/find_err 门控渲染
@@ -3370,27 +3433,171 @@ widget App {
             store.FindOpen("orphans")
             .LinksRefreshOf(.store.active_path)
         }
-        // 查找行点击口：OpenLink 共用导航口（开档 + 链接行派生）；files
-        // 模式拾取即关（store FindClose 关口——开态权威单点）；text 模式
-        // 保持开（检索结果浏览语义）。
+        // 查找行点击口：OpenLink 共用导航口（开档 + 链接行派生）。
+        //（**PLAN-038 T-03**：files 模式拾取即关分支退役——快开行点击
+        // 走 QuickPick 独立口；text 模式保持开，检索结果浏览语义不变。）
         .FindPick(path) -> {
             .OpenLink(path)
-            if .store.find_mode == "files" {
-                store.FindClose()
-            }
         }
 
         // —— 快开逐键（PLAN-038 T-02；契约 §1/§5）：独立查询不复用
         // find_q；纯内存过滤零 fetch（name_rows_of 共享出口——033 同规
         // 过滤域）。行集/首选同 handler 体内收敛（vue fire-and-forget
-        // 无时序窗）。查询变更递增世代（在途拾取票据失效——§5.3 关态门
-        // 判据）+ 清旧拾取错误（新查询清旧错误——错误面恒当前查询域）。
+        // 无时序窗；首选 = 显示集首项——quick_first_pick §1）。查询变更
+        // 递增世代（在途拾取票据失效——§5.3 关态门判据）+ 清旧拾取错误
+        //（新查询清旧错误——错误面恒当前查询域）。
         .QuickEdit(q) -> {
             .quick_q = q
-            .quick_rows = name_rows_of(.names, .quick_q)
+            .quick_rows = quick_view_rows(.names, .quick_q, .recent_paths)
             .quick_first_path = quick_first_of(.quick_rows)
             .quick_seq = .quick_seq + 1
             .quick_err = ""
+        }
+
+        // —— 快开确认（PLAN-038 T-03；契约 §3）：输入 Enter = 打开可见
+        // 首选实际 path。busy / 首选空（零结果）/ 目录非 ready（loading/
+        // error——加载与错误态不偷开候选）→ 零动作零关层零建页（不落
+        // 其他对话框默认动作——onenter 声明派发，模态期不触保存/退出）。
+        .QuickConfirm -> {
+            if .quick_busy {
+                console_log("quick: busy")
+            } else {
+                if .names_state == "ready" {
+                    if .quick_first_path != "" {
+                        .QuickPick(.quick_first_path)
+                    } else {
+                        console_log("quick: enter-no-first")
+                    }
+                } else {
+                    console_log("quick: enter-not-ready")
+                }
+            }
+        }
+        // —— 快开取消（PLAN-038 T-03；契约 §5）：Escape（vue v-model
+        // 关态由门兜住）/取消钮/X 同终态收敛口——世代递增（在途票据失效）
+        // + busy 复位 + 错误清零 + 关层。零编辑器副作用（不重挂载/不改
+        // active_key/不清正文/dirty/save_note——P 组承载）。
+        .QuickCancel -> {
+            console_log("quick: cancel")
+            .quick_seq = .quick_seq + 1
+            .quick_busy = false
+            .quick_err = ""
+            store.QuickClose()
+        }
+        // —— 快开拾取协调 handler（PLAN-038 T-03 生产化；契约 §4/§5
+        // ——T-01 载体冻结形态 + 036 OpenWikiLink 门族同构）：单 owner
+        // 拥有 exists/read 两等待窗；源票据第一 await 前同步捕获（uid/gen/
+        // key/body——untitled/无文档源 uid=0 原生通过，T-01 实勘）；已开
+        // 目标（含脏）found 直 NavCommit 激活（零读盘零覆盖零重复 tab）；
+        // 未开 exists→门①→read_wiki→门②（关态 quick_open+世代+来源五查
+        // ——vue Escape/X v-model 直写与重开递增世代同门兜住）→NavCommit
+        // 同步提交；missing/读失败 = 独立错误弹层留置零建页（不自动
+        // CreateGo 不弹缺页创建，错误不占 save_note）；**真实完成回执**
+        // （active_path==path 且 sel_gen 前进——NavCommit 成功路径恒
+        // TabActivate，拒绝零变化；「目标=当前页」误判族解除，契约 §4）
+        // 才关层/记最近/刷新当前页反链出链提及（失败留层输入保留）。
+        .QuickPick(path) -> {
+            if path != "" {
+                if .quick_busy {
+                    console_log("quick: busy")
+                } else {
+                    .quick_busy = true
+                    .quick_err = ""
+                    .quick_seq = .quick_seq + 1
+                    var myseq int = .quick_seq
+                    var t_uid int = .store.active_uid
+                    var t_gen int = .store.sel_gen
+                    var t_key str = .store.active_key
+                    var t_body str = .store.active_body
+                    var found int = -1
+                    var i int = 0
+                    while i < .store.tabs.len() {
+                        // ⚠ D-20②：列表元素先拷局部变量再比较。
+                        var tp str = .store.tabs[i].path
+                        if tp == path {
+                            found = i
+                        }
+                        i = i + 1
+                    }
+                    if found >= 0 {
+                        store.NavCommit({ uid: t_uid, gen: t_gen, key: t_key, body: t_body, path: path, anchor: "", body2: "" })
+                    } else {
+                        var ex bool = false
+                        var eok bool = true
+                        try {
+                            ex = exists(path)
+                        } catch (e) {
+                            eok = false
+                        }
+                        // —— 等待窗①门（exists 后）：关态+世代+来源五查 ——
+                        if !eok {
+                            .quick_err = "页面状态检查失败，请重试"
+                            console_log("quick: exists failed " + path)
+                        } else {
+                            var g1 bool = true
+                            if .store.quick_open != true { g1 = false }
+                            if .quick_seq != myseq { g1 = false }
+                            if .store.active_uid != t_uid { g1 = false }
+                            if .store.sel_gen != t_gen { g1 = false }
+                            if .store.active_key != t_key { g1 = false }
+                            if .store.active_body != t_body { g1 = false }
+                            if !g1 {
+                                console_log("quick: stale-after-exists " + path)
+                            } else {
+                                if !ex {
+                                    .quick_err = "目标不存在——请重开快速打开刷新目录"
+                                    console_log("quick: missing " + path)
+                                } else {
+                                    var body2 str = ""
+                                    var rok bool = true
+                                    try {
+                                        body2 = read_wiki(path)
+                                    } catch (e2) {
+                                        rok = false
+                                    }
+                                    // —— 等待窗②门（读盘后、提交前）——
+                                    if !rok {
+                                        .quick_err = "页面读取失败，请重试"
+                                        console_log("quick: read failed " + path)
+                                    } else {
+                                        var g2 bool = true
+                                        if .store.quick_open != true { g2 = false }
+                                        if .quick_seq != myseq { g2 = false }
+                                        if .store.active_uid != t_uid { g2 = false }
+                                        if .store.sel_gen != t_gen { g2 = false }
+                                        if .store.active_key != t_key { g2 = false }
+                                        if .store.active_body != t_body { g2 = false }
+                                        if !g2 {
+                                            console_log("quick: stale-after-read " + path)
+                                        } else {
+                                            store.NavCommit({ uid: t_uid, gen: t_gen, key: t_key, body: t_body, path: path, anchor: "", body2: body2 })
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    // —— 真实完成回执（契约 §4）——
+                    var done bool = false
+                    if .store.active_path == path {
+                        if .store.sel_gen != t_gen {
+                            done = true
+                        }
+                    }
+                    if done {
+                        .quick_busy = false
+                        .quick_err = ""
+                        store.QuickClose()
+                        .recent_paths = push_recent(.recent_paths, path)
+                        .RecentsPersist()
+                        .bl_rows = backlink_rows_of(.link_pages, path)
+                        .ol_rows = outlink_rows_of(.link_pages, path)
+                        .MentionsRefreshOf(path)
+                    } else {
+                        .quick_busy = false
+                    }
+                }
+            }
         }
 
         // —— 悬空建页（PLAN-005 T-02/T-03）——悬空行点击 → 确认弹层

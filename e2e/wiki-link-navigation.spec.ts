@@ -41,6 +41,11 @@ const openTreePage = async (page: import('@playwright/test').Page, label: string
   await expect(visibleEditor(page)).toContainText(marker, { timeout: 10_000 })
 }
 
+/** 快开弹层行拾取（PLAN-038 T-03——dialog 域锚；页面级 first() 会命中
+ *  模态后树行被 backdrop 拦截——S3 实勘）。 */
+const quickPickRow = (page: import('@playwright/test').Page, label: string) =>
+  page.getByRole('dialog').getByRole('button', { name: label, exact: true }).first().click()
+
 const tabButton = (page: import('@playwright/test').Page, title: string) =>
   page.locator('button[class*="h-8 px-3"]').filter({ hasText: new RegExp(`^${title}$`) })
 
@@ -98,10 +103,10 @@ test('wiki 导航·事件（中文别名/英文 stem/带锚真实点击）', asy
   // 一律加载期解析）→ 点击 → 已开目标激活 + 锚点提示（开页≠reveal）
   fs.writeFileSync(`${WORKSPACE}/NavAnchor.ad`, '# 锚点源\n\n跳 [[Hello World#sec-x]] 一处。\n\n尾部段落。\n', 'utf8')
   await page.keyboard.press('Control+p')
-  const anchorFind = page.getByPlaceholder('过滤文件名…')
+  const anchorFind = page.getByPlaceholder('输入标题、别名或路径…')
   await expect(anchorFind).toBeVisible({ timeout: 5_000 })
   await anchorFind.fill('NavAnchor')
-  await page.getByText('NavAnchor', { exact: true }).first().click()
+  await quickPickRow(page, 'NavAnchor')
   await expect(visibleEditor(page)).toContainText('跳 Hello World#sec-x 一处。', { timeout: 10_000 })
   await clickLink(page, 'Hello World#sec-x')
   await expect(page.getByText('已打开页面，暂不支持定位到锚点：sec-x', { exact: true })).toBeVisible({ timeout: 10_000 })
@@ -143,10 +148,10 @@ test('wiki 导航·未保存源（具名脏源+untitled 源，AC-04）', async (
   await page.keyboard.press('Control+n')
   await expect(tabButton(page, '未命名')).toHaveCount(1, { timeout: 10_000 })
   await page.keyboard.press('Control+p')
-  const u2Find = page.getByPlaceholder('过滤文件名…')
+  const u2Find = page.getByPlaceholder('输入标题、别名或路径…')
   await expect(u2Find).toBeVisible({ timeout: 5_000 })
   await u2Find.fill('NavSrc3')
-  await page.getByText('NavSrc3', { exact: true }).first().click()
+  await quickPickRow(page, 'NavSrc3')
   await expect(visibleEditor(page)).toContainText('参见 Projects 一处。', { timeout: 10_000 })
   await clickLink(page, 'Projects')
   await expect(tabButton(page, 'Projects')).toHaveCount(1, { timeout: 10_000 })
@@ -203,16 +208,16 @@ test('wiki 导航·目标状态（脏目标优先/读失败可见不记 recents�
   await expect(tabButton(page, 'NavTarget')).toHaveCount(0, '读失败零 tab')
   // 失败不记 recents（快开「最近」段无 NavTarget）
   await page.keyboard.press('Control+p')
-  const findInput = page.getByPlaceholder('过滤文件名…')
+  const findInput = page.getByPlaceholder('输入标题、别名或路径…')
   await expect(findInput).toBeVisible({ timeout: 5_000 })
   await expect(page.getByText('NavTarget.ad', { exact: true })).toHaveCount(0, '读失败不记最近文件')
-  await page.getByRole('button', { name: '收起', exact: true }).first().click()
+  await page.getByRole('dialog').getByRole('button', { name: '取消', exact: true }).click()
   // 恢复：再点（abort 已消费）→ 成功打开 + 此时入 recents（成功才记）
   await clickLink(page, 'NavTarget')
   await expect(tabButton(page, 'NavTarget')).toHaveCount(1, { timeout: 10_000 })
   await expect(page.getByText('页面读取失败，请重试', { exact: true })).toHaveCount(0, { timeout: 10_000 })
   await page.keyboard.press('Control+p')
-  await expect(page.getByPlaceholder('过滤文件名…')).toBeVisible({ timeout: 5_000 })
+  await expect(page.getByPlaceholder('输入标题、别名或路径…')).toBeVisible({ timeout: 5_000 })
   await expect(page.getByText('NavTarget.ad', { exact: true })).toBeVisible({ timeout: 10_000 })
   console.log('[target] PASS — 读失败可见不记 recents；恢复成功才入最近文件（成功副作用面）')
 })
@@ -224,17 +229,17 @@ test('wiki 导航·过期·解析窗（切档/A→B→A/关闭重开/源新输�
   await page.goto('/')
   await expect(page.getByText('ready', { exact: true }).first()).toBeVisible({ timeout: 15_000 })
   await page.keyboard.press('Control+p')
-  const findInput = page.getByPlaceholder('过滤文件名…')
+  const findInput = page.getByPlaceholder('输入标题、别名或路径…')
   await expect(findInput).toBeVisible({ timeout: 5_000 })
   await findInput.fill('NavSrc')
-  await page.getByText('NavSrc', { exact: true }).first().click()
+  await quickPickRow(page, 'NavSrc')
   await expect(visibleEditor(page)).toContainText('参见 Hello World 与 Projects 一处。', { timeout: 10_000 })
   // Tasks 预开为 tab（切换面走 tab 条——树折叠态无关）
   await page.keyboard.press('Control+p')
-  const sFind = page.getByPlaceholder('过滤文件名…')
+  const sFind = page.getByPlaceholder('输入标题、别名或路径…')
   await expect(sFind).toBeVisible({ timeout: 5_000 })
   await sFind.fill('Tasks')
-  await page.getByText('Tasks', { exact: true }).first().click()
+  await quickPickRow(page, 'Tasks')
   await expect(tabButton(page, 'Tasks')).toHaveCount(1, { timeout: 10_000 })
   await tabButton(page, 'NavSrc').click()
   await expect(visibleEditor(page)).toContainText('参见 Hello World 与 Projects 一处。', { timeout: 10_000 })
@@ -279,10 +284,10 @@ test('wiki 导航·过期·解析窗（切档/A→B→A/关闭重开/源新输�
 
   // S3 关闭重开：解析窗内关闭源 tab（干净直关）→ 快开重开同 path → 拒绝
   await page.keyboard.press('Control+p')
-  const findInput2 = page.getByPlaceholder('过滤文件名…')
+  const findInput2 = page.getByPlaceholder('输入标题、别名或路径…')
   await expect(findInput2).toBeVisible({ timeout: 5_000 })
   await findInput2.fill('NavSrc')
-  await page.getByText('NavSrc', { exact: true }).first().click()
+  await quickPickRow(page, 'NavSrc')
   await expect(visibleEditor(page)).toContainText('参见 Hello World 与 Projects 一处。', { timeout: 10_000 })
   tabsBefore = await tabCount(page)
   delayResolve = 2500
@@ -292,10 +297,10 @@ test('wiki 导航·过期·解析窗（切档/A→B→A/关闭重开/源新输�
   await srcTab.locator('..').locator('button').last().click()
   await expect(tabButton(page, 'NavSrc')).toHaveCount(0, { timeout: 10_000 })
   await page.keyboard.press('Control+p')
-  const findInput3 = page.getByPlaceholder('过滤文件名…')
+  const findInput3 = page.getByPlaceholder('输入标题、别名或路径…')
   await expect(findInput3).toBeVisible({ timeout: 5_000 })
   await findInput3.fill('NavSrc')
-  await page.getByText('NavSrc', { exact: true }).first().click()
+  await quickPickRow(page, 'NavSrc')
   await expect(visibleEditor(page)).toContainText('参见 Hello World 与 Projects 一处。', { timeout: 10_000 })
   await sleep(3500)
   await expect(visibleEditor(page)).toContainText('参见 Hello World 与 Projects 一处。', { timeout: 5_000 })
@@ -321,17 +326,17 @@ test('wiki 导航·过期·读盘窗与逆序（stale-after-read/第二点击，
   await page.goto('/')
   await expect(page.getByText('ready', { exact: true }).first()).toBeVisible({ timeout: 15_000 })
   await page.keyboard.press('Control+p')
-  const findInput = page.getByPlaceholder('过滤文件名…')
+  const findInput = page.getByPlaceholder('输入标题、别名或路径…')
   await expect(findInput).toBeVisible({ timeout: 5_000 })
   await findInput.fill('NavSrc2')
-  await page.getByText('NavSrc2', { exact: true }).first().click()
+  await quickPickRow(page, 'NavSrc2')
   await expect(visibleEditor(page)).toContainText('参见 Projects 与 Hello World 一处。', { timeout: 10_000 })
   // Tasks 预开为 tab（切换面走 tab 条——树折叠态无关）
   await page.keyboard.press('Control+p')
-  const s5Find = page.getByPlaceholder('过滤文件名…')
+  const s5Find = page.getByPlaceholder('输入标题、别名或路径…')
   await expect(s5Find).toBeVisible({ timeout: 5_000 })
   await s5Find.fill('Tasks')
-  await page.getByText('Tasks', { exact: true }).first().click()
+  await quickPickRow(page, 'Tasks')
   await expect(tabButton(page, 'Tasks')).toHaveCount(1, { timeout: 10_000 })
   await tabButton(page, 'NavSrc2').click()
   await expect(visibleEditor(page)).toContainText('参见 Projects 与 Hello World 一处。', { timeout: 10_000 })
@@ -369,6 +374,8 @@ test('wiki 导航·过期·读盘窗与逆序（stale-after-read/第二点击，
     }
     await route.continue()
   })
+  // S6 重进源页 = tab 条点击（NavSrc2 tab 在——原 page-wide first() 即
+  // tab 条钮；非快开拾取面——PLAN-038 迁移误转还原）。
   await page.getByText('NavSrc2', { exact: true }).first().click()
   await expect(visibleEditor(page)).toContainText('参见 Projects 与 Hello World 一处。', { timeout: 10_000 })
   delayResolve2 = 3000
@@ -391,10 +398,10 @@ test('wiki 导航·缺页确认（取消零建页/确认创建/来源失效拒�
   await page.goto('/')
   await expect(page.getByText('ready', { exact: true }).first()).toBeVisible({ timeout: 15_000 })
   await page.keyboard.press('Control+p')
-  const mFind = page.getByPlaceholder('过滤文件名…')
+  const mFind = page.getByPlaceholder('输入标题、别名或路径…')
   await expect(mFind).toBeVisible({ timeout: 5_000 })
   await mFind.fill('NavMiss')
-  await page.getByText('NavMiss', { exact: true }).first().click()
+  await quickPickRow(page, 'NavMiss')
   await expect(visibleEditor(page)).toContainText('跳 NavMiss 页 与 NavMiss 锚#sec-n 一处。', { timeout: 10_000 })
   const dialog = page.getByRole('alertdialog')
 
@@ -416,9 +423,9 @@ test('wiki 导航·缺页确认（取消零建页/确认创建/来源失效拒�
   await expect(tabButton(page, 'NavMiss 页')).toHaveCount(1, { timeout: 15_000 })
   expect(fs.existsSync(`${WORKSPACE}/NavMiss 页.ad`), '确认创建真建页').toBe(true)
   await page.keyboard.press('Control+p')
-  await expect(page.getByPlaceholder('过滤文件名…')).toBeVisible({ timeout: 5_000 })
+  await expect(page.getByPlaceholder('输入标题、别名或路径…')).toBeVisible({ timeout: 5_000 })
   await expect(page.getByText('NavMiss 页.ad', { exact: true })).toBeVisible({ timeout: 10_000 })
-  await page.getByRole('button', { name: '收起', exact: true }).first().click()
+  await page.getByRole('dialog').getByRole('button', { name: '取消', exact: true }).click()
   console.log('[missing] PASS — 确认创建：真建页开 tab + 入最近文件（成功副作用面）')
 
   // M3 来源失效拒绝：确认期切 tab → 创建被拒（零建页+独立提示重新点击）
@@ -452,10 +459,10 @@ test('wiki 导航·失败终态（离线/畸形/恢复不覆盖，AC-08）', asy
   await page.goto('/')
   await expect(page.getByText('ready', { exact: true }).first()).toBeVisible({ timeout: 15_000 })
   await page.keyboard.press('Control+p')
-  const fFind = page.getByPlaceholder('过滤文件名…')
+  const fFind = page.getByPlaceholder('输入标题、别名或路径…')
   await expect(fFind).toBeVisible({ timeout: 5_000 })
   await fFind.fill('NavFail')
-  await page.getByText('NavFail', { exact: true }).first().click()
+  await quickPickRow(page, 'NavFail')
   await expect(visibleEditor(page)).toContainText('跳 Projects 一处。', { timeout: 10_000 })
 
   // F1 离线（请求拒）：错误可见、零 tab；恢复臂随后（旧错误不覆盖新成功）
@@ -496,10 +503,10 @@ test('wiki 导航·边界（普通外链零路由/save_note 分域，AC-09）', 
   await page.goto('/')
   await expect(page.getByText('ready', { exact: true }).first()).toBeVisible({ timeout: 15_000 })
   await page.keyboard.press('Control+p')
-  const bFind = page.getByPlaceholder('过滤文件名…')
+  const bFind = page.getByPlaceholder('输入标题、别名或路径…')
   await expect(bFind).toBeVisible({ timeout: 5_000 })
   await bFind.fill('NavExt')
-  await page.getByText('NavExt', { exact: true }).first().click()
+  await quickPickRow(page, 'NavExt')
   await expect(visibleEditor(page)).toContainText('见 外部页 与 Hello World#sec-e 一处。', { timeout: 10_000 })
 
   // B1 普通外链零 resolver 路由：点击 [外部页]（引擎非 wikilink 渲染）

@@ -25,13 +25,11 @@ widget FindPanel {
                 onclick: .Toggle
                 style: "text-[11px] h-5 px-1 text-muted-foreground"
             }
-            // 模式标签（files=文件 / text=全文 / wanted=悬空 / trash=回收站
-            // / orphans=孤页——快捷键分流的结果态显示（PLAN-008 增 wanted
-            // 第三模式、PLAN-016 增 trash 第四模式、PLAN-020 增 orphans
-            // 第五模式）。
-            if .store.find_mode == "files" {
-                text "文件" { style: find_meta }
-            }
+            // 模式标签（text=全文 / wanted=悬空 / trash=回收站 / orphans=
+            // 孤页——快捷键分流的结果态显示（PLAN-008 增 wanted 第三模式、
+            // PLAN-016 增 trash 第四模式、PLAN-020 增 orphans 第五模式）。
+            // **PLAN-038 T-03**：files=文件 标签退役（快开用户面迁独立根
+            // 弹层——本面板不再承载 files 模式）。
             if .store.find_mode == "text" {
                 text "全文" { style: find_meta }
             }
