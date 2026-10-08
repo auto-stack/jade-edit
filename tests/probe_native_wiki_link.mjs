@@ -75,15 +75,28 @@ const bl = (label) => {
 function makeClient(port) {
   let nextId = 1
   const rpc = async (method, params) => {
-    const res = await fetch(`http://127.0.0.1:${port}/mcp`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ jsonrpc: '2.0', id: nextId++, method, params }),
-    })
-    if (!res.ok) throw new Error(`MCP ${method} -> HTTP ${res.status}`)
-    const body = await res.json()
-    if (body.error) throw new Error(`MCP ${method} error: ${JSON.stringify(body.error)}`)
-    return body.result
+    // 网络层重试（KNOWN-DEBT P737-D2：MCP 偶发连接复位、应用存活——300ms
+    // 退避 3 次；工具级 isError/HTTP 状态错误不重试，照实抛出）。
+    let lastErr
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const res = await fetch(`http://127.0.0.1:${port}/mcp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jsonrpc: '2.0', id: nextId++, method, params }),
+        })
+        if (!res.ok) throw new Error(`MCP ${method} -> HTTP ${res.status}`)
+        const body = await res.json()
+        if (body.error) throw new Error(`MCP ${method} error: ${JSON.stringify(body.error)}`)
+        return body.result
+      } catch (err) {
+        lastErr = err
+        const msg = String(err?.message ?? err)
+        if (!/fetch failed|ECONNRESET|socket|network/i.test(msg)) throw err
+        await sleep(300)
+      }
+    }
+    throw lastErr
   }
   const callTool = async (name, toolArgs) => {
     const result = await rpc('tools/call', { name, arguments: toolArgs })
@@ -554,9 +567,9 @@ async function protectArm() {
     // 被编辑块链接暂态失活，脏源保护由非编辑块承载，块 0 链接保持可点击。
     // 本序列含源键入回声窗口：P2b 为 F-037-R1 探针面。——
     const y5 = blocks.get(5) ?? y0
-    await H.pressOnly(edId, 30, y5)
+    // 行尾近旁点击落 caret（key_press 'end' 实测为选区替换语义——不用）。
+    await H.pressOnly(edId, 400, y5)
     await sleep(400)
-    await callTool('autoui_action', { element_id: edId, action: 'key_press', value: 'end' })
     for (const ch of 'XYZ') {
       await callTool('autoui_action', { element_id: edId, action: 'key_press', value: `c:${ch}` })
       await sleep(150)
@@ -580,14 +593,13 @@ async function protectArm() {
     try {
       await H.openPage(['Goals'], ['目标内容英文页'])
       const edId2 = await H.editorId()
-      await H.pressOnly(edId2, 30, 10)
+      await H.pressOnly(edId2, 400, 10)
       await sleep(400)
-      await callTool('autoui_action', { element_id: edId2, action: 'key_press', value: 'end' })
       for (const ch of 'QW') {
         await callTool('autoui_action', { element_id: edId2, action: 'key_press', value: `c:${ch}` })
         await sleep(150)
       }
-      await H.openPage(['Src', 'Src.ad'], ['普通正文段落'])
+      await H.openPage(['Src', 'Src.ad'], ['外部链接'])
       const edId3 = await H.editorId()
       if (!edId3) throw new Error('editor vnode missing after reopen (P5)')
       const blocks3 = await H.mapBlocks(edId3, 320)
@@ -605,19 +617,111 @@ async function protectArm() {
   }
 }
 
+// ---------------- M 臂（缺页确认真实 UI——T-04） ----------------
+
+async function missingArm() {
+  console.log('\n[probe-native-wiki-link] M 臂（缺页确认——真实弹层取消/创建）：')
+  buildFixtureWorkspace()
+  const app = launchVmApp(N_PORT, 'jade-probe-native-wiki-link-m', repoRoot, { JADE_WORKSPACE: NATIVE_WS })
+  try {
+    const { callTool } = await waitMcpAndUi(N_PORT, 'jade-probe-native-wiki-link-m', app, app._out)
+    const H = makeHelpers(callTool)
+    const ghostFile = path.join(NATIVE_WS, 'wiki', '幽灵页.ad')
+    await H.openPage(['Src', 'Src.ad'], ['外部链接'])
+    const edId = await H.editorId()
+    if (!edId) throw new Error('editor vnode not found (M)')
+    const blocks = await H.mapBlocks(edId, 320)
+    const yGhost = blocks.get(4)
+    if (yGhost === undefined) throw new Error('block 4 (幽灵页) not mapped')
+    // 活动弹层按钮定位：锚"创建缺失页面？"文本行，向后取首个 取消/创建
+    // 按钮对（vtree 同时含多个隐藏 dialog 实例——handler 名定位会误抓）。
+    const dialogBtns = (snap) => {
+      const lines = snap.split('\n')
+      const di = lines.findIndex((l) => l.includes('创建缺失页面'))
+      if (di < 0) return null
+      let cancel = null
+      let create = null
+      for (let j = di; j < Math.min(lines.length, di + 14); j++) {
+        if (cancel === null) { const m = lines[j].match(/button #(vnode_\d+) "取消"/); if (m) cancel = m[1] }
+        if (create === null) { const m = lines[j].match(/button #(vnode_\d+) "创建"/); if (m) create = m[1] }
+        if (cancel && create) break
+      }
+      return cancel && create ? { cancel, create } : null
+    }
+
+    // 弹层开合判据=store 权威旗标（create_confirm_open/navc_active）——
+    // vtree 同时渲染多个 dialog 模板实例，快照文本非可靠开合判据；弹层
+    // 按钮按"创建缺失页面？"锚定位（任意实例的同名 handler 派发等价）。
+    const confirmOpen = async () => {
+      const st = await H.state()
+      return (st.match(/create_confirm_open:\s*(\w+)/) ?? [])[1] === 'true'
+    }
+
+    // M1: 缺页点击→确认开（store）；取消→零建页+弹层关。
+    await H.scanLink(edId, yGhost, ['__never__'], { wantPath: '__never__' }).catch(() => null)
+    const dl1 = Date.now() + 8000
+    let opened1 = false
+    while (Date.now() < dl1) { if (await confirmOpen()) { opened1 = true; break } await sleep(250) }
+    ck(opened1, 'M1a 缺页真实点击→既有确认开（store create_confirm_open=true）')
+    const snap1 = await H.snapshot()
+    const b1 = dialogBtns(snap1)
+    ck(b1 !== null, 'M1b-定位 弹层按钮对（取消/创建）在案')
+    if (b1) await callTool('autoui_action', { element_id: b1.cancel, action: 'press' })
+    const dl2 = Date.now() + 8000
+    let closed1 = false
+    while (Date.now() < dl2) { if (!(await confirmOpen())) { closed1 = true; break } await sleep(250) }
+    ck(closed1 && !fs.existsSync(ghostFile) && !fs.existsSync(path.join(NATIVE_WS, '幽灵页.ad')), 'M1c 取消→弹层关（store 旗标 false）+零建页（root/wiki 双查）')
+
+    // M2: 再点击→确认→创建→真建正确页+开页。
+    await H.scanLink(edId, yGhost, ['__never__'], { wantPath: '__never__' }).catch(() => null)
+    const dl3 = Date.now() + 8000
+    let opened2 = false
+    while (Date.now() < dl3) { if (await confirmOpen()) { opened2 = true; break } await sleep(250) }
+    ck(opened2, 'M2a 再点击→确认复现（store）')
+    const snap2 = await H.snapshot()
+    const b2 = dialogBtns(snap2)
+    ck(b2 !== null, 'M2a-定位 创建按钮在案')
+    if (b2) await callTool('autoui_action', { element_id: b2.create, action: 'press' })
+    const dl = Date.now() + 15000
+    let created = false
+    while (Date.now() < dl) {
+      if (fs.existsSync(ghostFile) || fs.existsSync(path.join(NATIVE_WS, '幽灵页.ad'))) { created = true; break }
+      await sleep(250)
+    }
+    ck(created, 'M2b 确认创建→真建页落盘（root/wiki 双查）')
+    const dl4 = Date.now() + 8000
+    let openedPage = false
+    while (Date.now() < dl4) {
+      const ap = await H.storeField('active_path')
+      if (ap !== null && ap.includes('幽灵页')) { openedPage = true; break }
+      await sleep(250)
+    }
+    ck(openedPage, 'M2c 创建后开新页（active_path=幽灵页.ad）')
+    const st2 = await H.state()
+    const seqNow = intField(st2, 'nav_seq') ?? 0
+    ck(seqNow >= 2, 'M2d 导航确认消费（nav_seq≥2——两轮点击均达 handler）')
+    } catch (err) {
+    ck(false, `M 臂载体异常：${String(err.message).slice(0, 300)} | ${aliveTail(app)}`)
+  } finally {
+    await app._kill()
+  }
+}
+
 // ---------------- 主流程 ----------------
 
-console.log(`[probe-native-wiki-link] phase=${PHASE} — 指纹 → N（真实点击）→ O（origin）→ P（保护）→ S/M-F（分列）`)
+console.log(`[probe-native-wiki-link] phase=${PHASE} — 指纹 → N（真实点击）→ O（origin）→ P（保护）→ M（缺页）→ S/E（分列）`)
 fingerprintArm()
 
 if (PHASE === 'all' || PHASE === 'native') await nativeArm()
 if (PHASE === 'all' || PHASE === 'origin') await originArm()
 if (PHASE === 'all' || PHASE === 'protect') await protectArm()
+if (PHASE === 'all' || PHASE === 'missing') await missingArm()
 
 if (PHASE === 'all') {
   console.log('\n[probe-native-wiki-link] S 臂（分列）：')
   bl('S 等待窗迟到族：merged 消费同步无真实等待窗；split 原生载体 boot=F-24-2 家族在录（owner=auto-lang split 前端）——上游六环语料+036 vue S 组证据在案，native 等待窗 live 验证重入=split boot 修复')
   bl('E 右/中键：MCP 词表无右/中键合成——上游 plan732_click_gate_negatives（右/中键零激活）承载，本仓仪器边界如实分列')
+  bl('F 错误臂：merged 后端同步调用无真实错误窗（解析/读盘失败可见性=036 vue e2e F 组承载）——merged 强制错误缺仪器通道，如实分列')
 }
 
 console.log('\n[probe-native-wiki-link] 结果：')

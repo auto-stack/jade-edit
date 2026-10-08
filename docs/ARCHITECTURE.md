@@ -137,6 +137,7 @@ src/back/api.at           /api 契约（自有 Auto 源，与实现同 commit—
   [specs/editor-command-availability.md](specs/editor-command-availability.md)；
   能力结论（宿主命令桥缺供给）不因入口收口翻案，真执行仍按上游
   解锁门推进。
+- **原生正文内链导航（SD-3701，PLAN-037 R-03b3）**：VM merged 载体同一 `on "open-wiki-link"` 消费全门——上游供给链 auto-lang PLAN-732/737/739（wikilink attr 语义消费→合成通道派发→输入补丁摘臂）后，生产左键完整点击直达 OpenWikiLink/resolver/NavCommit（结构性 per-instance origin，双实例反例在案）；native split 消费未联验单列。证据 `tests/probe_native_wiki_link.mjs` 五臂+规范 [wiki-link-navigation](wiki-link-navigation.md) 原生行/[editor-host-capabilities](editor-host-capabilities.md) §1.3。
 - **正文内链导航（SD-3601，PLAN-036 R-03b2）**：Vue 正文
   `on "open-wiki-link"` 完整事件名消费（双参=target+可选目标锚点，
   缺参显式归一）→ `POST /api/resolve_wiki_link` 单目标只读解析（共享

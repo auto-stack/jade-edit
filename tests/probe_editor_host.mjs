@@ -719,9 +719,9 @@ function checks(rec) {
       uns(`M3 click 后 onfocusblock 零回执（MCP click 路径 write_ghost_state 直写不经 DSL handler——PLAN-044 T6 注锚定；块聚焦的宿主消息消费面未证，真键鼠标 headless 不可达）——VM 轨块聚焦读出=内部 ghost state，非宿主可消费消息`)
     }
     ck((rec.m3_save_count ?? 0) === 0, 'M3 编辑器 save 事件零回执（native 无 save 消息通道）')
-    ck((rec.m3_link_count ?? 0) === 0, 'M3 编辑器 link 事件零回执（native 无 wiki 链接消息通道）')
+    ck((rec.m3_link_count ?? 0) === 0, 'M3 编辑器 link 事件零回执（press-only ghost 点击门不闭合——PLAN-037 后完整点击链接事件已 live，见 probe_native_wiki_link N 臂）')
     uns('save：native 转换层 View::AutodownEditor 仅 on_change/on_focus（aura_view_builder convert_autodown_editor_native）+ 运行时零回执——缺层=auto-lang 转换 + VM 运行时；宿主保存入口=actions 捷径（I5）')
-    uns('link：native 无 open-wiki-link 消息通道（同上 + widget.rs 无链接点击路由）——缺层=auto-lang 转换 + VM 编辑壳')
+    uns('link：**PLAN-037 后已解锁（2026-10-03）**——上游供给链 auto-lang PLAN-732/737/739（wikilink attr 语义消费+ADE_LINK_DISPATCH 合成通道派发+输入补丁摘臂）后 merged 完整点击链接事件 live 消费（probe_native_wiki_link N/O/P/M 五臂全绿，binary≥v0.4.2-2730）；本探针 M3/N2 的零回执=press-only ghost 语义（阴性锚）非缺通道；save 通道缺口维持前条')
     // I5 宿主捷径
     ck((rec.i5_ctrls ?? 0) >= 1, `I5 autoui_keyboard Ctrl+S → HostCtrlS 回执（actions 捷径归一 "Ctrl+s" 查找命中）ctrls=${rec.i5_ctrls}`)
   }

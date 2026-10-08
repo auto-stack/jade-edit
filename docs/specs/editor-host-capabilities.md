@@ -29,13 +29,14 @@
 
 ### 1.3 链接（link）
 
-> **PLAN-036 刷新（2026-10-02）**：③ Vue 正文链接已由「缺供给双层」升级为**已消费**——完整事件名接线+单目标只读解析+导航保护交付，现行契约见 [wiki-link-navigation.md](wiki-link-navigation.md)。简称 `onopenwikilink` 生成名不匹配的兼容修复仍归 auto-lang（本片消费完整事件名绕开，B-1 依赖缩窄为兼容面）；①② native 链接事件缺供给维持。
+> **PLAN-036 刷新（2026-10-02）→ PLAN-037 刷新（2026-10-03）**：③ Vue 正文链接已由「缺供给双层」升级为**已消费**——完整事件名接线+单目标只读解析+导航保护交付，现行契约见 [wiki-link-navigation.md](wiki-link-navigation.md)。**①② native merged 链接事件升级为已消费（PLAN-037）**：上游供给链 auto-lang PLAN-732（wikilink attr 语义消费+合成通道）+PLAN-737（ADE_LINK_DISPATCH 派发根修）+PLAN-739（输入补丁摘臂）后，merged 生产真实点击经同一 `on "open-wiki-link"` 直达消费全门——绑定版本 v0.4.2-2713+（PLAN-739 tip）；native **split** 载体 boot 已恢复（F-24-2 未复现，probe_editor_host B1）而 split 链接消费未联验单列。简称 `onopenwikilink` 上游已支持属性简写绑定（便利形态）。
 
 | 面 | 事实 | 证据 |
 | --- | --- | --- |
 | 后端解析供给 | **已可消费**：`link_index` 行 `{target, anchor, exists, target_path}` 四级已解析（stems 精确→aliases 精确→stems casefold→aliases casefold；anchor=`#` 首现拆分透传）——merged 直调与 split HTTP 双臂已知答案全过。**PLAN-036 增补单目标口**：`POST /api/resolve_wiki_link`（只读零写、目录现读、无效/missing 严格区分——导航主承面） | probe N3/B2 + probe_wiki_link B3 十案 |
 | ③ Vue 链接事件+导航 | **已消费（PLAN-036 交付）**：完整事件名 `on "open-wiki-link"` 双参消费（第二参=目标锚点非来源身份；缺参显式归一）→ 单目标解析 → NavCommit 同步门导航（源票据/选择世代/每等待期门/迟到拒绝/缺页确认/独立提示）——**title 不被当 path、外链零路由**；简称 `@openwikilink` 兼容面仍不匹配（零监听，归 auto-lang） | e2e wiki-link-navigation 八测 + editor-host-capabilities navigation 案（真实导航）+ [wiki-link-navigation.md](wiki-link-navigation.md) |
-| ①② native 链接事件 | **缺供给**：VM 编辑壳无链接点击路由与消息通道（M3/N2 零回执）——原生正文点击维持未供给 | probe M3/N2 + widget.rs |
+| ①② native 链接事件（merged） | **已消费（PLAN-037 交付）**：生产完整点击门（左键按下抬起同链接区间，拖选/右中键/陈旧命中零激活）→ 六环派发 → 同一 OpenWikiLink 消费全门；双同正文实例 per-instance origin（无全局单槽）；缺页确认取消/创建 live 可达 | probe_native_wiki_link N/O/P/M 五臂（N2..N5+O 组+M 组全绿）+ [wiki-link-navigation.md](wiki-link-navigation.md) 原生证据行 |
+| ①② native 链接事件（split） | **未联验**：split 前端 boot 已恢复（F-24-2 未复现，probe_editor_host B1），split 载体的链接消费未验证——单列，不以 merged 证据替代 | probe_editor_host B1 |
 | 宿主开档口 | `OpenLink(path)` 接收**已解析 path**（反链/出链 target_path、拾取、建页导航共用）——是开档口不是 title resolver；title 不入链接身份（name-search 规范边界延续） | app.at OpenLink + name-search §2 |
 
 ### 1.4 selection / cursor / reveal
@@ -62,8 +63,8 @@
 按仓最小需求、拟议接口（**尚非现行 API**）与解锁证据见 [034-editor-host-supply.md](../plans/attachments/034-editor-host-supply.md)。摘要：
 
 - **auto-down**（§A）：A-1 保存/链接/聚焦事件载荷增实例身份（本仓消费 @save 的前置解锁）；A-2 showActions/canEdit 真消费 prop；A-3 六命令宿主可调面（runCommand 或等价回执对）。
-- **auto-lang**（§B）：B-1 open-wiki-link **简称** `@openwikilink` 生成名兼容（**PLAN-036 后缩窄为兼容面**——完整事件名 `on "open-wiki-link"` 已消费，正文导航不依赖本项；另 B-0 族新增上游缺口见 [wiki-link-navigation](wiki-link-navigation.md) §4：输入期 wikilink 解析缺失/空编辑器零块/块底 boundary 命中区遮挡——如实上告 owner=auto-down）；B-2 原生轨 save/link 消息通道；B-3 原生轨命令原语（key_press 词表无修饰键为仪器受限锚定——native 内部撤销源码路径在册，真键覆盖待补证）；B-4 位置族原语（caret/选区/reveal——R-08/R-11 方向输入）。
-- **jade-edit**（§C，本仓可实施面，后续 Plan 细化）：C-1 @save 消费接线（依赖 A-1）；C-2 六命令菜单真实化/失效收口——**已由 PLAN-035 交付独立分支**（失效收口形态：入口移除+可见说明+兼容守卫+三键归还，见 [editor-command-availability.md](editor-command-availability.md)；真执行仍待 A-3/B-3 解锁后另立消费片）；C-3 open-wiki-link 接线——**已由 PLAN-036 交付 Vue 片**（完整事件名消费+单目标解析+导航保护，见 [wiki-link-navigation.md](wiki-link-navigation.md)；原生轨点击待 B-2 另立消费片）；C-4 双轨保存同门链一致性。
+- **auto-lang**（§B）：B-1 open-wiki-link **简称** `@openwikilink` 生成名兼容（**PLAN-036 后缩窄为兼容面**——完整事件名 `on "open-wiki-link"` 已消费，正文导航不依赖本项；另 B-0 族新增上游缺口见 [wiki-link-navigation](wiki-link-navigation.md) §4：输入期 wikilink 解析缺失/空编辑器零块/块底 boundary 命中区遮挡——如实上告 owner=auto-down）；B-2 原生轨 save 通道（**link 通道已由 PLAN-037 交付解除**——上游 732/737/739 链，merged 已消费；split 消费未联验单列）；B-3 原生轨命令原语（key_press 词表无修饰键为仪器受限锚定——native 内部撤销源码路径在册，真键覆盖待补证）；B-4 位置族原语（caret/选区/reveal——R-08/R-11 方向输入）。
+- **jade-edit**（§C，本仓可实施面，后续 Plan 细化）：C-1 @save 消费接线（依赖 A-1）；C-2 六命令菜单真实化/失效收口——**已由 PLAN-035 交付独立分支**（失效收口形态：入口移除+可见说明+兼容守卫+三键归还，见 [editor-command-availability.md](editor-command-availability.md)；真执行仍待 A-3/B-3 解锁后另立消费片）；C-3 open-wiki-link 接线——**已由 PLAN-036 交付 Vue 片 + PLAN-037 交付 native merged 片**（完整事件名消费+单目标解析+导航保护+原生真实点击，见 [wiki-link-navigation.md](wiki-link-navigation.md)）；C-4 双轨保存同门链一致性。
 - **已知上游边界维持**：F-32-R2（VM 局部槽串扰）、F-24-2（jade 应用 split boot）、F-31-R1（engine dist 新鲜度义务）、F-31-R2（vue handler 互调未 await）、vue 多文件 e2e 时序族——本片如实分列，不因调查结论翻案。
 
 ## 4. 验证与边界

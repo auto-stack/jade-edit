@@ -1,7 +1,7 @@
-# wiki-link-navigation — Vue 正文内链导航（PLAN-036 · R-03b2）
+# wiki-link-navigation — 正文内链导航（PLAN-036 Vue 片 · R-03b2；PLAN-037 原生 merged 片 · R-03b3）
 
 > 状态：**功能接线规范**——Vue 正文 `[[页面]]` / `[[别名#锚点]]` 点击经现行四级解析打开正确页面的完整应用链：事件消费、单目标只读解析、导航时序与来源/世代门、缺页确认、失败终态与锚点边界。
-> 范围：仅 Vue 载体正文导航。原生轨正文点击、caret/reveal 定位、保存事件、命令桥仍为上游供给缺口（[editor-host-capabilities](editor-host-capabilities.md) §3 维持分列）；简称 `onopenwikilink` 兼容修复归 auto-lang（本片消费完整事件名，不等待该修复）。
+> 范围：Vue 载体与 **VM 原生 merged 载体**正文导航（PLAN-037 交付——上游供给链 auto-lang PLAN-732/737/739：wikilink attr 语义消费/合成通道派发/输入补丁摘臂；merged 生产真实点击经 `on "open-wiki-link"` 直达本规范全门，native split 状态单列 [editor-host-capabilities](editor-host-capabilities.md) §1.3）。caret/reveal 定位、保存事件、命令桥仍为供给缺口（§3/§4 维持分列）；简称 `onopenwikilink` 简写已由上游绑定支持（便利形态），导航主链消费完整事件名。
 > 证据：[036-wiki-link-contract.md](../plans/attachments/036-wiki-link-contract.md)（T-01 冻结件+B-1..B-10 执行期定谳）+ `tests/probe_wiki_link_navigation.mjs`（merged/split/形状/运行时四臂）+ `e2e/wiki-link-navigation.spec.ts`（E/U/D/S/M/F/B 八测）。
 
 ## 1. 事件与单目标解析（SD-01）
@@ -18,6 +18,8 @@
 ## 2. 导航时序、身份与保护（SD-02）
 
 协调 handler（`.OpenWikiLink`）单 owner 拥有全部异步读取；冻结形态见[契约 §2/§3](../plans/attachments/036-wiki-link-contract.md)：
+
+0. **来源先验（原生轨）**：上游回调为结构性 per-instance 绑定（PLAN-732 K-02 冻结——widget 实例持自己的 callback，无 Vue 轨 opener 全局单槽问题）；双同正文实例各发各来源、换内容零冒领由上游 `plan732_dual_instance_isolated_activation` + jade 原生探针 O 组（双实例真实点击）双面承载；载荷双 Str（target/target_anchor，无锚空串）与 Vue 消费逐值同语义。
 
 1. **源票据**：入口第一 await 前同步捕获单次不可变快照——`active_uid / sel_gen / active_key / active_path / active_body`（untitled 源同样有 tab_uid，不要求来源磁盘存在）+ App 侧递增请求号 `nav_seq`。
 2. **每等待期门**：解析（resolve_wiki_link）与读盘（read_wiki）两个等待窗各自之后、最终提交前五查——请求号 + uid + gen + key + body；任一失配即终止（`stale-after-resolve` / `stale-after-read`），**零激活零建 tab 零提示回写**。迟到拒绝不区分原因写面（旧结果不覆盖任何状态）。
@@ -42,6 +44,7 @@
 ## 4. 不变量与验证
 
 - 不变量：导航前后源页 body/dirty/doc_id/draft_erev 磁盘字节恒定；目标已开 dirty 实例激活后内存正文不被磁盘覆盖；最近文件只在真实成功后变化；save_note/草稿注记与 wiki_nav_note 互不覆盖。
-- 已知边界（如实分列，不因本片宣称消失）：原生轨正文点击无通道（B-2 维持）；引擎无输入期 wikilink 解析（键入 `[[` 保持字面——链接仅加载期解析，untitled 源带链接点击导航结构性不可达，契约 B-6）；空编辑器渲染零块无 caret 目标（B-7）；块底 boundary 命中区遮挡单行链接段中心点（B-8）；简称 `@openwikilink` 兼容归 auto-lang；caret/reveal 供给维持缺口。
+- 原生 merged 交付证据（PLAN-037）：真实左键完整点击（生产 core.handle_input 完整点击门）英文/中文/别名/带锚四链接导航正确目标、拖选/press-only/非链接/围栏零激活、双实例来源隔离、缺页确认取消/创建真建页——`tests/probe_native_wiki_link.mjs`（指纹/N 真实点击/O origin/P 保护/M 缺页五臂；N 臂 M1..M2d+O 组全绿在案）。
+- 已知边界（如实分列，不因本片宣称消失）：引擎无输入期 wikilink 解析（键入 `[[` 保持字面——链接仅加载期解析，untitled 源带链接点击导航结构性不可达，契约 B-6）；空编辑器渲染零块无 caret 目标（B-7）；块底 boundary 命中区遮挡单行链接段中心点（B-8）；caret/reveal 供给维持缺口；原生 split 载体的链接消费未联验（单列 editor-host-capabilities §1.3）；native merged 的等待窗迟到族无真实异步窗（消费同步，036 vue S 组+上游语料承载）。
 - 可重跑：`node tests/probe_wiki_link_navigation.mjs`（四臂全案）；`pnpm exec playwright test -c e2e/playwright.config.ts e2e/wiki-link-navigation.spec.ts`（八测单跑）。
 - 历史证据不改写：034 的「链接缺供给」与 035 的入口收口记录维持其时点结论；本片消费面以本规范为准。
