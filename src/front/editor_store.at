@@ -267,6 +267,13 @@ store EditorStore {
         var sel_gen int = 0
         var active_uid int = 0
         var wiki_nav_note str = ""
+        // —— 快速打开独立弹层开态（PLAN-038 T-02；契约
+        // attachments/038-quick-open-contract.md §1/§5）：与 find_open/
+        // find_mode 分野（快开 = 根弹层独立工作面，开态不复用查找面板；
+        // 查询/行集/首选/错误/忙碌/世代数据态在 App 模型——D-20④ 同款
+        // 裁定）。vue 轨 Escape/X 经 v-model 直写本字段（无 msg 派发，
+        // 030 reload 弹层同型）——在途拾取由 App 关态门 + 世代兜住。----
+        var quick_open bool = false
     }
 
     // msg 载荷单类型（编译器约束）：Open 单 map、Edit 单 str。
@@ -285,6 +292,7 @@ store EditorStore {
         BacklinksToggle,
         TagsToggle,
         FindOpen(str), FindToggle, FindClose,
+        QuickOpen, QuickClose,
         CreateConfirmOpen(str), CreateConfirmCancel,
         RenameOpen, RenameClose, TabsRenamed(str, str),
         NewOpen, NewClose, DeleteOpen, DeleteClose, CloseTabsOf(str),
@@ -1565,6 +1573,19 @@ store EditorStore {
         }
         .FindClose -> {
             .find_open = false
+            .console = console_lines()
+        }
+
+        // ---- 快速打开独立弹层（PLAN-038 T-02；契约 §1/§5）：开态单点
+        //——QuickOpen/QuickClose 只翻旗标（查询/行集/首选/错误/忙碌/世代
+        //在 App 模型；入口幂等重开 + 世代递增语义在 App 侧 ActFindFiles/
+        //QuickCancel）。FindClose 同构形态。----
+        .QuickOpen -> {
+            .quick_open = true
+            .console = console_lines()
+        }
+        .QuickClose -> {
+            .quick_open = false
             .console = console_lines()
         }
 

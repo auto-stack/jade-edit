@@ -273,6 +273,20 @@ fn name_rows_of(dir List, q str) List {
     return out
 }
 
+/// 快开首选路径（PLAN-038 T-02；契约 §1）：行集首项 path（"" = 无有效
+/// 候选——零结果/空行集，Enter 守卫判据）。纯函数出口恒 str（VM 视图
+/// content 位 map 字段不隐式解箱家族纪律）；⚠ D-30①：参数名 rows 避开
+/// 模型名（quick_rows——vue codegen 阴影面）。
+fn quick_first_of(rows List) str {
+    var out str = ""
+    if rows.len() > 0 {
+        // ⚠ D-20②：列表元素先拷局部变量再取字段。
+        var r0 = rows[0]
+        out = r0.path
+    }
+    return out
+}
+
 /// 最近打开头插（PLAN-020 T-02；SD-2001 recents 半——快开空 q「最近」
 /// 段数据面）：recent_paths 维护原语——头插 path + 既有清单去同项（去
 /// 重置顶）+ 容量 10 截断（while 重建法——列表定址删除/截断原语未用，
@@ -1144,6 +1158,7 @@ widget App {
         MentionsRefreshOf(str), LinkifyGo(str),
         OpenWikiLink(str, str),
         FindEdit(str), FindRun, ActFindFiles, ActFindText, FindPick(str),
+        QuickEdit(str),
         CreateClick(str), CreateGo, CreateCancel,
         TreeRefresh, LinksRefreshOf(str),
         RenameOpen, RenameEdit(str), RenameGo, RenameCancel,
@@ -1321,6 +1336,26 @@ widget App {
         var navc_key str = ""
         var navc_body str = ""
         var navc_anchor str = ""
+        // —— 快速打开独立数据态（PLAN-038 T-02；契约
+        // attachments/038-quick-open-contract.md §1/§5）：查询/行集/首选/
+        // 错误/忙碌/世代全在 App 模型（find_q/files_rows 同构不入 store
+        // ——D-20④ 同款裁定）。quick_rows = model 字段（VM 视图对 computed
+        // 行集渲染不可靠——033 T-04 实勘同判），重算点 = 入口/逐键/目录
+        // 提交（同 handler 体内收敛）；行形状 = {path,dtitle}（name_rows_of
+        // 出口恒等）。quick_first_path = ""（无有效候选——零结果/空行集，
+        // Enter 守卫判据）。quick_err = 拾取独立错误（不占 save_note 不
+        // 覆盖草稿注记——wiki_nav_note 同族分域）。quick_seq = 弹层世代/
+        // 请求号（重开/逐键/关闭/拾取启动递增——在途票据失效门）。
+        // __focus_result = ui.focus 回执观察位（renderer write_state 要求
+        // 已声明字段——未声明 FieldNotFound 静默，T-01 实勘；无业务消费）。
+        //----
+        var quick_q str = ""
+        var quick_rows List = []
+        var quick_first_path str = ""
+        var quick_err str = ""
+        var quick_busy bool = false
+        var quick_seq int = 0
+        var __focus_result str = ""
     }
 
     computed {
@@ -3280,6 +3315,10 @@ widget App {
                         // files 行集随目录提交重算（最新 find_q 配对——
                         // 同 handler 体内，vue 臂 fire-and-forget 收敛）。
                         .files_rows = name_rows_of(.names, .find_q)
+                        // 快开行集/首选随目录提交重算（PLAN-038 T-02——
+                        // 最新 quick_q 配对同门收敛；弹层未开重算无害幂等）。
+                        .quick_rows = name_rows_of(.names, .quick_q)
+                        .quick_first_path = quick_first_of(.quick_rows)
                     }
                 } else {
                     .names_state = "error"
@@ -3287,13 +3326,14 @@ widget App {
             }
         }
         // 名称失效统一口（PLAN-033 契约 §5 触点表——磁盘变化终态调用）：
-        // 世代递增（目录标失效 + text 结果标过期）+ 面板开才即时重取
-        //（面板关只失效——下次入口/触点再取，§5.3）。files 行集由
-        // computed 随新目录自动重算（提交时恒最新 find_q）。
+        // 世代递增（目录标失效 + text 结果标过期）+ 面板/快开开态才即时
+        // 重取（**PLAN-038 T-02 扩**：刷新可见消费者门 = 全文侧栏开态或
+        // quick_open——两者都关只失效，下次入口/触点再取，§5.2）。行集由
+        // 提交时恒最新输入配对（同 handler 体内收敛）。
         .NamesInvalidate -> {
             .names_gen = .names_gen + 1
             .find_stale = true
-            if .store.find_open {
+            if .store.find_open || .store.quick_open {
                 .NamesRefresh()
             }
         }
@@ -3338,6 +3378,19 @@ widget App {
             if .store.find_mode == "files" {
                 store.FindClose()
             }
+        }
+
+        // —— 快开逐键（PLAN-038 T-02；契约 §1/§5）：独立查询不复用
+        // find_q；纯内存过滤零 fetch（name_rows_of 共享出口——033 同规
+        // 过滤域）。行集/首选同 handler 体内收敛（vue fire-and-forget
+        // 无时序窗）。查询变更递增世代（在途拾取票据失效——§5.3 关态门
+        // 判据）+ 清旧拾取错误（新查询清旧错误——错误面恒当前查询域）。
+        .QuickEdit(q) -> {
+            .quick_q = q
+            .quick_rows = name_rows_of(.names, .quick_q)
+            .quick_first_path = quick_first_of(.quick_rows)
+            .quick_seq = .quick_seq + 1
+            .quick_err = ""
         }
 
         // —— 悬空建页（PLAN-005 T-02/T-03）——悬空行点击 → 确认弹层
