@@ -1631,7 +1631,12 @@ widget App {
 
             // —— 主区：explorer 树（行留根）+ 编辑区（tab 条 + 编辑器）——
             row (style: "flex-1 items-stretch overflow-hidden w-full") {
-                col (style: "w-56 shrink-0 border-r border-border bg-card hidden md:flex flex-col gap-2 p-2 overflow-y-auto") {
+                // 侧栏双层：宿主 h-full 承载满高（vm 轨 items-stretch 不拉伸
+                // Shrink 子项——上游 StretchLine 缺口，vue 轨 CSS stretch 同效
+                // 零变化）；滚动放内层——overflow-y-auto 视图直挂显式高会触
+                // 上游 Scrollable×Height(Full) 子树零几何（实勘 exp6）。
+                col (style: "w-56 shrink-0 border-r border-border bg-card hidden md:flex flex-col h-full") {
+                col (style: "flex-1 w-full flex-col gap-2 p-2 overflow-y-auto") {
                     // EXPLORER 头部行：标题 + 「＋」新建钮（PLAN-007——tab
                     // 条 plus 钮同构：button + icon "plus"；入口 =
                     // .ActNewFile 开新建弹层，落盘新档语义——与 Ctrl+N
@@ -1691,6 +1696,7 @@ widget App {
                             }
                         }
                     }
+                }
                 }
 
                 col (style: "flex-1 overflow-hidden") {
@@ -1753,10 +1759,16 @@ widget App {
                     //（emit('save') 无消费假入口——SD-03；上游 showActions
                     // 非 prop 维持分列，宿主隐藏为宿主呈现修复）。
                     if .store.tab_count > 0 {
-                        autodown_editor (key: .store.active_key, final: true, style: "flex-1 w-full [&_.autodown-editor-actions]:hidden") {
-                            content: .editor_content
-                            oninput: .Edit
-                            on "open-wiki-link": .OpenWikiLink
+                        // 编辑区 padding 容器：vue 轨该 padding 由引擎 CSS 承担
+                        //（.autodown-editor-content-wrapper 1rem/1.25rem），vm 轨
+                        // autodown_editor 官方件无此层——wrapper px-5 py-4 双轨
+                        // 补齐，任意变体把引擎层清零防 vue 双重 padding。
+                        col (style: "flex-1 w-full px-5 py-4 overflow-hidden") {
+                            autodown_editor (key: .store.active_key, final: true, style: "flex-1 w-full [&_.autodown-editor-actions]:hidden [&_.autodown-editor-content-wrapper]:p-0") {
+                                content: .editor_content
+                                oninput: .Edit
+                                on "open-wiki-link": .OpenWikiLink
+                            }
                         }
                     }
                     if .store.tab_count == 0 {

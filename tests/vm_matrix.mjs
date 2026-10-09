@@ -10,7 +10,7 @@
 //   5 save    保存落盘（toolbar 保存 → 脏标清 + 磁盘字节含标记 + frontmatter 保留
 //             + updated_at 自动维护——PLAN-015：已有键保存即更新值[当日形]）
 //   6 reload  重载可见（磁盘外改 → toolbar 重载 → 编辑器见新内容）
-//   B base    结构基线 v29 零漂移（仅 merged 臂；必须在 1-6 后、扩单前采集
+//   B base    结构基线 v30 零漂移（仅 merged 臂；必须在 1-6 后、扩单前采集
 //             ——v29 锁的是六检查终态，扩单不漂移基线；v29=PLAN-038 快开
 //             独立弹层批[state 纯增 8 字段 quick_* 七件+store quick_open、
 //             files_rows 退役；id 序列 = 快开根弹层新节点+工具栏 快速打开
@@ -199,7 +199,7 @@ const argOf = (name) => {
   return i >= 0 ? args[i + 1] : undefined
 }
 const ARM = argOf('--arm') ?? 'all' // all | merged | split
-const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v29.txt')
+const BASELINE = path.join(repoRoot, 'tests', 'baseline', 'structure-v30.txt')
 const SAVE_BASELINE = argOf('--save-baseline')
 
 const EDIT_MARKER = 'jade-edit 冒烟标记：编辑回写可见。'
@@ -645,29 +645,31 @@ async function runArm(arm, port) {
       const stateDump = (await callTool('autoui_state', {})).trim()
       const snapIds = JSON.stringify([...(await snapshotText()).matchAll(/#(vnode_\d+)/g)].map((m) => m[1]))
       const headerFor = (file) =>
-        `// jade-edit vm 结构基线 v29（PLAN-038 T-03 重锁；v28=PLAN-036 批、v27=PLAN-035 批、v26=PLAN-033 批、
+        `// jade-edit vm 结构基线 v30（2026-10-09 vm 布局修复批重锁；v29=PLAN-038 T-03、v28=PLAN-036 批、v27=PLAN-035 批、v26=PLAN-033 批、
 ` +
         `// v25=PLAN-032 批、v20=PLAN-025、v19=PLAN-021、v18=PLAN-020、v17=PLAN-019、v16=PLAN-018、
 ` +
         `// v15=PLAN-016、v14=PLAN-015、v13=PLAN-014、v12=PLAN-013、v11=PLAN-012 等均留档）。
 ` +
-        `// 重锁因由：双轨快速打开独立弹层批（PLAN-038 T-03）——**state 纯增 8 字段 + App files_rows
+        `// 重锁因由：vm 双轨布局修复批（用户实勘两件：侧栏不满高 + 编辑区零 padding——见
 ` +
-        `// 退役 + snapshot id 序列变化**（逐项解释在 PLAN-038 T-03 计划档）：App quick_q/quick_rows/
+        `// docs/upstream/2026-10-09-vm-layout-stretch-supply.md）：①侧栏拆宿主/内层双层（宿主
 ` +
-        `// quick_first_path/quick_err/quick_busy/quick_seq/__focus_result（独立查询/行集/首选/错误/
+        `// h-full 满高 + 内层 flex-1 overflow-y-auto 滚动——vm 轨 items-stretch 不拉伸 Shrink
 ` +
-        `// 忙碌/世代 + ui.focus 回执观察位——终态全缺省）+ store quick_open（独立弹层开态 false）；
+        `// 子项之上游缺口 workaround）；②编辑器外包 px-5 py-4 容器 + 任意变体清零引擎 wrapper
 ` +
-        `// files_rows 退役（files 模式用户面迁快开弹层）。id 序列变化面 = 快开根弹层新节点
+        `//（vm 轨 autodown_editor 无引擎 CSS padding 层之上游缺口 workaround，vue 轨净
 ` +
-        `//（dialog/input/行区/取消钮——闭态恒渲染 D-23③ 同族入树）+ 工具栏新增 快速打开 图标钮 +
+        `// padding 不变）。**state 零变化**（零 store 字段面）；snapshot id 序列 = 恰 +2 节点
 ` +
-        `// 右栏 files 模式分支退役（input 行/行集区/模式标签移除）+ 行集行形状 {path,dtitle,sec}
+        `//（侧栏宿主 col + 编辑区 padding col），插入点下游子树 id 重派生（57→59 置换，首
 ` +
-        `//（行区 for 循环节点）。其余结构零漂移。
+        `// divergence 在侧栏起点，chrome 头段与收尾段零漂移）。上游三件修复落地后本批 workaround
 ` +
-        `// 仪器同 v2..v28：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态
+        `// 层可撤（撤时再重锁）。
+` +
+        `// 仪器同 v2..v29：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态
 ` +
         `//（chrome 全套 + Hello World.ad 开；查找面板/建页弹层/新建弹层/属性弹层/新建目录
 ` +
@@ -690,7 +692,7 @@ async function runArm(arm, port) {
       } else if (fs.existsSync(BASELINE)) {
         const raw = fs.readFileSync(BASELINE, 'utf8')
         const ok = raw === headerFor(BASELINE) + baselineBodyOf()
-        check('B', 'baseline', ok, ok ? '结构基线 v29 零漂移（state 逐字节 + id 序列）——PLAN-038 T-03 重锁（state 纯增 8 字段 quick_* 七件+store quick_open + files_rows 退役；id 序列 = 快开弹层新节点+工具栏钮+files 面板分支退役，逐项解释在 PLAN-038 T-03）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
+        check('B', 'baseline', ok, ok ? '结构基线 v30 零漂移（state 逐字节 + id 序列）——2026-10-09 vm 布局修复批重锁（state 零变化；id 序列恰 +2 节点=侧栏宿主 col+编辑区 padding col，下游子树重派生——归因见基线头注与 docs/upstream/2026-10-09 供料包）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
       } else {
         console.log('  [baseline] structure-v29 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v29.txt')
       }
