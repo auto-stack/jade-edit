@@ -1,0 +1,105 @@
+{
+  "plan_id": "PLAN-039",
+  "plan_revision": 1,
+  "release": {
+    "version": "0.1.0",
+    "milestone": "Windows 源码试用（配合 auto-lang v0.5）",
+    "boundary": "P≤200 页 / 名称匹配 depth 8；不承诺安装包、跨平台、独立静态 dist 运行"
+  },
+  "closeout_status": "preparation_only",
+  "closeout_status_note": "最终 auto-lang v0.5 候选（D-01）未冻结——本 manifest 记录准备态证据；最终 RC 供给到位后更新并重验受影响证据",
+  "jade": {
+    "source_commit": null,
+    "source_commit_note": "最终发布资料 commit 由 T-05 收口时填写；本文件所在工作树当前基线 = 038 归档 tip 80eeea674a0c460856ff5ac4374f1e2ea6a2f78a + 本计划修复批",
+    "base_commit": "80eeea674a0c460856ff5ac4374f1e2ea6a2f78a"
+  },
+  "dependencies": {
+    "auto_lang": {
+      "role": "工具链（auto.exe 解释执行 src/*.at + VM/HTTP 载体）",
+      "source_commit": null,
+      "source_commit_note": "D-01：等待母工程 v0.5 RC 冻结来源",
+      "investigated_binaries": [
+        {
+          "path": "D:/autostack/auto-lang/target/debug/auto.exe",
+          "version": "auto 0.1.0+v0.4.2-2730-g91ae002d3-dirty",
+          "sha256": "1dae8b494a045a6409e2b03b7c09ad8d6f3c5bfdad09f82347d947fdc42339e3",
+          "note": "计划 §4.2 在录调查载体（debug 2730-dirty）；只用于准备，不作为最终候选"
+        },
+        {
+          "path": "D:/autostack/auto-lang/target/release/auto.exe",
+          "version": "auto 0.1.0+v0.4.2-2747-gab7a650bd",
+          "sha256": "1efdc3ed937ff95448eb2e2d88060dd221cf6b270854a65361b51889ea0a5ee2",
+          "note": "master 干净构建（PLAN-740 复审证据提交）；probe_editor_host 全案在册；仍非冻结 RC"
+        }
+      ]
+    },
+    "auto_down": {
+      "role": "引擎包（@autodown/engine Vue 组件 + autodown-core rust）",
+      "source_commit": null,
+      "source_commit_note": "D-01；调查时 HEAD 895f8d0f9355c9f5ec3ce8fca268bdb768395846（clean）",
+      "investigated_head": "895f8d0f9355c9f5ec3ce8fca268bdb768395846"
+    },
+    "auto_edit": {
+      "role": "stylekit 依赖（相对路径，须包含在获取指南）",
+      "source_commit": null,
+      "source_commit_note": "D-01；调查时 HEAD f9ae2a64361f74ad8565fc5df5c4a9aeb5fc10f2（clean）",
+      "investigated_head": "f9ae2a64361f74ad8565fc5df5c4a9aeb5fc10f2"
+    }
+  },
+  "toolchain": {
+    "node": "v25.2.1",
+    "pnpm": "11.6.0",
+    "note": "调查环境实测值；不外推为通用最低版本——最终候选在冻结工具链上重验后回填",
+    "platform": "Windows 10.0.26200 x64"
+  },
+  "forms": [
+    {
+      "id": "vm-merged",
+      "command": "auto run -r vm",
+      "role": "主交付形态",
+      "status": "verified_preparation"
+    },
+    {
+      "id": "vue-integrated",
+      "command": "auto run -r vue --server vm -B 8211 -F 4443",
+      "role": "现行第二交付形态",
+      "status": "verified_preparation"
+    },
+    {
+      "id": "vue-e2e",
+      "command": "serve-back + vite dev（e2e harness）",
+      "role": "验证载体——不代替发行启动",
+      "status": "verification_only"
+    },
+    {
+      "id": "vm-split",
+      "command": "auto run -r vm --no-merge",
+      "role": "开发/补充诊断路径",
+      "status": "diagnostic"
+    },
+    {
+      "id": "vue-dist-static",
+      "command": "单独 serve gen/front/vue/dist",
+      "role": "非独立发行形态（未验证 API 路由前无运行承诺）",
+      "status": "not_supported_as_release"
+    }
+  ],
+  "artifacts": {
+    "readiness": "docs/releases/v0.1.0-rc/readiness.md",
+    "validation": "docs/releases/v0.1.0-rc/validation.md",
+    "trial_guide": "docs/releases/v0.1.0-rc/trial-guide.md",
+    "screenshots": "docs/releases/v0.1.0-rc/screenshots/",
+    "checksums": "docs/releases/v0.1.0-rc/checksums.sha256",
+    "sample_workspace": "docs/releases/v0.1.0-rc/sample-workspace/"
+  },
+  "gates": {
+    "user_trial_confirmation": "pending",
+    "parent_engine_rc": "pending",
+    "joint_release_review": "pending",
+    "public_release": "pending"
+  },
+  "spec_targets": {
+    "new": "docs/specs/release-readiness.md",
+    "modified": "docs/specs/editor-host-capabilities.md"
+  }
+}

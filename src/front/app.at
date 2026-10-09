@@ -1168,6 +1168,19 @@ fn movedir_preview_text(nodes List, src str, dst str) str {
     return ""
 }
 
+/// 编辑器空文种子内容（PLAN-039 T-02；SD-04）：trim(active_body)=="" →
+/// "# " + title（create_page_impl 新建页模板同款标题行形态）。显示层
+/// 种子——store 正文保持 "" 直到真实输入经 oninput 落 .Edit：单一正文
+/// 权威、零磁盘污染（未编辑空文读回/保存保持原字节）；引擎
+/// lastEmittedMd 以初始文档播种（EngineEditor.vue），挂载期 select 零
+/// 发射——种子不产生脏标。清空全文（serialize 落空白）同判回归种子。
+fn editor_content_of(body str, title str) str {
+    if body.trim() == "" {
+        return "# " + title
+    }
+    return body
+}
+
 /// 回收站条目路径抽取（PLAN-019 T-02；恢复全部循环的元素安全通道——
 /// handler 内模型 List 直索引未证，call-arg 形过桥[.ft_nodes →
 /// paths_under 同款已证形态]；D-20② 元素先拷局部变量再取字段）。
@@ -1436,6 +1449,12 @@ widget App {
         // 合并钮条件 bool（同源派生——T-03 实勘：vm 弹层 content 流
         // `if <computed str> != ""` 整子树丢弃首例；bool computed 判别面）。
         movedir_conflict => dir_conflict_of(.ft_nodes, .movedir_src, .movedir_dst)
+        // 编辑器空文种子内容（PLAN-039 T-02；SD-04——editor_content_of
+        // 纯函数委托，D-33② 单函数调用形态；title 取 path_stem[页名不带
+        // 目录前缀——active_title 为 strip_ad 形含目录，实测
+        // "wiki/空页"]；依赖 = active_body/active_path 逐键重算，
+        // deldir_files_preview 输入随打随算同成本族）。
+        editor_content => editor_content_of(.store.active_body, path_stem(.store.active_path))
     }
 
     // —— actions 声明块（Plan 451 三源绑定：shortcut / toolbar 占位合成 /
@@ -1722,9 +1741,20 @@ widget App {
                     // —— 编辑区（autodown_editor；key 变即重挂载读 content:）——
                     // PLAN-036 T-03：正文内链完整事件名消费（on "open-wiki-link"
                     // 双参 = target + 可选目标锚点；引擎 emit 名 kebab 形）。
+                    // PLAN-039 T-02（SD-04）：空文输入起点 = 显示层种子——
+                    // content 绑定 editor_content computed（trim(active_body)
+                    // =="" 时 "# " + 页名[path_stem]，新建页模板同款标题行
+                    // 形态），store 正文保持 "" 直到真实输入经 oninput 落
+                    // .Edit——单一正文权威、零磁盘污染（未编辑空文读回/保存
+                    // 保持原字节）；引擎 lastEmittedMd 以初始文档播种
+                    //（EngineEditor.vue），挂载期 select 零发射，种子不产生
+                    // 脏标。清空全文（serialize 落空白）同判回归种子起点。
+                    // style 追加 tailwind 任意变体隐藏引擎动作栏假 Save 钮
+                    //（emit('save') 无消费假入口——SD-03；上游 showActions
+                    // 非 prop 维持分列，宿主隐藏为宿主呈现修复）。
                     if .store.tab_count > 0 {
-                        autodown_editor (key: .store.active_key, final: true, style: "flex-1 w-full") {
-                            content: .store.active_body
+                        autodown_editor (key: .store.active_key, final: true, style: "flex-1 w-full [&_.autodown-editor-actions]:hidden") {
+                            content: .editor_content
                             oninput: .Edit
                             on "open-wiki-link": .OpenWikiLink
                         }

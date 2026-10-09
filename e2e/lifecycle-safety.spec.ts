@@ -46,8 +46,19 @@ async function openFile(page: import('@playwright/test').Page, stem: string) {
 }
 
 async function menu(page: import('@playwright/test').Page, item: string) {
-  await page.getByRole('menuitem', { name: '文件' }).click()
-  await page.getByText(item, { exact: true }).last().click()
+  // 菜单弹层有界重试（PLAN-039 T-03——D-21 v11③ popover 瞬态家族与 matrix
+  // pick9 关层判据同族：popover 内容窗瞬态吞开层/吞点击；3×3s 而非默认
+  // 预算恒挂。⑩ trash 弧实测两连挂点同此）。
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      await page.getByRole('menuitem', { name: '文件' }).click()
+      await page.getByText(item, { exact: true }).last().click({ timeout: 3000 })
+      return
+    } catch (e) {
+      if (attempt === 2) throw e
+      await page.waitForTimeout(600)
+    }
+  }
 }
 
 const dlg = (page: import('@playwright/test').Page) => page.getByRole('dialog')

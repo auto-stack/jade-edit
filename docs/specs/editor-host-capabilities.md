@@ -14,7 +14,7 @@
 | --- | --- | --- |
 | 宿主保存入口（toolbar/菜单/Ctrl+S 共 ActSave） | **已可消费**（双轨）：三入口共 `ActSave → store.Save` 门链（untitled 另存旁路、lc_review 待核验门、快照-读回核验、草稿结算、较新输入保 dirty） | e2e save：toolbar 与编辑器聚焦态真键 Ctrl+S 均真落盘（原文/标记/frontmatter 三验 + 单次无双保存面）；editor-safety/draft-recovery 规范门链在册 |
 | ①② 编辑器 save 事件 | **缺供给**：`View::AutodownEditor` 仅 key/value/is_final/on_change/on_focus/placeholder/style——无 save 消息通道；候选 `onsave:` 语法入视图模板但零消费（快照显形+零回执） | probe M3/S2（save 回执恒零）+ aura_view_builder convert_autodown_editor_native |
-| ③ 引擎动作栏与 @save | **供给存在待接线**：EngineEditor 无条件渲染 Save 钮（`emit('save', serialize(engine.doc, true))`；`defineExpose handleSave`）；App.vue 仅听 `@update:modelValue`——点击引擎 Save 钮=零落盘+脏标保。**`:show-actions` 非 prop**：EngineEditor defineProps 无 canEdit/showActions，生成 attr 透传为 DOM 属性（`show-actions="true"` 可测），按钮显隐不受其控制——「隐藏引擎 Save」路线在 prop 供给前不成立 | e2e inventory（attr 透传）+ e2e save（点击零效果）；EngineEditor.vue defineProps |
+| ③ 引擎动作栏与 @save | **供给存在待接线；假入口已由宿主呈现修复下线（PLAN-039 SD-03）**：EngineEditor 仍无条件渲染 Save 钮（`emit('save', serialize(engine.doc, true))`；`defineExpose handleSave`）——jade 不消费该 emit；宿主经编辑器根类 tailwind 任意变体 `[&_.autodown-editor-actions]:hidden` 将动作栏 display:none（DOM 恒渲染、视觉不可达不可点）——e2e editor-host inventory/save 两测按新现实改锚（toBeHidden + attr 透传结论保持）。**`:show-actions` 非 prop** 维持：EngineEditor defineProps 无 canEdit/showActions，生成 attr 透传为 DOM 属性——上游供给缺口分列不变；@save 消费仍须 A-1 身份供给解锁（md+active_key 判源禁止不变）。VM 轨无该动作栏面（原生壳无此呈现），样式串经 Style::parse 容忍（快照原样保留） | e2e editor-host（隐藏+attr 透传）+ release-readiness 假钮阴性案；EngineEditor.vue defineProps |
 
 ### 1.2 命令（undo/redo/cut/copy/paste/select-all——逐项）
 
@@ -56,7 +56,7 @@
 3. **命令历史归属**：编辑器拥有历史栈/选区/执行；宿主只传命令请求并消费回执。宿主不得复制历史栈、不得借 DOM 私有实例或整文重置模拟撤销/复制/选区。无支持的命令入口不得伪造成功——035 起现行形态=入口收口+可见说明守卫（[editor-command-availability.md](editor-command-availability.md) §1.2）；原 console_log 降级为历史形态不再使用。
 4. **链接身份**：链接事件 target 消费现行四级解析（link_index target_path 逐路径），title/alias 不成为路径身份；`OpenLink(path)` 是开档口——不得将未解析 title 拼 `.ad` 直开或重写磁盘；缺页走既有悬空确认面，外链/白名单规则独立裁决。
 5. **位置语义**：块聚焦≠caret 行列；开页≠定位成功；data-block-id 块域与 getBlockMap 为公开坐标域，caret/选区偏移单位与挂载世代稳定域在供给落地前不预设。
-6. **show_actions 边界**：在 A-2 供给前，任何「隐藏引擎 Save 钮」的方案不成立；控制动作栏与可靠接入两路线均须真实验证后裁决。
+6. **show_actions 边界（PLAN-039 刷新）**：A-2 真消费 prop 供给前，`:show-actions` 仍非行为开关（attr 透传）；宿主已按「宿主呈现修复」路线经编辑器根类 CSS 隐藏动作栏（editor-host-capabilities §1.1 ③行——不冒称上游组件供给，上游缺口分列维持）。控制动作栏与可靠接入两路线仍须上游供给真实验证后裁决；在 A-1 身份供给前 @save 消费接线维持禁止。
 
 ## 3. 缺口与交接（SD-03）
 

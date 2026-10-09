@@ -304,8 +304,13 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   // 拾取全走弹层域，text/orphans/trash 面板域不变）。
   const quickDialog = page.getByRole('dialog')
   const openQuick = async () => {
-    await page.getByRole('menuitem', { name: '视图' }).click()
-    await page.getByRole('menuitem', { name: '快速打开' }).click()
+    // 幂等开层（PLAN-039 T-03 修测——③⑨ 弧 642 首开后 pick9 复走菜单路：
+    // 模态域外菜单不可达是 D-55⑥ 在录设计，menuitem 点击恒挂——弹层已开
+    // （input 可见）时跳过菜单路径；闭态恒渲染面下 input 不可见照走菜单）。
+    if (!(await quickInput.isVisible().catch(() => false))) {
+      await page.getByRole('menuitem', { name: '视图' }).click()
+      await page.getByRole('menuitem', { name: '快速打开' }).click()
+    }
     await expect(page.getByPlaceholder('输入标题、别名或路径…')).toBeVisible({ timeout: 10_000 })
   }
   const quickRowNames = async () =>
@@ -646,7 +651,23 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   const pick9 = async (query: string, label: string) => {
     await openQuick()
     await quickInput.fill(query)
-    await quickDialog.getByRole('button', { name: label, exact: true }).click()
+    // 逐拾取重试＋关层判据（D-21 v11③ 负载窗家族两形态实测：①点击回执
+    // 悬挂[开档重渲染窗]——默认预算恒挂；②点击 resolve 而效果被吞——
+    // 弹层留置假完成。判据 = 拾取生效必关层（QuickPick→quick_open
+    // false）；未关层/悬挂均入重试，重开层重填——已开档直激活幂等[038 AC]。
+    // RecCap 循环同族纪律）。
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        await quickDialog.getByRole('button', { name: label, exact: true }).click({ timeout: 8000 })
+        await expect(quickInput).toHaveCount(0, { timeout: 8000 })
+        return
+      } catch {
+        if (attempt === 2) throw new Error(`pick9(${query}) 拾取三试未达（负载窗家族）`)
+        await page.waitForTimeout(800)
+        if (!(await quickInput.isVisible().catch(() => false))) await openQuick()
+        await quickInput.fill(query)
+      }
+    }
   }
   await pick9('index', '首页')
   await expect(visibleEditor(page)).toContainText('提示', { timeout: 15_000 })
@@ -656,7 +677,7 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await quickInput.fill('')
   await expect(page.getByText('最近', { exact: true })).toBeVisible({ timeout: 10_000 })
   expect((await quickRowNames()).slice(0, 3), '「最近」逆序').toEqual(['Hello World', 'Tasks', '首页'])
-  await quickDialog.getByRole('button', { name: 'Hello World', exact: true }).click()
+  await quickDialog.getByRole('button', { name: 'Hello World', exact: true }).click({ timeout: 8000 })
   await expect(quickInput).toHaveCount(0, { timeout: 10_000 })
   await pick9('Tasks', 'Tasks')
   await openQuick()
@@ -683,6 +704,7 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
         await openQuick()
         await quickInput.fill(`RecCap${i}`)
         await quickDialog.getByRole('button', { name: `RecCap${i}`, exact: true }).click({ timeout: 8000 })
+        await expect(quickInput).toHaveCount(0, { timeout: 8000 }) // 关层判据（pick9 同款——吞点击假完成防御）
         picked = true
       } catch {
         if (attempt === 2) throw new Error(`RecCap${i} 拾取三试未达（负载窗家族）`)

@@ -37,15 +37,15 @@ test('宿主能力核验·inventory（载体/入口盘点）', async ({ page }) 
   await expect(visibleEditor(page)).toContainText('这是一段示例文本', { timeout: 10_000 })
   const editorRoot = page.locator('.autodown-editor:visible').first()
 
-  // 引擎动作栏：Save 按钮无条件渲染（:show-actions 未被 defineProps
-  // 消费——按钮显隐不受其控制；此处仅证「按钮在」，隐藏能力归 save 相位）
-  const engineSave = editorRoot.locator('.autodown-editor-save')
-  await expect(engineSave).toBeVisible()
-  await expect(engineSave).toHaveText('Save')
+  // 引擎动作栏：Save 按钮宿主呈现修复（PLAN-039 T-02 SD-03）——上游
+  // EngineEditor 仍无条件渲染（emit('save') 无消费），宿主经编辑器根类
+  // tailwind 任意变体 display:none 下线假入口。
+  await expect(editorRoot.locator('.autodown-editor-save')).toBeHidden()
 
   // :show-actions/:can-edit 透传为 DOM attr（生成器 bool_prop_binding
   // 发射 kebab attr；EngineEditor defineProps 无 canEdit/showActions
-  // ——Vue 未声明 prop 落为根元素属性，非组件行为开关）
+  // ——Vue 未声明 prop 落为根元素属性，非组件行为开关——上游供给结论
+  // 维持，宿主隐藏属宿主呈现修复非 prop 供给）
   expect(await editorRoot.getAttribute('show-actions'), 'show-actions 落 DOM attr（attr 透传）').toBe('true')
   expect(await editorRoot.getAttribute('can-edit'), 'can-edit 落 DOM attr（attr 透传）').toBe('true')
 
@@ -64,7 +64,7 @@ test('宿主能力核验·inventory（载体/入口盘点）', async ({ page }) 
   // :key 重挂载播种通道（content 换档面）：切档后 content 跟随
   await page.getByText('Tasks', { exact: true }).first().click()
   await expect(visibleEditor(page)).toContainText('原型设计', { timeout: 10_000 })
-  console.log('[inventory] PASS — 引擎 Save 钮无条件渲染 + show-actions/can-edit attr 透传 + 宿主入口在册 + data-block-id 块域 + :key 播种面')
+  console.log('[inventory] PASS — 引擎 Save 钮宿主隐藏（PLAN-039）+ show-actions/can-edit attr 透传 + 宿主入口在册 + data-block-id 块域 + :key 播种面')
 })
 
 test('宿主能力核验·save（引擎 @save 未接线 vs 宿主入口真保存）', async ({ page }) => {
@@ -81,13 +81,12 @@ test('宿主能力核验·save（引擎 @save 未接线 vs 宿主入口真保存
   await expect(page.getByText('未保存', { exact: true }).first()).toBeVisible({ timeout: 10_000 })
   const diskBefore = fs.readFileSync(TARGET_FILE, 'utf8')
 
-  // 引擎动作栏 Save 点击 → @save 无监听：零落盘 + 脏标保（未接线直证
-  // ——调查通过、接口尚不可用）
-  await page.locator('.autodown-editor:visible .autodown-editor-save').click()
-  await page.waitForTimeout(800)
-  await expect(page.getByText('未保存', { exact: true }).first()).toBeVisible({ timeout: 10_000 })
-  expect(fs.readFileSync(TARGET_FILE, 'utf8'), '引擎 Save 点击零磁盘写入（@save 未接线）').toBe(diskBefore)
-  console.log('[save] 引擎 Save 钮点击 → 零落盘 + 脏标保（emit 无消费者——供给存在待接线）')
+  // 引擎动作栏 Save：宿主呈现修复后不可达（PLAN-039 SD-03）——按钮
+  // display:none，假入口物理下线；@save 无消费的上游事实不变（供给
+  // 存在待接线维持分列，消费接线仍须 A-1 身份供给解锁）
+  await expect(page.locator('.autodown-editor:visible .autodown-editor-save')).toBeHidden()
+  expect(fs.readFileSync(TARGET_FILE, 'utf8'), '假入口下线零磁盘写入').toBe(diskBefore)
+  console.log('[save] 引擎 Save 钮已下线（宿主隐藏）——@save 上游无消费结论维持分列')
 
   // 宿主 toolbar 保存 → ActSave 共门链真落盘（脏标清 + 磁盘字节 +
   // 原文保留 + frontmatter 保留）
