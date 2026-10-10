@@ -33,7 +33,7 @@ const SAFE_BODY = `# ReloadSafe 头
 const STALE_TEXT = '文档已变化，请重新发起重载'
 /** 草稿结算墓碑计数（drafts 下各 doc 的 s 序列 meta——⑦ 结算弧证据面）。 */
 function countSettlements(): number {
-  const root = path.join(WORKSPACE, '.jade', 'drafts', 'v1')
+  const root = path.join(WORKSPACE, '.auto-jade', 'drafts', 'v1')
   if (!fs.existsSync(root)) return 0
   let n = 0
   for (const d of fs.readdirSync(root)) {
@@ -46,7 +46,7 @@ function countSettlements(): number {
 
 /** 任一检查点正文含标记（⑦ 磁盘前置——确认后再发起放弃）。 */
 function markerInCheckpoints(marker: string): boolean {
-  const root = path.join(WORKSPACE, '.jade', 'drafts', 'v1')
+  const root = path.join(WORKSPACE, '.auto-jade', 'drafts', 'v1')
   if (!fs.existsSync(root)) return false
   for (const d of fs.readdirSync(root)) {
     const dd = path.join(root, d)

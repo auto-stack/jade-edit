@@ -40,7 +40,7 @@
 //             →3 开逆序→拾取即关→去重置顶→容量截断 RecCap×12→10 行——
 //             write_wiki 素材 + ActDaily 树刷新）+ **⑩ 持久化三面
 //             （PLAN-021——磁盘逐行验[⑨ 终态 RecCap12..RecCap3 ↔
-//             .jade/recents.txt]+⑤ reload 跨会话恢复[「最近」段真弧]+
+//             .auto-jade/recents.txt]+⑤ reload 跨会话恢复[「最近」段真弧]+
 //             防线案 201 页 StatusBar 警示行显隐[渲染面——vm 组件子树
 //             不可见的对位承载]+清料零警示回归）**。入口 = 视图菜单项
 //             （键位面 = 真键盘，e2e 不覆盖）；检索触发 = 检索钮（契约底
@@ -256,7 +256,7 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   // 直接关闭路：弃改关闭（磁盘零写入）→ 档数回落 + 激活回落 Hello World
   await activeTabX.click()
   await expect(page.getByText('关闭后此文档的编辑不再显示', { exact: false }).first()).toBeVisible({ timeout: 10_000 })
-  // PLAN-031 T-05：直接关闭 → 放弃修改并关闭（结算式弃改——tombstone 在 .jade 域，wiki 文件零写入断言不变）
+  // PLAN-031 T-05：直接关闭 → 放弃修改并关闭（结算式弃改——tombstone 在 .auto-jade 域，wiki 文件零写入断言不变）
   await page.getByRole('button', { name: '放弃修改并关闭', exact: true }).click()
   await expect(page.getByText('关闭后此文档的编辑不再显示', { exact: false }).first()).toBeHidden({ timeout: 10_000 })
   await expect(tabBtn('Tasks')).toHaveCount(0, { timeout: 10_000 })
@@ -548,7 +548,7 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await expect(page.getByText('（无孤页）', { exact: true })).toBeVisible({ timeout: 10_000 })
   console.log('[11 find] PASS — orphans 第五模式空态（pristine 全连接——T-01 首锁）')
   // 快开子步：开弹层 → **空 q「最近」段（PLAN-021 修订——10m goto 重载
-  // = 新 Init，recents 自 .jade/recents.txt 跨会话载入[020「会话域复位
+  // = 新 Init，recents 自 .auto-jade/recents.txt 跨会话载入[020「会话域复位
   // 零记录」语义随持久化退役——本位 = G1 跨会话恢复 e2e 首证位]）** →
   // 过滤 → 拾取即关（PLAN-038 弹层面迁移）
   await openQuick()
@@ -724,9 +724,9 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   console.log('[11 find] PASS — ⑨ recents 弧线（清 q「最近」段→3 开逆序→拾取即关→去重置顶→容量截断 RecCap×12→10 行）')
 
   // ⑩ 持久化三面（PLAN-021 T-03；SD-2101——vm 矩阵 ⑩/⑩b/⑩c 同单）：
-  // ⑩a 磁盘逐行验（⑨ 弧终态 RecCap12..RecCap3 ↔ .jade/recents.txt——
+  // ⑩a 磁盘逐行验（⑨ 弧终态 RecCap12..RecCap3 ↔ .auto-jade/recents.txt——
   // 变更即存落盘面，身份域逐行）；
-  const recentsDiskLines = fs.readFileSync(path.join(WORKSPACE, '.jade', 'recents.txt'), 'utf8').split('\n').filter((l) => l !== '')
+  const recentsDiskLines = fs.readFileSync(path.join(WORKSPACE, '.auto-jade', 'recents.txt'), 'utf8').split('\n').filter((l) => l !== '')
   expect(recentsDiskLines, '⑩a 磁盘逐行 = RecCap12..RecCap3').toEqual(
     Array.from({ length: 10 }, (_, k) => `RecCap${12 - k}.ad`),
   )

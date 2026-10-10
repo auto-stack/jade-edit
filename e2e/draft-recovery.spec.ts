@@ -9,7 +9,7 @@ import path from 'node:path'
 import crypto from 'node:crypto'
 import { visibleEditor, WORKSPACE, TARGET_FILE, appendToEditor } from './helpers'
 
-const DRAFTS = path.join(WORKSPACE, '.jade', 'drafts', 'v1')
+const DRAFTS = path.join(WORKSPACE, '.auto-jade', 'drafts', 'v1')
 const sha = (s: string) => crypto.createHash('sha256').update(Buffer.from(s, 'utf8')).digest('hex')
 const bodyOf = (disk: string) =>
   disk.split('---').length >= 3 ? disk.split('---').slice(2).join('---').replace(/^\n/, '') : disk

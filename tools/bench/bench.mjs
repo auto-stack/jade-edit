@@ -32,7 +32,7 @@ import { fileURLToPath } from 'node:url'
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
 const AUTO_EXE = process.env.AUTO_EXE ?? 'D:/autostack/auto-lang/target/debug/auto.exe'
-const FIXTURE_SOURCE = process.env.JADE_FIXTURE ?? 'D:/autostack/auto-down/tmp/wiki-demo'
+const FIXTURE_SOURCE = process.env.AUTO_JADE_FIXTURE ?? 'D:/autostack/auto-down/tmp/wiki-demo'
 const HERE = path.dirname(fileURLToPath(import.meta.url))
 const RESULTS = path.join(HERE, 'results')
 const LOGS = path.join(HERE, 'logs')
@@ -152,7 +152,7 @@ async function launch({ seedLarge = false } = {}) {
   const t0 = performance.now()
   const app = spawn(AUTO_EXE, ['run', '-r', 'vm'], {
     cwd: repoRoot,
-    env: { ...process.env, AUTOUI_MCP_PORT: String(port), JADE_WORKSPACE: WS },
+    env: { ...process.env, AUTOUI_MCP_PORT: String(port), AUTO_JADE_WORKSPACE: WS },
     stdio: ['ignore', 'pipe', 'pipe'],
   })
   let out = ''
