@@ -243,6 +243,8 @@ AC-08 允许“真实用户确认 pending”的**资料准备交付**，不豁�
 
 进度：2/5（T-03/T-04/T-05 各完成 preparation 面；最终收口件受 §10 D-01/D-03 门）。T-01 [✅]；T-02 [✅]；T-03 [~]（本仓可跑门全绿：vm_matrix merged 20/20、e2e 全套件隔离全绿、probe 家族 19 件全绿+3 件环境事件失效待静默补跑、bench150 全绿含 tags 244ms 门、draft 矩阵全绿、mtime debug 路由全绿、split 诊断两轮实录——**最终候选回归与干净路径实走受 D-01 冻结门**）；T-04 [~]（RELEASE/trial-guide/readiness/validation/manifest/checksums/sample-workspace/三张真实截图已落——**最终版本与图片以 D-01 候选为准重采回填**）；T-05 [~]（release-readiness Spec 新建＋editor-host-capabilities §1.1/§2.6 SD-03 刷新已落 main——最终 manifest 收口与独立复审交接受 D-01 门）。
 
+> **协调注记（2026-10-10，PLAN-040 T-08）**：PLAN-040（auto-jade 改名＋手册型示例库＋宣传截图）已先于本计划终收口落 main——本计划 T-03/T-04/T-05 的重采与 manifest 收口**直接以新名（AutoJade/auto-jade、AUTO_JADE_* env、.auto-jade/）与新示例库（14 页手册型）执行**，零二次返工；jade_ready 状态键随批更名 auto_jade_ready（Spec/manifest/RC 资料已同步）。本注记不改本计划契约语义。
+
 **复审／交付后出口**：本计划交付就绪资料后，由用户试用确认与母工程联合发布流程处理 tag／对外发布。发布工具链或产品输入变化必须更新 manifest 并重验受影响证据；仅 ledger／归档簿记后代需证明代码与工件恒等并记录 provenance，不伪写旧回执绑定到新代码。用户试用、最终 RC 供给缺失是明确下一动作，不能无限开新功能 Plan 等待。
 
 ## 9. 复审记录

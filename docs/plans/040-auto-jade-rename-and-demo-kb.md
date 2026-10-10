@@ -1,12 +1,12 @@
 ---
 plan_id: PLAN-040
-status: executing
+status: execution_done
 feature_name: auto-jade 改名机械批＋手册型示例知识库与宣传截图（v0.1.0 发布前收口两件套）
 author: [agent]
 created_at: 2026-10-10T05:57:56Z
-updated_at: 2026-10-10T05:57:56Z
+updated_at: 2026-10-10T08:05:00Z
 plan_revision: 1
-current_step: 2
+current_step: 8
 total_steps: 8
 supersedes_spec_components:
   - docs/specs/draft-recovery.md
@@ -355,13 +355,13 @@ test-results/、dist/、deps/、rust-workspace/ 不在扫描面（生成物/依�
 | T-01 触点冻结普查 | 无（只读） | 全仓 fresh grep（含 docs/ specs/ RC/工具脚本盲区），逐条白名单定稿，§4.1 清单校正落档 | 触点清单＋白名单＝后续判据基准 | AC-01 | 清单覆盖 grep 全命中且白名单逐条有据 [✅ 2026-10-10：§4.1「T-01 触点冻结」块落档——新增触点 12 面（含第五锚 matrix.spec.ts:167、JADE_PROBE_PORT 族、probe 家族 17 件、wiki-link-navigation.md:22→SD-05）、高估校正 1 面（screenshots/README.md 零命中）、env 族终列 4 变量、白名单五类定稿（含 baseline v0..v32 历史审计档整体豁免——v33 新锁带新名）] |
 | T-02 身份层替换 | T-01 | pac.at/status_bar.at/app.at/package.json/e2e 锚×2/EDIT_MARKER/dbg 脚本 | 身份层全换＋`pnpm build` 再生 | AC-01 | vm 冒烟见 AutoJade；vue 构建绿；受触 e2e 单绿 [✅ 2026-10-10 e949b62：e2e 锚实为五处（T-01 新勘三锚随批）；pnpm build ✓14.17s gen name=auto-jade；vm 冒烟 snapshot AutoJade=true/JadeEdit=false＋PrintWindow 起窗正常；editor-host 4/4＋reload-safety 1/1] |
 | T-03 内部态/env 层替换 | T-02 | wsys/drafts/api＋SD-01/02＋reload-safety/serve-back/regen-vue＋注释面随批 | `.auto-jade/`＋`AUTO_JADE_*` 全换 | AC-02 | draft 矩阵全绿；serve-back belt 实证；grep 层零残留 |
-| T-04 全量回归＋基线重锁 | T-03 | vm_matrix（预期 [B] 红→审计→重锁 v33→复跑）＋e2e 全套件＋受触 probe | 基线 v33＋回归实录 | AC-03 | 20/20＋diff 审计档（名字面单变量）＋隔离口径全绿 |
-| T-05 文档资料清扫 | T-02 | 四 docs＋RC 五件＋manifest 键＋screenshots README＋SD-03/04＋欢迎.ad:12＋trial-guide 弃置语义注 | 资料层新名＋Spec 增量落 | AC-01/04 | §5.2 grep 断言零残留；git diff 白名单零改写 |
-| T-06 示例库撰写 | T-05 | sample-workspace 扩至 §5.3 全表＋链接闭合清点＋文体扫描 | 手册型语料交付 | AC-05 | 闭合清点档＋规格核对＋trial-guide 复走 |
-| T-07 宣传截图采制 | T-04、T-06 | demo 语料副本装载→§5.5 镜头逐拍→promo/＋README＋元数据→checksums 重算 | 截图套件交付 | AC-06 | README 表逐行核对；隐私注记在册 |
-| T-08 协调与交接 | T-05..07 | 039 协调注记一行（不改其契约）；本计划 §9 交接记录；复审交 auto-plan-review | 接力面落账 | AC-07 | 注记在档；复审另执行不自判 |
+| T-04 全量回归＋基线重锁 | T-03 | vm_matrix（预期 [B] 红→审计→重锁 v33→复跑）＋e2e 全套件＋受触 probe | 基线 v33＋回归实录 | AC-03 | 20/20＋diff 审计档（名字面单变量）＋隔离口径全绿 [✅ 2026-10-10：首跑 19/20 唯 [B] 红→diff 审计＝header 行1＋EDIT_MARKER 字节两处名字面（**§2.5/§4.4 前提实证校正：窗口标题/status 不入基线**——chrome 层仪器无此面）→v33 重锁→复跑 20/20 ALL GREEN；split 臂 ×2 MCP 不可达＝F-24-2 在册族（A/B 改名前 303e515 同败定谳）；e2e 41 passed/3 failed 与昨日同形——draft-recovery 隔离 3/3·quick-open 5/5 绿，matrix.spec 三跑败点漂移＝draft-settle 供料件在册〔303e515 pre-v2 同形·owner auto-lang〕＋本窗负载族（e2e 与 probe 链同机并发实录）；probe 家族 21 件全绿（native_wiki_link 隔离二跑 31/0/3＝昨日口径逐字复现，首二跑 flap＝D-54⑦ 瞬态族）] |
+| T-05 文档资料清扫 | T-02 | 四 docs＋RC 五件＋manifest 键＋screenshots README＋SD-03/04＋欢迎.ad:12＋trial-guide 弃置语义注 | 资料层新名＋Spec 增量落 | AC-01/04 | §5.2 grep 断言零残留；git diff 白名单零改写 [✅ 2026-10-10：SD-03/04/05 落（+SD-05 新增 wiki-link-navigation.md:22）；screenshots/README.md 实测零命中（T-01 校正）；弃置语义注入 trial-guide §1；扫掠断链回正三处（archived 档名）；剥离法终版断言零残留（白名单八类定稿）；他任务簿记不裹挟] |
+| T-06 示例库撰写 | T-05 | sample-workspace 扩至 §5.3 全表＋链接闭合清点＋文体扫描 | 手册型语料交付 | AC-05 | 闭合清点档＋规格核对＋trial-guide 复走 [✅ 2026-10-10：14 页（10 新＋欢迎重写＋3 既有保持）；split 后端 API 实勘闭合 PASS——悬空恰 1·功能页出链全≥3·核心页被链 7/6/7·标签族 8·别名 8 页·引擎：auto-lang 全角冒号页名解析实证；文体扫描零命中；trial-guide 锚结构性核验（欢迎/空页 0 字节/别名 Start/悬空锚/反链富集）] |
+| T-07 宣传截图采制 | T-04、T-06 | demo 语料副本装载→§5.5 镜头逐拍→promo/＋README＋元数据→checksums 重算 | 截图套件交付 | AC-06 | README 表逐行核对；隐私注记在册 [✅ 2026-10-10：七镜头（P1-P7）逐张视觉核验通过——vm 两镜头最大化窗 1933×1245 修正边缘轻裁切遗留·AutoJade 状态栏入镜；vue 五镜头 1440×900 同会话连续交互链（P2 反链行级就绪等待）；README 元数据＋preparation/D-01 重采注记＋隐私注记齐；checksums 重算 30 件] |
+| T-08 协调与交接 | T-05..07 | 039 协调注记一行（不改其契约）；本计划 §9 交接记录；复审交 auto-plan-review | 接力面落账 | AC-07 | 注记在档；复审另执行不自判 [✅ 2026-10-10：039 §8 协调注记落档（终收口以新名/新语料执行·jade_ready→auto_jade_ready 同步）；§9 work 记录落档；复审交 auto-plan-review] |
 
-进度：0/8。
+进度：8/8（全任务完成；复审交 auto-plan-review）。
 
 ## 9. 复审记录
 
@@ -372,6 +372,34 @@ test-results/、dist/、deps/、rust-workspace/ 不在扫描面（生成物/依�
   号位 040 双目录复核空闲 | changed: T-01..08 / AC-01..07 / SD-01..04 | next: work
   （T-01 触点冻结普查起） | note: 这是 new 阶段契约交接，不是实施通过或复审通过；
   §10-D1/D2 两项用户裁量点不阻塞执行（均有在册默认）。
+
+- 2026-10-10T08:05:00Z：stage: work | plan_id: PLAN-040 | plan_revision: 1 |
+  outcome: pass（execution_done） | code_commit: main 线性四批——e949b62（T-02
+  身份层）/ ebcda75（T-03 内部态/env 层＋SD-01/02）/ T-05 文档批（SD-03/04/05）/
+  T-06 语料批 / T-04 基线 v33 批 / T-07 截图批（基点 303e515；本仓直接 main
+  线性惯例——001..039 在册无 worktree 面，039 §9 同口径沿用） | task_ids:
+  T-01..T-08 全 8 | evidence: **AC-01** 剥离法终版零残留断言（白名单八类定稿
+  §4.1 T-01 块）＋vm 冒烟 snapshot AutoJade=true/JadeEdit=false＋vue build 绿
+  （gen name=auto-jade）＋e2e 锚五处；**AC-02** draft_recovery_matrix ALL GREEN
+  ＋reload-safety/draft-recovery e2e 绿＋serve-back belt 新 env 通道实证＋
+  probe_recent/probe_draft 绿＋trial-guide 弃置语义注入档；**AC-03** vm_matrix
+  首跑 19/20 唯 [B] 红→diff 审计＝header＋EDIT_MARKER 两名字面→v33 重锁→
+  20/20 ALL GREEN（split 臂=F-24-2 在册族·A/B 改名前同败定谳；e2e 41/3 与昨日
+  同形·隔离复跑归因＝draft-settle 供料件在册〔owner auto-lang〕＋本窗负载族；
+  probe 21 件全绿——native_wiki_link 隔离二跑 31/0/3 昨日口径逐字复现）；
+  **AC-04** RC 五件＋manifest 块键＋promo/README 新名、checksums 重算 30 件、
+  plans/archived＋bench/results＋baseline v0..v32 零改写；**AC-05** 14 页闭合
+  PASS（悬空恰 1·出链≥3·被链 7/6/7·标签族 8·别名 8 页）＋文体扫描零命中＋
+  trial-guide 锚结构性核验；**AC-06** 七镜头逐张视觉核验＋元数据/隐私注记/
+  D-01 重采定位在册；**AC-07** 039 §8 协调注记＋本记录双向落账 | blockers:
+  无 | next: review（auto-plan-review） | note: ①§2.5/§4.4 前提实证校正——窗口
+  标题/status 不入 vm 基线（chrome 层），基线漂移实为 header 模板＋EDIT_MARKER
+  两处；②T-01 新勘触点 12 面（第五锚/JADE_PROBE_PORT 族/probe 家族/wiki-link-
+  navigation.md:22→SD-05 增补）＋扫掠断链回正三处（auto-down 归档档名）；
+  ③bench_release_150 未随批跑（其性能门属 release-readiness Spec＝039 终收口
+  D-01 门域，非本计划 AC 面——env token 已随批更名，039 终验时以最终候选执行）；
+  ④本窗并行会话在飞（docs/upstream draft-settle 域两件＋docs/analysis 两件，
+  均未裹挟）；⑤e2e/.runtime 77 件暂存脚本随扫（gitignored 不入断言面）。
 
 ## 10. 待澄清事项
 
