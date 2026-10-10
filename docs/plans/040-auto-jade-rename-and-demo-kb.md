@@ -1,6 +1,6 @@
 ---
 plan_id: PLAN-040
-status: execution_done
+status: reviewed
 feature_name: auto-jade 改名机械批＋手册型示例知识库与宣传截图（v0.1.0 发布前收口两件套）
 author: [agent]
 created_at: 2026-10-10T05:57:56Z
@@ -354,7 +354,7 @@ test-results/、dist/、deps/、rust-workspace/ 不在扫描面（生成物/依�
 | --- | --- | --- | --- | --- | --- | --- |
 | T-01 触点冻结普查 | 无（只读） | 全仓 fresh grep（含 docs/ specs/ RC/工具脚本盲区），逐条白名单定稿，§4.1 清单校正落档 | 触点清单＋白名单＝后续判据基准 | AC-01 | 清单覆盖 grep 全命中且白名单逐条有据 [✅ 2026-10-10：§4.1「T-01 触点冻结」块落档——新增触点 12 面（含第五锚 matrix.spec.ts:167、JADE_PROBE_PORT 族、probe 家族 17 件、wiki-link-navigation.md:22→SD-05）、高估校正 1 面（screenshots/README.md 零命中）、env 族终列 4 变量、白名单五类定稿（含 baseline v0..v32 历史审计档整体豁免——v33 新锁带新名）] |
 | T-02 身份层替换 | T-01 | pac.at/status_bar.at/app.at/package.json/e2e 锚×2/EDIT_MARKER/dbg 脚本 | 身份层全换＋`pnpm build` 再生 | AC-01 | vm 冒烟见 AutoJade；vue 构建绿；受触 e2e 单绿 [✅ 2026-10-10 e949b62：e2e 锚实为五处（T-01 新勘三锚随批）；pnpm build ✓14.17s gen name=auto-jade；vm 冒烟 snapshot AutoJade=true/JadeEdit=false＋PrintWindow 起窗正常；editor-host 4/4＋reload-safety 1/1] |
-| T-03 内部态/env 层替换 | T-02 | wsys/drafts/api＋SD-01/02＋reload-safety/serve-back/regen-vue＋注释面随批 | `.auto-jade/`＋`AUTO_JADE_*` 全换 | AC-02 | draft 矩阵全绿；serve-back belt 实证；grep 层零残留 |
+| T-03 内部态/env 层替换 | T-02 | wsys/drafts/api＋SD-01/02＋reload-safety/serve-back/regen-vue＋注释面随批 | `.auto-jade/`＋`AUTO_JADE_*` 全换 | AC-02 | draft 矩阵全绿；serve-back belt 实证；grep 层零残留 [✅ 2026-10-10 ebcda75＋补账 823259e（review F-R040-1 闭账：draft-recovery/matrix/reload-safety/bench 四件扫掠改动漏提交归位——reload-safety 1/1·draft-recovery 3/3 补账后隔离复跑绿）；draft_recovery_matrix ALL GREEN＋probe_recent/probe_draft 绿＋AUTO_AUTO 双前缀事故修复] |
 | T-04 全量回归＋基线重锁 | T-03 | vm_matrix（预期 [B] 红→审计→重锁 v33→复跑）＋e2e 全套件＋受触 probe | 基线 v33＋回归实录 | AC-03 | 20/20＋diff 审计档（名字面单变量）＋隔离口径全绿 [✅ 2026-10-10：首跑 19/20 唯 [B] 红→diff 审计＝header 行1＋EDIT_MARKER 字节两处名字面（**§2.5/§4.4 前提实证校正：窗口标题/status 不入基线**——chrome 层仪器无此面）→v33 重锁→复跑 20/20 ALL GREEN；split 臂 ×2 MCP 不可达＝F-24-2 在册族（A/B 改名前 303e515 同败定谳）；e2e 41 passed/3 failed 与昨日同形——draft-recovery 隔离 3/3·quick-open 5/5 绿，matrix.spec 三跑败点漂移＝draft-settle 供料件在册〔303e515 pre-v2 同形·owner auto-lang〕＋本窗负载族（e2e 与 probe 链同机并发实录）；probe 家族 21 件全绿（native_wiki_link 隔离二跑 31/0/3＝昨日口径逐字复现，首二跑 flap＝D-54⑦ 瞬态族）] |
 | T-05 文档资料清扫 | T-02 | 四 docs＋RC 五件＋manifest 键＋screenshots README＋SD-03/04＋欢迎.ad:12＋trial-guide 弃置语义注 | 资料层新名＋Spec 增量落 | AC-01/04 | §5.2 grep 断言零残留；git diff 白名单零改写 [✅ 2026-10-10：SD-03/04/05 落（+SD-05 新增 wiki-link-navigation.md:22）；screenshots/README.md 实测零命中（T-01 校正）；弃置语义注入 trial-guide §1；扫掠断链回正三处（archived 档名）；剥离法终版断言零残留（白名单八类定稿）；他任务簿记不裹挟] |
 | T-06 示例库撰写 | T-05 | sample-workspace 扩至 §5.3 全表＋链接闭合清点＋文体扫描 | 手册型语料交付 | AC-05 | 闭合清点档＋规格核对＋trial-guide 复走 [✅ 2026-10-10：14 页（10 新＋欢迎重写＋3 既有保持）；split 后端 API 实勘闭合 PASS——悬空恰 1·功能页出链全≥3·核心页被链 7/6/7·标签族 8·别名 8 页·引擎：auto-lang 全角冒号页名解析实证；文体扫描零命中；trial-guide 锚结构性核验（欢迎/空页 0 字节/别名 Start/悬空锚/反链富集）] |
@@ -400,6 +400,64 @@ test-results/、dist/、deps/、rust-workspace/ 不在扫描面（生成物/依�
   D-01 门域，非本计划 AC 面——env token 已随批更名，039 终验时以最终候选执行）；
   ④本窗并行会话在飞（docs/upstream draft-settle 域两件＋docs/analysis 两件，
   均未裹挟）；⑤e2e/.runtime 77 件暂存脚本随扫（gitignored 不入断言面）。
+
+- 2026-10-10T08:40:00Z：stage: review | plan_id: PLAN-040 | plan_revision: 1 |
+  outcome: needs_fix | reviewed_commit: 79f4c62（基线基点 303e515） |
+  dependency_revisions: auto-lang debug auto.exe 0.1.0+v0.4.2-2900-ge0999cee1-dirty
+  （SHA256 前缀 24239007B3AE711B） | spec_inputs: draft-recovery/name-search/
+  release-readiness/editor-host-capabilities/wiki-link-navigation 五 Specs 现行版 |
+  acceptance_results: AC-02/AC-03 **partial**（证据绑定工作树非 HEAD——见
+  F-R040-1）；AC-01/04/05/06/07 复核命令面初验通过（终局复验待补账后） |
+  findings: **F-R040-1**（severity=阻断）：T-03 提交清单遗漏四件——
+  e2e/draft-recovery.spec.ts（:12 .auto-jade 路径）、e2e/matrix.spec.ts（5 处
+  .auto-jade 注释/recents 盘读）、e2e/reload-safety.spec.ts（:36/:49 draft
+  路径）、tools/bench/bench.mjs（AUTO_JADE_FIXTURE/AUTO_JADE_WORKSPACE 两行）
+  的状态扫掠改动未随 ebcda75 落库——HEAD 上该三 spec 读旧 `.jade` 路径而
+  应用已写 `.auto-jade/`，执行期记录的 reload-safety/draft-recovery 绿证
+  绑定未提交工作树。affected: T-03/AC-02/AC-03（T-04 e2e 面证据同绑定）。
+  correction: 四件选择性提交（并行会话 WIP 零裹挟——已逐 hunk 分账：四件
+  脏面全为本计划内容；helpers.ts AUTO_JADE_E2E_WS/serve-back --workspace/
+  editor_store.at PLAN-750 门/docs 四件＝并行会话域不动）＋补账后隔离复跑
+  reload-safety/draft-recovery/matrix.spec | evidence: git diff 逐文件 hunk
+  清单（本记录在档）；`git show ebcda75 --stat` 无该四件 | next: work 补账
+  （T-03 重开·current_step 7）→ 复验 → re-review。
+
+- 2026-10-10T09:20:00Z：stage: review | plan_id: PLAN-040 | plan_revision: 1 |
+  outcome: pass（re-review；F-R040-1 闭账） | reviewed_commit: 823259e（补账后
+  HEAD；基点 303e515） | base_commit: 303e515 | dependency_revisions: auto-lang
+  debug auto.exe v0.4.2-2900-ge0999cee1-dirty（review 窗内家族重建≥2 次——对
+  本计划源码 dump 等价实证〔cand2 diff 唯一差异＝并行会话 draft_allocating
+  源级字段，引擎面零字节〕） | spec_inputs: 五 Specs 现行版（SD-01..05 逐条
+  与代码/文档对照通过——draft-recovery.md:14/89 ↔ drafts.at:44/api.at:415、
+  name-search.md:20、release-readiness.md:7/41/51/64 手册型契约、
+  editor-host-capabilities.md:9/17/67/68、wiki-link-navigation.md:22） |
+  acceptance_results: **AC-01 pass**（剥离法零残留＝白名单 5 行全为豁免项/新名
+  假象＋vm 冒烟 snapshot AutoJade=true·JadeEdit=false＠HEAD＋editor-host e2e
+  4/4＠HEAD〔AutoJade boot 锚〕＋gen name=auto-jade）；**AC-02 pass**（补账
+  823259e 后 reload-safety 1/1·draft-recovery 3/3 隔离绿＠提交态＋draft 矩阵
+  ALL GREEN〔ebcda75 证据·代码同一〕＋serve-back belt＋弃置语义注入档＋SD-01/02
+  对照）；**AC-03 pass**（基线证据＝212551f 双跑 20/20 ALL GREEN＋HEAD 对全部
+  vm 输入与 212551f 字节同一〔git diff src/+vm_matrix.mjs+pac.at+tests/baseline/
+  ＝空〕＋review 窗 HEAD 工作树 19/20 唯 [B] 红逐字节归因＝并行会话 editor_store.at
+  draft_allocating WIP 单行〔其 v34 重锁在途〕——**复用理由**：代码同一＋漂移
+  字节全归属并行 WIP；split 臂 F-24-2 在册族〔A/B 改名前 303e515 同败×2〕；
+  e2e 41/3 同形〔draft-recovery/quick-open 隔离绿；matrix.spec 六跑败点漂移＋
+  **改名前 A/B 同机同败定谳**〔303e515 worktree 600s click timeout 同形〕＝
+  在册 draft-settle 供料件＋家族重建风暴窗实录〕；probe 家族 21 件〔执行窗〕
+  ＋native_wiki_link 隔离二跑 31/0/3 昨日口径）；**AC-04 pass**（checksums
+  30/30 重算核验＠HEAD＋RC 新名＋plans/archived·bench/results·baseline v0..v32
+  零改写）；**AC-05 pass**（闭合复验＠HEAD：14 页/悬空恰 1/核心被链 7·6·7/
+  标签族 8＋文体零命中＋trial-guide 锚结构性核验）；**AC-06 pass**（七镜头
+  逐张视觉核验＋元数据/隐私/D-01 重采定位在册〔文件与 dcb2930 提交字节同一〕）；
+  **AC-07 pass**（039 协调注记 rg 在档＋本记录） | findings: F-R040-1 已闭账
+  （补账 823259e＋复验绿）；**F-R040-2**（severity=注记·非阻断）：review 窗
+  家族重建风暴实录——auto.exe ≥2 次替换＋3 cargo 长驻＋泄漏 vm 僵尸（PID 38520
+  清杀）＋vm_matrix 六跑败点漂移（全为在册 v9..v31 负载族形态学）；.runtime
+  扫掠误伤自建脚本 repoRoot 常量（jade-edit→auto-jade 路径串——gitignored
+  暂存面·已修复·零仓库影响）；并行会话 v34 基线重锁在途（vm_matrix.mjs/v34/
+  v33 删除/editor_store.at——本复审未触碰，其落库由其计划承载） | evidence:
+  本记录内嵌命令结果＋`git show HEAD:tests/baseline/structure-v33.txt` 与
+  cand2 diff 30 行（漂移字节归属在档）＋worktree A/B 实录 | next: merge。
 
 ## 10. 待澄清事项
 
