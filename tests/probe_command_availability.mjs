@@ -256,7 +256,7 @@ async function runMergedArm({ dir, ws, port, variant }) {
   const rec = { variant }
   const app = spawn(AUTO_EXE, ['run', '-r', 'vm'], {
     cwd: dir,
-    env: { ...process.env, AUTOUI_MCP_PORT: String(port), JADE_WORKSPACE: ws },
+    env: { ...process.env, AUTOUI_MCP_PORT: String(port), AUTO_JADE_WORKSPACE: ws },
     stdio: ['ignore', 'pipe', 'pipe'],
   })
   let appOut = ''
@@ -444,10 +444,10 @@ function fingerprints() {
   }
   fp.auto_lang = rev('D:/autostack/auto-lang')
   fp.auto_down = rev('D:/autostack/auto-down')
-  fp.jade_edit = rev(repoRoot)
+  fp.auto_jade = rev(repoRoot)
   try {
-    fp.jade_edit_desc = execFileSync('git', ['-C', repoRoot, 'describe', '--tags', '--always', '--dirty'], { encoding: 'utf8' }).trim()
-  } catch { fp.jade_edit_desc = 'unavailable' }
+    fp.auto_jade_desc = execFileSync('git', ['-C', repoRoot, 'describe', '--tags', '--always', '--dirty'], { encoding: 'utf8' }).trim()
+  } catch { fp.auto_jade_desc = 'unavailable' }
   const engineDist = 'D:/autostack/auto-down/autodown/packages/engine/dist'
   try {
     const st = fs.statSync(engineDist)
@@ -610,7 +610,7 @@ async function runStoreArm({ dir, ws, port }) {
   const rec = { arm: 'store' }
   const app = spawn(AUTO_EXE, ['run', '-r', 'vm'], {
     cwd: dir,
-    env: { ...process.env, AUTOUI_MCP_PORT: String(port), JADE_WORKSPACE: ws },
+    env: { ...process.env, AUTOUI_MCP_PORT: String(port), AUTO_JADE_WORKSPACE: ws },
     stdio: ['ignore', 'pipe', 'pipe'],
   })
   let appOut = ''

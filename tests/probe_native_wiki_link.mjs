@@ -5,7 +5,7 @@
 //
 //   指纹臂    auto.exe 版本/SHA（须含供给：≥ v0.4.2-2650-gd5215b477）、
 //            auto-lang rev/732 交付 commit、auto-jade HEAD。
-//   N 臂      真实 jade 应用 merged（cwd=仓根 + JADE_WORKSPACE fixture）：
+//   N 臂      真实 jade 应用 merged（cwd=仓根 + AUTO_JADE_WORKSPACE fixture）：
 //            MCP editor_drag 单点（MousePressed→Released 直经生产
 //            core.handle_input 完整点击门——SD-01 §3/§6 press+release=语义
 //            完整点击）逐链接真实点击→目标页打开；press-only（门不闭合）/
@@ -203,7 +203,7 @@ function buildFixtureWorkspace() {
   fs.writeFileSync(path.join(NATIVE_WS, 'wiki', '目标页.ad'), '目标页正文内容。\n', 'utf8')
   fs.writeFileSync(
     path.join(NATIVE_WS, 'wiki', 'AliasTarget.ad'),
-    // jade page_fm_list 读块式列表（aliases: + "- 项"）——flow list 不识别。
+    // auto-jade page_fm_list 读块式列表（aliases: + "- 项"）——flow list 不识别。
     '---\ntitle: 别名目标\naliases:\n  - 别名页\n---\n\n别名目标页正文。\n',
     'utf8',
   )
@@ -353,9 +353,9 @@ function fingerprintArm() {
   const ver = ((v.stdout ?? '') + (v.stderr ?? '')).trim().split('\n')[0] || `exit ${v.status}`
   let shaVal = 'unavailable'
   try { shaVal = sha(AUTO_EXE) } catch { /* 缺文件 */ }
-  const jadeHead = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: repoRoot, encoding: 'utf8' }).stdout.trim()
+  const autoJadeHead = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: repoRoot, encoding: 'utf8' }).stdout.trim()
   const langHead = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: 'D:/autostack/auto-lang', encoding: 'utf8' }).stdout.trim()
-  rec.fingerprints = { auto_exe_version: ver, auto_exe_sha: shaVal, jade_head: jadeHead, auto_lang_head: langHead }
+  rec.fingerprints = { auto_exe_version: ver, auto_exe_sha: shaVal, auto_jade_head: autoJadeHead, auto_lang_head: langHead }
   for (const [k, val] of Object.entries(rec.fingerprints)) console.log(`  ${k} = ${String(val).slice(0, 100)}`)
   const m = ver.match(/v0\.4\.2-(\d+)-g([0-9a-f]+)/)
   ck(m !== null && Number(m[1]) >= 2650, `N0 binary 含供给基线（≥v0.4.2-2650-gd5215b477，实测 ${ver}）`)
@@ -366,12 +366,12 @@ function fingerprintArm() {
 async function nativeArm() {
   console.log('\n[probe-native-wiki-link] N 臂（真实应用 merged 真实点击）：')
   buildFixtureWorkspace()
-  const app = launchVmApp(N_PORT, 'auto-jade-probe-native-wiki-link', repoRoot, { JADE_WORKSPACE: NATIVE_WS })
+  const app = launchVmApp(N_PORT, 'auto-jade-probe-native-wiki-link', repoRoot, { AUTO_JADE_WORKSPACE: NATIVE_WS })
   try {
     const { callTool } = await waitMcpAndUi(N_PORT, 'auto-jade-probe-native-wiki-link', app, app._out)
     const H = makeHelpers(callTool)
     await H.openPage(['Src', 'Src.ad'], ['普通正文段落'])
-    ok('N1 真实应用 boot+开档（JADE_WORKSPACE fixture；Src.ad 经 filetree 打开）')
+    ok('N1 真实应用 boot+开档（AUTO_JADE_WORKSPACE fixture；Src.ad 经 filetree 打开）')
     const edId = await H.editorId()
     if (!edId) throw new Error('editor vnode not found in snapshot')
     const blocks = await H.mapBlocks(edId, 320)
@@ -501,7 +501,7 @@ async function originArm() {
     `name: "auto-jade-probe-native-origin"\nversion: "0.1.0"\nscene: "ui"\nrender: ["vm"]\ntitle: "ProbeNativeOrigin"\nwindow: "900x420"\n`,
     'utf8',
   )
-  const app = launchVmApp(O_PORT, 'auto-jade-probe-native-origin', PROBE_DIR, { JADE_WORKSPACE: NATIVE_WS })
+  const app = launchVmApp(O_PORT, 'auto-jade-probe-native-origin', PROBE_DIR, { AUTO_JADE_WORKSPACE: NATIVE_WS })
   try {
     const { callTool } = await waitMcpAndUi(O_PORT, 'auto-jade-probe-native-origin', app, app._out)
     const H = makeHelpers(callTool)
@@ -551,7 +551,7 @@ async function originArm() {
 
 async function protectArm() {
   console.log('\n[probe-native-wiki-link] P 臂（脏源/脏目标保护——真实键入+真实点击）：')
-  const app = launchVmApp(N_PORT, 'auto-jade-probe-native-wiki-link-p', repoRoot, { JADE_WORKSPACE: NATIVE_WS })
+  const app = launchVmApp(N_PORT, 'auto-jade-probe-native-wiki-link-p', repoRoot, { AUTO_JADE_WORKSPACE: NATIVE_WS })
   try {
     const { callTool } = await waitMcpAndUi(N_PORT, 'auto-jade-probe-native-wiki-link-p', app, app._out)
     const H = makeHelpers(callTool)
@@ -622,7 +622,7 @@ async function protectArm() {
 async function missingArm() {
   console.log('\n[probe-native-wiki-link] M 臂（缺页确认——真实弹层取消/创建）：')
   buildFixtureWorkspace()
-  const app = launchVmApp(N_PORT, 'auto-jade-probe-native-wiki-link-m', repoRoot, { JADE_WORKSPACE: NATIVE_WS })
+  const app = launchVmApp(N_PORT, 'auto-jade-probe-native-wiki-link-m', repoRoot, { AUTO_JADE_WORKSPACE: NATIVE_WS })
   try {
     const { callTool } = await waitMcpAndUi(N_PORT, 'auto-jade-probe-native-wiki-link-m', app, app._out)
     const H = makeHelpers(callTool)

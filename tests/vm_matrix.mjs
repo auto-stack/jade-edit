@@ -82,8 +82,8 @@
 //             ——清 q[type_text 空]→「最近」段→3 开逆序→拾取即关→去重
 //             置顶→容量截断[RecCap×12→10 行]）+ **⑩ 持久化逐行验子步
 //             （PLAN-021——⑨ 弧终态 recents RecCap12..RecCap3 ↔
-//             .jade/recents.txt 磁盘逐行一致[变更即存落盘面]+快照免索引
-//             负向[.jade 点前缀 walk 忽略——树/面板零感知]）**。执行序在
+//             .auto-jade/recents.txt 磁盘逐行一致[变更即存落盘面]+快照免索引
+//             负向[.auto-jade 点前缀 walk 忽略——树/面板零感知]）**。执行序在
 //             10b 后 9 前。**臂尾 ⑩b/⑩c（PLAN-021——check 9 后第二
 //             boot，fail 即臂败不占检查位）**：⑩b 跨会话重启载入弧[真
 //             进程重启——Init 载入半：recent_paths state 清单逐行 = 磁盘
@@ -170,7 +170,7 @@
 //             本检查杀进程，恒为臂内最后一项）
 //
 // 双臂（PLAN-001 换基后配方）：
-//   merged 臂（默认）  auto run -r vm + JADE_WORKSPACE=隔离 fixture——
+//   merged 臂（默认）  auto run -r vm + AUTO_JADE_WORKSPACE=隔离 fixture——
 //                      back 进程内直调，零后端进程零端口；
 //   split 臂（--arm split / gate 全跑）  auto run -r vm --no-merge——
 //                      AutoVM HTTP back 同进程起服，HTTP 往返。
@@ -191,7 +191,7 @@ import { fileURLToPath } from 'node:url'
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const AUTO_EXE = process.env.AUTO_EXE ?? 'D:/autostack/auto-lang/target/debug/auto.exe'
-const FIXTURE_SOURCE = process.env.JADE_FIXTURE ?? 'D:/autostack/auto-down/tmp/wiki-demo'
+const FIXTURE_SOURCE = process.env.AUTO_JADE_FIXTURE ?? 'D:/autostack/auto-down/tmp/wiki-demo'
 const FIXTURE = path.join(repoRoot, 'e2e', '.runtime', 'workspace')
 
 const args = process.argv.slice(2)
@@ -530,7 +530,7 @@ async function runArm(arm, port) {
   const split = arm === 'split'
   const app = spawn(AUTO_EXE, split ? ['run', '-r', 'vm', '--no-merge'] : ['run', '-r', 'vm'], {
     cwd: repoRoot,
-    env: { ...process.env, AUTOUI_MCP_PORT: String(port), JADE_WORKSPACE: FIXTURE },
+    env: { ...process.env, AUTOUI_MCP_PORT: String(port), AUTO_JADE_WORKSPACE: FIXTURE },
     stdio: ['ignore', 'pipe', 'pipe'],
   })
   let appOut = ''
@@ -809,13 +809,13 @@ async function runArm(arm, port) {
     await pressActiveTabClose('Tasks')
     await stateIs('confirm_open', 'true')
     // PLAN-031 T-05 语义升级：直接关闭 → 「放弃修改并关闭」（结算式
-    // 放弃——tombstone 落 .jade 域，wiki 文件零写入断言不变；保留草稿
+    // 放弃——tombstone 落 .auto-jade 域，wiki 文件零写入断言不变；保留草稿
     // 并关闭新弧 = T-06 矩阵承载）。
     await pressButton('放弃修改并关闭', { exact: true })
     await stateIs('tab_count', '1')
     await stateIs('active_title', tabTitleOf(TARGET_LABEL))
     const tabDisk = fs.readFileSync(path.join(FIXTURE, 'wiki', TAB_LABEL), 'utf8')
-    check('7', 'tab', !tabDisk.includes(TAB_MARKER), `双档切换互换 + dirty 关闭确认两路（取消档留/放弃修改并关闭[结算式弃改——.jade 域墓碑]=${!tabDisk.includes(TAB_MARKER)}；保留草稿新弧=T-06）`)
+    check('7', 'tab', !tabDisk.includes(TAB_MARKER), `双档切换互换 + dirty 关闭确认两路（取消档留/放弃修改并关闭[结算式弃改——.auto-jade 域墓碑]=${!tabDisk.includes(TAB_MARKER)}；保留草稿新弧=T-06）`)
 
     // 8 编辑操作族：段中回车/退格（C-5 整文构造达成同语义）。
     // state dump 中字符串换行以 \n 字面转义呈现——断言锚用转义形。
@@ -2303,20 +2303,20 @@ async function runArm(arm, port) {
     const recCapOk = recRows3.length === 10 && recRows3[0] === 'RecCap12' && recRows3[9] === 'RecCap3'
     if (!recCapOk) throw new Error(`容量截断失守 len=${recRows3.length} rows=${JSON.stringify(recRows3)}`)
     // ⑩ 持久化逐行验（PLAN-021 T-03；SD-2101 落盘面——fail 即臂败）：
-    // ⑨ 弧终态 recents（RecCap12..RecCap3 十行）↔ .jade/recents.txt 磁盘
+    // ⑨ 弧终态 recents（RecCap12..RecCap3 十行）↔ .auto-jade/recents.txt 磁盘
     // 逐行一致（八触点「变更即存」的落盘面直证）；面板行文本 = path 本
     // 身（RecCap* 无 title——dtitle fallback = path），与磁盘行同域可比。
-    const diskLines = fs.readFileSync(path.join(FIXTURE, '.jade', 'recents.txt'), 'utf8').split('\n').filter((l) => l !== '')
+    const diskLines = fs.readFileSync(path.join(FIXTURE, '.auto-jade', 'recents.txt'), 'utf8').split('\n').filter((l) => l !== '')
     // 面板行文本 = 显示名（dtitle 缺省 stem——.ad 尾剥）；磁盘行 = 身份域
     // path。逐行验按显示域归一（剥 .ad 尾）——身份域逐行锚 = 臂尾 ⑩b
     // state 清单对读。
     const diskStems = diskLines.map((l) => (l.endsWith('.ad') ? l.slice(0, -3) : l))
     const recDiskOk = JSON.stringify(diskStems) === JSON.stringify(recRows3)
     if (!recDiskOk) throw new Error(`持久化逐行验失守 disk=${JSON.stringify(diskLines)} panel=${JSON.stringify(recRows3)}`)
-    // 免索引负向（PLAN-021；D-33① 点前缀 walk 忽略——树/面板快照零 .jade
+    // 免索引负向（PLAN-021；D-33① 点前缀 walk 忽略——树/面板快照零 .auto-jade
     // 感知；state dump 侧由基线 v19 全文承载零感知）。
-    const snapNoJade = !(await snapshotText()).includes('.jade')
-    if (!snapNoJade) throw new Error('.jade 泄漏进树/面板快照（免索引面失守）')
+    const snapNoAutoJade = !(await snapshotText()).includes('.auto-jade')
+    if (!snapNoAutoJade) throw new Error('.auto-jade 泄漏进树/面板快照（免索引面失守）')
     // 收尾：快开弹层关（⑨ 终态「最近」段行集含 RecCap*——取消钮关层
     // 复位；弹层闭态行区不渲染，check 12 反链面板负向断言不受污染）。
     const pressQuickCancel = async () => {
@@ -2329,8 +2329,8 @@ async function runArm(arm, port) {
     }
     await pressQuickCancel()
     await stateIs('quick_open', 'false')
-    check('11', 'find', recentsReplacedOk && proOk && cjkFilterOk && notRanOk && hitOk && emptyFindOk && aliasHitOk && trashCopyOk && trashRerouteOk && trashRowOk && purgeCopyOk && purgeCancelOk && trashEmptyOk && purgeDiskOk && trashRows2Ok && trashTreeInvisibleOk && trashSaveBackOk && restoreAllEmptyOk && restoreAllDiskOk && orphNoInput && orphListedOk && orphClearedOk && orphDanglingOk && recAccumOk && recOrderOk && recDedupOk && recCapOk && recDiskOk && snapNoJade,
-      `快开（**PLAN-038 T-03 独立根弹层**——quick_open/quick_q 弹层面[区域锚]/空q recents 替换面[PLAN-020 断言修订语义迁移——最近段+已开档行+未开档排除]/Pro→Projects 独行拾取即关[QuickPick→quick_open false]/定理→CAP 独行+CJK 拾取开档双臂[PLAN-028 POST 化收口]）+ 检索（text 切换/未运行提示/CJK「任务列表」POST 双臂命中/行导航面板保持开/运行后空态）+ alias 检索（PLAN-012——fs 造档→搜「检别名」→AliasTgt.ad 行→拾取开档双臂）+ trash 模式[PLAN-016 ⑥：＋新建 TrashMe→菜单删除 弹层文案「将移入回收站」+改道磁盘面→回收站第四模式 清单行→清空强确认[M=1 派生+取消留置零落盘]→清空→空态闭环+磁盘 .trash 消]+ **trash 增强 ⑦[PLAN-019：双条目清单→行点击预览[.trash 路径 tab 开 active_title=.trash/TrashR1+树不可见]+保存落回 .trash 原位[磁盘标记直证——可编辑口径]+恢复全部[循环 restore→清单空态+磁盘双档回根字节保真]]+ **⑧ orphans 第五模式[PLAN-020：无 input 负向面+fs 造纯孤页档入列[back walk 零树依赖]+行点击开档+造链清孤[ActSave 顺产重算行消]+悬空出链计入出链度[OrphanD 非孤——resolved 面直证]]+ ⑨ recents 弧线[PLAN-020：清 q[type_text 空]→「最近」段累积态→3 开[index/Tasks/Hello World ASCII 拾取]→头 3 行逆序→拾取即关→去重置顶[重拾 Tasks 头位]→容量截断[RecCap×12+ActDaily 树刷新→12 开→10 行 头 RecCap12 尾 RecCap3]]+ **⑩ 持久化逐行验[PLAN-021：⑨ 弧终态 ↔ .jade/recents.txt 磁盘逐行一致+快照免索引负向]**`)
+    check('11', 'find', recentsReplacedOk && proOk && cjkFilterOk && notRanOk && hitOk && emptyFindOk && aliasHitOk && trashCopyOk && trashRerouteOk && trashRowOk && purgeCopyOk && purgeCancelOk && trashEmptyOk && purgeDiskOk && trashRows2Ok && trashTreeInvisibleOk && trashSaveBackOk && restoreAllEmptyOk && restoreAllDiskOk && orphNoInput && orphListedOk && orphClearedOk && orphDanglingOk && recAccumOk && recOrderOk && recDedupOk && recCapOk && recDiskOk && snapNoAutoJade,
+      `快开（**PLAN-038 T-03 独立根弹层**——quick_open/quick_q 弹层面[区域锚]/空q recents 替换面[PLAN-020 断言修订语义迁移——最近段+已开档行+未开档排除]/Pro→Projects 独行拾取即关[QuickPick→quick_open false]/定理→CAP 独行+CJK 拾取开档双臂[PLAN-028 POST 化收口]）+ 检索（text 切换/未运行提示/CJK「任务列表」POST 双臂命中/行导航面板保持开/运行后空态）+ alias 检索（PLAN-012——fs 造档→搜「检别名」→AliasTgt.ad 行→拾取开档双臂）+ trash 模式[PLAN-016 ⑥：＋新建 TrashMe→菜单删除 弹层文案「将移入回收站」+改道磁盘面→回收站第四模式 清单行→清空强确认[M=1 派生+取消留置零落盘]→清空→空态闭环+磁盘 .trash 消]+ **trash 增强 ⑦[PLAN-019：双条目清单→行点击预览[.trash 路径 tab 开 active_title=.trash/TrashR1+树不可见]+保存落回 .trash 原位[磁盘标记直证——可编辑口径]+恢复全部[循环 restore→清单空态+磁盘双档回根字节保真]]+ **⑧ orphans 第五模式[PLAN-020：无 input 负向面+fs 造纯孤页档入列[back walk 零树依赖]+行点击开档+造链清孤[ActSave 顺产重算行消]+悬空出链计入出链度[OrphanD 非孤——resolved 面直证]]+ ⑨ recents 弧线[PLAN-020：清 q[type_text 空]→「最近」段累积态→3 开[index/Tasks/Hello World ASCII 拾取]→头 3 行逆序→拾取即关→去重置顶[重拾 Tasks 头位]→容量截断[RecCap×12+ActDaily 树刷新→12 开→10 行 头 RecCap12 尾 RecCap3]]+ **⑩ 持久化逐行验[PLAN-021：⑨ 弧终态 ↔ .auto-jade/recents.txt 磁盘逐行一致+快照免索引负向]**`)
 
     // N name（PLAN-033 T-04）：名称查找一致原生组（R-04）。语料 = fs 造
     // nm/ 子树（外部变更面——查找入口重开即 NamesRefresh 取新目录：本组
@@ -3827,7 +3827,7 @@ async function runArm(arm, port) {
     const bootAgain = async () => {
       const app2 = spawn(AUTO_EXE, split ? ['run', '-r', 'vm', '--no-merge'] : ['run', '-r', 'vm'], {
         cwd: repoRoot,
-        env: { ...process.env, AUTOUI_MCP_PORT: String(port), JADE_WORKSPACE: FIXTURE },
+        env: { ...process.env, AUTOUI_MCP_PORT: String(port), AUTO_JADE_WORKSPACE: FIXTURE },
         stdio: ['ignore', 'pipe', 'pipe'],
       })
       let out2 = ''
@@ -3886,7 +3886,7 @@ async function runArm(arm, port) {
         loadedRows = m[1].split(',').map((s) => s.trim().replace(/^"|"$/g, '')).filter((s) => s !== '')
         return loadedRows.length > 0
       }, 'recent_paths loaded (non-empty state)', 10000)
-      const diskRows2 = fs.readFileSync(path.join(FIXTURE, '.jade', 'recents.txt'), 'utf8').split('\n').filter((l) => l !== '')
+      const diskRows2 = fs.readFileSync(path.join(FIXTURE, '.auto-jade', 'recents.txt'), 'utf8').split('\n').filter((l) => l !== '')
       const reloadRowsOk = loadedRows.length > 0 && JSON.stringify(loadedRows) === JSON.stringify(diskRows2)
       if (!reloadRowsOk) throw new Error(`⑩b 载入态逐行失守 loaded=${JSON.stringify(loadedRows)} disk=${JSON.stringify(diskRows2)}`)
       // 载入态快开：「最近」段渲染（RecCap*.ad 同文树行在——段标题为唯

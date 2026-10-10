@@ -17,7 +17,7 @@
   recent_paths_get 同族零 D-19 面：CJK 值在响应 body UTF-8 直通）。
 - 覆盖：工作区根 depth 8 内全部 `.ad` 页，每页恰一条记录；walk 序 =
   `collect_ad_pages` 同源（fs.tree dirs-first + 名称 casefold，确定性）；
-  点前缀目录（.trash/.jade 等）自动排除。
+  点前缀目录（.trash/.auto-jade 等）自动排除。
 - 字段：`title` = 文件 stem（恒，与 link_index 同口径）；`dtitle` =
   frontmatter `title` 单行值（引号壳剥离），空/缺省 → stem（装配即定值）；
   `aliases` = block-list 两缩进形态 trim 归一（page_aliases 在册规则）。

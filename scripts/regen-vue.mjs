@@ -20,7 +20,7 @@
 // 撤除。
 //
 // 残余补件（非上游清偿面；pattern 断言，形态变化即 fail 按实重审）：
-//   1. vm-natives.ts 运行期垫片——jade vue 轨运行期语义面：dialog_*
+//   1. vm-natives.ts 运行期垫片——auto-jade vue 轨运行期语义面：dialog_*
 //      取消语义（"" = 取消）、Process.exit/__vmOnly no-op（QuitSaveClose
 //      落盘后终止在 vue 收敛为无害 no-op）、console_* 聚合（ConsolePanel
 //      真数据）。上游 682 F3 后 natives.ts R-tier 带先到先得守卫，垫片
@@ -46,8 +46,8 @@ import { fileURLToPath } from 'node:url'
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const AUTO_EXE = process.env.AUTO_EXE ?? 'D:/autostack/auto-lang/target/debug/auto.exe'
 const ENGINE_DIST_GUARD =
-  process.env.JADE_EDIT_ENGINE_ROOT
-    ? path.join(process.env.JADE_EDIT_ENGINE_ROOT, 'scripts', 'assert-dist-fresh.mjs')
+  process.env.AUTO_JADE_ENGINE_ROOT
+    ? path.join(process.env.AUTO_JADE_ENGINE_ROOT, 'scripts', 'assert-dist-fresh.mjs')
     : 'D:/autostack/auto-down/autodown/packages/engine/scripts/assert-dist-fresh.mjs'
 const vueDir = path.join(repoRoot, 'gen', 'front', 'vue')
 const apiTs = path.join(vueDir, 'src', 'lib', 'api.ts')
@@ -176,7 +176,7 @@ console.log('[regen-vue] 补件：src/vm-natives.ts 运行期垫片（console �
 // ②d/②e（补件 3/4）已随上游 PLAN-682 delivered 撤除（2026-09-22 回执步，
 // 见头注三批退役：1914 原生直发 :key 绑定 + gen-only 物化扫描落地）。
 
-// ③ engine dist 新鲜度卫兵（并行会话 src 领先 dist 的白屏债务，jade
+// ③ engine dist 新鲜度卫兵（并行会话 src 领先 dist 的白屏债务，auto-jade
 // e2e-prepare 同款 fail-fast）
 if (fs.existsSync(ENGINE_DIST_GUARD)) {
   run(process.execPath, [ENGINE_DIST_GUARD])

@@ -1,4 +1,4 @@
-// helpers.ts — vue 轨六检查共享件（jade front e2e helpers 形态的最小集）。
+// helpers.ts — vue 轨六检查共享件（auto-jade front e2e helpers 形态的最小集）。
 import { expect, type Page } from '@playwright/test'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -27,7 +27,7 @@ export async function openApp(page: Page) {
   await expect(page.getByText('index.ad', { exact: true }).first()).toBeVisible()
 }
 
-/** 文档末尾追加文本（jade e2e appendToEditor 同款：click + Ctrl+End）。
+/** 文档末尾追加文本（auto-jade e2e appendToEditor 同款：click + Ctrl+End）。
  *  **PLAN-031 T-05**：keyboard.type → insertText（单次 input 事件——粘贴
  *  语义）——逐键检查点排水（vue 轨每 Edit 一 POST + 全 DOM 重渲染）在
  *  套内累积 tab 数下把 UI 拖入秒级卡顿（矩阵套内 [11]/[13] 点击饿死实

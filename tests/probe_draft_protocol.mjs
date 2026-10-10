@@ -13,14 +13,14 @@
 //              独立校验器逐字段）。
 //
 // 案表（期望值 = T-01 附件 §3 决策表）：
-//   ① 空库 begin/list 不建 .jade（split 臂）
+//   ① 空库 begin/list 不建 .auto-jade（split 臂）
 //   ② 检查点确认四步 + 磁盘逐字节（CJK/引号/反斜杠/CRLF/尾随换行/空文
 //      /emoji+tab）+ 三重校验（len 字符/slen 字节/sha Node 对读）
 //   ③ 身份分配单调（d0001..）+ 守卫（畸形 id/越界路径拒）
 //   ④ 结算墓碑 + 清理 + 迟到旧写入不复活（settle_erev 门）
 //   ⑤ 故障注入：截断/坏 meta/删 body/杂件 → bad[] 线索 + 前序有效存活
 //      + 恢复枚举零写面（树 hash 前后对读）+ **原文件逐字不变**
-//   ⑥ 索引面：tree/link_index/search 对 .jade/drafts 零感知
+//   ⑥ 索引面：tree/link_index/search 对 .auto-jade/drafts 零感知
 //
 // 双臂一致 = 同一 back 模块两形态对读。用法（仓根）：node tests/probe_draft_protocol.mjs
 
@@ -173,7 +173,7 @@ function makeMcp(port) {
 async function runMergedPhase(phase, ws) {
   const app = spawn(AUTO_EXE, ['run', '-r', 'vm'], {
     cwd: PROJ,
-    env: { ...process.env, AUTOUI_MCP_PORT: String(MERGED_PORT), JADE_WORKSPACE: ws, DP_PHASE: phase },
+    env: { ...process.env, AUTOUI_MCP_PORT: String(MERGED_PORT), AUTO_JADE_WORKSPACE: ws, DP_PHASE: phase },
     stdio: ['ignore', 'pipe', 'pipe'],
   })
   let appOut = ''
@@ -216,7 +216,7 @@ async function runMergedPhase(phase, ws) {
 async function startSplit(ws) {
   const child = spawn(AUTO_EXE, ['run', '--server', 'vm', '-B', String(SPLIT_PORT)], {
     cwd: repoRoot,
-    env: { ...process.env, JADE_WORKSPACE: ws },
+    env: { ...process.env, AUTO_JADE_WORKSPACE: ws },
     stdio: ['ignore', 'pipe', 'pipe'],
   })
   let out = ''
@@ -253,7 +253,7 @@ async function startSplit(ws) {
 }
 
 // ---- 磁盘面工具 ----
-const DR = (ws) => path.join(ws, '.jade', 'drafts', 'v1')
+const DR = (ws) => path.join(ws, '.auto-jade', 'drafts', 'v1')
 const df = (ws, rel) => path.join(DR(ws), rel)
 const rd = (ws, rel) => fs.readFileSync(df(ws, rel))
 const existsf = (ws, rel) => fs.existsSync(df(ws, rel))
@@ -427,9 +427,9 @@ console.log(`\n[probe-draft] arm 2: split serve-back HTTP（:${SPLIT_PORT}，同
 const split = await startSplit(WS.split)
 try {
   eq(await split.GET('/api/draft_begin'), '1', '① 空库：begin = "1"')
-  ck(!fs.existsSync(path.join(WS.split, '.jade')), '① 空库：begin 只读不建 .jade')
+  ck(!fs.existsSync(path.join(WS.split, '.auto-jade')), '① 空库：begin 只读不建 .auto-jade')
   eq(JSON.stringify(JSON.parse(await split.GET('/api/draft_list'))), '{"epoch":1,"pending":[],"bad":[]}', '① 空库：清单恒空形')
-  ck(!fs.existsSync(path.join(WS.split, '.jade')), '① 空库：list 只读不建 .jade')
+  ck(!fs.existsSync(path.join(WS.split, '.auto-jade')), '① 空库：list 只读不建 .auto-jade')
   eq(await split.GET('/api/draft_alloc'), 'd0001', '③ 身份：分配 d0001')
   const ck1 = await split.POST('/api/draft_checkpoint', { doc_id: 'd0001', epoch: 1, erev: 1, path: 'wiki/表情.ad', name: '表情', body: H1, orig: '' })
   eq(ck1, 'ok:1', '② emoji/tab/多语系 CJK 检查点确认（HTTP POST body 通道）')
@@ -464,7 +464,7 @@ try {
   eq(metaLine(WS.split, 'd0002/s00001.meta', 'event'), 'discarded', '④ 墓碑：s00001 event=discarded')
   const treeBody = await (await fetch(`${split.url}/api/tree?path=&depth=8`)).text()
   const idxBody = await (await fetch(`${split.url}/api/link_index?path=&depth=8`)).text()
-  ck(!treeBody.includes('.jade') && !idxBody.includes('.jade'), '⑥ 索引面：tree/link_index 对 .jade/drafts 零感知')
+  ck(!treeBody.includes('.auto-jade') && !idxBody.includes('.auto-jade'), '⑥ 索引面：tree/link_index 对 .auto-jade/drafts 零感知')
   const searchBody = await (await fetch(`${split.url}/api/search_wiki`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: 'emoji', limit: 20 }) })).text()
   ck(!searchBody.includes('😀'), '⑥ 索引面：全文检索对草稿正文零感知')
   const wikiFile = path.join(WS.split, 'wiki', '源.ad')

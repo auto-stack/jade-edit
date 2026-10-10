@@ -114,7 +114,7 @@ function makeMcp(port) {
 async function runPhase(phase, ws, port, extraEnv = {}) {
   const app = spawn(AUTO_EXE, ['run', '-r', 'vm'], {
     cwd: PROJ,
-    env: { ...process.env, AUTOUI_MCP_PORT: String(port), JADE_WORKSPACE: ws, P32_PHASE: phase, ...extraEnv },
+    env: { ...process.env, AUTOUI_MCP_PORT: String(port), AUTO_JADE_WORKSPACE: ws, P32_PHASE: phase, ...extraEnv },
     stdio: ['ignore', 'pipe', 'pipe'],
   })
   let appOut = ''
@@ -595,7 +595,7 @@ async function mergedArm2(PORT) {
 async function startSplit(ws, port) {
   const child = spawn(AUTO_EXE, ['run', '--server', 'vm', '-B', String(port)], {
     cwd: PROJ,
-    env: { ...process.env, JADE_WORKSPACE: ws },
+    env: { ...process.env, AUTO_JADE_WORKSPACE: ws },
     stdio: ['ignore', 'pipe', 'pipe'],
   })
   let out = ''

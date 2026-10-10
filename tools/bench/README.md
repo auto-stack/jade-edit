@@ -1,6 +1,6 @@
 # tools/bench — 测量套件（PLAN-002 T-02）
 
-**定位**：对照 auto-edit PLAN-005 `tools/bench/bench.py` 收口形态的 jade
+**定位**：对照 auto-edit PLAN-005 `tools/bench/bench.py` 收口形态的 auto-jade
 化（node 栈）。测量**套件**（跑数与断言）：L0 代理测量 + 预算断言。
 **L0 = VM+merged（debug 构建）——无绝对性能效力**，报告价值 = 启动/打开
 链形状分解 + 热态回归护栏 + blocked-upstream 项记账基线。数字不入公开

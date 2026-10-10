@@ -5,7 +5,7 @@
 // 形态：spawn `auto run --server vm -B <port>`（同进程 AutoVM HTTP 后端，
 // 不开窗——T-00 ① 勘定配方）+ fixture 隔离拷贝（源零污染）+ ws_root belt。
 // 旧 exe 旁陈年 config 压 env 的事故类别在 Auto back 无 config 文件 =
-// 结构性消失；belt 保留为 JADE_WORKSPACE 未生效的 fail-fast。
+// 结构性消失；belt 保留为 AUTO_JADE_WORKSPACE 未生效的 fail-fast。
 //
 // CLI：node scripts/serve-back.mjs [--port 8211]
 // 库：import { serveBackend } from './serve-back.mjs'
@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url'
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const AUTO_EXE = process.env.AUTO_EXE ?? 'D:/autostack/auto-lang/target/debug/auto.exe'
-const FIXTURE_SOURCE = process.env.JADE_FIXTURE ?? 'D:/autostack/auto-down/tmp/wiki-demo'
+const FIXTURE_SOURCE = process.env.AUTO_JADE_FIXTURE ?? 'D:/autostack/auto-down/tmp/wiki-demo'
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 const normPath = (p) => p.replace(/^\\\\\?\\/, '').replace(/\\/g, '/').toLowerCase()
@@ -33,7 +33,7 @@ export async function serveBackend({ port = 8211, workspace } = {}) {
 
   const child = spawn(AUTO_EXE, ['run', '--server', 'vm', '-B', String(port)], {
     cwd: repoRoot,
-    env: { ...process.env, JADE_WORKSPACE: ws },
+    env: { ...process.env, AUTO_JADE_WORKSPACE: ws },
     stdio: ['ignore', 'pipe', 'pipe'],
   })
   let out = ''
@@ -55,13 +55,13 @@ export async function serveBackend({ port = 8211, workspace } = {}) {
     await sleep(400)
   }
 
-  // belt：ws_root 实际指向 fixture（JADE_WORKSPACE 未生效即 fail-fast）。
+  // belt：ws_root 实际指向 fixture（AUTO_JADE_WORKSPACE 未生效即 fail-fast）。
   // 响应体 = JSON 编码字符串（含转义反斜杠）——JSON.parse 解包后再比。
   const belt = await fetch(`${url}/api/ws_root`)
   const beltText = JSON.parse(await belt.text())
   if (!normPath(beltText).includes(normPath(ws))) {
     try { execFileSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], { stdio: 'ignore' }) } catch {}
-    throw new Error(`[serve-back] ws_root mismatch: got "${beltText}" want prefix "${ws}"（JADE_WORKSPACE 未生效？）`)
+    throw new Error(`[serve-back] ws_root mismatch: got "${beltText}" want prefix "${ws}"（AUTO_JADE_WORKSPACE 未生效？）`)
   }
 
   return {

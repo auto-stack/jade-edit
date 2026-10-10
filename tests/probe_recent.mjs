@@ -12,13 +12,13 @@
 //              CJK 常态走 body 不走 query）。
 //
 // 案表（§6 五案展开；期望值 = SD-2101 持久层定文）：
-//   ① get 缺档容错   首跑（零 .jade 目录）→ ""（只读不建——目录零创建）
+//   ① get 缺档容错   首跑（零 .auto-jade 目录）→ ""（只读不建——目录零创建）
 //   ② set/get 往返   set 3 行清单 → true；get 逐字节同值；磁盘逐字节
 //   ③ CJK 路径行     set CJK 两行（POST body——D-19 免疫）→ get 同值
 //   ④ 空串清空       set "" → true；文件存在空内容；get → ""（清空语义
 //                    ——写空文件不删文件）
-//   ⑤ 复核+免索引证  set 后 .jade/recents.txt exists；tree/link_index
-//                    两面 .jade 零感知（dot 前缀 walk 忽略——D-33①）
+//   ⑤ 复核+免索引证  set 后 .auto-jade/recents.txt exists；tree/link_index
+//                    两面 .auto-jade 零感知（dot 前缀 walk 忽略——D-33①）
 //
 // 双臂一致 = 两臂返回值逐案相等（G2）。D-21 负载窗 flake：无-RESULT 早崩
 // 按 README 口径重跑即绿。
@@ -33,7 +33,7 @@ import { pickPort } from './pick_port.mjs'
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const AUTO_EXE = process.env.AUTO_EXE ?? 'D:/autostack/auto-lang/target/debug/auto.exe'
-const FIXTURE_SOURCE = process.env.JADE_FIXTURE ?? 'D:/autostack/auto-down/tmp/wiki-demo'
+const FIXTURE_SOURCE = process.env.AUTO_JADE_FIXTURE ?? 'D:/autostack/auto-down/tmp/wiki-demo'
 const RUNTIME = path.join(repoRoot, 'e2e', '.runtime')
 const PROBE_DIR = path.join(RUNTIME, 'probe-merged')
 const MERGED_WS = path.join(RUNTIME, 'probe-workspace')
@@ -58,18 +58,18 @@ function diskAsserts(ws, tag, failures) {
     console.log(`  [${tag}] ${ok ? 'PASS' : 'FAIL'} — ${label}`)
     if (!ok) failures.push(`${tag}: ${label}`)
   }
-  const recentsPath = path.join(ws, '.jade', 'recents.txt')
-  ck(fs.existsSync(recentsPath), '⑤ 复核：.jade/recents.txt exists（set 后在盘）')
+  const recentsPath = path.join(ws, '.auto-jade', 'recents.txt')
+  ck(fs.existsSync(recentsPath), '⑤ 复核：.auto-jade/recents.txt exists（set 后在盘）')
   if (fs.existsSync(recentsPath)) {
     const bytes = fs.readFileSync(recentsPath, 'utf8')
     ck(bytes === FINAL_LINES, '② 通道：磁盘逐字节 = 最终 set 参数（原样直写无再加工）')
   }
   // ① 只读不建：探针流程只写过一次目录——目录存在性由 set 兑现，缺档
-  //    面（首跑）在 get 返回值侧直证，这里补目录面终态（.jade 恰一文件）。
-  const jadeFiles = fs.existsSync(path.join(ws, '.jade'))
-    ? fs.readdirSync(path.join(ws, '.jade'))
+  //    面（首跑）在 get 返回值侧直证，这里补目录面终态（.auto-jade 恰一文件）。
+  const autoJadeFiles = fs.existsSync(path.join(ws, '.auto-jade'))
+    ? fs.readdirSync(path.join(ws, '.auto-jade'))
     : []
-  ck(jadeFiles.length === 1 && jadeFiles[0] === 'recents.txt', '持久层域圈定：.jade 内恰 recents.txt 一件')
+  ck(autoJadeFiles.length === 1 && autoJadeFiles[0] === 'recents.txt', '持久层域圈定：.auto-jade 内恰 recents.txt 一件')
 }
 
 // ---------------- merged 臂：探针工程 + 进程内直调 ----------------
@@ -94,8 +94,8 @@ widget App {
         var g5_back str = ""
         // 免索引证面（小 bool 字段——tree/link_index 大 JSON 不入模型，
         // 规避 autoui_state dump 截断）
-        var jade_in_tree bool = false
-        var jade_in_idx bool = false
+        var autojade_in_tree bool = false
+        var autojade_in_idx bool = false
     }
     view {
         col (style: "h-full w-full items-center justify-center") {
@@ -116,9 +116,9 @@ widget App {
             // 局部变量承接大 face——仅 contains 判定入模型（D-20③ 分裂面
             // 规避：局部 str 直调 contains 在册形态）。
             var tr str = tree("", 8)
-            jade_in_tree = tr.contains(".jade")
+            autojade_in_tree = tr.contains(".auto-jade")
             var idx str = link_index("", 8)
-            jade_in_idx = idx.contains(".jade")
+            autojade_in_idx = idx.contains(".auto-jade")
             done = true
         }
     }
@@ -169,7 +169,7 @@ async function runMergedArm() {
   buildProbeProject()
   const app = spawn(AUTO_EXE, ['run', '-r', 'vm'], {
     cwd: PROBE_DIR,
-    env: { ...process.env, AUTOUI_MCP_PORT: String(MERGED_PORT), JADE_WORKSPACE: MERGED_WS },
+    env: { ...process.env, AUTOUI_MCP_PORT: String(MERGED_PORT), AUTO_JADE_WORKSPACE: MERGED_WS },
     stdio: ['ignore', 'pipe', 'pipe'],
   })
   let appOut = ''
@@ -220,7 +220,7 @@ async function runMergedArm() {
       if (v === null) throw new Error(`probe state missing field for ${k}:\n${dump.slice(0, 1200)}`)
     }
     // ⑤ 免索引证：tree/link_index 两 face 的 contains 判定 bool（期望 false）
-    returns['6-tree-no-jade'] = boolField('jade_in_tree') === 'false' && boolField('jade_in_idx') === 'false' ? 'absent' : 'PRESENT'
+    returns['6-tree-no-autojade'] = boolField('autojade_in_tree') === 'false' && boolField('autojade_in_idx') === 'false' ? 'absent' : 'PRESENT'
     return { returns, diskCheck: (failures) => diskAsserts(MERGED_WS, 'merged', failures) }
   } finally {
     try { execFileSync('taskkill', ['/PID', String(app.pid), '/T', '/F'], { stdio: 'ignore' }) } catch {}
@@ -261,7 +261,7 @@ async function runSplitArm() {
     returns['5b-get-back'] = JSON.parse(await (await fetch(`${back.url}/api/recent_paths_get`)).text())
     const treeBody = await (await fetch(`${back.url}/api/tree?path=&depth=8`)).text()
     const idxBody = await (await fetch(`${back.url}/api/link_index?path=&depth=8`)).text()
-    returns['6-tree-no-jade'] = (treeBody.includes('.jade') || idxBody.includes('.jade')) ? 'PRESENT' : 'absent'
+    returns['6-tree-no-autojade'] = (treeBody.includes('.auto-jade') || idxBody.includes('.auto-jade')) ? 'PRESENT' : 'absent'
     return { returns, diskCheck: (failures) => diskAsserts(ws, 'split', failures) }
   } finally {
     await back.stop()
@@ -280,7 +280,7 @@ const EXPECT = {
   '4b-get-empty': '',
   '5-set-final': '1',
   '5b-get-back': FINAL_LINES,
-  '6-tree-no-jade': 'absent',
+  '6-tree-no-autojade': 'absent',
 }
 
 const failures = []

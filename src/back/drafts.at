@@ -6,7 +6,7 @@
 // draft_* ↔ 实现 d_*）：草稿文件格式与 IO 全部在后端；front 零 fs 面
 // （ARCHITECTURE 双轨纪律）。原文件只由显式保存改写——本模块**从不**
 // 触碰 wiki 页面（write_body/read_body 零调用），草稿库 = 工作区本地
-// `.jade/drafts/v1/`（点前缀目录 walk 忽略——D-33①，T-01 实证树/检索/
+// `.auto-jade/drafts/v1/`（点前缀目录 walk 忽略——D-33①，T-01 实证树/检索/
 // 反链/页面数零感知）。
 //
 // 记录方案（T-01 定谳，§3 决策表）：
@@ -39,9 +39,9 @@ use wsys
 
 // ---- 基础面 ----
 
-/// 草稿库根（工作区本地；.jade 点前缀 = 索引族零感知）
+/// 草稿库根（工作区本地；.auto-jade 点前缀 = 索引族零感知）
 fn d_root() str {
-    return wsys.root_dir() + "/.jade/drafts/v1"
+    return wsys.root_dir() + "/.auto-jade/drafts/v1"
 }
 
 /// 左补零（seq 五位 / doc id 四位）

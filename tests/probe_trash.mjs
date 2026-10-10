@@ -47,13 +47,13 @@ import { pickPort } from './pick_port.mjs'
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const AUTO_EXE = process.env.AUTO_EXE ?? 'D:/autostack/auto-lang/target/debug/auto.exe'
-const FIXTURE_SOURCE = process.env.JADE_FIXTURE ?? 'D:/autostack/auto-down/tmp/wiki-demo'
+const FIXTURE_SOURCE = process.env.AUTO_JADE_FIXTURE ?? 'D:/autostack/auto-down/tmp/wiki-demo'
 const RUNTIME = path.join(repoRoot, 'e2e', '.runtime')
 const PROBE_DIR = path.join(RUNTIME, 'probe-trash')
 const MERGED_WS = path.join(RUNTIME, 'probe-trash-workspace')
 const MERGED_PORT = 9363
-// 端口自动避让（PLAN-016 G4）——候选段 try-bind 首个可绑；JADE_PROBE_PORT_TRASH 强制通道。
-const SPLIT_PORT = await pickPort({ env: 'JADE_PROBE_PORT_TRASH' })
+// 端口自动避让（PLAN-016 G4）——候选段 try-bind 首个可绑；AUTO_JADE_PROBE_PORT_TRASH 强制通道。
+const SPLIT_PORT = await pickPort({ env: 'AUTO_JADE_PROBE_PORT_TRASH' })
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
@@ -290,7 +290,7 @@ const PROBE_SUPPORT_AT = `// 探针专用支撑件（tests/probe_trash.mjs 生�
 // 符（SD-1201 v1 单层口径），① 嵌套案 setup 专用——直调 File.create_dir
 //（create_dir_all 递归语义，探针 A 定谳）+ is_dir 复核。
 fn ws_root() str {
-    var root str = Env.get("JADE_WORKSPACE")
+    var root str = Env.get("AUTO_JADE_WORKSPACE")
     if root == "" {
         root = Env.get("AUTO_PROJECT_DIR")
     }
@@ -363,7 +363,7 @@ async function runMergedArm() {
   buildProbeProject()
   const app = spawn(AUTO_EXE, ['run', '-r', 'vm'], {
     cwd: PROBE_DIR,
-    env: { ...process.env, AUTOUI_MCP_PORT: String(MERGED_PORT), JADE_WORKSPACE: MERGED_WS },
+    env: { ...process.env, AUTOUI_MCP_PORT: String(MERGED_PORT), AUTO_JADE_WORKSPACE: MERGED_WS },
     stdio: ['ignore', 'pipe', 'pipe'],
   })
   let appOut = ''

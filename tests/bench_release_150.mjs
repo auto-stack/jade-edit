@@ -3,7 +3,7 @@
 // p21-bench150.mjs 一次性件收编——.runtime 居 ignored 不可作发行依赖，§6.2）。
 //
 //   语料   150 页合成（P≤200 安全线内；CJK/深目录/别名/tags/悬空混布）
-//          → e2e/.runtime/bench150-ws（JADE_WORKSPACE 隔离指向，每次重建）
+//          → e2e/.runtime/bench150-ws（AUTO_JADE_WORKSPACE 隔离指向，每次重建）
 //   HTTP 面 serve-back（`auto run --server vm`）计时：
 //     ①索引  link_index GET 全量（冷/热）+ ①b tags_index 全量
 //     ②检索  search_wiki POST（CJK/ASCII/别名）
@@ -69,7 +69,7 @@ function buildCorpus() {
 
 // ---------------- HTTP 面（serve-back） ----------------
 async function httpPhase() {
-  process.env.JADE_FIXTURE = WS // serve-back 隔离源指语料——⚠ 须在 import 前
+  process.env.AUTO_JADE_FIXTURE = WS // serve-back 隔离源指语料——⚠ 须在 import 前
   // （serve-back 模块加载期读 FIXTURE_SOURCE 常量；p21 首跑实录：import 先行
   // 5 页 fixture 混入，全案计时作废重跑）
   const { serveBackend } = await import(pathToFileURL(path.join(repoRoot, 'scripts', 'serve-back.mjs')).href)
@@ -132,7 +132,7 @@ async function uiPhase() {
   const uiStart = now() // 墙钟自 spawn 起——boot-ready = 进程启动→UI 就绪全窗
   const app = spawn(AUTO_EXE, ['run', '-r', 'vm'], {
     cwd: repoRoot,
-    env: { ...process.env, AUTOUI_MCP_PORT: String(PORT + 1), JADE_WORKSPACE: WS },
+    env: { ...process.env, AUTOUI_MCP_PORT: String(PORT + 1), AUTO_JADE_WORKSPACE: WS },
     stdio: ['ignore', 'pipe', 'pipe'],
   })
   let out = ''

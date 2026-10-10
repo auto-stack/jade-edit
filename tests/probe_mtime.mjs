@@ -42,12 +42,12 @@ import { pickPort } from './pick_port.mjs'
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const AUTO_EXE = process.env.AUTO_EXE ?? 'D:/autostack/auto-lang/target/debug/auto.exe'
-const FIXTURE_SOURCE = process.env.JADE_FIXTURE ?? 'D:/autostack/auto-down/tmp/wiki-demo'
+const FIXTURE_SOURCE = process.env.AUTO_JADE_FIXTURE ?? 'D:/autostack/auto-down/tmp/wiki-demo'
 const RUNTIME = path.join(repoRoot, 'e2e', '.runtime')
 const PROBE_DIR = path.join(RUNTIME, 'probe-mtime')
 const MERGED_WS = path.join(RUNTIME, 'probe-mtime-workspace')
 const MERGED_PORT = 9401
-const SPLIT_PORT = await pickPort({ env: 'JADE_PROBE_PORT_MTIME' })
+const SPLIT_PORT = await pickPort({ env: 'AUTO_JADE_PROBE_PORT_MTIME' })
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
@@ -189,7 +189,7 @@ async function runMergedArm() {
   buildProbeProject()
   const app = spawn(AUTO_EXE, ['run', '-r', 'vm'], {
     cwd: PROBE_DIR,
-    env: { ...process.env, AUTOUI_MCP_PORT: String(MERGED_PORT), JADE_WORKSPACE: MERGED_WS },
+    env: { ...process.env, AUTOUI_MCP_PORT: String(MERGED_PORT), AUTO_JADE_WORKSPACE: MERGED_WS },
     stdio: ['ignore', 'pipe', 'pipe'],
   })
   let appOut = ''
@@ -233,7 +233,7 @@ async function runSplitArm() {
   buildProbeProject()
   const app = spawn(AUTO_EXE, ['run', '--server', 'vm', '-B', String(SPLIT_PORT)], {
     cwd: PROBE_DIR,
-    env: { ...process.env, JADE_WORKSPACE: MERGED_WS },
+    env: { ...process.env, AUTO_JADE_WORKSPACE: MERGED_WS },
     stdio: ['ignore', 'pipe', 'pipe'],
   })
   let appOut = ''

@@ -11,7 +11,7 @@ ConfirmKeepClose）+ `src/front/app.at`（恢复面板/状态栏提示/弹层动
 
 ## 1. 检查点协议（SD-01）
 
-**存储**：工作区本地 `.jade/drafts/v1/d%04d/`（点前缀目录 walk 忽略
+**存储**：工作区本地 `.auto-jade/drafts/v1/d%04d/`（点前缀目录 walk 忽略
 D-33①——树/检索/反链/页面数零感知，probe+e2e 双面直证）。每稳定文档
 身份一目录：`c%05d.body`（正文原始字节）+ `.orig`（原文基准）+
 `.meta`（行式 k=v：schema/event/epoch/erev/len 字符+slen 字节/
@@ -86,7 +86,7 @@ body="" 非空恒 dirty 需另存）；**空文副本不被 body==original 普�
   md`：受检门/真实回执/定向协调；路径上下文检查点=迁移后同 doc_id 新
   seq 续排，path 逐记录在案），其余项仍未交付。检查点失败注入弧由
   probe 协议矩阵（七类故障）+ e2e ⑧（draft_settle 拦截→结算失败不提
-  交）承载。已关闭草稿及 `.jade/drafts` 不被文件操作删除/清空连带结算
+  交）承载。已关闭草稿及 `.auto-jade/drafts` 不被文件操作删除/清空连带结算
   （document-lifecycle 删除协调：清洁实例关闭、有输入保留副本，草稿
   记录保留）。
 - **上游边界（实勘在册）**：vm 合并轨 3+ 检查点后 AURA/MCP 面楔死

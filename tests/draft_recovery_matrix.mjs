@@ -34,7 +34,7 @@ import { pickPort } from './pick_port.mjs'
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const AUTO_EXE = process.env.AUTO_EXE ?? 'D:/autostack/auto-lang/target/debug/auto.exe'
-const FIXTURE_SOURCE = process.env.JADE_FIXTURE ?? 'D:/autostack/auto-down/tmp/wiki-demo'
+const FIXTURE_SOURCE = process.env.AUTO_JADE_FIXTURE ?? 'D:/autostack/auto-down/tmp/wiki-demo'
 const WS = path.join(repoRoot, 'e2e', '.runtime', 'draft-matrix-ws')
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 const shaHex = (s) => crypto.createHash('sha256').update(Buffer.from(s, 'utf8')).digest('hex')
@@ -133,7 +133,7 @@ async function bootApp(phaseLabel) {
   const port = await pickPort()
   const app = spawn(AUTO_EXE, ['run', '-r', 'vm'], {
     cwd: repoRoot,
-    env: { ...process.env, AUTOUI_MCP_PORT: String(port), JADE_WORKSPACE: WS },
+    env: { ...process.env, AUTOUI_MCP_PORT: String(port), AUTO_JADE_WORKSPACE: WS },
     stdio: ['ignore', 'pipe', 'pipe'],
   })
   spawnedPids.push(app.pid)
@@ -244,7 +244,7 @@ const waitFor = (pred, label, timeoutMs = 15000) =>
   })
 
 // ---- 种子面（fs 直种——合法检查点记录，e2e seedDraft 同构） ----
-const DR = path.join(WS, '.jade', 'drafts', 'v1')
+const DR = path.join(WS, '.auto-jade', 'drafts', 'v1')
 const sha = (s) => shaHex(s)
 function seedDraft(doc, opts) {
   const body = opts.body

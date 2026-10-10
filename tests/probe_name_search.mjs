@@ -44,7 +44,7 @@ import { pickPort } from './pick_port.mjs'
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const AUTO_EXE = process.env.AUTO_EXE ?? 'D:/autostack/auto-lang/target/debug/auto.exe'
-const FIXTURE_SOURCE = process.env.JADE_FIXTURE ?? 'D:/autostack/auto-down/tmp/wiki-demo'
+const FIXTURE_SOURCE = process.env.AUTO_JADE_FIXTURE ?? 'D:/autostack/auto-down/tmp/wiki-demo'
 const RUNTIME = path.join(repoRoot, 'e2e', '.runtime')
 const PROBE_DIR = path.join(RUNTIME, 'probe-name-search')
 const MERGED_WS = path.join(RUNTIME, 'probe-name-search-ws')
@@ -259,7 +259,7 @@ async function runMergedArm(preSnap) {
   buildProbeProject()
   const app = spawn(AUTO_EXE, ['run', '-r', 'vm'], {
     cwd: PROBE_DIR,
-    env: { ...process.env, AUTOUI_MCP_PORT: String(MERGED_PORT), JADE_WORKSPACE: MERGED_WS },
+    env: { ...process.env, AUTOUI_MCP_PORT: String(MERGED_PORT), AUTO_JADE_WORKSPACE: MERGED_WS },
     stdio: ['ignore', 'pipe', 'pipe'],
   })
   let appOut = ''
@@ -528,7 +528,7 @@ function checks(tag, data, failures) {
       // 转义读回：Quoted 行 title/aliases 逐值等值（引号/反斜杠/制表）
       const q = dir.find((r) => r.path === 'nm/Quoted.ad')
       ck(q?.dtitle === 'q"ote\\slash' && JSON.stringify(q?.aliases) === JSON.stringify([`tab${TAB}9`]), `转义读回 title="q\\"ote\\\\slash" aliases=["tab<TAB>9"]（实际：${JSON.stringify(q)?.slice(0, 160)}）`)
-      // 忽略面：目录不含 .trash/.jade/非 .ad（集合等价已证——点前缀不入 walkAds）
+      // 忽略面：目录不含 .trash/.auto-jade/非 .ad（集合等价已证——点前缀不入 walkAds）
       ck(dir.every((r) => !r.path.includes('/.') && !r.path.startsWith('.') && r.path.endsWith('.ad')), '目录零点前缀/零非 .ad 条目')
     }
   }

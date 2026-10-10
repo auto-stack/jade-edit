@@ -37,7 +37,7 @@ export default defineConfig({
     },
     {
       // --host 127.0.0.1：vite 默认绑 localhost(::1)，127.0.0.1 探活不通
-      //（jade front 同款）；--strictPort：端口冲突显式炸而非静默换端口。
+      //（auto-jade front 同款）；--strictPort：端口冲突显式炸而非静默换端口。
       command: 'node node_modules/vite/bin/vite.js --strictPort --host 127.0.0.1',
       cwd: vueDir,
       url: `http://127.0.0.1:${FRONT_PORT}`,

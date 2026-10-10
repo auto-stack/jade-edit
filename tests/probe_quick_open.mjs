@@ -478,7 +478,7 @@ async function runCarrier(tag, windowSize, port, checks) {
   const dir = path.join(RUNTIME, `probe-quick-open-${tag}`)
   buildCarrierProject(dir, windowSize)
   buildFixtureWorkspace()
-  const app = launchVmApp(port, `auto-jade-probe-quick-open-${tag}`, dir, { JADE_WORKSPACE: FIXTURE })
+  const app = launchVmApp(port, `auto-jade-probe-quick-open-${tag}`, dir, { AUTO_JADE_WORKSPACE: FIXTURE })
   try {
     const { callTool } = await waitMcpAndUi(port, `auto-jade-probe-quick-open-${tag}`, app, app._out)
     await pollState(callTool, (d) => /booted:\s*true/.test(d), 15000, 'booted')
@@ -982,7 +982,7 @@ async function prodChecks(callTool) {
 async function runProdArm() {
   buildProdWorkspace()
   const port = await pickPort()
-  const app = launchVmApp(port, 'auto-jade-probe-quick-open-prod', repoRoot, { JADE_WORKSPACE: PROD_WS })
+  const app = launchVmApp(port, 'auto-jade-probe-quick-open-prod', repoRoot, { AUTO_JADE_WORKSPACE: PROD_WS })
   try {
     const { callTool } = await waitMcpAndUi(port, 'auto-jade-probe-quick-open-prod', app, app._out)
     for (let i = 0; i < 90; i++) {

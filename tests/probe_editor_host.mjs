@@ -42,7 +42,7 @@ import { pickPort } from './pick_port.mjs'
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const AUTO_EXE = process.env.AUTO_EXE ?? 'D:/autostack/auto-lang/target/debug/auto.exe'
-const FIXTURE_SOURCE = process.env.JADE_FIXTURE ?? 'D:/autostack/auto-down/tmp/wiki-demo'
+const FIXTURE_SOURCE = process.env.AUTO_JADE_FIXTURE ?? 'D:/autostack/auto-down/tmp/wiki-demo'
 const RUNTIME = path.join(repoRoot, 'e2e', '.runtime')
 const PROBE_DIR = path.join(RUNTIME, 'probe-editor-host')
 const MERGED_WS = path.join(RUNTIME, 'probe-editor-host-ws')
@@ -322,7 +322,7 @@ async function runMergedArm(rec) {
   buildProbeProject()
   const app = spawn(AUTO_EXE, ['run', '-r', 'vm'], {
     cwd: PROBE_DIR,
-    env: { ...process.env, AUTOUI_MCP_PORT: String(MERGED_PORT), JADE_WORKSPACE: MERGED_WS },
+    env: { ...process.env, AUTOUI_MCP_PORT: String(MERGED_PORT), AUTO_JADE_WORKSPACE: MERGED_WS },
     stdio: ['ignore', 'pipe', 'pipe'],
   })
   let appOut = ''
@@ -550,7 +550,7 @@ async function attemptNativeSplitBoot(rec) {
   prepareWorkspace(SPLIT_WS)
   const app = spawn(AUTO_EXE, ['run', '-r', 'vm', '--no-merge'], {
     cwd: PROBE_DIR,
-    env: { ...process.env, AUTOUI_MCP_PORT: String(BOOT_PORT), JADE_WORKSPACE: SPLIT_WS },
+    env: { ...process.env, AUTOUI_MCP_PORT: String(BOOT_PORT), AUTO_JADE_WORKSPACE: SPLIT_WS },
     stdio: ['ignore', 'pipe', 'pipe'],
   })
   let out = ''
@@ -650,7 +650,7 @@ function fingerprints(rec) {
   } catch (e) {
     fp.engine_dist_mtime = 'unavailable'
   }
-  fp.jade_edit = rev(repoRoot)
+  fp.auto_jade = rev(repoRoot)
   rec.fingerprints = fp
   return rec
 }

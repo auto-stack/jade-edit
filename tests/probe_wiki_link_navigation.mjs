@@ -42,7 +42,7 @@ import { pickPort } from './pick_port.mjs'
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const AUTO_EXE = process.env.AUTO_EXE ?? 'D:/autostack/auto-lang/target/debug/auto.exe'
-const ENGINE_ROOT = process.env.JADE_EDIT_ENGINE_ROOT ?? 'D:/autostack/auto-down/autodown/packages/engine'
+const ENGINE_ROOT = process.env.AUTO_JADE_ENGINE_ROOT ?? 'D:/autostack/auto-down/autodown/packages/engine'
 const RUNTIME = path.join(repoRoot, 'e2e', '.runtime')
 const PROBE_DIR = path.join(RUNTIME, 'probe-wiki-link')
 const MERGED_WS = path.join(RUNTIME, 'probe-wiki-link-ws')
@@ -737,7 +737,7 @@ async function runMergedArm(rec) {
   buildProbeProject()
   const app = spawn(AUTO_EXE, ['run', '-r', 'vm'], {
     cwd: PROBE_DIR,
-    env: { ...process.env, AUTOUI_MCP_PORT: String(MERGED_PORT), JADE_WORKSPACE: MERGED_WS },
+    env: { ...process.env, AUTOUI_MCP_PORT: String(MERGED_PORT), AUTO_JADE_WORKSPACE: MERGED_WS },
     stdio: ['ignore', 'pipe', 'pipe'],
   })
   let appOut = ''
@@ -1262,7 +1262,7 @@ function fingerprints(rec) {
   try {
     fp.engine_dist_entry_sha = sha(path.join(ENGINE_ROOT, 'dist', 'index.js'))
   } catch { fp.engine_dist_entry_sha = 'unavailable' }
-  fp.jade_edit = rev(repoRoot)
+  fp.auto_jade = rev(repoRoot)
   rec.fingerprints = fp
   return rec
 }
