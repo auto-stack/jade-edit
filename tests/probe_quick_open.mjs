@@ -428,7 +428,7 @@ function buildCarrierProject(dir, windowSize) {
   fs.writeFileSync(path.join(dir, 'src', 'front', 'app.at'), CARRIER_AT, 'utf8')
   fs.writeFileSync(
     path.join(dir, 'pac.at'),
-    `name: "jade-probe-quick-open"
+    `name: "auto-jade-probe-quick-open"
 version: "0.1.0"
 scene: "ui"
 render: ["vm"]
@@ -478,9 +478,9 @@ async function runCarrier(tag, windowSize, port, checks) {
   const dir = path.join(RUNTIME, `probe-quick-open-${tag}`)
   buildCarrierProject(dir, windowSize)
   buildFixtureWorkspace()
-  const app = launchVmApp(port, `jade-probe-quick-open-${tag}`, dir, { JADE_WORKSPACE: FIXTURE })
+  const app = launchVmApp(port, `auto-jade-probe-quick-open-${tag}`, dir, { JADE_WORKSPACE: FIXTURE })
   try {
-    const { callTool } = await waitMcpAndUi(port, `jade-probe-quick-open-${tag}`, app, app._out)
+    const { callTool } = await waitMcpAndUi(port, `auto-jade-probe-quick-open-${tag}`, app, app._out)
     await pollState(callTool, (d) => /booted:\s*true/.test(d), 15000, 'booted')
     await checks(callTool)
   } catch (err) {
@@ -982,9 +982,9 @@ async function prodChecks(callTool) {
 async function runProdArm() {
   buildProdWorkspace()
   const port = await pickPort()
-  const app = launchVmApp(port, 'jade-probe-quick-open-prod', repoRoot, { JADE_WORKSPACE: PROD_WS })
+  const app = launchVmApp(port, 'auto-jade-probe-quick-open-prod', repoRoot, { JADE_WORKSPACE: PROD_WS })
   try {
-    const { callTool } = await waitMcpAndUi(port, 'jade-probe-quick-open-prod', app, app._out)
+    const { callTool } = await waitMcpAndUi(port, 'auto-jade-probe-quick-open-prod', app, app._out)
     for (let i = 0; i < 90; i++) {
       const d = (await callTool('autoui_state', {})).trim()
       if (/status:\s*"ready"/.test(d) && /names_seq:\s*[1-9]/.test(d)) break

@@ -147,7 +147,7 @@ function buildProbeProject() {
   fs.writeFileSync(path.join(PROBE_DIR, 'src', 'front', 'app.at'), PROBE_AT, 'utf8')
   fs.writeFileSync(
     path.join(PROBE_DIR, 'pac.at'),
-    `name: "jade-probe-mtime"
+    `name: "auto-jade-probe-mtime"
 version: "0.1.0"
 scene: "ui"
 render: ["vm"]
@@ -200,7 +200,7 @@ async function runMergedArm() {
     const deadline = Date.now() + 45000
     for (;;) {
       try {
-        await rpc('initialize', { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'jade-probe-mtime', version: '0.1.0' } })
+        await rpc('initialize', { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'auto-jade-probe-mtime', version: '0.1.0' } })
         break
       } catch (err) {
         if (app.exitCode !== null) throw new Error(`probe app exited early (code ${app.exitCode}):\n${appOut.slice(-1500)}`)

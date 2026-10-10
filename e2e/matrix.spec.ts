@@ -164,7 +164,7 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
 
   // 1 boot
   await page.goto('/')
-  await expect(page.getByText('JadeEdit', { exact: true }).first()).toBeVisible()
+  await expect(page.getByText('AutoJade', { exact: true }).first()).toBeVisible()
   await expect(page.getByText('ready', { exact: true }).first()).toBeVisible({ timeout: 15_000 })
   console.log('[1 boot] PASS')
 

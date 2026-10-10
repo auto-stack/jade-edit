@@ -9,7 +9,7 @@ export const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)
 export const WORKSPACE = path.join(repoRoot, 'e2e', '.runtime', 'workspace')
 export const TARGET_FILE = path.join(WORKSPACE, 'wiki', 'Hello World.ad')
 
-export const EDIT_MARKER = 'jade-edit 冒烟标记：编辑回写可见。'
+export const EDIT_MARKER = 'auto-jade 冒烟标记：编辑回写可见。'
 export const RELOAD_MARKER = '外部重载标记：重载可见。'
 export const TARGET_LABEL = 'Hello World.ad'
 // 扩单三组（PLAN-002 T-01）——与 tests/vm_matrix.mjs 同名常量同源

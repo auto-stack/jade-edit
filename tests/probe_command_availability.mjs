@@ -155,7 +155,7 @@ function buildProbeProject(dir, opts) {
   fs.writeFileSync(path.join(dir, 'src', 'front', 'app.at'), makeProbeAt(opts), 'utf8')
   fs.writeFileSync(
     path.join(dir, 'pac.at'),
-    `name: "jade-probe-cmd-avail${opts.undoShortcut ? '-variant' : ''}"
+    `name: "auto-jade-probe-cmd-avail${opts.undoShortcut ? '-variant' : ''}"
 version: "0.1.0"
 scene: "ui"
 render: ["vm"]
@@ -267,7 +267,7 @@ async function runMergedArm({ dir, ws, port, variant }) {
     const deadline = Date.now() + 45000
     for (;;) {
       try {
-        await rpc('initialize', { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'jade-probe-cmd-avail', version: '0.1.0' } })
+        await rpc('initialize', { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'auto-jade-probe-cmd-avail', version: '0.1.0' } })
         break
       } catch (err) {
         if (app.exitCode !== null) throw new Error(`probe app exited early (code ${app.exitCode}):\n${appOut.slice(-2000)}`)
@@ -595,7 +595,7 @@ function buildStoreProbeProject(dir) {
   fs.writeFileSync(path.join(dir, 'src', 'front', 'app.at'), makeStoreProbeAt(), 'utf8')
   fs.writeFileSync(
     path.join(dir, 'pac.at'),
-    `name: "jade-probe-cmd-avail-store"
+    `name: "auto-jade-probe-cmd-avail-store"
 version: "0.1.0"
 scene: "ui"
 render: ["vm"]
@@ -621,7 +621,7 @@ async function runStoreArm({ dir, ws, port }) {
     const deadline = Date.now() + 45000
     for (;;) {
       try {
-        await rpc('initialize', { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'jade-probe-cmd-avail-store', version: '0.1.0' } })
+        await rpc('initialize', { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'auto-jade-probe-cmd-avail-store', version: '0.1.0' } })
         break
       } catch (err) {
         if (app.exitCode !== null) throw new Error(`store probe app exited early (code ${app.exitCode}):\n${appOut.slice(-2000)}`)

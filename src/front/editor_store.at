@@ -1287,7 +1287,7 @@ store EditorStore {
             .console = console_lines()
         }
         .ActAbout -> {
-            console_log("jade-edit 0.1 — auto-edit 基座 + autodown_editor（PLAN-001 换基）")
+            console_log("auto-jade 0.1 — auto-edit 基座 + autodown_editor（PLAN-001 换基）")
             .console = console_lines()
         }
 

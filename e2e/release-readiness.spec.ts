@@ -22,7 +22,7 @@ const EMPTY_PATH = path.join(WORKSPACE, 'wiki', EMPTY_PAGE)
 /** 应用启动（现行 fixture 形态：wiki/ 子树默认折叠——boot 后手动展开）。 */
 async function bootApp(page: Page) {
   await page.goto('/')
-  await expect(page.getByText('JadeEdit', { exact: true }).first()).toBeVisible()
+  await expect(page.getByText('AutoJade', { exact: true }).first()).toBeVisible()
   await expect(page.getByText('ready', { exact: true }).first()).toBeVisible({ timeout: 15_000 })
   await page.getByRole('button', { name: 'wiki' }).click()
   await expect(page.getByRole('button', { name: 'Hello World' })).toBeVisible({ timeout: 10_000 })

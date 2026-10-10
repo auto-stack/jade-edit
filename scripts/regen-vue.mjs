@@ -35,7 +35,7 @@
 // 臂双 :key 根修 6830b0b2b）；④孤儿 dep-demo 清理（gen-only 物化扫描
 // 落地，popover 冷删即重物化）。快照投影双态（D-18）同步终结。
 //
-// vue 面 = 纯生成物（gen/ 不入库）：jade-edit 无手写 vue 文件，不走
+// vue 面 = 纯生成物（gen/ 不入库）：auto-jade 无手写 vue 文件，不走
 // demo/jade 的 deploy-into-src 步（零 committed 漂移面）。
 
 import { spawnSync } from 'node:child_process'

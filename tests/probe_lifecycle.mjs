@@ -386,7 +386,7 @@ function buildProbeProject() {
   fs.writeFileSync(path.join(PROJ, 'src', 'front', 'app.at'), PROBE_AT, 'utf8')
   fs.writeFileSync(
     path.join(PROJ, 'pac.at'),
-    `name: "jade-probe-lifecycle"
+    `name: "auto-jade-probe-lifecycle"
 version: "0.1.0"
 scene: "ui"
 render: ["vm"]

@@ -4,7 +4,7 @@
 // vue 运行时配方〔.am/quoted-link-audit 持久化〕）。
 //
 //   指纹臂    auto.exe 版本/SHA、auto-lang/auto-down rev、engine dist SHA、
-//            jade-edit HEAD——运行时证据绑定。
+//            auto-jade HEAD——运行时证据绑定。
 //   形状臂    探针工程 `auto build -r vue --gen-only` 生成 SFC 绑定形状：
 //            完整事件名 `on "open-wiki-link"` → @open-wiki-link（匹配引擎
 //            emit 名）；简称 `onopenwikilink` → @openwikilink（不匹配——
@@ -602,7 +602,7 @@ function buildProbeProject() {
   fs.writeFileSync(path.join(PROBE_DIR, 'src', 'front', 'editor_store.at'), makeStoreAt(), 'utf8')
   fs.writeFileSync(
     path.join(PROBE_DIR, 'pac.at'),
-    `name: "jade-probe-wiki-link"
+    `name: "auto-jade-probe-wiki-link"
 version: "0.1.0"
 scene: "ui"
 render: ["vm"]
@@ -748,7 +748,7 @@ async function runMergedArm(rec) {
     const deadline = Date.now() + 45000
     for (;;) {
       try {
-        await rpc('initialize', { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'jade-probe-wiki-link', version: '0.1.0' } })
+        await rpc('initialize', { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'auto-jade-probe-wiki-link', version: '0.1.0' } })
         break
       } catch (err) {
         if (app.exitCode !== null) throw new Error(`probe app exited early (code ${app.exitCode}):\n${appOut.slice(-2500)}`)

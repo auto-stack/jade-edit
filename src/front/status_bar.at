@@ -18,7 +18,7 @@ widget StatusBar {
         col (style: "w-full shrink-0") {
             col (style: "h-px w-full bg-border")
             row (style: "h-6 items-center bg-muted/30 shrink-0 w-full gap-3 px-2") {
-                text "JadeEdit" { style: status_text }
+                text "AutoJade" { style: status_text }
                 text ".ad" { style: status_text }
                 if .store.active_dirty {
                     text "未保存" { style: "text-[11px] text-amber-400" }

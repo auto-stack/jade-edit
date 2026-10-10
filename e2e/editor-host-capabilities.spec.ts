@@ -28,7 +28,7 @@ const neutralBlur = (page: import('@playwright/test').Page) =>
 test('宿主能力核验·inventory（载体/入口盘点）', async ({ page }) => {
   // boot（matrix.spec 同款：状态行 ready——openApp 的树行锚为旧口径）
   await page.goto('/')
-  await expect(page.getByText('JadeEdit', { exact: true }).first()).toBeVisible()
+  await expect(page.getByText('AutoJade', { exact: true }).first()).toBeVisible()
   await expect(page.getByText('ready', { exact: true }).first()).toBeVisible({ timeout: 15_000 })
 
   // 打开一档 → 编辑器 content 面可见（vue 载体真组件挂载）

@@ -4,7 +4,7 @@
 // delivered；公开契约=docs/specs/auto-lang/ui/design/autodown-wikilink.md）。
 //
 //   指纹臂    auto.exe 版本/SHA（须含供给：≥ v0.4.2-2650-gd5215b477）、
-//            auto-lang rev/732 交付 commit、jade-edit HEAD。
+//            auto-lang rev/732 交付 commit、auto-jade HEAD。
 //   N 臂      真实 jade 应用 merged（cwd=仓根 + JADE_WORKSPACE fixture）：
 //            MCP editor_drag 单点（MousePressed→Released 直经生产
 //            core.handle_input 完整点击门——SD-01 §3/§6 press+release=语义
@@ -366,9 +366,9 @@ function fingerprintArm() {
 async function nativeArm() {
   console.log('\n[probe-native-wiki-link] N 臂（真实应用 merged 真实点击）：')
   buildFixtureWorkspace()
-  const app = launchVmApp(N_PORT, 'jade-probe-native-wiki-link', repoRoot, { JADE_WORKSPACE: NATIVE_WS })
+  const app = launchVmApp(N_PORT, 'auto-jade-probe-native-wiki-link', repoRoot, { JADE_WORKSPACE: NATIVE_WS })
   try {
-    const { callTool } = await waitMcpAndUi(N_PORT, 'jade-probe-native-wiki-link', app, app._out)
+    const { callTool } = await waitMcpAndUi(N_PORT, 'auto-jade-probe-native-wiki-link', app, app._out)
     const H = makeHelpers(callTool)
     await H.openPage(['Src', 'Src.ad'], ['普通正文段落'])
     ok('N1 真实应用 boot+开档（JADE_WORKSPACE fixture；Src.ad 经 filetree 打开）')
@@ -498,12 +498,12 @@ async function originArm() {
   fs.writeFileSync(path.join(PROBE_DIR, 'src', 'front', 'app.at'), makeOriginAt(), 'utf8')
   fs.writeFileSync(
     path.join(PROBE_DIR, 'pac.at'),
-    `name: "jade-probe-native-origin"\nversion: "0.1.0"\nscene: "ui"\nrender: ["vm"]\ntitle: "ProbeNativeOrigin"\nwindow: "900x420"\n`,
+    `name: "auto-jade-probe-native-origin"\nversion: "0.1.0"\nscene: "ui"\nrender: ["vm"]\ntitle: "ProbeNativeOrigin"\nwindow: "900x420"\n`,
     'utf8',
   )
-  const app = launchVmApp(O_PORT, 'jade-probe-native-origin', PROBE_DIR, { JADE_WORKSPACE: NATIVE_WS })
+  const app = launchVmApp(O_PORT, 'auto-jade-probe-native-origin', PROBE_DIR, { JADE_WORKSPACE: NATIVE_WS })
   try {
-    const { callTool } = await waitMcpAndUi(O_PORT, 'jade-probe-native-origin', app, app._out)
+    const { callTool } = await waitMcpAndUi(O_PORT, 'auto-jade-probe-native-origin', app, app._out)
     const H = makeHelpers(callTool)
     const snap = await H.snapshot()
     const ids = snap.split('\n').filter(isEditorLine).map(vnodeIdOf).filter(Boolean)
@@ -551,9 +551,9 @@ async function originArm() {
 
 async function protectArm() {
   console.log('\n[probe-native-wiki-link] P 臂（脏源/脏目标保护——真实键入+真实点击）：')
-  const app = launchVmApp(N_PORT, 'jade-probe-native-wiki-link-p', repoRoot, { JADE_WORKSPACE: NATIVE_WS })
+  const app = launchVmApp(N_PORT, 'auto-jade-probe-native-wiki-link-p', repoRoot, { JADE_WORKSPACE: NATIVE_WS })
   try {
-    const { callTool } = await waitMcpAndUi(N_PORT, 'jade-probe-native-wiki-link-p', app, app._out)
+    const { callTool } = await waitMcpAndUi(N_PORT, 'auto-jade-probe-native-wiki-link-p', app, app._out)
     const H = makeHelpers(callTool)
     const srcDiskBefore = fs.readFileSync(path.join(NATIVE_WS, 'wiki', 'Src.ad'), 'utf8')
     await H.openPage(['Src', 'Src.ad'], ['普通正文段落'])
@@ -622,9 +622,9 @@ async function protectArm() {
 async function missingArm() {
   console.log('\n[probe-native-wiki-link] M 臂（缺页确认——真实弹层取消/创建）：')
   buildFixtureWorkspace()
-  const app = launchVmApp(N_PORT, 'jade-probe-native-wiki-link-m', repoRoot, { JADE_WORKSPACE: NATIVE_WS })
+  const app = launchVmApp(N_PORT, 'auto-jade-probe-native-wiki-link-m', repoRoot, { JADE_WORKSPACE: NATIVE_WS })
   try {
-    const { callTool } = await waitMcpAndUi(N_PORT, 'jade-probe-native-wiki-link-m', app, app._out)
+    const { callTool } = await waitMcpAndUi(N_PORT, 'auto-jade-probe-native-wiki-link-m', app, app._out)
     const H = makeHelpers(callTool)
     const ghostFile = path.join(NATIVE_WS, 'wiki', '幽灵页.ad')
     await H.openPage(['Src', 'Src.ad'], ['外部链接'])

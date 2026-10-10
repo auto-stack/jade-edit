@@ -268,7 +268,7 @@ function buildProbeProject() {
   fs.writeFileSync(path.join(PROBE_DIR, 'src', 'front', 'app.at'), makeProbeAt(), 'utf8')
   fs.writeFileSync(
     path.join(PROBE_DIR, 'pac.at'),
-    `name: "jade-probe-editor-host"
+    `name: "auto-jade-probe-editor-host"
 version: "0.1.0"
 scene: "ui"
 render: ["vm"]
@@ -333,7 +333,7 @@ async function runMergedArm(rec) {
     const deadline = Date.now() + 45000
     for (;;) {
       try {
-        await rpc('initialize', { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'jade-probe-editor-host', version: '0.1.0' } })
+        await rpc('initialize', { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'auto-jade-probe-editor-host', version: '0.1.0' } })
         break
       } catch (err) {
         if (app.exitCode !== null) throw new Error(`probe app exited early (code ${app.exitCode}):\n${appOut.slice(-2000)}`)
@@ -561,7 +561,7 @@ async function attemptNativeSplitBoot(rec) {
     const deadline = Date.now() + 30000
     for (;;) {
       try {
-        await rpc('initialize', { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'jade-probe-editor-host-split', version: '0.1.0' } })
+        await rpc('initialize', { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'auto-jade-probe-editor-host-split', version: '0.1.0' } })
         rec.split_boot = 'ok'
         return true
       } catch (err) {
@@ -731,7 +731,7 @@ function checks(rec) {
     ck((rec.s1_input_b ?? 0) >= 1, `S1 editor-b type_text → OnInputB 回执 input_b=${rec.s1_input_b}`)
     ck((rec.s1_input_a_after ?? 0) === (rec.m2_input_a ?? 0), 'S1 反例：B 键入零串扰 A（input_a 不增——A/B 通道独立）')
     ck(rec.s1_active === 'doc-a' && rec.s1_body_b !== rec.s1_body_a, `S1 同正文双页 + active 指向 A 而事件源于 B——md-only 载荷 + active 读回不可辨识来源（缺口直证）`)
-    uns('save 来源身份：事件载荷=全文 md 单参（INPUT_TEXT），无 tab_uid/实例世代字段；同正文双页下宿主无法凭载荷/active 判源——缺层=jade-edit 消费设计 + 上游身份字段供给')
+    uns('save 来源身份：事件载荷=全文 md 单参（INPUT_TEXT），无 tab_uid/实例世代字段；同正文双页下宿主无法凭载荷/active 判源——缺层=auto-jade 消费设计 + 上游身份字段供给')
     ck((rec.s2_save_count ?? 0) === 0, `S2 终态：编辑器 save 事件回执恒零（save_count=${rec.s2_save_count}）`)
     ck((rec.s2_ctrls ?? 0) >= 1 && (rec.s2_ctrlz ?? 0) >= 0, `S2 宿主捷径通道在（ctrls=${rec.s2_ctrls}）——原生轨宿主保存唯一入口=actions 捷径/按钮`)
   }

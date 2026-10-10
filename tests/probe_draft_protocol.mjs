@@ -138,7 +138,7 @@ widget App {
 }
 `
 
-const PAC_AT = `name: "jade-probe-draft"
+const PAC_AT = `name: "auto-jade-probe-draft"
 version: "0.1.0"
 scene: "ui"
 render: ["vm"]

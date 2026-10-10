@@ -84,7 +84,7 @@ test('reload safety（PLAN-030 全弧）', async ({ page }) => {
   fs.writeFileSync(emptyFile, '')
 
   await page.goto('/')
-  await expect(page.getByText('JadeEdit', { exact: true }).first()).toBeVisible()
+  await expect(page.getByText('AutoJade', { exact: true }).first()).toBeVisible()
   await expect(page.getByText('ready', { exact: true }).first()).toBeVisible({ timeout: 15_000 })
   await page.getByText('wiki', { exact: true }).first().click()
   await page.getByText('ReloadSafe', { exact: true }).first().click()

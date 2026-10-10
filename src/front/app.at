@@ -1,4 +1,4 @@
-// app.at — jade-edit 根组件（PLAN-001 T-01 换基：基座 chrome = auto-edit
+// app.at — auto-jade 根组件（PLAN-001 T-01 换基：基座 chrome = auto-edit
 // PLAN-003 交付形态；树行 = bps filetree 留根视图；编辑器 = autodown_editor）。
 //
 // 结构：
@@ -1568,7 +1568,7 @@ widget App {
         action (id: "view.reload",    handler: .Reload,    title: "重载",  icon: "refresh-cw",
                 enabled_if: ".store.tab_count > 0")
         action (id: "view.recover",   handler: .RecoverOpen, title: "待恢复草稿", icon: "history")
-        action (id: "help.about",  handler: .ActAbout,  title: "关于 jade-edit")
+        action (id: "help.about",  handler: .ActAbout,  title: "关于 auto-jade")
 
         toolbar {
             item (action: "file.new")
@@ -1659,7 +1659,7 @@ widget App {
                     menubar-menu (value: "help") {
                         menubar-trigger "帮助"
                         menubar-content {
-                            menubar-item (title: "关于 jade-edit", icon: "info") { onclick: .ActAbout }
+                            menubar-item (title: "关于 auto-jade", icon: "info") { onclick: .ActAbout }
                         }
                     }
                 }

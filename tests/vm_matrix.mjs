@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// vm_matrix.mjs — jade-edit vm 轨检查矩阵（PLAN-001 T-04 换基双臂化；
+// vm_matrix.mjs — auto-jade vm 轨检查矩阵（PLAN-001 T-04 换基双臂化；
 // PLAN-081 T-05 原始形态演进；PLAN-002 T-01 扩三组；PLAN-003 T-04 link 扩单）。
 //
 // 检查单（AC-03 检查单——vue 轨 playwright 断言域与此同单）：
@@ -203,7 +203,7 @@ const ARM = argOf('--arm') ?? 'all' // all | merged | split
 const BASELINE = path.join(repoRoot, "tests", "baseline", "structure-v32.txt")
 const SAVE_BASELINE = argOf('--save-baseline')
 
-const EDIT_MARKER = 'jade-edit 冒烟标记：编辑回写可见。'
+const EDIT_MARKER = 'auto-jade 冒烟标记：编辑回写可见。'
 const RELOAD_MARKER = '外部重载标记：重载可见。'
 const TARGET_LABEL = 'Hello World.ad'
 // 扩单三组（PLAN-002 T-01）——tab 面 / 编辑操作族 / 退出存盘
@@ -546,7 +546,7 @@ async function runArm(arm, port) {
     const deadline = Date.now() + 45000
     for (;;) {
       try {
-        await rpc('initialize', { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'jade-edit-vm-matrix', version: '0.2.0' } })
+        await rpc('initialize', { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'auto-jade-vm-matrix', version: '0.2.0' } })
         break
       } catch (err) {
         if (app.exitCode !== null) throw new Error(`app exited early (code ${app.exitCode}):\n${appOut.slice(-1500)}`)
@@ -648,7 +648,7 @@ async function runArm(arm, port) {
       const stateDump = (await callTool('autoui_state', {})).trim()
       const snapIds = JSON.stringify([...(await snapshotText()).matchAll(/#(vnode_\d+)/g)].map((m) => m[1]))
       const headerFor = (file) =>
-        `// jade-edit vm 结构基线 v32（2026-10-10 链接域 v2 重锁——代码域屏蔽+面板去重；v31=撤 workaround 批、v30=2026-10-09 布局修复批、v29=PLAN-038 T-03、v28=PLAN-036 批、
+        `// auto-jade vm 结构基线 v32（2026-10-10 链接域 v2 重锁——代码域屏蔽+面板去重；v31=撤 workaround 批、v30=2026-10-09 布局修复批、v29=PLAN-038 T-03、v28=PLAN-036 批、
 ` +
         `// v25=PLAN-032 批、v20=PLAN-025、v19=PLAN-021、v18=PLAN-020、v17=PLAN-019、v16=PLAN-018、
 ` +
@@ -3837,7 +3837,7 @@ async function runArm(arm, port) {
       const dl = Date.now() + 45000
       for (;;) {
         try {
-          await client2.rpc('initialize', { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'jade-edit-vm-matrix-reboot', version: '0.2.0' } })
+          await client2.rpc('initialize', { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'auto-jade-vm-matrix-reboot', version: '0.2.0' } })
           break
         } catch (err) {
           if (app2.exitCode !== null) throw new Error(`reboot app exited early (code ${app2.exitCode}):\n${out2.slice(-1500)}`)

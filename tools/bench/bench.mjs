@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// bench.mjs — jade-edit 测量套件（PLAN-002 T-02；对照 auto-edit
+// bench.mjs — auto-jade 测量套件（PLAN-002 T-02；对照 auto-edit
 // PLAN-005 bench.py 收口形态，node 化）。
 //
 // 三命令：
@@ -162,7 +162,7 @@ async function launch({ seedLarge = false } = {}) {
   const deadline = Date.now() + 45000
   for (;;) {
     try {
-      await rpc('initialize', { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'jade-bench', version: '0.1.0' } })
+      await rpc('initialize', { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'auto-jade-bench', version: '0.1.0' } })
       break
     } catch (e) {
       if (app.exitCode !== null) throw new Error(`app exited early (code ${app.exitCode}):\n${out.slice(-800)}`)
