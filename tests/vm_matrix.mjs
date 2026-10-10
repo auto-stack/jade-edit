@@ -10,7 +10,7 @@
 //   5 save    保存落盘（toolbar 保存 → 脏标清 + 磁盘字节含标记 + frontmatter 保留
 //             + updated_at 自动维护——PLAN-015：已有键保存即更新值[当日形]）
 //   6 reload  重载可见（磁盘外改 → toolbar 重载 → 编辑器见新内容）
-//   B base    结构基线 v31 零漂移（仅 merged 臂；必须在 1-6 后、扩单前采集
+//   B base    结构基线 v32 零漂移（仅 merged 臂；必须在 1-6 后、扩单前采集
 //             ——v29 锁的是六检查终态，扩单不漂移基线；v29=PLAN-038 快开
 //             独立弹层批[state 纯增 8 字段 quick_* 七件+store quick_open、
 //             files_rows 退役；id 序列 = 快开根弹层新节点+工具栏 快速打开
@@ -152,10 +152,11 @@
 //             行[语料实勘全集——执行期校正：7 非计划记的 6，Hello
 //             World.ad 实有 demo]/展开导航双臂[CJK CAP 案 PLAN-028 双臂化]/
 //             Save 刷新外造新行。wanted 子步：模式入口无 input 行无检索
-//             钮/语料已知答案页面名（1）【执行期校正：悬空全集=首页+页
-//             面名，首页已被 10c 消缺故不在此位】+外造 Wanted Target（1）/
-//             取消零落盘/创建开档+消缺+exists 翻转+模板逐字节/空态闭环
-//             （无悬空链接）。inline 子步（PLAN-009 T-04 meta 组）：⑦外造
+//             钮/语料悬空清零零漂移【v2 代码域屏蔽：index.ad 提示行
+//             `[[页面名]]` 行内代码域文档示例不计——原「页面名（1）」
+//             已知答案随之消失，空态+双负向钉 = 提取口径回归锁】+外造
+//             Wanted Target（1）/取消零落盘/创建开档+消缺+exists 翻转+
+//             模板逐字节/二源 CJK 空态闭环（无悬空链接）。inline 子步（PLAN-009 T-04 meta 组）：⑦外造
 //             body #inline-meta 档[fm 无 tags 键——纯 body 聚合源]保存 →
 //             面板新行；⑧语料基线零漂移回归（7 语料 tag 行全在 + 忽略面
 //             负向——无 block-project-a 行：`{#block-project-a}` 块锚/
@@ -199,7 +200,7 @@ const argOf = (name) => {
   return i >= 0 ? args[i + 1] : undefined
 }
 const ARM = argOf('--arm') ?? 'all' // all | merged | split
-const BASELINE = path.join(repoRoot, "tests", "baseline", "structure-v31.txt")
+const BASELINE = path.join(repoRoot, "tests", "baseline", "structure-v32.txt")
 const SAVE_BASELINE = argOf('--save-baseline')
 
 const EDIT_MARKER = 'jade-edit 冒烟标记：编辑回写可见。'
@@ -647,31 +648,27 @@ async function runArm(arm, port) {
       const stateDump = (await callTool('autoui_state', {})).trim()
       const snapIds = JSON.stringify([...(await snapshotText()).matchAll(/#(vnode_\d+)/g)].map((m) => m[1]))
       const headerFor = (file) =>
-        `// jade-edit vm 结构基线 v31（2026-10-10 撤 workaround 重锁——上游 PLAN-748 落地回执；v30=2026-10-09 布局修复批、v29=PLAN-038 T-03、v28=PLAN-036 批、v27=PLAN-035 批、
+        `// jade-edit vm 结构基线 v32（2026-10-10 链接域 v2 重锁——代码域屏蔽+面板去重；v31=撤 workaround 批、v30=2026-10-09 布局修复批、v29=PLAN-038 T-03、v28=PLAN-036 批、
 ` +
         `// v25=PLAN-032 批、v20=PLAN-025、v19=PLAN-021、v18=PLAN-020、v17=PLAN-019、v16=PLAN-018、
 ` +
         `// v15=PLAN-016、v14=PLAN-015、v13=PLAN-014、v12=PLAN-013、v11=PLAN-012 等均留档）。
 ` +
-        `// 重锁因由：上游 PLAN-748 四件供料修复落地（auto-lang HEAD c72ff953b，debug 载体
+        `// 重锁因由：链接提取 v2（wsys.at mask_code_regions——行内代码/围栏内 [[..]]/#tag
 ` +
-        `// v0.4.2-2835-dirty 后本地重建）——v30 批的两层 workaround 撤除：①侧栏回单层
+        `// 不再计入，wiki 惯例代码内标记非链接；语料实勘 index.ad 提示行 「[[页面名]]」
 ` +
-        `// overflow-y-auto col（T-07 overflow 滚动转写：视觉类上移视口 Container，满高+bg
+        `// 教程示例误入悬空清单）+ 面板行按页去重（backlink_rows_of 按源页/outlink_rows_of
 ` +
-        `// 正常，像素终验 785/786）；②编辑器 px-5 py-4 容器+清零变体撤（T-10 autodown_editor
+        `// 按落点——面板=页面清单语义，links_json 逐实例真相不变）。**state 漂移 =
 ` +
-        `// 内建引擎等值 padding CONTENT_PAD_Y=16/X=20，vm 实测正文左缘 +42 设备px≈20 CSS
+        `// links_json 字节**（index.ad 出链数组撤 页面名 悬空条目——v31 唯一实质面）；
 ` +
-        `// 与引擎 1.25rem 等值）。**state 零变化**；snapshot id 序列 = 撤 2 workaround 节点
+        `// snapshot id 序列零漂移（wanted 行不在基线采集点渲染——find 面板闭态）。
 ` +
-        `// 后 278→277：净 -1 = 侧栏 T-07 视口 Container 新节点 +1、编辑器 padding col -1、
+        `// 语义口径与矩阵断言面（check-14 wanted ⑤空态+双负向钉/⑦二源 CJK 空态闭环）
 ` +
-        `// autodown_editor 内部 id 因 T-10 重派生（替换 1）。上游回执与残余件（右栏面板
-` +
-        `// live 不可见——layout 配给已正确[289px 落位 P748_PROBE 实测]、绘制层缺失）见
-` +
-        `// docs/upstream/2026-10-09-vm-layout-stretch-supply.md 回执节。
+        `// 见 wsys.at mask_code_regions 注与 app.at 面板派生注。
 ` +
         `// 仪器同 v2..v29：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态
 ` +
@@ -696,7 +693,7 @@ async function runArm(arm, port) {
       } else if (fs.existsSync(BASELINE)) {
         const raw = fs.readFileSync(BASELINE, 'utf8')
         const ok = raw === headerFor(BASELINE) + baselineBodyOf()
-        check('B', 'baseline', ok, ok ? '结构基线 v31 零漂移（state 逐字节 + id 序列）——2026-10-10 撤 workaround 重锁（上游 PLAN-748 落地回执：state 零变化；278→277 净 -1=侧栏 T-07 视口 Container +1/编辑器 padding col -1——归因见基线头注与供料包回执节）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
+        check('B', 'baseline', ok, ok ? '结构基线 v32 零漂移（state 逐字节 + id 序列）——2026-10-10 链接域 v2 重锁（state = links_json 字节[index.ad 页面名 悬空条目撤——代码域屏蔽 v2]；id 序列零漂移——归因见基线头注）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
       } else {
         console.log('  [baseline] structure-v29 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v29.txt')
       }
@@ -855,8 +852,8 @@ async function runArm(arm, port) {
     const panelText1 = await snapshotText()
     // ⑥ 出链/wanted 恒链接文本（SD-1401 定文——显示名化零波及面）：
     // 出链行 = target 文本（'首页（悬空）' 非 dtitle 覆盖形）；wanted
-    // label 形 `页面名（1）` 断言域在 14⑤ 不动 + 12⑤ 'Project X'
-    // 非 'Projects' 非退化并证。
+    // label 聚合形断言域在 14⑤（v2 后语料悬空清零，外造源承载）+
+    // 12⑤ 'Project X' 非 'Projects' 非退化并证。
     const panelOk = panelText1.includes('首页（悬空）') && panelText1.includes('CAP 定理')
     check('10', 'link', panelOk, `link_index 已知答案（首页悬空存在判）+ 面板反链三源显示名（首页/CAP 定理/Tasks——PLAN-014 反链行名化 ⑤）+ 出链段恒 target 文本（CAP 定理钮/首页悬空——⑥ 零变化面）=${panelOk}`)
     // 点击反链行 → 开来源档 index.ad（ASCII 路径——HTTP 通道可导航；
@@ -1318,9 +1315,9 @@ async function runArm(arm, port) {
     // 14 meta（PLAN-008 T-04）：tags 面板 + wanted 模式八子步（双件同组
     // ——PLAN-004 find 组先例；组内子步不占检查位，fail 即臂败，10c/12
     // 同款）。执行序在 10c 后 11 前（此位语料态 = tags 全集 7[13 file
-    // 未删 CAP/12 rename 未改名] + 悬空仅剩 页面名（1）——首页已被 10c
-    // 建页消缺【执行期校正：语料悬空全集 = 首页+页面名，index.ad 尾行
-    // [[页面名]] 亦悬空】）。前置：关反链面板（10 开着——tags/wanted
+    // 未删 CAP/12 rename 未改名] + 悬空清零——首页已被 10c 建页消缺、
+    // index.ad 提示行 [[页面名]] 系行内代码域文档示例不计【v2 代码域
+    // 屏蔽：原「悬空全集 = 首页+页面名」口径随之修订】）。前置：关反链面板（10 开着——tags/wanted
     // 行断言免反链行 .ad 路径文本重叠）；收尾：复原反链面板开（check
     // 11 首步「开着→关」口径不漂移）+ find 面板关。
     await pressButton('视图', { exact: true })
@@ -1576,15 +1573,17 @@ async function runArm(arm, port) {
     await pressButton('视图', { exact: true })
     await pressButton('切换标签', { exact: true })
     await stateIs('tags_open', 'false')
-    // wanted ⑤：模式入口（无 input 行/无触发钮 + 语料已知答案行——首页
-    // 已消缺故不在，页面名（1）在）
+    // wanted ⑤：模式入口（无 input 行/无触发钮 + **语料悬空清零零漂移**
+    // ——v2 代码域屏蔽后 index.ad 提示行 `[[页面名]]`（行内代码域文档
+    // 示例）不再计入，语料悬空全集 = 空[首页已被 10c 消缺]→ 直接空态
+    // 「（无悬空链接）」+ 页面名/首页双负向钉 = 提取口径回归锁）
     await pressButton('视图', { exact: true })
     await pressButton('悬空清单', { exact: true })
     await stateIs('find_mode', 'wanted')
     await stateIs('find_open', 'true')
     const metaWantedSnap = await snapshotText()
     const wantedNoInput = !metaWantedSnap.includes('输入查询词') && !metaWantedSnap.includes('过滤文件名') && !metaWantedSnap.includes('"检索"')
-    const wantedKnown = metaWantedSnap.includes('"页面名（1）"') && !metaWantedSnap.includes('"首页（1）"')
+    const wantedKnown = metaWantedSnap.includes('（无悬空链接）') && !metaWantedSnap.includes('"页面名（1）"') && !metaWantedSnap.includes('"首页（1）"')
     if (!(wantedNoInput && wantedKnown)) throw new Error(`wanted 入口断言失守（noInput=${wantedNoInput} known=${wantedKnown}）`)
     // wanted ⑤b：外造悬空源档 → 重入口（ActFindWanted 即刷新）→ 新行
     fs.writeFileSync(path.join(FIXTURE, 'Wanted Source.ad'), '# WS\n\nsee [[Wanted Target]].\n', 'utf8')
@@ -1627,12 +1626,24 @@ async function runArm(arm, port) {
     const wantedDiskOk = fs.existsSync(path.join(FIXTURE, 'Wanted Target.ad'))
       && fs.readFileSync(path.join(FIXTURE, 'Wanted Target.ad'), 'utf8') === '# Wanted Target\n\n'
     if (!(wantedFlipOk && wantedGoneOk && wantedDiskOk)) throw new Error(`wanted 建页弧线失守（flip=${wantedFlipOk} gone=${wantedGoneOk} disk=${wantedDiskOk}）`)
-    // wanted ⑦：空态闭环——消缺余量（页面名，语料悬空第二目标【执行期
-    // 校正】；create_page POST body CJK 双臂已证——消缺面 = 磁盘+索引
+    // wanted ⑦：空态闭环——外造 CJK 悬空源（v2 后语料悬空全集 = 空——
+    // index.ad 提示行 [[页面名]] 系行内代码域文档示例不计[代码域屏蔽
+    // v2]；create_page POST body CJK 双臂已证——消缺面 = 磁盘+索引
     // 重取+行集重算，双臂同达；split CJK 开档全败不涉本断言）→ wanted
     // 清单空态「（无悬空链接）」
-    await pressButton('页面名（1）', { exact: true })
+    fs.writeFileSync(path.join(FIXTURE, 'Wanted 源二.ad'), '# W2\n\n参见 [[缺页甲]]。\n', 'utf8')
+    await pressButton('视图', { exact: true })
+    await pressButton('悬空清单', { exact: true })
+    let wanted2RowOk = false
+    for (const dl = Date.now() + 8000; ; ) {
+      wanted2RowOk = (await snapshotText()).includes('"缺页甲（1）"')
+      if (wanted2RowOk || Date.now() > dl) break
+      await sleep(300)
+    }
+    if (!wanted2RowOk) throw new Error('wanted 二源 CJK 行未现（外造刷新失守）')
+    await pressButton('缺页甲（1）', { exact: true })
     await stateIs('create_confirm_open', 'true')
+    await stateIs('create_target', '缺页甲')
     await pressInCreateDialog('创建')
     let wantedEmptyOk = false
     for (const dl = Date.now() + 8000; ; ) {
@@ -1649,7 +1660,7 @@ async function runArm(arm, port) {
     await pressButton('切换反链', { exact: true })
     await stateIs('backlinks_open', 'true')
     check('14', 'meta', metaTagsOk && metaSaveOk && metaInlineOk && metaInlineBaselineOk && wantedNoInput && wantedKnown && wantedRowOk && wantedCancelOk && wantedFlipOk && wantedGoneOk && wantedDiskOk && wantedEmptyOk && metaPrefillOk && metaTitlePrefillOk && metaCancelOk && metaSaveOk2 && metaAliasOk && metaDelDiskOk && metaInterOk && metaTitleDiskOk && metaTitleTreeOk && metaTitleClearDiskOk && metaTitleFallOk,
-      `meta 组八子步 + inline 子步 + 属性子步（tags：面板开 7 tag 行[语料实勘全集]/展开导航双臂+CJK CAP 案[PLAN-028 双臂化]/Save 刷新外造新行；inline：body #inline-meta 档保存后面板新行+语料基线零漂移回归[忽略面负向无 block-project-a]；wanted：模式入口无 input 行无检索钮/语料已知答案 页面名（1）+外造 Wanted Target（1）/取消零落盘/创建开档+消缺+exists 翻转+模板逐字节/空态闭环（无悬空链接）；属性[PLAN-011+013]：untitled no-op/预填回显[tags+title 位首]/title 编辑弧线[磁盘 title 行受控改写+树行显示即时刷新]+清空回落[删键回 stem 显示]/取消零落盘/tags 保存+面板即时刷/alias 帽烟别名 exists 翻转[links_json 双臂]/删值弧线[空空白=删键]/保存流互作[frontmatter 存续]——目标页双臂同单 CAP 定理[PLAN-028 POST 化收口]）`)
+      `meta 组八子步 + inline 子步 + 属性子步（tags：面板开 7 tag 行[语料实勘全集]/展开导航双臂+CJK CAP 案[PLAN-028 双臂化]/Save 刷新外造新行；inline：body #inline-meta 档保存后面板新行+语料基线零漂移回归[忽略面负向无 block-project-a]；wanted：模式入口无 input 行无检索钮/语料悬空清零零漂移【v2 代码域屏蔽——原页面名（1）已知答案消失·双负向钉】+外造 Wanted Target（1）/取消零落盘/创建开档+消缺+exists 翻转+模板逐字节/二源 CJK 空态闭环（无悬空链接）；属性[PLAN-011+013]：untitled no-op/预填回显[tags+title 位首]/title 编辑弧线[磁盘 title 行受控改写+树行显示即时刷新]+清空回落[删键回 stem 显示]/取消零落盘/tags 保存+面板即时刷/alias 帽烟别名 exists 翻转[links_json 双臂]/删值弧线[空空白=删键]/保存流互作[frontmatter 存续]——目标页双臂同单 CAP 定理[PLAN-028 POST 化收口]）`)
 
     // —— 弹层/结构锚助手族（PLAN-012/014 纪律修订形态；**PLAN-016 前移
     // **——check 11 trash 子步先用[＋新建/删除弹层]，声明位从 check 13

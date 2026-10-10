@@ -348,9 +348,81 @@ fn resolve_target(stems List, aliases List, rels List, target str) str {
 /// ⚠ VM 纪律（T-02 实勘）：列表元素上的链式方法调用错乱（heap 接收者
 /// CALL_SPEC 错位——`segs[i].split_once(..)` 返回垃圾长度），元素必须
 /// 先拷局部变量再调方法（links_json 节点收集循环同款已证形态）。
-fn extract_links_json(body str, stems List, aliases List, rels List) str {
+/// **代码域屏蔽（链接/tag 提取共享前置，v2 口径）**：wiki 惯例——行内
+/// 代码与围栏块内的 `[[..]]`/`#tag` 字面是文档示例不是链接（语料实勘：
+/// 欢迎.ad 教程行 `` `[[写作示例]]` `` 误计出链 → 反链面板同源双行；
+/// index.ad 提示行 `[[页面名]]` 误入悬空清单）。**消费面 = 提取仅读**
+/// ——返回屏蔽副本，磁盘原文零接触；改写族（rename linkify）按原文
+/// 位置重组，不经本函数（代码内 [[Old]] 随改名被改写 = 已知 v2 边界，
+/// 语料无此形态）。口径：
+/// - 围栏 = trim 后 ``` 起始行至下一 ``` 行之间行内容置空（信息串兼容；
+///   ~~~ 波浪围栏/4 空格缩进代码块不涉——v2 边界在案，随 markdown 深
+///   解析批扩展）；
+/// - 行内 = 反引号逐段配对，奇数段（span 内）内容置空、反引号保留
+///   （保留分隔符防跨段假配对——drop 后直拼会把 `[[a` + `b]]` 拼成新
+///   候选）；行内反引号奇数个（末 span 无闭合）→ 末段 CommonMark 字面
+///   处理不屏蔽；
+/// - 提取器同族接入：extract_links_json / page_inline_tags（2675 行
+///   v1 「code fence 内 #tag 会计入」缺口随本函数闭账）。
+fn mask_code_regions(body str) str {
     var sb StringBuilder = StringBuilder.new(1024)
-    var segs = body.split("[[")
+    var lines = body.split("\n")
+    var in_fence bool = false
+    var i int = 0
+    while i < lines.len() {
+        var line str = lines[i]
+        var t str = line.trim()
+        if t.starts_with("```") {
+            in_fence = !in_fence
+            if i > 0 {
+                sb.append("\n")
+            }
+        } else if in_fence {
+            if i > 0 {
+                sb.append("\n")
+            }
+        } else {
+            var parts = line.split("`")
+            if parts.len() >= 3 {
+                var seg StringBuilder = StringBuilder.new(64)
+                var in_code bool = false
+                var j int = 0
+                while j < parts.len() {
+                    if j > 0 {
+                        seg.append("`")
+                        in_code = !in_code
+                    }
+                    if !in_code {
+                        // ⚠ D-20②：列表元素先拷局部变量再调方法。
+                        var p str = parts[j]
+                        seg.append(p)
+                    }
+                    j = j + 1
+                }
+                if in_code {
+                    // 末反引号无闭合——末段字面语义，回接不屏蔽。
+                    var last str = parts[parts.len() - 1]
+                    seg.append(last)
+                }
+                if i > 0 {
+                    sb.append("\n")
+                }
+                sb.append(seg.build())
+            } else {
+                if i > 0 {
+                    sb.append("\n")
+                }
+                sb.append(line)
+            }
+        }
+        i = i + 1
+    }
+    return sb.build()
+}
+fn extract_links_json(body str, stems List, aliases List, rels List) str {
+    var masked str = mask_code_regions(body)
+    var sb StringBuilder = StringBuilder.new(1024)
+    var segs = masked.split("[[")
     var i int = 1
     while i < segs.len() {
         var seg str = segs[i]
@@ -2672,11 +2744,14 @@ fn is_digits(s str) bool {
 ///   车} → 忽略（ends_with 链判，禁 .length 取尾）；prev 空 = body 首
 ///   位直通。
 /// 合格 token 非空未入集 → push（while 查重——D-11 禁 .find 闭包）。
-/// ⚠ code fence 内 #tag 会计入（v1 原文扫——语料无此形态；fence 感知
-/// 扫描随 markdown 深解析批，PLAN-009 §10.6 观测项）。
+/// **代码域 v2 已闭账**（原 v1 注「code fence 内 #tag 会计入——fence
+/// 感知随 markdown 深解析批」）：入口 mask_code_regions 屏蔽后扫描，
+/// 行内 span/围栏内 #tag 不再计入（语料实勘零漂移——v1 时语料即无此
+/// 形态）；4 空格缩进代码块仍计入（v2 边界同 mask 口径在案）。
 fn page_inline_tags(body str) List {
+    var masked str = mask_code_regions(body)
     var out List = []
-    var segs = body.split("#")
+    var segs = masked.split("#")
     var i int = 1
     while i < segs.len() {
         // ⚠ D-20②：列表元素先拷局部变量再调方法。
