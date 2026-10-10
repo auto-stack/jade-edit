@@ -192,7 +192,11 @@ import { fileURLToPath } from 'node:url'
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const AUTO_EXE = process.env.AUTO_EXE ?? 'D:/autostack/auto-lang/target/debug/auto.exe'
 const FIXTURE_SOURCE = process.env.AUTO_JADE_FIXTURE ?? 'D:/autostack/auto-down/tmp/wiki-demo'
-const FIXTURE = path.join(repoRoot, 'e2e', '.runtime', 'workspace')
+// AUTO_JADE_E2E_WS 覆盖 = 多会话并行私有工作区（serve-back --workspace /
+// e2e helpers 同指——默认共享 ws 免互踩；缺省路径零变化）。
+const FIXTURE = process.env.AUTO_JADE_E2E_WS
+  ? path.resolve(process.env.AUTO_JADE_E2E_WS)
+  : path.join(repoRoot, 'e2e', '.runtime', 'workspace')
 
 const args = process.argv.slice(2)
 const argOf = (name) => {
@@ -200,7 +204,7 @@ const argOf = (name) => {
   return i >= 0 ? args[i + 1] : undefined
 }
 const ARM = argOf('--arm') ?? 'all' // all | merged | split
-const BASELINE = path.join(repoRoot, "tests", "baseline", "structure-v33.txt")
+const BASELINE = path.join(repoRoot, "tests", "baseline", "structure-v34.txt")
 const SAVE_BASELINE = argOf('--save-baseline')
 
 const EDIT_MARKER = 'auto-jade 冒烟标记：编辑回写可见。'
@@ -648,31 +652,27 @@ async function runArm(arm, port) {
       const stateDump = (await callTool('autoui_state', {})).trim()
       const snapIds = JSON.stringify([...(await snapshotText()).matchAll(/#(vnode_\d+)/g)].map((m) => m[1]))
       const headerFor = (file) =>
-        `// auto-jade vm 结构基线 v33（2026-10-10 改名批重锁——jade-edit→auto-jade 全深度机械批；v32=链接域 v2、v31=撤 workaround 批、v30=2026-10-09 布局修复批、v29=PLAN-038 T-03、v28=PLAN-036 批、
+        `// auto-jade vm 结构基线 v34（2026-10-10 PLAN-750 分配臂 in-flight 门批重锁；v33=改名批锁[在途未及单列提交，随本批并链——EDIT_MARKER 字节面]、v32=链接域 v2、v31=撤 workaround 批、v30=2026-10-09 布局修复批、v29=PLAN-038 T-03、v28=PLAN-036 批、
 ` +
         `// v25=PLAN-032 批、v20=PLAN-025、v19=PLAN-021、v18=PLAN-020、v17=PLAN-019、v16=PLAN-018、
 ` +
         `// v15=PLAN-016、v14=PLAN-015、v13=PLAN-014、v12=PLAN-013、v11=PLAN-012 等均留档）。
 ` +
-        `// 重锁因由：产品更名 auto-jade（PLAN-040）——身份面（窗口标题 AutoJade/status
+        `// 重锁因由（v32→v34 合并增量）：①PLAN-750 供料落地——editor_store.at 三分配点
 ` +
-        `// 文本/关于菜单/e2e 锚/EDIT_MARKER）与内部态面（.jade/→.auto-jade/、JADE_*→
+        `//（.Edit/.ConfirmKeepClose/.QuitKeepClose）draft_begin/draft_alloc await 悬窗重入
 ` +
-        `// AUTO_JADE_*）全深度机械替换，零功能改动。**state 漂移 = EDIT_MARKER 字节**
+        `// 单飞门，**state 漂移 = +draft_allocating 单行**（App 态新字段，draft_epoch 同域；
 ` +
-        `//（active_body 冒烟标记文本随身份层更名——唯一实质面；links_json/recents/
+        `// 其余 state 面/links_json/recents/console 零变化，snapshot id 序列零漂移——门不
 ` +
-        `// console 零变化）；snapshot id 序列零漂移（widget id 不含文本——窗口标题与
+        `// 入渲染面）；②承改名批（PLAN-040，v33 在途锁）EDIT_MARKER 字节 + 内部态断言面
 ` +
-        `// status 文本均在 chrome 层，state 段与 id 序列仪器均无此面）。
+        `//（.auto-jade/recents.txt、snapNoAutoJade）随批更名（v33 前历次重锁因由见各基线
 ` +
-        `// 内部态断言语义（check ⑩ recents 磁盘逐行 ↔ .auto-jade/recents.txt；check 11
+        `// 头注）。
 ` +
-        `// 快开免索引负向 snapNoAutoJade——.auto-jade 点前缀 walk 忽略）随批更名，
-` +
-        `// 语义与断言面零变化（v32 前历次重锁因由见各基线头注）。
-` +
-        `// 仪器同 v2..v29：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态
+        `// 仪器同 v2..v33：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态
 ` +
         `//（chrome 全套 + Hello World.ad 开；查找面板/建页弹层/新建弹层/属性弹层/新建目录
 ` +
@@ -695,7 +695,7 @@ async function runArm(arm, port) {
       } else if (fs.existsSync(BASELINE)) {
         const raw = fs.readFileSync(BASELINE, 'utf8')
         const ok = raw === headerFor(BASELINE) + baselineBodyOf()
-        check('B', 'baseline', ok, ok ? '结构基线 v33 零漂移（state 逐字节 + id 序列）——2026-10-10 改名批重锁（state = EDIT_MARKER 字节[冒烟标记随身份层 jade-edit→auto-jade]；id 序列零漂移——归因见基线头注）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
+        check('B', 'baseline', ok, ok ? '结构基线 v34 零漂移（state 逐字节 + id 序列）——2026-10-10 PLAN-750 分配臂 in-flight 门批重锁（state = +draft_allocating 态字段；承改名批 v33 在途锁并链——EDIT_MARKER 字节面；归因见基线头注）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
       } else {
         console.log('  [baseline] structure-v29 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v29.txt')
       }

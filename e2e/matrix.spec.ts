@@ -1504,20 +1504,32 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
     .poll(() => fs.readFileSync(path.join(WORKSPACE, '.trash', 'MgR', 'MgRPg.ad'), 'utf8').includes('e2e skip 弧保存落回原位标记。'), { timeout: 10_000 })
     .toBe(true)
   console.log('[13 dir5] PASS — PLAN-025 skip 三择 tab 重映射弧（三钮→跳过同名→tab 跟随 .trash 改道位显源档内容[F-R19-1 闭账]+磁盘 twin 不动+.trash 位保存落回原位）')
-  // 收尾：关 .trash 落位 tab + 磁盘复原（标记行剥离）
-  await page.locator('button:has(svg.lucide-xicon)').first().click()
+  // 收尾：关 .trash 落位 tab + 磁盘复原（标记行剥离）。**PLAN-750 复验
+  // 批定靶修订**：`.first()` 历史上命中的是 tab 条首档而非本档（注释所指
+  // .trash 落位 tab＝新起 tab 恒居末位）——首档干净时静默关、误打误撞；
+  // 打字尾键落入 Save 的 write/read await 悬窗后（AC-08 较新输入保持
+  // dirty——blur 冲刷先手不再必胜），带脏关闭弹层即拦死后续（2026-10-10
+  // 三轮同形实证）。显式 `.last()` 定靶 + 脏关结算（弃改——磁盘随行 POST
+  // 复原无差；净关时零弹层直过）。
+  await page.locator('button:has(svg.lucide-xicon)').last().click()
+  const dirtyCloseNote = page.getByText('关闭后此文档的编辑不再显示', { exact: false })
+  if (await dirtyCloseNote.isVisible().catch(() => false)) {
+    await page.getByRole('button', { name: '放弃修改并关闭', exact: true }).click()
+    await expect(page.getByText('关闭后此文档的编辑不再显示', { exact: false })).toBeHidden({ timeout: 10_000 })
+  }
   await request.post('/api/write_wiki', { data: { path: '.trash/MgR/MgRPg.ad', body: '# MgRPg\n\n源冲突档标记：tab 跟随改道位。\n' } })
 
   // 14 meta（PLAN-008 T-04；vm 矩阵 check 14 同单——段内最后）：tags
   // 面板 + wanted 模式。执行序在 13 后（此位已知答案——e2e 13 删的是
   // Hello World.ad[vm 删 CAP 定理.ad，两轨素材异位既有口径]：tags 4 行
   // [demo/distributed-systems/theory 随删除消失、12 改名 Projects→
-  // Project X——tasks/index/jade-garden/project-management]；wanted 2
-  // 行 = Hello World（3）[wiki/index + wiki/CAP 定理 + wiki/Tasks 三处
-  // 入链悬空] + 页面名（1）[wiki/index 尾行——语料实勘全集执行期校正
-  // 面]；首页 不悬空[唯一链接方 Hello World 已删]、CAP 定理 不悬空
-  // [wiki/CAP 定理.ad 在盘]。e2e 建页全走 POST body CJK 已证面——无
-  // vm 侧 D-19 分野。
+  // Project X——tasks/index/jade-garden/project-management]；**wanted 1 行
+  // = Hello World（3）[wiki/index + wiki/CAP 定理 + wiki/Tasks 三处入链
+  // 悬空]——链接域 v2（代码域屏蔽）后 index.ad 提示行 \`[[页面名]]\` 撤出
+  // 悬空清单（vm check-14 同口径「空态+双负向钉」；本单 ⑤ 负向钉＋⑦
+  // 空态直断对齐——PLAN-750 复验批随修）**；首页 不悬空[唯一链接方
+  // Hello World 已删]、CAP 定理 不悬空 [wiki/CAP 定理.ad 在盘]。e2e 建页
+  // 全走 POST body CJK 已证面——无 vm 侧 D-19 分野。
   await page.getByText('视图', { exact: true }).click()
   await page.getByText('切换反链', { exact: true }).click()
   // tags ①：面板开启 + 4 tag 行（label 计数；此位已知答案）
@@ -1667,15 +1679,16 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
   await page.getByText('切换反链', { exact: true }).click()
   await page.getByText('视图', { exact: true }).click()
   await page.getByText('切换标签', { exact: true }).click()
-  // wanted ⑤：模式入口（无 input 行/无检索钮 + 两行清单已知答案）
+  // wanted ⑤：模式入口（无 input 行/无检索钮 + 单行清单已知答案——v2
+  // 代码域屏蔽后 页面名 条目撤，负向钉=提取口径回归锁[vm check-14 同口径]）
   await page.getByText('视图', { exact: true }).click()
   await page.getByText('悬空清单', { exact: true }).click()
   await expect(page.getByText('悬空', { exact: true })).toBeVisible({ timeout: 10_000 })
   await expect(page.getByPlaceholder('输入查询词…')).toHaveCount(0)
   await expect(page.getByRole('button', { name: '检索', exact: true })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Hello World（3）', exact: true })).toBeVisible({ timeout: 10_000 })
-  await expect(page.getByRole('button', { name: '页面名（1）', exact: true })).toBeVisible()
-  console.log('[14 meta] wanted 入口 — 无 input 行/无检索钮 + 两行清单已知答案')
+  await expect(page.getByRole('button', { name: '页面名（1）', exact: true })).toHaveCount(0)
+  console.log('[14 meta] wanted 入口 — 无 input 行/无检索钮 + 单行清单已知答案（页面名负向钉——v2 代码域屏蔽）')
   // wanted ⑧+⑥：Hello World（3）行——取消零落盘 → 再点创建 → 消缺
   //（根落位 Hello World.ad——与 13 删除的 wiki/Hello World.ad 异位不冲
   // 突；三处入链一并接回）
@@ -1695,13 +1708,12 @@ test('vue 六检查（vm 矩阵同单）', async ({ page, request }) => {
     .toBe(true)
   await expect(page.getByRole('button', { name: 'Hello World（3）', exact: true })).toHaveCount(0, { timeout: 10_000 })
   console.log('[14 meta] wanted 建页弧线 — 取消零落盘/创建开档（模板逐字节）/消缺（三处入链一并接回）')
-  // wanted ⑦：空态闭环——消缺余量（页面名）→「（无悬空链接）」
-  await page.getByRole('button', { name: '页面名（1）', exact: true }).click()
-  await page.getByRole('button', { name: '创建', exact: true }).click()
+  // wanted ⑦：空态闭环——v2 后 Hello World 为唯一悬空行，消缺即空态
+  //（页面名条目已撤——原「消缺余量建页」弧退役；vm check-14 空态同口径）
   await expect(page.getByText('（无悬空链接）', { exact: true })).toBeVisible({ timeout: 10_000 })
   console.log('[14 meta] wanted 空态闭环 — 全消缺 →（无悬空链接）')
   // exists 翻转（既有弧线）：开 index tab → 反链面板出链行全 exists
-  //（Hello World/页面名 钮在、Hello World（悬空）文本不在——13 ⑤ 曾断
+  //（Hello World 钮在、Hello World（悬空）文本不在——13 ⑤ 曾断
   // 言其悬空，建页接回后翻转）
   await tabBtn('首页').click()
   await page.getByText('视图', { exact: true }).click()

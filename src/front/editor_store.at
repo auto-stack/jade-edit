@@ -191,6 +191,12 @@ store EditorStore {
         // —— 草稿检查点（PLAN-031 T-03）：会话代次（draft_begin 惰性取一
         // 次持值复用——重复调用会续增，T-01 定谳）；0 = 未取。----
         var draft_epoch int = 0
+        // 分配臂 in-flight 门（PLAN-750 供料落地 2026-10-10）：draft_begin/
+        // draft_alloc 两 await 悬窗内同 store 事件可重入（vue 轨引擎首挂载
+        // 逐键发射——ui/overview SD-01 契约），重入键跳过分配臂，身份分配
+        // 单飞由在途调用收尾、其排水续发吸收重入键正文/erev。true = 分配
+        // 往返在途；异常路径 try/catch 保证复位，否则永久卡门。----
+        var draft_allocating bool = false
         // 待恢复条数提示（PLAN-031 T-04；App Init 单写口——StatusBar 条件
         // 行直读。0 = 无；>0 = 状态栏「待恢复草稿 N 条」入口提示——非模态
         // 不劫持（自动弹模态层被 T-04 实勘否决：劫持全应用点击面））。
@@ -385,7 +391,9 @@ store EditorStore {
         // 每 keystroke 触发 drain——单在-flight 合并等待，merged 臂同步
         // 完成即逐键落盘，vue/split 臂在-flight 期新输入只更新正文、由
         // 排水循环收尾时续发最新——run-to-completion 语义下无迟到竞态
-        // 【await 悬窗外 handler 体原子】）；回原文（dirty 翻假）→ 结算
+        // 【await 悬窗外 handler 体原子；悬窗内同事件可重入——分配臂
+        // draft_allocating 单飞门（PLAN-750）、排水臂 state!=sending
+        // 幂等守卫，两臂各负其责】）；回原文（dirty 翻假）→ 结算
         // 旧草稿 discarded（失败提示并保留恢复记录）。----
         .Edit(text) -> {
             var j int = -1
@@ -412,18 +420,28 @@ store EditorStore {
                 if changed {
                     if .tabs[j].dirty {
                         if .tabs[j].doc_id == "" {
-                            if .draft_epoch == 0 {
-                                .draft_epoch = draft_begin().parse_int()
+                            if !.draft_allocating {
+                                .draft_allocating = true
+                                try {
+                                    if .draft_epoch == 0 {
+                                        .draft_epoch = draft_begin().parse_int()
+                                    }
+                                    .tabs[j].doc_id = draft_alloc()
+                                } catch (ea) {
+                                    console_log("draft-error: alloc exception")
+                                }
+                                .draft_allocating = false
                             }
-                            .tabs[j].doc_id = draft_alloc()
                         }
                         if .tabs[j].doc_id != "" {
                             if .tabs[j].draft_state != "sending" {
                                 store.DraftDrainOf(.tabs[j].doc_id)
                             }
                         } else {
-                            .save_note = "草稿身份分配失败——正文未保护"
-                            console_log("draft-error: alloc failed")
+                            if !.draft_allocating {
+                                .save_note = "草稿身份分配失败——正文未保护"
+                                console_log("draft-error: alloc failed")
+                            }
                         }
                     } else {
                         if .tabs[j].doc_id != "" {
@@ -1118,11 +1136,19 @@ store EditorStore {
                     if .tabs[f].body == .close_target_body {
                         var doc str = .tabs[f].doc_id
                         if doc == "" {
-                            if .draft_epoch == 0 {
-                                .draft_epoch = draft_begin().parse_int()
+                            if !.draft_allocating {
+                                .draft_allocating = true
+                                try {
+                                    if .draft_epoch == 0 {
+                                        .draft_epoch = draft_begin().parse_int()
+                                    }
+                                    .tabs[f].doc_id = draft_alloc()
+                                } catch (eb) {
+                                    console_log("draft-error: alloc exception (keep-close)")
+                                }
+                                .draft_allocating = false
+                                doc = .tabs[f].doc_id
                             }
-                            .tabs[f].doc_id = draft_alloc()
-                            doc = .tabs[f].doc_id
                         }
                         if doc != "" {
                             store.DraftDrainOf(doc)
@@ -1347,11 +1373,19 @@ store EditorStore {
                 if f >= 0 {
                     var doc str = .tabs[f].doc_id
                     if doc == "" {
-                        if .draft_epoch == 0 {
-                            .draft_epoch = draft_begin().parse_int()
+                        if !.draft_allocating {
+                            .draft_allocating = true
+                            try {
+                                if .draft_epoch == 0 {
+                                    .draft_epoch = draft_begin().parse_int()
+                                }
+                                .tabs[f].doc_id = draft_alloc()
+                            } catch (ec) {
+                                console_log("draft-error: alloc exception (quit-keep)")
+                            }
+                            .draft_allocating = false
+                            doc = .tabs[f].doc_id
                         }
-                        .tabs[f].doc_id = draft_alloc()
-                        doc = .tabs[f].doc_id
                     }
                     if doc == "" {
                         fail = true

@@ -1,5 +1,25 @@
 # vue 轨草稿检查点保存不结算 → LC 删除卫语句误阻：上游供料（2026-10-10）
 
+> **2026-10-10 PLAN-750 落地回执（jade 复验）**：上游以 PLAN-750 立项定谳
+> **RC-C 潜伏竞态**（非 auto-lang 回归——codegen 零 diff/后端恒等/老载体
+> 同败三证；供料包 `evidence/p750/supply-draft.md`），修复落 jade 侧
+> `editor_store.at` 分配臂 **in-flight 门**（App 态 `draft_allocating`
+> 单飞 + try/catch 异常复位 + 重入期误报门；`.Edit`/`.ConfirmKeepClose`/
+> `.QuitKeepClose` 三分配点同形守卫）。复验（repro.mjs 同工具前后对照）：
+> D 场景（delay=0 双键）修复前红——本会话静载即复现 begin×2/alloc×2/
+> `d0002/(EMPTY)` 孤儿/erev=2 卡 checkpoint；修复后绿——单 alloc、
+> checkpoint(erev=2) 双键吸收、无孤儿、「草稿已保护」；E（delay=25）两
+> checkpoint erev=1→2 顺序排水；B/C 保存弧 settle(saved,seq=1) 墓碑落盘
+> +marker 磁盘核对。**matrix.spec 2 轮全绿**（1.5m/1.3m——含原 4/4
+> 阻断弧 [13 file] Hello World 删除，新载体首次完整通过；途中随批修
+> 两处既有测试债：[13 dir5] 收尾 `.first()` 错靶＋[14] wanted 断言滞留
+> 链接域 v1 语义——详见根因档案 §三）；**vm_matrix merged 20/20**
+> （基线 v33→v34 重锁：+draft_allocating 态字段，改名批在途 v33 锁并
+> 链）。多会话并行复验环境实录与隔离三件套（serve-back --workspace/
+> AUTO_JADE_E2E_WS）见根因档案。根因档案与本仓落地全录：
+> `2026-10-10-draft-settle-race-rootcause.md`。PLAN-750 AC-01/02/05
+> 产品面闭环。
+
 来源：jade-edit。消费者：auto-lang 草稿运行时（`.jade/drafts/v1` 结算协议）与
 宿主-引擎结算链。证据载体：debug `v0.4.2-2835-g2fd9c0599-dirty` 后本地重建
 （auto-lang HEAD `c72ff953b`）；release `v0.4.2-2747-gab7a650bd` 同败（A/B 排除

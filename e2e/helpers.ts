@@ -5,8 +5,12 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 export const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-/** run-back 隔离 fixture 工作区（playwright webServer 启动时重建）。 */
-export const WORKSPACE = path.join(repoRoot, 'e2e', '.runtime', 'workspace')
+/** run-back 隔离 fixture 工作区（playwright webServer 启动时重建）。
+ *  AUTO_JADE_E2E_WS 覆盖 = 多会话并行时的私有工作区（与 serve-back
+ *  --workspace 同指——spec 磁盘断言面随迁；缺省路径零变化）。 */
+export const WORKSPACE = process.env.AUTO_JADE_E2E_WS
+  ? path.resolve(process.env.AUTO_JADE_E2E_WS)
+  : path.join(repoRoot, 'e2e', '.runtime', 'workspace')
 export const TARGET_FILE = path.join(WORKSPACE, 'wiki', 'Hello World.ad')
 
 export const EDIT_MARKER = 'auto-jade 冒烟标记：编辑回写可见。'

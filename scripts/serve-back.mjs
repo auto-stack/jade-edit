@@ -7,7 +7,9 @@
 // 旧 exe 旁陈年 config 压 env 的事故类别在 Auto back 无 config 文件 =
 // 结构性消失；belt 保留为 AUTO_JADE_WORKSPACE 未生效的 fail-fast。
 //
-// CLI：node scripts/serve-back.mjs [--port 8211]
+// CLI：node scripts/serve-back.mjs [--port 8211] [--workspace <path>]
+//（--workspace = 库 API workspace 参的 CLI 形态——多会话并行时私有
+// 工作区，免默认 e2e/.runtime/workspace 互踩；缺省路径零变化。）
 // 库：import { serveBackend } from './serve-back.mjs'
 
 import { spawn, execFileSync } from 'node:child_process'
@@ -81,7 +83,8 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const args = process.argv.slice(2)
   const i = args.indexOf('--port')
   const port = Number(i >= 0 ? args[i + 1] : 8211)
-  const back = await serveBackend({ port })
+  const wi = args.indexOf('--workspace')
+  const back = await serveBackend({ port, workspace: wi >= 0 ? args[wi + 1] : undefined })
   console.log(`[serve-back] AutoVM backend up: ${back.url}/api/ws_root -> ok`)
   console.log(`[serve-back] workspace: ${back.workspace}`)
   console.log('[serve-back] Ctrl+C to stop')
