@@ -1,5 +1,34 @@
 # vm 轨 iced 布局三缺陷 + autodown_editor padding 缺口：上游供料（2026-10-09）
 
+> **2026-10-10 PLAN-748 落地回执（jade 复验）**：上游以 PLAN-748 立项收口
+> （HEAD `c72ff953b`；jade 复验载体 = debug `v0.4.2-2835-dirty` 后本地增量重建，
+> release 工件上游自注待重建）。四件处置——
+> ①**件一 resolved（定位修订）**：T-06 定音探针证伪「StretchLine 不交叉拉伸」
+> 供料定位——根因 = overflow 转写层视觉类（bg/border）挂滚动内容 col 止于内容
+> 高（视口 Fill 拉伸本身正常）；T-07 `split_scroll_visual_classes` 视觉类上移
+> 视口 Container 根修。jade 撤侧栏双层 workaround 回单层 overflow col：满高
+> 像素终验 785/786（复验前同形态旧载体 550）。
+> ②**件二 上游定音 HEAD 干净构建不复现**（p748_j1/j2/j3 定音探针 = 回归锁，
+> headless+live 双通道）；jade workaround 已随批撤除，未复验残留。
+> ③**件三 layout 面已修、live 绘制层残余（转上游续件）**：`P748_PROBE=1` 实测
+> StretchLine 配给正确（child[2] natural_w=289 落位、fill share=586、fill_sum=1），
+> 但 live 屏面右栏零绘制（border-l/bg-card/面板文本全无；同点位 border 扫描
+> x=780..1113 纯内容底色）——上游定音探针为 **bounds 收集器**（几何绿）覆盖
+> 不到绘制面，疑「layout 正确 paint 缺失」分歧（clip/paint bounds/z 序域）。
+> jade live 于 HEAD 载体持续不可见（去 if 包装、去行 overflow-hidden 两变体
+> 同败）。**测试面已适配**：vm_matrix `panelRegion` 增 `container` 投影臂
+> （T-07 起 overflow col 快照投影 = 视口 container[整串 style] + 内嵌
+> scrollable）。
+> ④**件四 resolved**：T-10 autodown_editor 内建引擎等值 padding
+> （CONTENT_PAD_Y=16/X=20 逻辑 px 对齐引擎 css:103；widget 四点联动）。jade 撤
+> px-5 py-4 临时层：vm 实测正文左缘 +42 设备px≈20 CSS 与引擎 1.25rem 等值，
+> vue 轨引擎 CSS 独挑不变。
+> 基线链：jade v29→v30（+2 workaround 节点，2026-10-09 批）→**v31（撤层净
+> -1 = T-07 视口 Container +1 / 编辑器 padding col -1，state 零变化）**；
+> vm_matrix merged **20/20 ALL GREEN**（panelRegion 适配后）；e2e 全套件 41
+> passed + 3 败 = D-21 负载窗族（败集逐窗漂移，冷却过滤单跑 2/2 PASS 9.7s）；
+> vue build ✓ 11.30s。
+
 来源：jade-edit。消费者：auto-lang `crates/auto-lang/src/ui/iced/`（renderer.rs /
 stretch_line.rs / style/iced_adapter.rs）与 autodown_editor 官方件。这是 Jade 的
 上游需求包，不是已登记的 auto-lang Plan；不占编号、不改上游规范。上游走自己的
