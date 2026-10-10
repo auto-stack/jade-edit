@@ -200,7 +200,7 @@ const argOf = (name) => {
   return i >= 0 ? args[i + 1] : undefined
 }
 const ARM = argOf('--arm') ?? 'all' // all | merged | split
-const BASELINE = path.join(repoRoot, "tests", "baseline", "structure-v32.txt")
+const BASELINE = path.join(repoRoot, "tests", "baseline", "structure-v33.txt")
 const SAVE_BASELINE = argOf('--save-baseline')
 
 const EDIT_MARKER = 'auto-jade 冒烟标记：编辑回写可见。'
@@ -648,27 +648,29 @@ async function runArm(arm, port) {
       const stateDump = (await callTool('autoui_state', {})).trim()
       const snapIds = JSON.stringify([...(await snapshotText()).matchAll(/#(vnode_\d+)/g)].map((m) => m[1]))
       const headerFor = (file) =>
-        `// auto-jade vm 结构基线 v32（2026-10-10 链接域 v2 重锁——代码域屏蔽+面板去重；v31=撤 workaround 批、v30=2026-10-09 布局修复批、v29=PLAN-038 T-03、v28=PLAN-036 批、
+        `// auto-jade vm 结构基线 v33（2026-10-10 改名批重锁——jade-edit→auto-jade 全深度机械批；v32=链接域 v2、v31=撤 workaround 批、v30=2026-10-09 布局修复批、v29=PLAN-038 T-03、v28=PLAN-036 批、
 ` +
         `// v25=PLAN-032 批、v20=PLAN-025、v19=PLAN-021、v18=PLAN-020、v17=PLAN-019、v16=PLAN-018、
 ` +
         `// v15=PLAN-016、v14=PLAN-015、v13=PLAN-014、v12=PLAN-013、v11=PLAN-012 等均留档）。
 ` +
-        `// 重锁因由：链接提取 v2（wsys.at mask_code_regions——行内代码/围栏内 [[..]]/#tag
+        `// 重锁因由：产品更名 auto-jade（PLAN-040）——身份面（窗口标题 AutoJade/status
 ` +
-        `// 不再计入，wiki 惯例代码内标记非链接；语料实勘 index.ad 提示行 「[[页面名]]」
+        `// 文本/关于菜单/e2e 锚/EDIT_MARKER）与内部态面（.jade/→.auto-jade/、JADE_*→
 ` +
-        `// 教程示例误入悬空清单）+ 面板行按页去重（backlink_rows_of 按源页/outlink_rows_of
+        `// AUTO_JADE_*）全深度机械替换，零功能改动。**state 漂移 = EDIT_MARKER 字节**
 ` +
-        `// 按落点——面板=页面清单语义，links_json 逐实例真相不变）。**state 漂移 =
+        `//（active_body 冒烟标记文本随身份层更名——唯一实质面；links_json/recents/
 ` +
-        `// links_json 字节**（index.ad 出链数组撤 页面名 悬空条目——v31 唯一实质面）；
+        `// console 零变化）；snapshot id 序列零漂移（widget id 不含文本——窗口标题与
 ` +
-        `// snapshot id 序列零漂移（wanted 行不在基线采集点渲染——find 面板闭态）。
+        `// status 文本均在 chrome 层，state 段与 id 序列仪器均无此面）。
 ` +
-        `// 语义口径与矩阵断言面（check-14 wanted ⑤空态+双负向钉/⑦二源 CJK 空态闭环）
+        `// 内部态断言语义（check ⑩ recents 磁盘逐行 ↔ .auto-jade/recents.txt；check 11
 ` +
-        `// 见 wsys.at mask_code_regions 注与 app.at 面板派生注。
+        `// 快开免索引负向 snapNoAutoJade——.auto-jade 点前缀 walk 忽略）随批更名，
+` +
+        `// 语义与断言面零变化（v32 前历次重锁因由见各基线头注）。
 ` +
         `// 仪器同 v2..v29：state 段逐字节 + snapshot vnode id 出现序列；终态 = 六检查后满状态
 ` +
@@ -693,7 +695,7 @@ async function runArm(arm, port) {
       } else if (fs.existsSync(BASELINE)) {
         const raw = fs.readFileSync(BASELINE, 'utf8')
         const ok = raw === headerFor(BASELINE) + baselineBodyOf()
-        check('B', 'baseline', ok, ok ? '结构基线 v32 零漂移（state 逐字节 + id 序列）——2026-10-10 链接域 v2 重锁（state = links_json 字节[index.ad 页面名 悬空条目撤——代码域屏蔽 v2]；id 序列零漂移——归因见基线头注）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
+        check('B', 'baseline', ok, ok ? '结构基线 v33 零漂移（state 逐字节 + id 序列）——2026-10-10 改名批重锁（state = EDIT_MARKER 字节[冒烟标记随身份层 jade-edit→auto-jade]；id 序列零漂移——归因见基线头注）' : '结构基线漂移（--save-baseline 重锁需人工裁定）')
       } else {
         console.log('  [baseline] structure-v29 不存在——首锁：node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v29.txt')
       }
