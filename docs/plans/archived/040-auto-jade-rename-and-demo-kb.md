@@ -1,6 +1,7 @@
 ---
 plan_id: PLAN-040
-status: reviewed
+status: archived
+completion_kind: delivered
 feature_name: auto-jade 改名机械批＋手册型示例知识库与宣传截图（v0.1.0 发布前收口两件套）
 author: [agent]
 created_at: 2026-10-10T05:57:56Z
@@ -458,6 +459,42 @@ test-results/、dist/、deps/、rust-workspace/ 不在扫描面（生成物/依�
   v33 删除/editor_store.at——本复审未触碰，其落库由其计划承载） | evidence:
   本记录内嵌命令结果＋`git show HEAD:tests/baseline/structure-v33.txt` 与
   cand2 diff 30 行（漂移字节归属在档）＋worktree A/B 实录 | next: merge。
+
+- 2026-10-10T09:45:00Z：stage: merge | plan_id: PLAN-040:r1 | outcome: pass |
+  delivery_commit: 823259e（T-03 补账后 HEAD＝reviewed_commit 恒等——实现链
+  e949b62→ebcda75→8b2fb3f→ec82a9e→212551f→dcb2930→79f4c62→823259e 直接 main
+  线性无 merge commit；7b8d4f2=复审记录批、账本批与归档批=docs-only 簿记
+  后代，代码态与 823259e 恒等） | canonical_spec_paths:
+  docs/specs/draft-recovery.md（SD-4001@ebcda75）+docs/specs/name-search.md
+  （SD-4002@ebcda75）+docs/specs/release-readiness.md（SD-4003@8b2fb3f——
+  含手册型示例库契约 §2.3）+docs/specs/editor-host-capabilities.md（SD-4004@
+  8b2fb3f）+docs/specs/wiki-link-navigation.md（SD-4005@8b2fb3f——纯 modify
+  名字面/语料面五件，零功能改动） | ledger_targets: docs/parity-ledger.md
+  v44（SD-4001..4005 指针五行——受跟踪账本 Git 直更，无 live ledger 服务
+  〔.autoos 缺席实勘同 031..038〕） | checkpoints: prepared〔reviewed 基线
+  823259e＋复审 pass 记录 7b8d4f2＋SD-01..05 逐条对照通过＋账本投影目标
+  v44〕→landed〔main tip=实现链尾 823259e＋簿记后代——直接 main 线性惯例
+  001..040 在册；合并窗 smoke：editor-host 4/4＠HEAD＋vm 冒烟 AutoJade=true＋
+  闭合 PASS＋checksums 30/30＋零残留断言（review 窗实录）〕→ledger_refreshed
+  〔读回核验：表头 v44 恰一＋SD-4001..4005 恰五行＋SD-3803/3701/D-55 原样〕
+  →archived〔本批 git mv→docs/plans/archived/040-auto-jade-rename-and-
+  demo-kb.md，status archived+completion_kind delivered（YAML 块内），
+  provenance 链路=review 7b8d4f2→delivery 823259e→账本 v44 均可达〕→
+  cleaned〔无 worktree/dev 分支清理面（直接 main 线性——git worktree list
+  单一主检出核验；review 窗两枚 A/B 诊断 worktree 已随批移除）；并行会话
+  WIP（editor_store.at PLAN-750/vm_matrix v34 重锁/structure-v34/helpers/
+  serve-back/docs 四件）保留路由其 owner 不裹挟〕 | deployment_observation:
+  ①VM 轨=解释执行 src 即时生效零重建面；②gen/front/vue＋dist=T-02 pnpm
+  build 再生（name=auto-jade）后 front .at 零改动——dist 现势；③载体
+  binary=上游 auto-lang 域（家族会话持续重建中 v0.4.2-2900-dirty——非本仓
+  工件） | batch_regression_due: **到期已履**——PLAN-040 为五倍数（035/038
+  回执「非五倍数未到期」反面）：024..038 惯例「§6 全量门+复审复跑+合并窗
+  smoke=批级回归本体」，本计划执行窗＋复审窗 24h 内两轮全量面（e2e 全套件
+  41 spec＋probe 21 件＋vm_matrix 20 检查＋draft 矩阵——覆盖 036..040 全部
+  测试资产）除在册家族（draft-settle 供料件/F-24-2/负载窗）外全绿＋A/B
+  定谳；**无 .last-batch-regression.json 机制**（auto-lang 域规则，本仓
+  024..038 同判未建立）——建议：并行会话 draft-settle 修复落库后安排静默窗
+  批量回归复跑（matrix.spec 全绿为验收信号）。
 
 ## 10. 待澄清事项
 
