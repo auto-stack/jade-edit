@@ -1,0 +1,30 @@
+---
+title: 引擎：auto-lang
+aliases:
+  - auto-lang
+tags:
+  - 生态
+---
+
+# 引擎：auto-lang
+
+Auto Jade 是 auto-* 工具家族的一员。家族分工：
+
+| 项目 | 角色 |
+| --- | --- |
+| auto-jade | 你正在使用的知识库编辑器 |
+| auto-lang | 语言与运行时——AutoDown 语法、渲染与编辑引擎 |
+| auto-edit | 轻量级通用编辑器 |
+| auto-down | 知识库引擎早期的孵化仓 |
+
+## 与 auto-lang 的协同
+
+Auto Jade 的编辑器与页面渲染由 auto-lang 提供的引擎驱动；本手册语料
+（`.ad` 文件）就是引擎支持的 AutoDown 格式。语法细节见
+[[AutoDown 语法速查]]。
+
+## 版本协同
+
+v0.1.0 与 auto-lang v0.5 协同发布——工具链获取与指纹核验步骤见试用指南
+（trial-guide）。当前版本的能力边界见 [[版本与边界]]；回到 [[欢迎]] 继续
+逛手册。
