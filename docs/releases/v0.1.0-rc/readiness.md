@@ -1,4 +1,4 @@
-# readiness.md — Jade v0.1.0 源码试用收口裁定（PLAN-039 T-01/T-02）
+# readiness.md — Auto Jade v0.1.0 源码试用收口裁定（PLAN-039 T-01/T-02）
 
 > 状态：**preparation_only**——最终 auto-lang v0.5 候选（D-01）尚未冻结；本档记录
 > 收口裁定与本仓修复证据，不宣称最终 RC。逐命令/计数/指纹证据见
@@ -12,7 +12,7 @@
 | 状态 | 判定 | 依据 |
 | --- | --- | --- |
 | `preparation_only` | **现行** | D-01 最终 RC 未冻结；本仓修复与准备证据已就位 |
-| `jade_ready` | 未判定 | 待 T-03 在最终候选上的完整回归与干净路径实走（AC-05/06/07） |
+| `auto_jade_ready` | 未判定 | 待 T-03 在最终候选上的完整回归与干净路径实走（AC-05/06/07） |
 | `blocked` | 无现行阻断 | 空文输入与 Save 假入口两缺口已在本仓闭环（§3/§4）；其余为已登记边界非阻断 |
 | `publish_ready` | **false** | 用户真实试用确认（D-03）、母工程联合发布门（D-04）独立 pending，不被本计划代填 |
 
@@ -33,7 +33,7 @@
 - Vue 轨：空文档（0 字节 `.ad` 或清空后正文落空白）→ 引擎 `parseBlocks` 跳过空白行
   → 零块渲染（`EngineEditor.vue` `v-for views` 空集）→ contenteditable 逐块挂载 =
   零输入面，用户无法输入。纯空白种子同样无效（解析为零块）。
-- 原生轨：编辑壳空态只有浅灰 placeholder（jade 未传 `placeholder` prop 时为空域）；
+- 原生轨：编辑壳空态只有浅灰 placeholder（auto-jade 未传 `placeholder` prop 时为空域）；
   MCP `key_press` 合成回执 ok 但**非空对照档同样零正文突变**（合成键程不达 DSL
   handler——M3/N2 ghost 家族仪器受限，B-3 单列），空档真实键程**不可由本仓仪器证
   明/证伪**，归真实试用走查（trial-guide 场景 E1）＋上游键程原语供给（auto-lang B-3
@@ -61,7 +61,7 @@
 ## 4. 缺口裁定：引擎 Save 假入口（SD-03）
 
 **现象与根因**：`EngineEditor.vue` 无条件渲染动作栏 Save 钮
-（`emit('save', serialize(...))`），jade 只听 `@update:modelValue`——点击=零落盘+脏
+（`emit('save', serialize(...))`），auto-jade 只听 `@update:modelValue`——点击=零落盘+脏
 标保（假入口）。`:show-actions` 非 EngineEditor defineProps（attr 透传非行为开关），
 上游无隐藏供给（e2e inventory + probe 形状双证）。
 

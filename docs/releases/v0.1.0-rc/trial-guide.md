@@ -1,4 +1,4 @@
-# trial-guide.md — Jade v0.1.0 源码试用走查清单（PLAN-039 T-04）
+# trial-guide.md — Auto Jade v0.1.0 源码试用走查清单（PLAN-039 T-04）
 
 > 用途：真实用户按本清单完成一次可绑定版本的试用，并回填 §6 回执——回执是
 > `publish_ready` 的必要条件（D-03），代理/工程验收不能代填。
@@ -13,25 +13,25 @@
 
 ```powershell
 # 0) 建立独立的试用目录（与开发机路径无关的任意干净目录）
-mkdir C:\jade-trial; cd C:\jade-trial
+mkdir C:\auto-jade-trial; cd C:\auto-jade-trial
 
 # 1) 放置冻结工具链（来源/hash 见 RELEASE.md），核对指纹
 Get-FileHash -LiteralPath .\auto.exe -Algorithm SHA256   # 应与发布 checksums 一致
 .\auto.exe --version
 
-# 2) 获取 jade 源码（冻结版本）与兄弟仓依赖（结构见 RELEASE.md「获取」节）
+# 2) 获取 auto-jade 源码（冻结版本）与兄弟仓依赖（结构见 RELEASE.md「获取」节）
 
 # 3) 准备样例工作区副本（样例随源码交付：docs/releases/v0.1.0-rc/sample-workspace）
-Copy-Item -Recurse <jade源码>\docs\releases\v0.1.0-rc\sample-workspace C:\jade-trial\my-wiki
+Copy-Item -Recurse <auto-jade源码>\docs\releases\v0.1.0-rc\sample-workspace C:\auto-jade-trial\my-wiki
 
 # 4) 安装依赖并启动（两种形态任选；指南走查以原生 merged 为主形态）
-$env:AUTO_EXE = "C:\jade-trial\auto.exe"
+$env:AUTO_EXE = "C:\auto-jade-trial\auto.exe"
 pnpm install
 pnpm build
 & $env:AUTO_EXE --version
 
 # 形态一：原生 merged（主交付形态）
-$env:JADE_WORKSPACE = "C:\jade-trial\my-wiki"
+$env:AUTO_JADE_WORKSPACE = "C:\auto-jade-trial\my-wiki"
 & $env:AUTO_EXE run -r vm
 
 # 形态二：Vue 集成形（第二交付形态；后端 8211 / 前端 4443）
@@ -39,8 +39,14 @@ $env:JADE_WORKSPACE = "C:\jade-trial\my-wiki"
 #   浏览器打开 http://127.0.0.1:4443
 ```
 
-注意：`-B/-F` 端口被占用时换空闲端口；`JADE_WORKSPACE` 指向**你的副本**，启动后
+注意：`-B/-F` 端口被占用时换空闲端口；`AUTO_JADE_WORKSPACE` 指向**你的副本**，启动后
 右侧状态行应显示 `workspace ready`。
+
+> **关于旧工作区**：本版本起产品名由 jade-edit 更名为 auto-jade，工作区内部
+> 状态目录随之由 `.jade/` 改为 `.auto-jade/`（草稿检查点、最近打开清单等内部
+> 数据）。若你在更名前用过旧版本：旧工作区里的 `.jade/` 目录会被新版本**静默
+> 弃置**（不再读取，也不删除——留在盘上无害）；你的全部笔记页面（`wiki/` 下的
+> `.ad` 文件）不受任何影响，直接用新版本打开即可。
 
 ## 2. 走查场景（原生 merged 主形态）
 
@@ -119,4 +125,4 @@ A5–A7 即 E1：原生形态下空页是否可直接键入。若 A6 无法输�
 ```
 
 回执交予发布负责人与 `docs/releases/v0.1.0-rc/manifest.json` gates.user_trial_confirmation
-绑定。缺回执则 publish_ready=false（不阻塞本仓 jade_ready 判定）。
+绑定。缺回执则 publish_ready=false（不阻塞本仓 auto_jade_ready 判定）。

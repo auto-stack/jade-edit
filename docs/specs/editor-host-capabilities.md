@@ -6,7 +6,7 @@
 
 ## 1. 当前能力与载体（SD-01）
 
-三载体：①原生 merged（`auto run -r vm`，进程内 CALL）②原生 split（`--no-merge`；jade 应用 boot 阻断 F-24-2 在录，接口面与①同转换层判定继承；最小探针工程 boot 成功证阻断为 jade 应用面）③Vue＋split 后端（serve-back + gen/front/vue）。判定分四态：已可消费／供给存在待接线／缺供给／受阻。
+三载体：①原生 merged（`auto run -r vm`，进程内 CALL）②原生 split（`--no-merge`；auto-jade 应用 boot 阻断 F-24-2 在录，接口面与①同转换层判定继承；最小探针工程 boot 成功证阻断为 auto-jade 应用面）③Vue＋split 后端（serve-back + gen/front/vue）。判定分四态：已可消费／供给存在待接线／缺供给／受阻。
 
 ### 1.1 保存（save）
 
@@ -14,7 +14,7 @@
 | --- | --- | --- |
 | 宿主保存入口（toolbar/菜单/Ctrl+S 共 ActSave） | **已可消费**（双轨）：三入口共 `ActSave → store.Save` 门链（untitled 另存旁路、lc_review 待核验门、快照-读回核验、草稿结算、较新输入保 dirty） | e2e save：toolbar 与编辑器聚焦态真键 Ctrl+S 均真落盘（原文/标记/frontmatter 三验 + 单次无双保存面）；editor-safety/draft-recovery 规范门链在册 |
 | ①② 编辑器 save 事件 | **缺供给**：`View::AutodownEditor` 仅 key/value/is_final/on_change/on_focus/placeholder/style——无 save 消息通道；候选 `onsave:` 语法入视图模板但零消费（快照显形+零回执） | probe M3/S2（save 回执恒零）+ aura_view_builder convert_autodown_editor_native |
-| ③ 引擎动作栏与 @save | **供给存在待接线；假入口已由宿主呈现修复下线（PLAN-039 SD-03）**：EngineEditor 仍无条件渲染 Save 钮（`emit('save', serialize(engine.doc, true))`；`defineExpose handleSave`）——jade 不消费该 emit；宿主经编辑器根类 tailwind 任意变体 `[&_.autodown-editor-actions]:hidden` 将动作栏 display:none（DOM 恒渲染、视觉不可达不可点）——e2e editor-host inventory/save 两测按新现实改锚（toBeHidden + attr 透传结论保持）。**`:show-actions` 非 prop** 维持：EngineEditor defineProps 无 canEdit/showActions，生成 attr 透传为 DOM 属性——上游供给缺口分列不变；@save 消费仍须 A-1 身份供给解锁（md+active_key 判源禁止不变）。VM 轨无该动作栏面（原生壳无此呈现），样式串经 Style::parse 容忍（快照原样保留） | e2e editor-host（隐藏+attr 透传）+ release-readiness 假钮阴性案；EngineEditor.vue defineProps |
+| ③ 引擎动作栏与 @save | **供给存在待接线；假入口已由宿主呈现修复下线（PLAN-039 SD-03）**：EngineEditor 仍无条件渲染 Save 钮（`emit('save', serialize(engine.doc, true))`；`defineExpose handleSave`）——auto-jade 不消费该 emit；宿主经编辑器根类 tailwind 任意变体 `[&_.autodown-editor-actions]:hidden` 将动作栏 display:none（DOM 恒渲染、视觉不可达不可点）——e2e editor-host inventory/save 两测按新现实改锚（toBeHidden + attr 透传结论保持）。**`:show-actions` 非 prop** 维持：EngineEditor defineProps 无 canEdit/showActions，生成 attr 透传为 DOM 属性——上游供给缺口分列不变；@save 消费仍须 A-1 身份供给解锁（md+active_key 判源禁止不变）。VM 轨无该动作栏面（原生壳无此呈现），样式串经 Style::parse 容忍（快照原样保留） | e2e editor-host（隐藏+attr 透传）+ release-readiness 假钮阴性案；EngineEditor.vue defineProps |
 
 ### 1.2 命令（undo/redo/cut/copy/paste/select-all——逐项）
 
@@ -64,8 +64,8 @@
 
 - **auto-down**（§A）：A-1 保存/链接/聚焦事件载荷增实例身份（本仓消费 @save 的前置解锁）；A-2 showActions/canEdit 真消费 prop；A-3 六命令宿主可调面（runCommand 或等价回执对）。
 - **auto-lang**（§B）：B-1 open-wiki-link **简称** `@openwikilink` 生成名兼容（**PLAN-036 后缩窄为兼容面**——完整事件名 `on "open-wiki-link"` 已消费，正文导航不依赖本项；另 B-0 族新增上游缺口见 [wiki-link-navigation](wiki-link-navigation.md) §4：输入期 wikilink 解析缺失/空编辑器零块/块底 boundary 命中区遮挡——如实上告 owner=auto-down）；B-2 原生轨 save 通道（**link 通道已由 PLAN-037 交付解除**——上游 732/737/739 链，merged 已消费；split 消费未联验单列）；B-3 原生轨命令原语（key_press 词表无修饰键为仪器受限锚定——native 内部撤销源码路径在册，真键覆盖待补证）；B-4 位置族原语（caret/选区/reveal——R-08/R-11 方向输入）。
-- **jade-edit**（§C，本仓可实施面，后续 Plan 细化）：C-1 @save 消费接线（依赖 A-1）；C-2 六命令菜单真实化/失效收口——**已由 PLAN-035 交付独立分支**（失效收口形态：入口移除+可见说明+兼容守卫+三键归还，见 [editor-command-availability.md](editor-command-availability.md)；真执行仍待 A-3/B-3 解锁后另立消费片）；C-3 open-wiki-link 接线——**已由 PLAN-036 交付 Vue 片 + PLAN-037 交付 native merged 片**（完整事件名消费+单目标解析+导航保护+原生真实点击，见 [wiki-link-navigation.md](wiki-link-navigation.md)）；C-4 双轨保存同门链一致性。
-- **已知上游边界维持**：F-32-R2（VM 局部槽串扰）、F-24-2（jade 应用 split boot）、F-31-R1（engine dist 新鲜度义务）、F-31-R2（vue handler 互调未 await）、vue 多文件 e2e 时序族——本片如实分列，不因调查结论翻案。
+- **auto-jade**（§C，本仓可实施面，后续 Plan 细化）：C-1 @save 消费接线（依赖 A-1）；C-2 六命令菜单真实化/失效收口——**已由 PLAN-035 交付独立分支**（失效收口形态：入口移除+可见说明+兼容守卫+三键归还，见 [editor-command-availability.md](editor-command-availability.md)；真执行仍待 A-3/B-3 解锁后另立消费片）；C-3 open-wiki-link 接线——**已由 PLAN-036 交付 Vue 片 + PLAN-037 交付 native merged 片**（完整事件名消费+单目标解析+导航保护+原生真实点击，见 [wiki-link-navigation.md](wiki-link-navigation.md)）；C-4 双轨保存同门链一致性。
+- **已知上游边界维持**：F-32-R2（VM 局部槽串扰）、F-24-2（auto-jade 应用 split boot）、F-31-R1（engine dist 新鲜度义务）、F-31-R2（vue handler 互调未 await）、vue 多文件 e2e 时序族——本片如实分列，不因调查结论翻案。
 
 ## 4. 验证与边界
 

@@ -4,7 +4,7 @@
 > 母工程 auto-lang v0.5）的收敛边界：双支持形态、基础使用/数据安全门、候选
 > 与工件指纹规则、收口状态分列与外部状态单列。
 > 本规范不是发布动作授权：tag、对外发布、网站部署不在本仓门禁内（母工程
-> 联合发布流程承载）；「准备完成」≠「Jade 验收通过」≠「已经发布」。
+> 联合发布流程承载）；「准备完成」≠「Auto Jade 验收通过」≠「已经发布」。
 > 证据：`docs/releases/v0.1.0-rc/`（readiness/validation/trial-guide/
 > manifest/checksums/screenshots/sample-workspace）+ `tests/bench_release_150.mjs`
 > + `e2e/release-readiness.spec.ts`。
@@ -38,7 +38,7 @@ stylekit 相对路径），不承诺独立安装包或单独静态 dist 可运�
 | 状态 | 语义 |
 | --- | --- |
 | `preparation_only` | dirty 工具链或未冻结依赖——只支持准备证据，不称最终 RC |
-| `jade_ready` | 本计划基础行为、修复、冻结依赖与回归均通过（不要求母工程全部门禁） |
+| `auto_jade_ready` | 本计划基础行为、修复、冻结依赖与回归均通过（不要求母工程全部门禁） |
 | `blocked` | 本仓基础行为或候选来源未达标——列出 owner、复现、所需供给与重入条件；不得作为 execution_done 的成功替代 |
 | `publish_ready` | 另需真实用户试用确认、独立复审/交付与母工程联合发布门完成 |
 
@@ -48,7 +48,7 @@ stylekit 相对路径），不承诺独立安装包或单独静态 dist 可运�
 ## 2. 候选与工件指纹（SD-02）
 
 1. **manifest**（`docs/releases/v0.1.0-rc/manifest.json`）至少含：plan_id/
-   revision、Jade source_commit 与发布资料 commit、各依赖 source_commit、
+   revision、Auto Jade source_commit 与发布资料 commit、各依赖 source_commit、
    工具链实际版本/SHA256/获取或重建记录、engine dist SHA256 与 freshness
    结果、Node/pnpm、平台、支持形态、构建命令、工件及 checksum、验证回执
    指针、真实图来源、用户试用与外部门状态。字段未知写 `null`/`pending`
@@ -61,7 +61,10 @@ stylekit 相对路径），不承诺独立安装包或单独静态 dist 可运�
 3. **干净路径实走**：获取/构建/启动指南须在另一绝对路径按 trial-guide
    逐条实走（真实 ws_root 副本；`$LASTEXITCODE` 逐项检查）；不得依赖开发
    机绝对路径、未跟踪 fixture（wiki-demo/.runtime）或私有文件。样例语料
-   以 `docs/releases/v0.1.0-rc/sample-workspace/` 第一方交付。
+   以 `docs/releases/v0.1.0-rc/sample-workspace/` 第一方交付——**手册型
+   示例知识库**（约 12 页：产品手册即功能演示语料，PLAN-040 §5.3 页表与
+   链接密度/标签族/别名覆盖为交付口径；语料面向最终用户行文，工程台账
+   文体不入册；trial-guide 走查锚页与悬空建页演示链接随扩库保持）。
 4. **checksums**：`checksums.sha256` 校验随资料交付的截图与工件；源码以
    commit 与来源绑定；manifest/收据不自引用自身 checksum。
 5. **性能门**：150 页语料 `tests/bench_release_150.mjs`——tags_index

@@ -19,7 +19,7 @@
 
 协调 handler（`.OpenWikiLink`）单 owner 拥有全部异步读取；冻结形态见[契约 §2/§3](../plans/attachments/036-wiki-link-contract.md)：
 
-0. **来源先验（原生轨）**：上游回调为结构性 per-instance 绑定（PLAN-732 K-02 冻结——widget 实例持自己的 callback，无 Vue 轨 opener 全局单槽问题）；双同正文实例各发各来源、换内容零冒领由上游 `plan732_dual_instance_isolated_activation` + jade 原生探针 O 组（双实例真实点击）双面承载；载荷双 Str（target/target_anchor，无锚空串）与 Vue 消费逐值同语义。
+0. **来源先验（原生轨）**：上游回调为结构性 per-instance 绑定（PLAN-732 K-02 冻结——widget 实例持自己的 callback，无 Vue 轨 opener 全局单槽问题）；双同正文实例各发各来源、换内容零冒领由上游 `plan732_dual_instance_isolated_activation` + auto-jade 原生探针 O 组（双实例真实点击）双面承载；载荷双 Str（target/target_anchor，无锚空串）与 Vue 消费逐值同语义。
 
 1. **源票据**：入口第一 await 前同步捕获单次不可变快照——`active_uid / sel_gen / active_key / active_path / active_body`（untitled 源同样有 tab_uid，不要求来源磁盘存在）+ App 侧递增请求号 `nav_seq`。
 2. **每等待期门**：解析（resolve_wiki_link）与读盘（read_wiki）两个等待窗各自之后、最终提交前五查——请求号 + uid + gen + key + body；任一失配即终止（`stale-after-resolve` / `stale-after-read`），**零激活零建 tab 零提示回写**。迟到拒绝不区分原因写面（旧结果不覆盖任何状态）。

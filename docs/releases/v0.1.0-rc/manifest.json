@@ -8,7 +8,7 @@
   },
   "closeout_status": "preparation_only",
   "closeout_status_note": "最终 auto-lang v0.5 候选（D-01）未冻结——本 manifest 记录准备态证据；最终 RC 供给到位后更新并重验受影响证据",
-  "jade": {
+  "auto_jade": {
     "source_commit": null,
     "source_commit_note": "最终发布资料 commit 由 T-05 收口时填写；本文件所在工作树当前基线 = 038 归档 tip 80eeea674a0c460856ff5ac4374f1e2ea6a2f78a + 本计划修复批",
     "base_commit": "80eeea674a0c460856ff5ac4374f1e2ea6a2f78a"

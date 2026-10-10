@@ -5,7 +5,7 @@
 //
 //   指纹臂    auto.exe 版本/SHA（须含供给：≥ v0.4.2-2650-gd5215b477）、
 //            auto-lang rev/732 交付 commit、auto-jade HEAD。
-//   N 臂      真实 jade 应用 merged（cwd=仓根 + AUTO_JADE_WORKSPACE fixture）：
+//   N 臂      真实 auto-jade 应用 merged（cwd=仓根 + AUTO_JADE_WORKSPACE fixture）：
 //            MCP editor_drag 单点（MousePressed→Released 直经生产
 //            core.handle_input 完整点击门——SD-01 §3/§6 press+release=语义
 //            完整点击）逐链接真实点击→目标页打开；press-only（门不闭合）/

@@ -1,4 +1,4 @@
-# jade-edit v0.1.0 Release 文档（发布收口批——PLAN-039）
+# auto-jade v0.1.0 Release 文档（发布收口批——PLAN-039）
 
 > v0.1.0 = **Windows 源码试用里程碑**（配合母工程 auto-lang v0.5）：
 > 面向中文个人 wiki 目标用户的 `.ad`（AutoDown/markdown-wiki）桌面
@@ -8,7 +8,7 @@
 > 本批（PLAN-039）刷新现势判据与指南；029 时代判据表（§1 旧版）由
 > 030..038 后的当前门链替代——历史回执锚保留 §5。
 > **发布状态分列**（不混称）：`preparation_only`（现行——最终工具链
-> RC 未冻结，D-01）→ `jade_ready`（本仓门全绿）→ `publish_ready`
+> RC 未冻结，D-01）→ `auto_jade_ready`（本仓门全绿）→ `publish_ready`
 > （另需用户试用确认＋母工程联合发布门）。当前 = preparation_only。
 
 ## 1. v0.1.0 判据（现行——PLAN-039 十项 AC 的发布面摘要）
@@ -33,7 +33,7 @@
 
 | 形态 | 启动（PowerShell） | 说明 |
 | --- | --- | --- |
-| **原生 merged（主交付形态）** | `$env:JADE_WORKSPACE="<wiki 目录>"; & <auto.exe> run -r vm` | back 进程内直调，单命令单进程；原生窗 |
+| **原生 merged（主交付形态）** | `$env:AUTO_JADE_WORKSPACE="<wiki 目录>"; & <auto.exe> run -r vm` | back 进程内直调，单命令单进程；原生窗 |
 | **Vue 集成形（第二交付形态）** | `& <auto.exe> run -r vue --server vm -B 8211 -F 4443` | vue 前端 serve + HTTP 后端自动接线；浏览器开 http://127.0.0.1:4443；端口可换 |
 | 原生 `--no-merge`（split） | 开发/补充诊断路径 | boot 已恢复（034 时代 F-24-2 未复现实测在册）；链接消费未联验单列——不以其证明上述两形态 |
 | 单独 Vue dist 静态 serve | 非独立发行形态 | 未验证 API 路由前不提供独立运行承诺 |
@@ -59,15 +59,15 @@
 
 ```powershell
 $env:AUTO_EXE = '<冻结工具链>\auto.exe'
-$env:JADE_WORKSPACE = 'C:\jade-trial\my-wiki'   # 你的工作区副本
+$env:AUTO_JADE_WORKSPACE = 'C:\auto-jade-trial\my-wiki'   # 你的工作区副本
 & $env:AUTO_EXE run -r vm                        # 形态一
 & $env:AUTO_EXE run -r vue --server vm -B 8211 -F 4443   # 形态二
 ```
 
 - 样例语料随源码交付：`docs/releases/v0.1.0-rc/sample-workspace/`
   （复制为你的工作区副本后使用；不依赖任何开发机私有 fixture）。
-- 工作区根三级回退（`JADE_WORKSPACE` → `AUTO_PROJECT_DIR` → cwd）——
-  **两种形态都必须显式 `JADE_WORKSPACE` 指向你的 wiki**。
+- 工作区根三级回退（`AUTO_JADE_WORKSPACE` → `AUTO_PROJECT_DIR` → cwd）——
+  **两种形态都必须显式 `AUTO_JADE_WORKSPACE` 指向你的 wiki**。
 - `>200` 页触发状态栏知情警示（试用边界 P≤200 / 名称匹配 depth 8）。
 - 菜单替代：组合键含 Shift 的入口（Ctrl+Shift+O/F/D）当前被塌缩——
   用菜单对应项替代。
@@ -115,5 +115,5 @@ $env:JADE_WORKSPACE = 'C:\jade-trial\my-wiki'   # 你的工作区副本
 ---
 
 > **状态纪律**：本档当前描述 preparation_only 现势——「准备完成」≠「
-> Jade 验收通过」≠「已经发布」。最终版本/工具链 hash/截图以 T-03 冻结
+> Auto Jade 验收通过」≠「已经发布」。最终版本/工具链 hash/截图以 T-03 冻结
 > 候选为准回填（manifest + checksums.sha256 + screenshots/）。

@@ -2947,7 +2947,7 @@ pub fn tags_json(path str, depth int) str {
 
 // ===== 工作区状态持久层（PLAN-021 T-01；第十九切片 back 半——back 持久
 // 层首开，SD-2101）：**专用不泛化**（通用 KV state_get/set 面 v1 不做
-// ——第二持久需求出现时再议，避免过早抽象）。`.auto-jade/` = jade 内部态目
+// ——第二持久需求出现时再议，避免过早抽象）。`.auto-jade/` = auto-jade 内部态目
 // 录（工作区根点前缀）：fs_tree_skipped 点前缀忽略一手源（D-33①——
 // SD-1601 .trash 同论证）⇒ walk 忽略，索引/标签/检索/树/快开五面零污
 // 染；**非用户内容**（auto-jade 内部态——与 D-14 frontmatter 用户域无涉）。

@@ -1,13 +1,13 @@
-# jade-edit — 知识库方向的 AutoDown 编辑器（独立仓，auto-edit 家族）
+# auto-jade — 知识库方向的 AutoDown 编辑器（独立仓，auto-edit 家族）
 
-> jade-edit：`.ad`（AutoDown/markdown-wiki）文件的桌面编辑器，**AutoUI
+> auto-jade：`.ad`（AutoDown/markdown-wiki）文件的桌面编辑器，**AutoUI
 > 单工程双轨**首例——同一份 `src/front/*.at` 单源，vm 轨解释渲染（iced
 > 原生窗）、vue 轨生成 Vue3+Vite 工程。从初始版起双轨一致性（同日落地，
 > gate 双臂同断言域），不再积累组装级差异（旧 jade-garden 的教训）。
 
 ## 是什么 / 不是什么
 
-- **产品定位（SD-303，2026-09-22 Q1 裁定）**：jade-edit = **知识库方向**的
+- **产品定位（SD-303，2026-09-22 Q1 裁定）**：auto-jade = **知识库方向**的
   AutoDown 编辑器，与 auto-edit（轻量级编辑器）**长期并存、两套产品**
   ——不做产品合并；组件尽量共用，未来组件插件化时升级为插件级共用；
   家族栈（stylekit/bps/@autodown/engine）维持。裁定全文见
@@ -29,7 +29,7 @@
   最小环收口；**第四切片 = 重命名 + 反链改写**（SD-601，2026-09-23）：
   F2/菜单 → dialog 弹层（预填 + 影响面预览）→ 磁盘改名 + 全部入链
   `[[wikilink]]` 源文自动改写（知识完整性件——旧园 rename 只补内存
-  索引不改源文，jade 纯派生链接面下源文改写为本仓首创设计；casefold
+  索引不改源文，auto-jade 纯派生链接面下源文改写为本仓首创设计；casefold
   裁决随批落定：stem 匹配维持精确比较、case-only 拒；casefold 匹配本
   体属另立计划）；**第五切片 = 树文件管理**（SD-701，2026-09-23）：
   EXPLORER 头部「＋」新建（复用 create_page——幂等/清洗/模板/根落位
@@ -165,8 +165,8 @@
   清单 dump 直出字符串新观测面）；
   **第十九切片 = 试用赋能批**（SD-2101，2026-09-27）：**recents 持
   久化（back 持久层首开）+ P≤200 试用防线 + 150 页实测**三件——020
-  §10.3 留口兑现 + §10.5 试用驱动承接：①**`.jade/` 持久层**（工作区
-  根点前缀目录——walk 忽略一手源免索引/jade 内部态非用户内容/工作区
+  §10.3 留口兑现 + §10.5 试用驱动承接：①**`.auto-jade/` 持久层**（工作区
+  根点前缀目录——walk 忽略一手源免索引/auto-jade 内部态非用户内容/工作区
   本地；**专用不泛化**——通用 KV 随第二持久需求再议）：`recent_paths_
   get/set` 双契约（换行分隔原样存取——缺档容错只读不建/空串清空写空
   文件），Init 载入 + 八触点变更即存——**会话域 → 工作区域升级**（
@@ -244,7 +244,7 @@
   矩阵面 + e2e 窗 HTTP 签名零复现 + popover v11③ 族 1 例重跑即绿
   ——留观维持）+ 盘点三件维持候选（checkbox/menubar memo/
   autoui_state——705/706 delta 零触）+ build ✓built 20.23s（新
-  gen 面全链绿——706 生成器变更对 jade 语料零破坏直证）。
+  gen 面全链绿——706 生成器变更对 auto-jade 语料零破坏直证）。
   **重入收口（2026-09-30，家族 706 rev2 修复落 master 后）**：
   家族 bisect 定谳=**plan047 T-06 computed 信号网裸 Value 无 RC 堆
   身份 UAF**（三面同根因——debug panic/release 弹层滞留/probe_
@@ -299,7 +299,7 @@
   §4.3 提案——①CJK 开档✅/②真实试用 ≥1 轮**待用户**/③release 批
   receipt]+交付形态双形[merged 单命令/vue 集成单命令 `auto run -r vue
   --server vm`——dist 独立 serve 缺口注记：vite 5.4.21 preview 不代理
-  /api 实测 404]+试用指南[JADE_WORKSPACE 指向真实 wiki+核心弧
+  /api 实测 404]+试用指南[AUTO_JADE_WORKSPACE 指向真实 wiki+核心弧
   walkthrough——指南命令 T-03 逐条实走直证「指南即验证」]+已知限制
   五件注记面+001..028 切片摘要）+ **全量回归门六面 fresh receipt**
   （merged 22 PASS 基线 v20 零漂移[新载体 debug 16:01 v0.4.2-2311
@@ -344,14 +344,14 @@ auto-lang 双 exe 中间态（debug 全量 vue gen 自旋 / 新 release deps
 select prop schema drift + vm 矩阵不稳）——分段路由判绿口径见
 parity-ledger D-21 v20（build 段 `SCHEMA_DRIFT_GENERATE_AT=1` 生成
 通道）；`pnpm install`（仓根，playwright）。
-工作区根：`JADE_WORKSPACE` env（缺席 = AUTO_PROJECT_DIR = 工程目录）。
+工作区根：`AUTO_JADE_WORKSPACE` env（缺席 = AUTO_PROJECT_DIR = 工程目录）。
 
 ```sh
 # —— vm 轨（默认 merged：back 进程内直调，零后端进程零端口）——
-JADE_WORKSPACE=<工作区> auto run -r vm
+AUTO_JADE_WORKSPACE=<工作区> auto run -r vm
 
 # —— vm 轨 split（AutoVM HTTP 后端 + 前端窗，HTTP 往返）——
-JADE_WORKSPACE=<工作区> auto run -r vm --no-merge
+AUTO_JADE_WORKSPACE=<工作区> auto run -r vm --no-merge
 
 # —— 后端独立 serve（不开窗——vue dev / 联调用）——
 node scripts/serve-back.mjs [--port 8211]     # auto run --server vm + 隔离 fixture + ws_root belt
@@ -392,7 +392,7 @@ e2e 弧线 = ASCII 悬空源档测试内造零语料改动）+ **find**（查找
 「任务列表」**POST 双臂**[D-19 面无]/行导航面板保持开/运行后空态；CJK
 文件名拾取导航子步仅 vm merged 臂——D-19 同款口径；**alias 检索子步
 [PLAN-012]：内造 alias 档 → 搜「检别名」→ AliasTgt.ad 命中行 → 拾取开
-档双臂——title=stem 口径 = `tests/probe_dir_move.mjs` 直证面**；**PLAN-020 ⑧⑨**：空 q 断言修订[005「全量 5 行」→ recents 替换面——累积位态「最近」段；首跑无记录全量面 = T-02 冒烟一次性件承载]+⑧ orphans 第五模式[无 input 负向面+fs 造纯孤页档入列→行点击开档→造链清孤→悬空出链计入出链度——resolved 面直证]+⑨ recents 弧线[清 q→「最近」段→3 开逆序→拾取即关→去重置顶→容量截断 RecCap×12→10 行]**；**PLAN-021 ⑩**：快开子步断言修订[020「空 q 零记录全量」→「最近」段跨会话载入——重载后 recents 自 .jade/recents.txt 恢复，会话域复位语义随持久化退役]+⑩ 持久化逐行验[⑨ 终态 RecCap12..RecCap3 ↔ 磁盘逐行]+⑤ reload 跨会话真弧[「最近」段逐行恢复+拾取开档位态复原]+防线案 201 页[StatusBar 警示行显隐——知情纯显示面+清料零警示回归]**；vm 臂尾 ⑩b/⑩c = 进程重启载入真弧+201 页 store 态断言[组件子树快照不可见对位]**）+ **rename**（重命
+档双臂——title=stem 口径 = `tests/probe_dir_move.mjs` 直证面**；**PLAN-020 ⑧⑨**：空 q 断言修订[005「全量 5 行」→ recents 替换面——累积位态「最近」段；首跑无记录全量面 = T-02 冒烟一次性件承载]+⑧ orphans 第五模式[无 input 负向面+fs 造纯孤页档入列→行点击开档→造链清孤→悬空出链计入出链度——resolved 面直证]+⑨ recents 弧线[清 q→「最近」段→3 开逆序→拾取即关→去重置顶→容量截断 RecCap×12→10 行]**；**PLAN-021 ⑩**：快开子步断言修订[020「空 q 零记录全量」→「最近」段跨会话载入——重载后 recents 自 .auto-jade/recents.txt 恢复，会话域复位语义随持久化退役]+⑩ 持久化逐行验[⑨ 终态 RecCap12..RecCap3 ↔ 磁盘逐行]+⑤ reload 跨会话真弧[「最近」段逐行恢复+拾取开档位态复原]+防线案 201 页[StatusBar 警示行显隐——知情纯显示面+清料零警示回归]**；vm 臂尾 ⑩b/⑩c = 进程重启载入真弧+201 页 store 态断言[组件子树快照不可见对位]**）+ **rename**（重命
 名七子步：入口禁用态[untitled+脏档——handler 守卫，D-24③]/弹层锚[预填
 stem + 影响面预览 N 页 M 处]/取消零落盘/改名弧线[active 投影 + tab 更新
 + 磁盘改名 + 双页源文改写]/跨页改写可见[出链行新 stem + 点击导航新档 +
@@ -799,7 +799,7 @@ e2e 同单（断言域 = 结构/文本/磁盘字节，非像素）。
   本批全程新 exe 载体；release 09-25 17:58 未变；D-35② 复测执行窗
   条件或至——留观面板交接非本批范围]。
 - 结构基线 = `tests/baseline/structure-v19.txt`：state 段逐字节 +
-  snapshot vnode id 出现序列（v2 仪器延续；**v19 = PLAN-021 计划内重锁**[store ws_warn[P≤200 防线态——现行语料恒 "" 入 dump]——非零重锁第六例 store 新字段面；App 模型零新字段/recent_paths 值域六检查后 1 项同 v18——pristine 语料零 .jade 载入半=臂尾 ⑩b 承载；id 序列零变化——StatusBar 组件子树快照不可见]；**v18 = PLAN-020 计划内重
+  snapshot vnode id 出现序列（v2 仪器延续；**v19 = PLAN-021 计划内重锁**[store ws_warn[P≤200 防线态——现行语料恒 "" 入 dump]——非零重锁第六例 store 新字段面；App 模型零新字段/recent_paths 值域六检查后 1 项同 v18——pristine 语料零 .auto-jade 载入半=臂尾 ⑩b 承载；id 序列零变化——StatusBar 组件子树快照不可见]；**v18 = PLAN-020 计划内重
   锁**[App orphan_rows[pristine 恒空 []]+recent_paths[六检查后 1 项
   ——**str 清单 dump 直出字符串非 vmref** 新观测面]入 dump + action
   view.find-orphans[Ctrl+Shift+O]+menubar 视图项「孤页清单」入 id 序
@@ -956,4 +956,4 @@ old-carrier release 同挂；供料候选记账；027 窗 debug 路由纪律续
 
 PLAN-081（bootstrap）+ PLAN-001（换基自有 back）已交付归档——后者见
 [plans/archived/001-jade-edit-rebase-autoedit.md](plans/archived/001-jade-edit-rebase-autoedit.md)；
-PLAN-081 本体在 auto-down 主检出 `docs/plans/081-jade-edit-bootstrap.md`。
+PLAN-081 本体在 auto-down 主检出 `docs/plans/archived/081-jade-edit-bootstrap.md`。

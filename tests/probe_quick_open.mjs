@@ -9,7 +9,7 @@
 //   （pac render vm + src/back 整树拷贝 + src/front/editor_store.at 原样 +
 //   探针 app.at），MCP autoui_* 驱动，非复制策略机——提交链全走生产 store。
 // 后续相位（T-02/T-03/T-04 后扩）：生产 App Q/C/R（目录/隔离/世代门）与
-//   O/S/P（开页/过期/零副作用）组——真实生产 jade 应用 merged 驱动
+//   O/S/P（开页/过期/零副作用）组——真实生产 auto-jade 应用 merged 驱动
 //   （probe_native_wiki_link N 臂配方）。
 //
 // 冻结判据（038-quick-open-contract.md §2/§3 载体面）：
@@ -622,7 +622,7 @@ async function t1NarrowChecks(callTool) {
   await press(callTool, await waitButton(callTool, '取消'))
 }
 
-// ---------------- 生产 App 相位（T-03/T-04；真实 jade 应用 merged） ----------------
+// ---------------- 生产 App 相位（T-03/T-04；真实 auto-jade 应用 merged） ----------------
 
 const PROD_WS = path.join(RUNTIME, 'quick-open-prod-ws')
 
@@ -1009,7 +1009,7 @@ if (PHASE === 't1' || PHASE === 'all') {
   await runCarrier('narrow', '640x480', port2, t1NarrowChecks)
 }
 if (PHASE === 'prod' || PHASE === 'all') {
-  console.log('[probe-quick-open] phase prod — 生产 App I/K/Q/C/R/O 组（真实 jade 应用 merged）')
+  console.log('[probe-quick-open] phase prod — 生产 App I/K/Q/C/R/O 组（真实 auto-jade 应用 merged）')
   await runProdArm()
 }
 
