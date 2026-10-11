@@ -1,5 +1,8 @@
 # auto-jade — 知识库方向的 AutoDown 编辑器（独立仓，auto-edit 家族）
 
+> 产品介绍、实拍截图与示例知识库入口：[中文 README](../README.cn.md) ·
+> [English README](../README.md)。本页保留工程概览、运行矩阵与历史验证记录。
+
 > auto-jade：`.ad`（AutoDown/markdown-wiki）文件的桌面编辑器，**AutoUI
 > 单工程双轨**首例——同一份 `src/front/*.at` 单源，vm 轨解释渲染（iced
 > 原生窗）、vue 轨生成 Vue3+Vite 工程。从初始版起双轨一致性（同日落地，
