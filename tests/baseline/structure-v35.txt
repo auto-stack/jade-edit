@@ -1,3 +1,10 @@
+// 结构基线 v35（auto-os/PLAN-061 主题接入批重锁，2026-11-05）。
+// v34→v35 delta（全录，逐项）：①state 纯增 1 字段 dark_mode（Plan 458
+// 契约 mode 位，design 派生源——本批接入）；②console 面 MCP 端口值
+// 9381→pickPort 动态（原门复活：WinNAT 排除段 9300-9399 漂移，
+// F-R8-1 同族——vm_matrix.mjs 改用仓内 pick_port.mjs）；③ws_name
+// "p750-vm-ws"→"workspace"（wiki-demo fixture 上游现值——预存环境差，
+// 非本批）。承 v34（2026-10-10 PLAN-750 分配臂批）。
 // auto-jade vm 结构基线 v34（2026-10-10 PLAN-750 分配臂 in-flight 门批重锁；v33=改名批锁[在途未及单列提交，随本批并链——EDIT_MARKER 字节面]、v32=链接域 v2、v31=撤 workaround 批、v30=2026-10-09 布局修复批、v29=PLAN-038 T-03、v28=PLAN-036 批、
 // v25=PLAN-032 批、v20=PLAN-025、v19=PLAN-021、v18=PLAN-020、v17=PLAN-019、v16=PLAN-018、
 // v15=PLAN-016、v14=PLAN-015、v13=PLAN-014、v12=PLAN-013、v11=PLAN-012 等均留档）。
