@@ -10,7 +10,13 @@
 //   5 save    保存落盘（toolbar 保存 → 脏标清 + 磁盘字节含标记 + frontmatter 保留
 //             + updated_at 自动维护——PLAN-015：已有键保存即更新值[当日形]）
 //   6 reload  重载可见（磁盘外改 → toolbar 重载 → 编辑器见新内容）
-//   B base    结构基线 v32 零漂移（仅 merged 臂；必须在 1-6 后、扩单前采集
+//   B base    结构基线 v35 零漂移（仅 merged 臂；必须在 1-6 后、扩单前采集
+//             ——v35=auto-os/PLAN-061 主题接入批[state 纯增 1 字段
+//             dark_mode（458 契约 mode 位，design 派生源）+ design 块；
+//             console 面端口值 9381→pickPort 动态（原门复活：WinNAT 排除段
+//             9300-9399 漂移，F-R8-1 同族）；ws_name workspace=wiki-demo
+//             fixture 上游现值（预存环境差，非本批）]；v34=PLAN-081 等留档；
+//             v32 旧注以下保留）
 //             ——v29 锁的是六检查终态，扩单不漂移基线；v29=PLAN-038 快开
 //             独立弹层批[state 纯增 8 字段 quick_* 七件+store quick_open、
 //             files_rows 退役；id 序列 = 快开根弹层新节点+工具栏 快速打开
@@ -185,6 +191,7 @@
 //   node tests/vm_matrix.mjs --save-baseline tests/baseline/structure-v2.txt
 
 import { spawn, execFileSync } from 'node:child_process'
+import { pickPort } from './pick_port.mjs'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -204,7 +211,7 @@ const argOf = (name) => {
   return i >= 0 ? args[i + 1] : undefined
 }
 const ARM = argOf('--arm') ?? 'all' // all | merged | split
-const BASELINE = path.join(repoRoot, "tests", "baseline", "structure-v34.txt")
+const BASELINE = path.join(repoRoot, "tests", "baseline", "structure-v35.txt")
 const SAVE_BASELINE = argOf('--save-baseline')
 
 const EDIT_MARKER = 'auto-jade 冒烟标记：编辑回写可见。'
@@ -3959,7 +3966,10 @@ const arms = ARM === 'all' ? ['merged', 'split'] : [ARM]
 const all = []
 let failed = 0
 for (const [idx, arm] of arms.entries()) {
-  const port = 9381 + idx * 2
+  // PLAN-061 原门复活最小修复：arm MCP 口 9381 固定值落 WinNAT 排除段
+  // 9300-9399（netsh 实测）——bind 恒拒、MCP 永不监听、整门环境死。
+  // 改用仓内 pick_port.mjs（probe 族同款避让件，段 8221..8260）。
+  const port = await pickPort({ env: `AUTO_JADE_PROBE_PORT_${arm.toUpperCase()}` })
   const results = await runArm(arm, port)
   all.push({ arm, results })
   failed += results.filter((r) => !r.ok).length
